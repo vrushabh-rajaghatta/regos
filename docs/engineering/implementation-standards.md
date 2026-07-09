@@ -1,0 +1,260 @@
+# Implementation Standards
+
+---
+**Title:** Implementation Standards
+
+**Owner:** Architecture Review Board
+
+**Status:** Approved
+
+**Version:** 1.0
+
+**Effective Date:** 2026-07-08
+
+**Last Reviewed:** 2026-07-08
+
+**Next Review:** 2027-07-08
+
+**Related Documents:**
+- philosophy.md
+- repository.md
+- business-modeling.md
+- ENGINEERING.md
+
+**Related ADRs:**
+- None
+
+---
+
+# Purpose
+
+The Implementation Standards define how the RegOS architecture is translated into software.
+
+They establish consistent implementation practices that preserve business understanding, architectural integrity, and long-term maintainability.
+
+Implementation decisions should always reinforce the business model rather than reshape it.
+
+---
+
+# Implementation Principles
+
+## Principle 1 — Implement Capabilities, Not CRUD Operations
+
+Software should implement business capabilities.
+
+Controllers, endpoints, repositories, and databases exist to support business behavior rather than define it.
+
+---
+
+## Principle 2 — Business Intent Precedes Technical Design
+
+Every implementation begins with business intent.
+
+Commands express intent.
+
+Capabilities execute intent.
+
+Technical implementation follows.
+
+---
+
+## Principle 3 — Architecture Is Expressed Through Code
+
+Code should clearly communicate the architecture.
+
+A reader should understand the business capability without studying framework configuration.
+
+---
+
+## Principle 4 — Consistency Is Preferred Over Creativity
+
+When multiple valid implementation approaches exist, prefer the one that is already established within RegOS.
+
+Consistency improves maintainability, onboarding, and AI-assisted development.
+
+---
+
+# Building a Capability
+
+Every capability follows the same implementation lifecycle.
+
+```text
+Business Capability
+        ↓
+Command
+        ↓
+Aggregate
+        ↓
+Business Rules
+        ↓
+Domain Events
+        ↓
+Facts
+        ↓
+Persistence
+        ↓
+API
+        ↓
+Tests
+```
+
+Business behavior should emerge through this flow.
+
+Implementation should never begin from persistence or user interfaces.
+
+---
+
+# Modeling the Domain
+
+## Aggregates
+
+Aggregates protect business invariants.
+
+They own business consistency and define transactional boundaries.
+
+Aggregates should expose behavior rather than mutable state.
+
+---
+
+## Entities
+
+Entities possess identity and participate in business behavior.
+
+Entities should never become containers for unrelated logic.
+
+---
+
+## Value Objects
+
+Value Objects describe business concepts without identity.
+
+They should be immutable whenever practical.
+
+---
+
+## Domain Services
+
+Domain Services exist only when business behavior cannot naturally belong to an Aggregate or Value Object.
+
+They should remain rare.
+
+---
+
+## Specifications
+
+Specifications express reusable business conditions.
+
+They improve consistency and reduce duplicated business logic.
+
+---
+
+## Domain Events
+
+Domain Events represent completed business actions.
+
+They communicate meaningful business changes.
+
+Events describe what has already happened.
+
+---
+
+# Application Layer
+
+The Application Layer coordinates business capabilities.
+
+It is responsible for:
+
+- Commands
+- Queries
+- Handlers
+- Validation
+- Transactions
+- Orchestration
+
+The Application Layer does not contain business decision logic.
+
+Business decisions belong to the Domain.
+
+---
+
+# Infrastructure Layer
+
+Infrastructure supports the Domain and Application layers.
+
+Responsibilities include:
+
+- Persistence
+- Messaging
+- External integrations
+- File storage
+- Background processing
+
+Infrastructure implements contracts defined by the business architecture.
+
+It never defines business behavior.
+
+---
+
+# Cross-Cutting Standards
+
+## Identifiers
+
+Business entities should use strongly typed identifiers.
+
+Primitive identifiers should not leak into business models.
+
+---
+
+## Time
+
+Business time should be obtained through an abstraction rather than directly from the system clock.
+
+This improves testing, repeatability, and determinism.
+
+---
+
+## Errors
+
+Business failures should be represented explicitly.
+
+Exceptions are reserved for unexpected technical failures.
+
+---
+
+## Results
+
+Application operations should communicate success and failure through explicit result types rather than relying solely on exceptions.
+
+---
+
+## Auditing
+
+Important business actions should be traceable.
+
+Audit information should support regulatory accountability without polluting business logic.
+
+---
+
+# Implementation Checklist
+
+Before implementing a capability, verify the following.
+
+- [ ] The business capability has been defined.
+- [ ] Business intent is represented by a Command.
+- [ ] Business invariants are protected by an Aggregate.
+- [ ] Domain Events describe completed business actions.
+- [ ] Facts have been identified where applicable.
+- [ ] Business Rules remain inside the Domain.
+- [ ] Infrastructure contains no business decision logic.
+- [ ] Strongly typed identifiers are used.
+- [ ] Business time is abstracted.
+- [ ] The capability is independently testable.
+- [ ] Architectural changes requiring an ADR have been identified.
+
+---
+
+# Change History
+
+| Version | Date | Summary |
+|----------|------------|-------------------------------------------|
+| 1.0 | 2026-07-08 | Initial approved version. |
