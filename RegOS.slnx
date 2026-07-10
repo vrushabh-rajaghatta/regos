@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/src/" />
+  <Folder Name="/src/Host/">
+    <Project Path="src/Host/RegOS.Api/RegOS.Api.csproj" />
+  </Folder>
   <Folder Name="/src/Product/">
     <Project Path="src/Product/RegOS.Product.Application/RegOS.Product.Application.csproj" />
     <Project Path="src/Product/RegOS.Product.Domain/RegOS.Product.Domain.csproj" />

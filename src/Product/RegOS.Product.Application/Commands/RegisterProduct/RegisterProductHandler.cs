@@ -1,6 +1,5 @@
 namespace RegOS.Product.Application.Commands.RegisterProduct;
 
-using RegOS.Product.Application.Contracts;
 using RegOS.Product.Application.Persistence;
 using RegOS.Product.Domain.Product;
 

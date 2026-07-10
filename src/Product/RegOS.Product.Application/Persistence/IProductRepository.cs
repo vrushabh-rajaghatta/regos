@@ -1,4 +1,4 @@
-namespace RegOS.Product.Application.Contracts;
+namespace RegOS.Product.Application.Persistence;
 
 using RegOS.Product.Domain.Product;
 
