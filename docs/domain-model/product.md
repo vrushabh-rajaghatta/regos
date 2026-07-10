@@ -1,6 +1,7 @@
 # Product
 
 ---
+
 Title: Product Domain Model
 
 Owner: Architecture Review Board
@@ -12,9 +13,11 @@ Version: 1.0
 Last Reviewed: 2026-07-09
 
 Related Documents:
+
 - business-modeling.md
 
 Related ADRs:
+
 - ADR-0002
 
 ---
@@ -104,6 +107,38 @@ Business Rules:
 - Normalized values represent the same business value.
 - Uniqueness is enforced outside the Value Object.
 
+## Product Status
+
+A Product has a business lifecycle.
+
+States:
+
+- Registered
+- Active
+- Archived
+
+Business Rules:
+
+- Every newly registered Product starts in the Registered state.
+- A Registered Product may be Archived.
+- An Archived Product cannot return to Registered without an explicit Restore Product capability.
+
+## Product Type
+
+Represents the regulatory classification of a Product.
+
+Business Rules
+
+- Every Product has exactly one ProductType.
+- ProductType is assigned during registration.
+- ProductType cannot be changed.
+- Supported values:
+  - Medical Device
+  - Drug
+  - Biologic
+  - Combination Product
+  - IVD
+
 ---
 
 # Relationships
@@ -150,6 +185,6 @@ Planned capabilities include:
 
 # Change History
 
-| Version | Date | Summary |
-|----------|------|---------|
-| 1.0 | 2026-07-09 | Initial Product domain model. |
+| Version | Date       | Summary                       |
+| ------- | ---------- | ----------------------------- |
+| 1.0     | 2026-07-09 | Initial Product domain model. |

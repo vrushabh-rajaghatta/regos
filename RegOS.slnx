@@ -1,9 +1,16 @@
 <Solution>
   <Folder Name="/src/" />
   <Folder Name="/src/Product/">
+    <Project Path="src/Product/RegOS.Product.Application/RegOS.Product.Application.csproj" />
     <Project Path="src/Product/RegOS.Product.Domain/RegOS.Product.Domain.csproj" />
+    <Project Path="src/Product/RegOS.Product.Infrastructure/RegOS.Product.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/RegOS.Persistence/RegOS.Persistence.csproj" />
     <Project Path="src/Shared/RegOS.SDK/RegOS.SDK.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Product/">
+    <Project Path="tests/Product/RegOS.Product.Domain.Tests/RegOS.Product.Domain.Tests.csproj" />
   </Folder>
 </Solution>

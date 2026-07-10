@@ -1,6 +1,7 @@
 # Register Product
 
 ---
+
 Title: Register Product Capability
 
 Owner: Architecture Review Board
@@ -12,9 +13,11 @@ Version: 1.0
 Last Reviewed: 2026-07-09
 
 Related Domain Models:
+
 - product.md
 
 Related ADRs:
+
 - ADR-0002
 
 ---
@@ -56,6 +59,7 @@ The minimum information required to register a Product.
 Current assumptions:
 
 - ProductName
+- ProductType
 - Owning Organization
 
 Additional inputs may be introduced after further domain discovery.
@@ -96,6 +100,12 @@ Additional inputs may be introduced after further domain discovery.
 A new Product exists within the Organization.
 
 The Product is ready for future Product Versions.
+
+After successful registration:
+
+- A Product exists.
+- The Product is in the Registered state.
+- The Product is ready for future Product Versions.
 
 ---
 
@@ -148,6 +158,6 @@ Potential future enhancements include:
 
 # Change History
 
-| Version | Date | Summary |
-|----------|------|---------|
-| 1.0 | 2026-07-09 | Initial capability definition. |
+| Version | Date       | Summary                        |
+| ------- | ---------- | ------------------------------ |
+| 1.0     | 2026-07-09 | Initial capability definition. |
