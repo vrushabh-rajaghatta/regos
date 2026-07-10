@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RegOS.Api.Endpoints.Products;
 using RegOS.Product.Application.DependencyInjection;
 using RegOS.Product.Infrastructure.DependencyInjection;
 using RegOS.Product.Infrastructure.Persistence;
@@ -23,5 +24,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapProductEndpoints();
 
 app.Run();
