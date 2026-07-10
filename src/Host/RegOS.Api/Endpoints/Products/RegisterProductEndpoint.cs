@@ -3,9 +3,9 @@ using RegOS.Product.Domain.Products;
 
 namespace RegOS.Api.Endpoints.Products;
 
-public static class ProductEndpoints
+public static class RegisterProductEndpoint
 {
-    public static IEndpointRouteBuilder MapProductEndpoints(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapRegisterProductEndpoint(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("api/products", async (
             RegisterProductRequest request,

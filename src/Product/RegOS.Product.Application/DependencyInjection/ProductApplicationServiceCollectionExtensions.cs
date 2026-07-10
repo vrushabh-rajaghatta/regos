@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using RegOS.Product.Application.Commands.RegisterProduct;
+using RegOS.Product.Application.Queries.GetProduct;
 
 namespace RegOS.Product.Application.DependencyInjection;
 
@@ -9,6 +10,7 @@ public static class ProductApplicationServiceCollectionExtensions
         this IServiceCollection services)
     {
         services.AddScoped<RegisterProductHandler>();
+        services.AddScoped<GetProductHandler>();
 
         return services;
     }

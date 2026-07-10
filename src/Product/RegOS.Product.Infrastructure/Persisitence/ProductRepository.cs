@@ -1,5 +1,6 @@
 namespace RegOS.Product.Infrastructure.Persistence;
 
+using Microsoft.EntityFrameworkCore;
 using RegOS.Product.Application.Persistence;
 using RegOS.Product.Domain.Product;
 
@@ -17,5 +18,10 @@ public sealed class ProductRepository : IProductRepository
         CancellationToken cancellationToken = default)
     {
         await _dbContext.Products.AddAsync(product, cancellationToken);
+    }
+
+    public async Task<Product?> GetByIdAsync(ProductId id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 }
