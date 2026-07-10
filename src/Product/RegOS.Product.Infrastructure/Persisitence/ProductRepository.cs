@@ -24,4 +24,9 @@ public sealed class ProductRepository : IProductRepository
     {
         return await _dbContext.Products.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Product>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Products.OrderBy(p => p.Name).ToListAsync(cancellationToken);
+    }
 }

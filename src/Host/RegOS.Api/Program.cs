@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Product.Application.DependencyInjection;
@@ -8,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(
+        new JsonStringEnumConverter());
+});
 
 builder.Services.AddDbContext<ProductDbContext>(options =>
 {
@@ -27,5 +34,6 @@ if (app.Environment.IsDevelopment())
 
 app.MapRegisterProductEndpoint();
 app.MapGetProductEndpoint();
+app.MapListProductsEndpoint();
 
 app.Run();

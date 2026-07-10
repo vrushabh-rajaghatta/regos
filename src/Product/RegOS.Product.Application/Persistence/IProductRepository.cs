@@ -9,4 +9,6 @@ public interface IProductRepository
     Task<Product?> GetByIdAsync(
     ProductId id,
     CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Product>> ListAsync(CancellationToken cancellationToken = default);
 }
