@@ -1,30 +1,36 @@
+import { useState } from "react";
 import { useProducts } from "../hooks/useProducts";
+import { ProductToolbar } from "../components/ProductToolbar";
+import { RegisterProductDialog } from "../components/RegisterProductDialog";
+import { LoadingProducts } from "../components/LoadingProducts";
+import { EmptyProductState } from "../components/EmptyProductState";
+import { ProductLoadError } from "../components/ProductLoadError";
+import { ProductCard } from "../components/ProductCard";
 
 export function ProductListPage() {
   const { data, isLoading, error } = useProducts();
 
-  if (isLoading) {
-    return <p>Loading products...</p>;
-  }
-
-  if (error) {
-    return <p>Unable to load products.</p>;
-  }
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold mb-6">Products</h1>
+    <>
+      <ProductToolbar onCreate={() => setDialogOpen(true)} />
 
-      <ul className="space-y-3">
-        {data?.map((product) => (
-          <li key={product.id} className="border rounded-lg p-4">
-            <div className="font-medium">{product.name}</div>
-            <div className="text-sm text-muted-foreground">
-              {product.type} • {product.status}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+      <RegisterProductDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      {isLoading && <LoadingProducts />}
+
+      {!isLoading && error && <ProductLoadError retry={() => {}} />}
+
+      {!isLoading && !error && data?.length === 0 && <EmptyProductState />}
+
+      {!isLoading && !error && data && data.length > 0 && (
+        <div className="space-y-3">
+          {data.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
