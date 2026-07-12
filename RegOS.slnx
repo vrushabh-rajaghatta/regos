@@ -1,10 +1,5 @@
 <Solution>
   <Folder Name="/src/" />
-  <Folder Name="/src/Application/">
-    <Project Path="src/Application/RegOS.Application.Application/RegOS.Application.Application.csproj" />
-    <Project Path="src/Application/RegOS.Application.Domain/RegOS.Application.Domain.csproj" />
-    <Project Path="src/Application/RegOS.Application.Infrastructure/RegOS.Application.Infrastructure.csproj" />
-  </Folder>
   <Folder Name="/src/Host/">
     <Project Path="src/Host/RegOS.Api/RegOS.Api.csproj" />
   </Folder>
@@ -12,6 +7,11 @@
     <Project Path="src/Product/RegOS.Product.Application/RegOS.Product.Application.csproj" />
     <Project Path="src/Product/RegOS.Product.Domain/RegOS.Product.Domain.csproj" />
     <Project Path="src/Product/RegOS.Product.Infrastructure/RegOS.Product.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/RegulatoryApplication/">
+    <Project Path="src/RegulatoryApplication/RegOS.RegulatoryApplication.Application/RegOS.RegulatoryApplication.Application.csproj" />
+    <Project Path="src/RegulatoryApplication/RegOS.RegulatoryApplication.Domain/RegOS.RegulatoryApplication.Domain.csproj" />
+    <Project Path="src/RegulatoryApplication/RegOS.RegulatoryApplication.Infrastructure/RegOS.RegulatoryApplication.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/RegOS.Persistence/RegOS.Persistence.csproj" />

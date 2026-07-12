@@ -18,8 +18,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Product\RegOS.Product.Application\RegOS.Product.Application.csproj" />
     <ProjectReference Include="..\..\Product\RegOS.Product.Infrastructure\RegOS.Product.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Application\RegOS.Application.Application\RegOS.Application.Application.csproj" />
-    <ProjectReference Include="..\..\Application\RegOS.Application.Infrastructure\RegOS.Application.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\RegulatoryApplication\RegOS.RegulatoryApplication.Application\RegOS.RegulatoryApplication.Application.csproj" />
+    <ProjectReference Include="..\..\RegulatoryApplication\RegOS.RegulatoryApplication.Infrastructure\RegOS.RegulatoryApplication.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\RegOS.Application.Domain\RegOS.Application.Domain.csproj" />
-    <ProjectReference Include="..\RegOS.Application.Application\RegOS.Application.Application.csproj" />
+    <ProjectReference Include="..\RegOS.RegulatoryApplication.Domain\RegOS.RegulatoryApplication.Domain.csproj" />
+    <ProjectReference Include="..\RegOS.RegulatoryApplication.Application\RegOS.RegulatoryApplication.Application.csproj" />
     <ProjectReference Include="..\..\Product\RegOS.Product.Domain\RegOS.Product.Domain.csproj" />
   </ItemGroup>
 
