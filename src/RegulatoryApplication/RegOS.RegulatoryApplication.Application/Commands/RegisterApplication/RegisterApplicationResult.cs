@@ -1,6 +1,6 @@
-using ApplicationId = RegOS.RegulatoryApplication.Domain.Aggregates.Application.ApplicationId;
+using RegulatoryApplicationId = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplicationId;
 
 namespace RegOS.RegulatoryApplication.Application.Commands.RegisterApplication;
 
 public sealed record RegisterApplicationResult(
-    ApplicationId Id);
+    RegulatoryApplicationId Id);

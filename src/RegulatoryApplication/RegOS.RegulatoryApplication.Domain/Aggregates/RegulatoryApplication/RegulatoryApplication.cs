@@ -1,27 +1,27 @@
 using RegOS.Product.Domain.Product;
 
-namespace RegOS.RegulatoryApplication.Domain.Aggregates.Application;
+namespace RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
-public sealed class Application
+public sealed class RegulatoryApplication
 {
-    private Application(
-        ApplicationId id,
+    private RegulatoryApplication(
+        RegulatoryApplicationId id,
         ProductId productId,
         Guid authorityId,
         Guid countryId,
         Guid applicantOrganizationId,
-        string displayName)
+        string name)
     {
         Id = id;
         ProductId = productId;
         AuthorityId = authorityId;
         CountryId = countryId;
         ApplicantOrganizationId = applicantOrganizationId;
-        DisplayName = displayName;
-        Status = ApplicationStatus.Draft;
+        Name = name;
+        Status = RegulatoryApplicationStatus.Draft;
     }
 
-    public ApplicationId Id { get; }
+    public RegulatoryApplicationId Id { get; }
 
     public ProductId ProductId { get; }
 
@@ -31,18 +31,18 @@ public sealed class Application
 
     public Guid ApplicantOrganizationId { get; private set; }
 
-    public string DisplayName { get; private set; }
+    public string Name { get; private set; }
 
     public string? ApplicationNumber { get; private set; }
 
-    public ApplicationStatus Status { get; private set; }
+    public RegulatoryApplicationStatus Status { get; private set; }
 
-    public static Application Register(
+    public static RegulatoryApplication Create(
         ProductId productId,
         Guid authorityId,
         Guid countryId,
         Guid applicantOrganizationId,
-        string displayName)
+        string name)
     {
         if (productId == default)
             throw new ArgumentException("Product is required.", nameof(productId));
@@ -56,56 +56,48 @@ public sealed class Application
         if (applicantOrganizationId == Guid.Empty)
             throw new ArgumentException("Applicant organization is required.", nameof(applicantOrganizationId));
 
-        if (string.IsNullOrWhiteSpace(displayName))
-            throw new ArgumentException("Display name is required.", nameof(displayName));
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
 
-        return new Application(
-            ApplicationId.New(),
+        return new RegulatoryApplication(
+            RegulatoryApplicationId.New(),
             productId,
             authorityId,
             countryId,
             applicantOrganizationId,
-            displayName.Trim());
+            name.Trim());
     }
 
-    public void AssignApplicationNumber(string applicationNumber)
+    public void Rename(string name)
     {
-        if (string.IsNullOrWhiteSpace(applicationNumber))
-            throw new ArgumentException("Application number is required.", nameof(applicationNumber));
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
 
-        ApplicationNumber = applicationNumber.Trim();
-    }
-
-    public void Rename(string displayName)
-    {
-        if (string.IsNullOrWhiteSpace(displayName))
-            throw new ArgumentException("Display name is required.", nameof(displayName));
-
-        DisplayName = displayName.Trim();
+        Name = name.Trim();
     }
 
     public void Activate()
     {
-        Status = ApplicationStatus.Active;
+        Status = RegulatoryApplicationStatus.Active;
     }
 
     public void Approve()
     {
-        Status = ApplicationStatus.Approved;
+        Status = RegulatoryApplicationStatus.Approved;
     }
 
     public void Reject()
     {
-        Status = ApplicationStatus.Rejected;
+        Status = RegulatoryApplicationStatus.Rejected;
     }
 
     public void Withdraw()
     {
-        Status = ApplicationStatus.Withdrawn;
+        Status = RegulatoryApplicationStatus.Withdrawn;
     }
 
     public void Archive()
     {
-        Status = ApplicationStatus.Archived;
+        Status = RegulatoryApplicationStatus.Archived;
     }
 }

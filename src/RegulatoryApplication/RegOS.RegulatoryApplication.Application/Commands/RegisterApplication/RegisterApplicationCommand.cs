@@ -7,4 +7,4 @@ public sealed record RegisterApplicationCommand(
     Guid AuthorityId,
     Guid CountryId,
     Guid ApplicantOrganizationId,
-    string DisplayName);
+    string Name);

@@ -1,6 +1,6 @@
-namespace RegOS.RegulatoryApplication.Domain.Aggregates.Application;
+namespace RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
-public enum ApplicationStatus
+public enum RegulatoryApplicationStatus
 {
     Draft = 1,
 

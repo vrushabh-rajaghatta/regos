@@ -16,14 +16,12 @@ public sealed class RegisterProductHandler
 
     public async Task<ProductId> HandleAsync(RegisterProductCommand command, CancellationToken cancellationToken = default)
     {
-        var productName = new ProductName(command.Name);
-        var productId = new ProductId(Guid.NewGuid());
-        var product = new Product(productId, productName, command.Type);
+        var product = Product.Create(command.Name, command.Type);
 
         await _repository.AddAsync(product, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return productId;
+        return product.Id;
     }
 }
