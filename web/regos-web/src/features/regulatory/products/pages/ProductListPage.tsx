@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { useProducts } from "../hooks/useProducts";
-import { ProductToolbar } from "../components/ProductToolbar";
-import { RegisterProductDialog } from "../components/RegisterProductDialog";
 import { LoadingProducts } from "../components/LoadingProducts";
 import { EmptyProductState } from "../components/EmptyProductState";
 import { ProductLoadError } from "../components/ProductLoadError";
-import { ProductCard } from "../components/ProductCard";
+import { PageHeader } from "@/shared/components/PageHeader";
+import { Button } from "@/components/ui/button";
+
+import {
+  ProductCard,
+  RegisterProductDialog,
+  useProducts,
+} from "@/features/regulatory/products";
 
 export function ProductListPage() {
   const { data, isLoading, error } = useProducts();
@@ -14,7 +18,13 @@ export function ProductListPage() {
 
   return (
     <>
-      <ProductToolbar onCreate={() => setDialogOpen(true)} />
+      <PageHeader
+        title="Products"
+        description="Manage registered products."
+        actions={
+          <Button onClick={() => setDialogOpen(true)}>New Product</Button>
+        }
+      />
 
       <RegisterProductDialog open={dialogOpen} onOpenChange={setDialogOpen} />
 

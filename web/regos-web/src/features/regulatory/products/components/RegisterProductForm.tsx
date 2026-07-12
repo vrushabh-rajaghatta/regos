@@ -22,6 +22,7 @@ import {
   registerProductSchema,
   type RegisterProductFormValues,
 } from "../validation/registerProductSchema";
+import { PRODUCT_TYPES } from "../constants/productTypes";
 
 interface RegisterProductFormProps {
   onSuccess(): void;
@@ -61,11 +62,7 @@ export function RegisterProductForm({ onSuccess }: RegisterProductFormProps) {
             <Field data-invalid={!!errors.name}>
               <FieldLabel htmlFor="name">Product Name</FieldLabel>
 
-              <Input
-                id="name"
-                placeholder="Enter product name"
-                {...field}
-              />
+              <Input id="name" placeholder="Enter product name" {...field} />
 
               <FieldError errors={[errors.name]} />
             </Field>
@@ -85,11 +82,11 @@ export function RegisterProductForm({ onSuccess }: RegisterProductFormProps) {
                 </SelectTrigger>
 
                 <SelectContent>
-                  <SelectItem value="MedicalDevice">Medical Device</SelectItem>
-
-                  <SelectItem value="Drug">Drug</SelectItem>
-
-                  <SelectItem value="Biologic">Biologic</SelectItem>
+                  {PRODUCT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
