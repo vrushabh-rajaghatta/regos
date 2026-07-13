@@ -6,6 +6,7 @@ import { ProductListPage } from "@/features/regulatory/products/pages/ProductLis
 import { ProductDetailsPage } from "@/features/regulatory/products/components/ProductDetailsPage";
 import { ProductWorkspaceLayout } from "@/features/regulatory/products/layout/ProductWorkspaceLayout";
 import { ProductOverviewPage } from "@/features/regulatory/products/pages/ProductOverviewPage";
+import { RegulatoryApplicationListPage } from "@/features/regulatory/applications/pages/RegulatoryApplicationListPage";
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ export const router = createBrowserRouter([
                   {
                     index: true,
                     element: <ProductOverviewPage />,
+                  },
+                  {
+                    path: "applications",
+                    element: <RegulatoryApplicationListPage />,
                   },
                 ],
               },
