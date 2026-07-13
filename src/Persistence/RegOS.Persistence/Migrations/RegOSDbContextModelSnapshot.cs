@@ -122,7 +122,7 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("products", (string)null);
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", b =>
