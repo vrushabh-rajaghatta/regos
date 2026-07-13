@@ -1,9 +1,12 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using RegOS.Api.Endpoints.Products;
+using RegOS.Api.Endpoints.RegulatoryApplications;
 using RegOS.Product.Application.DependencyInjection;
 using RegOS.Product.Infrastructure.DependencyInjection;
 using RegOS.Product.Infrastructure.Persistence;
+using RegOS.RegulatoryApplication.Application;
+using RegOS.RegulatoryApplication.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +39,9 @@ builder.Services.AddDbContext<ProductDbContext>(options =>
 builder.Services.AddProductApplication();
 builder.Services.AddProductInfrastructure();
 
+builder.Services.AddRegulatoryApplicationServices();
+builder.Services.AddRegulatoryApplicationInfrastructure(builder.Configuration);
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -48,5 +54,7 @@ if (app.Environment.IsDevelopment())
 app.MapRegisterProductEndpoint();
 app.MapGetProductEndpoint();
 app.MapListProductsEndpoint();
+
+app.MapCreateRegulatoryApplication();
 
 app.Run();
