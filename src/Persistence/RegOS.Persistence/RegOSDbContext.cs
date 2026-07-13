@@ -7,6 +7,8 @@ using CountryAggregate =
     RegOS.MasterData.Domain.Geography.Country.Country;
 using AuthorityAggregate =
     RegOS.MasterData.Domain.Regulatory.Authority.Authority;
+using OrganizationAggregate =
+    RegOS.Organization.Domain.Aggregates.Organization.Organization;
 
 namespace RegOS.Persistence;
 
@@ -29,6 +31,9 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<AuthorityAggregate> Authorities =>
         Set<AuthorityAggregate>();
+
+    public DbSet<OrganizationAggregate> Organizations =>
+        Set<OrganizationAggregate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

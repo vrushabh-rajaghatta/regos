@@ -1,9 +1,12 @@
 using System.Text.Json.Serialization;
 using RegOS.Api.Endpoints.MasterData;
+using RegOS.Api.Endpoints.Organization;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.RegulatoryApplications;
 using RegOS.MasterData.Application;
 using RegOS.MasterData.Infrastructure;
+using RegOS.Organization.Application;
+using RegOS.Organization.Infrastructure;
 using RegOS.Persistence;
 using RegOS.Persistence.Initialization;
 using RegOS.Product.Application.DependencyInjection;
@@ -42,6 +45,9 @@ builder.Services.AddProductInfrastructure();
 builder.Services.AddMasterDataApplication();
 builder.Services.AddMasterDataInfrastructure();
 
+builder.Services.AddOrganizationApplication();
+builder.Services.AddOrganizationInfrastructure();
+
 builder.Services.AddRegulatoryApplicationServices();
 builder.Services.AddRegulatoryApplicationInfrastructure(builder.Configuration);
 
@@ -66,6 +72,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapListCountries();
 app.MapListAuthorities();
+app.MapListOrganizations();
 
 app.MapRegisterProductEndpoint();
 app.MapGetProductEndpoint();

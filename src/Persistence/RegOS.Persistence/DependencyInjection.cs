@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Persistence.Initialization;
 using RegOS.Persistence.Initialization.MasterData;
+using RegOS.Persistence.Initialization.Organization;
 
 namespace RegOS.Persistence;
 
@@ -18,6 +19,7 @@ public static class DependencyInjection
                 configuration.GetConnectionString("RegOS")));
 
         services.AddScoped<IDataInitializer, MasterDataInitializer>();
+        services.AddScoped<IDataInitializer, OrganizationInitializer>();
 
         return services;
     }

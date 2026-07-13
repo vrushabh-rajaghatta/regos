@@ -8,6 +8,11 @@
     <Project Path="src/MasterData/RegOS.MasterData.Domain/RegOS.MasterData.Domain.csproj" />
     <Project Path="src/MasterData/RegOS.MasterData.Infrastructure/RegOS.MasterData.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Organization/">
+    <Project Path="src/Organization/RegOS.Organization.Application/RegOS.Organization.Application.csproj" />
+    <Project Path="src/Organization/RegOS.Organization.Domain/RegOS.Organization.Domain.csproj" />
+    <Project Path="src/Organization/RegOS.Organization.Infrastructure/RegOS.Organization.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Persistence/">
     <Project Path="src/Persistence/RegOS.Persistence/RegOS.Persistence.csproj" />
   </Folder>
