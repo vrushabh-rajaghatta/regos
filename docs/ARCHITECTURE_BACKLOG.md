@@ -83,3 +83,17 @@ These capabilities should replace temporary assumptions in the Application workf
 Target Sprint
 
 Sprint 11-13
+
+## AB-004 - Pin .NET SDK with global.json
+
+Status: Deferred
+
+Reason
+
+When the project introduces CI/CD or multiple contributors,
+pin the .NET SDK version using global.json to ensure
+consistent builds across environments.
+
+Target
+
+Before first production deployment.

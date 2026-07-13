@@ -89,3 +89,11 @@ Architecture is introduced only when required by the current sprint.
 ## ES-011
 
 Every sprint must end with a demonstrable feature.
+
+---
+
+## ES-013
+
+Pin the .NET SDK using `global.json`.
+
+All developers and CI environments should build RegOS using the same SDK version to ensure reproducible builds.
