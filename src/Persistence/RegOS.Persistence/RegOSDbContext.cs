@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using RegulatoryApplicationAggregate =
     RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
+using CountryAggregate =
+    RegOS.MasterData.Domain.Geography.Country.Country;
+using AuthorityAggregate =
+    RegOS.MasterData.Domain.Regulatory.Authority.Authority;
 
 namespace RegOS.Persistence;
 
@@ -19,6 +23,12 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
+
+    public DbSet<CountryAggregate> Countries =>
+        Set<CountryAggregate>();
+
+    public DbSet<AuthorityAggregate> Authorities =>
+        Set<AuthorityAggregate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

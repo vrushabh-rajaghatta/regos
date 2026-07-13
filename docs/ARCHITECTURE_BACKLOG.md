@@ -86,7 +86,7 @@ Sprint 11-13
 
 ## AB-004 - Pin .NET SDK with global.json
 
-Status: Deferred
+Status: Done
 
 Reason
 

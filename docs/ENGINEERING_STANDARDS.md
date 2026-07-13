@@ -97,3 +97,21 @@ Every sprint must end with a demonstrable feature.
 Pin the .NET SDK using `global.json`.
 
 All developers and CI environments should build RegOS using the same SDK version to ensure reproducible builds.
+
+---
+
+## ES-014 — Prefer Identity References Across Aggregates
+
+> Aggregates reference other aggregates by their strongly typed identifiers (e.g., `CountryId`, `ProductId`, `AuthorityId`) rather than navigation properties. Object relationships are materialized in the persistence layer, while the domain model remains persistence-agnostic and focused on business invariants.
+
+---
+
+## ES-015 — Master Data Records Use Deterministic Identities
+
+> Master Data (Countries, Authorities, Languages, Dosage Forms, etc.) are assigned stable identifiers defined by the platform. Transactional aggregates (Products, Regulatory Applications, Submissions) continue to generate identities within the domain. This gives us two distinct identity strategies, each appropriate for its purpose.
+
+---
+
+## ES-016 — Platform Data Is Initialized via IDataInitializer
+
+> Platform-owned data is initialized by `IDataInitializer` implementations during application startup. Today it is Master Data; tomorrow it may be default roles, workflow templates, document types, or regulatory taxonomies. Rather than inventing a new bootstrapping mechanism each time, we extend the initialization pipeline. Implementations must be idempotent.

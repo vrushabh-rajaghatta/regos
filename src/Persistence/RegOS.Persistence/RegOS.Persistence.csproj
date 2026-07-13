@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Product\RegOS.Product.Domain\RegOS.Product.Domain.csproj" />
     <ProjectReference Include="..\..\RegulatoryApplication\RegOS.RegulatoryApplication.Domain\RegOS.RegulatoryApplication.Domain.csproj" />
+    <ProjectReference Include="..\..\MasterData\RegOS.MasterData.Domain\RegOS.MasterData.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

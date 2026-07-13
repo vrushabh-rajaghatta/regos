@@ -1,7 +1,11 @@
 using System.Text.Json.Serialization;
+using RegOS.Api.Endpoints.MasterData;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.RegulatoryApplications;
+using RegOS.MasterData.Application;
+using RegOS.MasterData.Infrastructure;
 using RegOS.Persistence;
+using RegOS.Persistence.Initialization;
 using RegOS.Product.Application.DependencyInjection;
 using RegOS.Product.Infrastructure.DependencyInjection;
 using RegOS.RegulatoryApplication.Application;
@@ -35,10 +39,23 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddProductApplication();
 builder.Services.AddProductInfrastructure();
 
+builder.Services.AddMasterDataApplication();
+builder.Services.AddMasterDataInfrastructure();
+
 builder.Services.AddRegulatoryApplicationServices();
 builder.Services.AddRegulatoryApplicationInfrastructure(builder.Configuration);
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var initializers = scope.ServiceProvider.GetServices<IDataInitializer>();
+
+    foreach (var initializer in initializers)
+    {
+        await initializer.InitializeAsync();
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -46,6 +63,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     app.UseCors(DevCorsPolicy);
 }
+
+app.MapListCountries();
+app.MapListAuthorities();
 
 app.MapRegisterProductEndpoint();
 app.MapGetProductEndpoint();
