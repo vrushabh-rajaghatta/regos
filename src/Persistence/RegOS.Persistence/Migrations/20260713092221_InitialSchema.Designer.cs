@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using RegOS.Product.Infrastructure.Persistence;
+using RegOS.Persistence;
 
 #nullable disable
 
-namespace RegOS.Product.Infrastructure.Migrations
+namespace RegOS.Persistence.Migrations
 {
-    [DbContext(typeof(ProductDbContext))]
-    [Migration("20260710072003_InitialCreate")]
-    partial class InitialCreate
+    [DbContext(typeof(RegOSDbContext))]
+    [Migration("20260713092221_InitialSchema")]
+    partial class InitialSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -48,6 +48,40 @@ namespace RegOS.Product.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("products", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ApplicantOrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApplicationNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CountryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RegulatoryApplications", (string)null);
                 });
 #pragma warning restore 612, 618
         }

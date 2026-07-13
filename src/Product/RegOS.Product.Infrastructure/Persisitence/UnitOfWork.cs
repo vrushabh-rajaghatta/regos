@@ -1,12 +1,13 @@
 namespace RegOS.Product.Infrastructure.Persistence;
 
+using RegOS.Persistence;
 using RegOS.Product.Application.Persistence;
 
 public sealed class UnitOfWork : IUnitOfWork
 {
-    private readonly ProductDbContext _dbContext;
+    private readonly RegOSDbContext _dbContext;
 
-    public UnitOfWork(ProductDbContext dbContext)
+    public UnitOfWork(RegOSDbContext dbContext)
     {
         _dbContext = dbContext;
     }

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 
+using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
-using RegOS.RegulatoryApplication.Infrastructure.Persistence;
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 
 namespace RegOS.RegulatoryApplication.Infrastructure.Repositories;
@@ -10,10 +10,10 @@ namespace RegOS.RegulatoryApplication.Infrastructure.Repositories;
 public sealed class RegulatoryApplicationRepository
     : IRegulatoryApplicationRepository
 {
-    private readonly RegulatoryApplicationDbContext _dbContext;
+    private readonly RegOSDbContext _dbContext;
 
     public RegulatoryApplicationRepository(
-        RegulatoryApplicationDbContext dbContext)
+        RegOSDbContext dbContext)
     {
         _dbContext = dbContext;
     }

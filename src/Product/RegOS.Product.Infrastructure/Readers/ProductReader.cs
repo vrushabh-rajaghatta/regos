@@ -1,17 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 
+using RegOS.Persistence;
 using RegOS.Product.Contracts.Models;
 using RegOS.Product.Contracts.Readers;
 using RegOS.Product.Domain.Product;
-using RegOS.Product.Infrastructure.Persistence;
 
 namespace RegOS.Product.Infrastructure.Readers;
 
 public sealed class ProductReader : IProductReader
 {
-    private readonly ProductDbContext _dbContext;
+    private readonly RegOSDbContext _dbContext;
 
-    public ProductReader(ProductDbContext dbContext)
+    public ProductReader(RegOSDbContext dbContext)
     {
         _dbContext = dbContext;
     }

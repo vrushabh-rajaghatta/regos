@@ -1,10 +1,9 @@
 using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.RegulatoryApplications;
+using RegOS.Persistence;
 using RegOS.Product.Application.DependencyInjection;
 using RegOS.Product.Infrastructure.DependencyInjection;
-using RegOS.Product.Infrastructure.Persistence;
 using RegOS.RegulatoryApplication.Application;
 using RegOS.RegulatoryApplication.Infrastructure;
 
@@ -31,10 +30,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
         new JsonStringEnumConverter());
 });
 
-builder.Services.AddDbContext<ProductDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("RegOS"));
-});
+builder.Services.AddPersistence(builder.Configuration);
 
 builder.Services.AddProductApplication();
 builder.Services.AddProductInfrastructure();

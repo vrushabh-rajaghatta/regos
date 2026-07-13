@@ -1,14 +1,15 @@
 namespace RegOS.Product.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
+using RegOS.Persistence;
 using RegOS.Product.Application.Persistence;
 using RegOS.Product.Domain.Product;
 
 public sealed class ProductRepository : IProductRepository
 {
-    private readonly ProductDbContext _dbContext;
+    private readonly RegOSDbContext _dbContext;
 
-    public ProductRepository(ProductDbContext dbContext)
+    public ProductRepository(RegOSDbContext dbContext)
     {
         _dbContext = dbContext;
     }
