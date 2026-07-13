@@ -1,4 +1,4 @@
-namespace RegOS.Persistence.Configurations;
+namespace RegOS.Persistence.Configurations.Product;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

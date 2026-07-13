@@ -1,0 +1,21 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Platform -->
+    <TargetFramework>net10.0</TargetFramework>
+
+    <!-- Language -->
+    <LangVersion>latest</LangVersion>
+
+    <!-- Compiler -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Build -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- Documentation -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

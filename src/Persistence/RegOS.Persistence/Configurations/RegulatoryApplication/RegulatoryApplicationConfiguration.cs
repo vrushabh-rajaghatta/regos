@@ -5,7 +5,7 @@ using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 
-namespace RegOS.Persistence.Configurations;
+namespace RegOS.Persistence.Configurations.RegulatoryApplication;
 
 public sealed class RegulatoryApplicationConfiguration
     : IEntityTypeConfiguration<RegulatoryApplicationAggregate>
