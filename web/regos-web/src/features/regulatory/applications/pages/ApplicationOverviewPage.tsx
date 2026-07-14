@@ -1,6 +1,9 @@
 import { useParams } from "react-router-dom";
 
 import { useApplication } from "../hooks/useApplication";
+import { ApplicationStatusBadge } from "../components/ApplicationStatusBadge";
+import { ApplicationActivity } from "../components/ApplicationActivity";
+import { ApplicationDashboardSummary } from "../components/ApplicationDashboardSummary";
 
 export function ApplicationOverviewPage() {
   const { applicationId } = useParams();
@@ -41,7 +44,9 @@ export function ApplicationOverviewPage() {
 
         <div>
           <div className="text-sm text-muted-foreground">Status</div>
-          <div className="font-medium">{application.status}</div>
+          <div className="mt-1">
+            <ApplicationStatusBadge status={application.status} />
+          </div>
         </div>
       </section>
 
@@ -85,6 +90,31 @@ export function ApplicationOverviewPage() {
             {new Date(application.createdOn).toLocaleString()}
           </div>
         </div>
+      </section>
+
+      <section className="space-y-4 border-t pt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Activity
+        </h2>
+
+        <ApplicationActivity
+          activities={[
+            { type: "Created", occurredOn: application.createdOn },
+          ]}
+        />
+      </section>
+
+      <section className="space-y-4 border-t pt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Summary
+        </h2>
+
+        <ApplicationDashboardSummary
+          items={[
+            { title: "Submissions", value: 0 },
+            { title: "Documents", value: 0 },
+          ]}
+        />
       </section>
     </div>
   );

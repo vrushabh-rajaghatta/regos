@@ -1,8 +1,7 @@
 import { useParams } from "react-router-dom";
 
-import { Badge } from "@/components/ui/badge";
-
 import { useApplication } from "../hooks/useApplication";
+import { ApplicationStatusBadge } from "./ApplicationStatusBadge";
 
 export function ApplicationWorkspaceHeader() {
   const { applicationId } = useParams();
@@ -26,7 +25,7 @@ export function ApplicationWorkspaceHeader() {
           </p>
         </div>
 
-        <Badge>{application.status}</Badge>
+        <ApplicationStatusBadge status={application.status} />
       </div>
     </header>
   );

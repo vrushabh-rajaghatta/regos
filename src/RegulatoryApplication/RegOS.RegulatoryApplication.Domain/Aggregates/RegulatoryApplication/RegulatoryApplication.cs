@@ -28,7 +28,7 @@ public sealed class RegulatoryApplication
         AuthorityId = authorityId;
         ApplicantOrganizationId = applicantOrganizationId;
         Name = name;
-        Status = RegulatoryApplicationStatus.Draft;
+        Status = ApplicationStatus.Draft;
         CreatedOn = createdOn;
     }
 
@@ -46,7 +46,7 @@ public sealed class RegulatoryApplication
 
     public string? ApplicationNumber { get; private set; }
 
-    public RegulatoryApplicationStatus Status { get; private set; }
+    public ApplicationStatus Status { get; private set; }
 
     public DateTime CreatedOn { get; }
 
@@ -90,28 +90,46 @@ public sealed class RegulatoryApplication
         Name = name.Trim();
     }
 
+    /// <summary>Draft or OnHold -> Active.</summary>
     public void Activate()
     {
-        Status = RegulatoryApplicationStatus.Active;
+        if (Status == ApplicationStatus.Closed)
+            throw new InvalidOperationException(
+                ApplicationErrors.ApplicationAlreadyClosed);
+
+        if (Status == ApplicationStatus.Active)
+            throw new InvalidOperationException(
+                ApplicationErrors.ApplicationAlreadyActive);
+
+        // Status is Draft or OnHold.
+        Status = ApplicationStatus.Active;
     }
 
-    public void Approve()
+    /// <summary>Active -> OnHold.</summary>
+    public void PutOnHold()
     {
-        Status = RegulatoryApplicationStatus.Approved;
+        if (Status == ApplicationStatus.Closed)
+            throw new InvalidOperationException(
+                ApplicationErrors.ApplicationAlreadyClosed);
+
+        if (Status != ApplicationStatus.Active)
+            throw new InvalidOperationException(
+                ApplicationErrors.InvalidStatusTransition);
+
+        Status = ApplicationStatus.OnHold;
     }
 
-    public void Reject()
+    /// <summary>Active -> Closed. Closed is terminal.</summary>
+    public void Close()
     {
-        Status = RegulatoryApplicationStatus.Rejected;
-    }
+        if (Status == ApplicationStatus.Closed)
+            throw new InvalidOperationException(
+                ApplicationErrors.ApplicationAlreadyClosed);
 
-    public void Withdraw()
-    {
-        Status = RegulatoryApplicationStatus.Withdrawn;
-    }
+        if (Status != ApplicationStatus.Active)
+            throw new InvalidOperationException(
+                ApplicationErrors.InvalidStatusTransition);
 
-    public void Archive()
-    {
-        Status = RegulatoryApplicationStatus.Archived;
+        Status = ApplicationStatus.Closed;
     }
 }

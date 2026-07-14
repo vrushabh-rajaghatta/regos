@@ -62,7 +62,8 @@ public sealed class RegulatoryApplicationConfiguration
             .HasMaxLength(100);
 
         builder.Property(x => x.Status)
-            .HasConversion<int>();
+            .HasConversion<int>()
+            .IsRequired();
 
         builder.Property(x => x.CreatedOn)
             .HasColumnType("timestamp with time zone")

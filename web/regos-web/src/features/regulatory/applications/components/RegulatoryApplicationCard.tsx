@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 
-import { Badge } from "@/components/ui/badge";
-
 import type { RegulatoryApplicationSummary } from "../types/RegulatoryApplicationSummary";
+import { ApplicationStatusBadge } from "./ApplicationStatusBadge";
 
 interface RegulatoryApplicationCardProps {
   productId: string;
@@ -32,7 +31,7 @@ export function RegulatoryApplicationCard({
           </p>
         </div>
 
-        <Badge>{application.status}</Badge>
+        <ApplicationStatusBadge status={application.status} />
       </div>
     </Link>
   );

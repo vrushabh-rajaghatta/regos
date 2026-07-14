@@ -35,4 +35,7 @@
   <Folder Name="/tests/Product/">
     <Project Path="tests/Product/RegOS.Product.Domain.Tests/RegOS.Product.Domain.Tests.csproj" />
   </Folder>
+  <Folder Name="/tests/RegulatoryApplication/">
+    <Project Path="tests/RegulatoryApplication/RegOS.RegulatoryApplication.Domain.Tests/RegOS.RegulatoryApplication.Domain.Tests.csproj" />
+  </Folder>
 </Solution>
