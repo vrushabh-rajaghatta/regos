@@ -16,6 +16,10 @@
   <Folder Name="/src/Persistence/">
     <Project Path="src/Persistence/RegOS.Persistence/RegOS.Persistence.csproj" />
   </Folder>
+  <Folder Name="/src/ReferenceData/">
+    <Project Path="src/ReferenceData/RegOS.ReferenceData.Application/RegOS.ReferenceData.Application.csproj" />
+    <Project Path="src/ReferenceData/RegOS.ReferenceData.Domain/RegOS.ReferenceData.Domain.csproj" />
+  </Folder>
   <Folder Name="/src/Product/">
     <Project Path="src/Product/RegOS.Product.Application/RegOS.Product.Application.csproj" />
     <Project Path="src/Product/RegOS.Product.Contracts/RegOS.Product.Contracts.csproj" />

@@ -9,6 +9,8 @@ using AuthorityAggregate =
     RegOS.MasterData.Domain.Regulatory.Authority.Authority;
 using OrganizationAggregate =
     RegOS.Organization.Domain.Aggregates.Organization.Organization;
+using SubmissionTypeAggregate =
+    RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
 
 namespace RegOS.Persistence;
 
@@ -34,6 +36,9 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<OrganizationAggregate> Organizations =>
         Set<OrganizationAggregate>();
+
+    public DbSet<SubmissionTypeAggregate> SubmissionTypes =>
+        Set<SubmissionTypeAggregate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

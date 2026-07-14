@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\MasterData\RegOS.MasterData.Domain\RegOS.MasterData.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
