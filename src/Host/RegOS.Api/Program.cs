@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using RegOS.Api.Endpoints.Applications;
 using RegOS.Api.Endpoints.MasterData;
 using RegOS.Api.Endpoints.Organization;
 using RegOS.Api.Endpoints.Products;
@@ -80,6 +81,6 @@ app.MapListProductsEndpoint();
 
 app.MapCreateRegulatoryApplication();
 app.MapListRegulatoryApplications();
-app.MapGetRegulatoryApplication();
+app.MapGetApplication();
 
 app.Run();

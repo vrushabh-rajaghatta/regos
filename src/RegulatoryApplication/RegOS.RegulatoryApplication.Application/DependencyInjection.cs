@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using RegOS.RegulatoryApplication.Application.Commands.CreateRegulatoryApplication;
-using RegOS.RegulatoryApplication.Application.Queries.GetRegulatoryApplication;
+using RegOS.RegulatoryApplication.Application.Queries.Applications.GetApplication;
 using RegOS.RegulatoryApplication.Application.Queries.ListRegulatoryApplications;
 
 namespace RegOS.RegulatoryApplication.Application;
@@ -14,7 +14,7 @@ public static class DependencyInjection
 
         services.AddScoped<ListRegulatoryApplicationsHandler>();
 
-        services.AddScoped<GetRegulatoryApplicationHandler>();
+        services.AddScoped<GetApplicationHandler>();
 
         return services;
     }

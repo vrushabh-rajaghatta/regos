@@ -19,7 +19,8 @@ public sealed class RegulatoryApplication
         CountryId countryId,
         AuthorityId authorityId,
         OrganizationId applicantOrganizationId,
-        string name)
+        string name,
+        DateTime createdOn)
     {
         Id = id;
         ProductId = productId;
@@ -28,6 +29,7 @@ public sealed class RegulatoryApplication
         ApplicantOrganizationId = applicantOrganizationId;
         Name = name;
         Status = RegulatoryApplicationStatus.Draft;
+        CreatedOn = createdOn;
     }
 
     public RegulatoryApplicationId Id { get; }
@@ -45,6 +47,8 @@ public sealed class RegulatoryApplication
     public string? ApplicationNumber { get; private set; }
 
     public RegulatoryApplicationStatus Status { get; private set; }
+
+    public DateTime CreatedOn { get; }
 
     public static RegulatoryApplication Create(
         ProductId productId,
@@ -74,7 +78,8 @@ public sealed class RegulatoryApplication
             countryId,
             authorityId,
             applicantOrganizationId,
-            name.Trim());
+            name.Trim(),
+            DateTime.UtcNow);
     }
 
     public void Rename(string name)

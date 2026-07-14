@@ -1,86 +1,91 @@
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
-import { Badge } from "@/components/ui/badge";
-import { Page } from "@/shared/components/Page";
-import { PageHeader } from "@/shared/components/PageHeader";
-import { PageSection } from "@/shared/components/PageSection";
-
-import { useRegulatoryApplication } from "../hooks/useRegulatoryApplication";
+import { useApplication } from "../hooks/useApplication";
 
 export function ApplicationOverviewPage() {
-  const { productId, applicationId } = useParams();
+  const { applicationId } = useParams();
 
   const {
     data: application,
     isLoading,
     error,
-  } = useRegulatoryApplication(productId!, applicationId!);
+  } = useApplication(applicationId!);
 
   if (isLoading) {
     return (
-      <Page>
-        <p className="text-muted-foreground">Loading application...</p>
-      </Page>
+      <div className="p-6">
+        <p className="text-muted-foreground">Loading Application...</p>
+      </div>
     );
   }
 
   if (error || !application) {
     return (
-      <Page>
-        <p className="text-destructive">Unable to load application.</p>
-      </Page>
+      <div className="p-6">
+        <p className="text-destructive">Unable to load Application.</p>
+      </div>
     );
   }
 
   return (
-    <Page>
-      <PageHeader
-        title={application.name}
-        description={`${application.countryName} (${application.authorityCode})`}
-        actions={<Badge>{application.status}</Badge>}
-      />
+    <div className="max-w-2xl space-y-8 p-6">
+      <section className="space-y-4">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Application
+        </h2>
 
-      <Link
-        to={`/regulatory/products/${productId}/applications`}
-        className="text-sm text-muted-foreground hover:underline"
-      >
-        ← Back to Applications
-      </Link>
+        <div>
+          <div className="text-sm text-muted-foreground">Name</div>
+          <div className="font-medium">{application.name}</div>
+        </div>
 
-      <PageSection title="Overview">
-        <dl className="grid grid-cols-2 gap-6">
-          <div>
-            <dt className="text-sm text-muted-foreground">Application Name</dt>
-            <dd className="font-medium">{application.name}</dd>
+        <div>
+          <div className="text-sm text-muted-foreground">Status</div>
+          <div className="font-medium">{application.status}</div>
+        </div>
+      </section>
+
+      <section className="space-y-4 border-t pt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Jurisdiction
+        </h2>
+
+        <div>
+          <div className="text-sm text-muted-foreground">Country</div>
+          <div className="font-medium">{application.countryName}</div>
+        </div>
+
+        <div>
+          <div className="text-sm text-muted-foreground">Authority</div>
+          <div className="font-medium">{application.authorityName}</div>
+        </div>
+      </section>
+
+      <section className="space-y-4 border-t pt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Applicant
+        </h2>
+
+        <div>
+          <div className="text-sm text-muted-foreground">Organization</div>
+          <div className="font-medium">
+            {application.applicantOrganizationName}
           </div>
+        </div>
+      </section>
 
-          <div>
-            <dt className="text-sm text-muted-foreground">Status</dt>
-            <dd className="font-medium">{application.status}</dd>
-          </div>
+      <section className="space-y-4 border-t pt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Audit
+        </h2>
 
-          <div>
-            <dt className="text-sm text-muted-foreground">Country</dt>
-            <dd className="font-medium">
-              {application.countryName} ({application.countryCode})
-            </dd>
+        <div>
+          <div className="text-sm text-muted-foreground">Created On</div>
+          <div className="font-medium">
+            {new Date(application.createdOn).toLocaleString()}
           </div>
-
-          <div>
-            <dt className="text-sm text-muted-foreground">Authority</dt>
-            <dd className="font-medium">
-              {application.authorityName} ({application.authorityCode})
-            </dd>
-          </div>
-
-          <div>
-            <dt className="text-sm text-muted-foreground">
-              Applicant Organization
-            </dt>
-            <dd className="font-medium">{application.organizationName}</dd>
-          </div>
-        </dl>
-      </PageSection>
-    </Page>
+        </div>
+      </section>
+    </div>
   );
 }

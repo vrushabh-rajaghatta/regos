@@ -64,6 +64,10 @@ public sealed class RegulatoryApplicationConfiguration
         builder.Property(x => x.Status)
             .HasConversion<int>();
 
+        builder.Property(x => x.CreatedOn)
+            .HasColumnType("timestamp with time zone")
+            .IsRequired();
+
         // Cross-aggregate foreign keys. The domain exposes no navigation
         // properties, but EF still models the relationships.
         builder.HasOne<ProductAggregate>()
