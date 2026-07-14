@@ -80,5 +80,6 @@ app.MapListProductsEndpoint();
 
 app.MapCreateRegulatoryApplication();
 app.MapListRegulatoryApplications();
+app.MapGetRegulatoryApplication();
 
 app.Run();

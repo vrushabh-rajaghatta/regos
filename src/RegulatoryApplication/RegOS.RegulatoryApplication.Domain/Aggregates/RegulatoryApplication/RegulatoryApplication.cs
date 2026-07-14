@@ -1,21 +1,30 @@
+using RegOS.MasterData.Domain.Geography.Country;
+using RegOS.MasterData.Domain.Regulatory.Authority;
+using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
 
 namespace RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
 public sealed class RegulatoryApplication
 {
+    public const string ProductRequired = "Product is required.";
+    public const string CountryRequired = "Country is required.";
+    public const string AuthorityRequired = "Authority is required.";
+    public const string ApplicantOrganizationRequired = "Applicant organization is required.";
+    public const string NameRequired = "Name is required.";
+
     private RegulatoryApplication(
         RegulatoryApplicationId id,
         ProductId productId,
-        Guid authorityId,
-        Guid countryId,
-        Guid applicantOrganizationId,
+        CountryId countryId,
+        AuthorityId authorityId,
+        OrganizationId applicantOrganizationId,
         string name)
     {
         Id = id;
         ProductId = productId;
-        AuthorityId = authorityId;
         CountryId = countryId;
+        AuthorityId = authorityId;
         ApplicantOrganizationId = applicantOrganizationId;
         Name = name;
         Status = RegulatoryApplicationStatus.Draft;
@@ -25,11 +34,11 @@ public sealed class RegulatoryApplication
 
     public ProductId ProductId { get; }
 
-    public Guid AuthorityId { get; private set; }
+    public CountryId CountryId { get; private set; }
 
-    public Guid CountryId { get; private set; }
+    public AuthorityId AuthorityId { get; private set; }
 
-    public Guid ApplicantOrganizationId { get; private set; }
+    public OrganizationId ApplicantOrganizationId { get; private set; }
 
     public string Name { get; private set; }
 
@@ -39,31 +48,31 @@ public sealed class RegulatoryApplication
 
     public static RegulatoryApplication Create(
         ProductId productId,
-        Guid authorityId,
-        Guid countryId,
-        Guid applicantOrganizationId,
+        CountryId countryId,
+        AuthorityId authorityId,
+        OrganizationId applicantOrganizationId,
         string name)
     {
         if (productId == default)
-            throw new ArgumentException("Product is required.", nameof(productId));
+            throw new ArgumentException(ProductRequired, nameof(productId));
 
-        if (authorityId == Guid.Empty)
-            throw new ArgumentException("Authority is required.", nameof(authorityId));
+        if (countryId == default)
+            throw new ArgumentException(CountryRequired, nameof(countryId));
 
-        if (countryId == Guid.Empty)
-            throw new ArgumentException("Country is required.", nameof(countryId));
+        if (authorityId == default)
+            throw new ArgumentException(AuthorityRequired, nameof(authorityId));
 
-        if (applicantOrganizationId == Guid.Empty)
-            throw new ArgumentException("Applicant organization is required.", nameof(applicantOrganizationId));
+        if (applicantOrganizationId == default)
+            throw new ArgumentException(ApplicantOrganizationRequired, nameof(applicantOrganizationId));
 
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name is required.", nameof(name));
+            throw new ArgumentException(NameRequired, nameof(name));
 
         return new RegulatoryApplication(
             RegulatoryApplicationId.New(),
             productId,
-            authorityId,
             countryId,
+            authorityId,
             applicantOrganizationId,
             name.Trim());
     }
@@ -71,7 +80,7 @@ public sealed class RegulatoryApplication
     public void Rename(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name is required.", nameof(name));
+            throw new ArgumentException(NameRequired, nameof(name));
 
         Name = name.Trim();
     }

@@ -1,6 +1,6 @@
-namespace RegOS.RegulatoryApplication.Application.Queries.ListRegulatoryApplications;
+namespace RegOS.RegulatoryApplication.Application.Queries.GetRegulatoryApplication;
 
-public sealed record RegulatoryApplicationInfo(
+public sealed record RegulatoryApplicationDetail(
     Guid Id,
     string Name,
     string? ApplicationNumber,

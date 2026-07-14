@@ -1,4 +1,4 @@
-export interface RegulatoryApplicationSummary {
+export interface RegulatoryApplicationDetail {
   id: string;
   name: string;
   applicationNumber: string | null;

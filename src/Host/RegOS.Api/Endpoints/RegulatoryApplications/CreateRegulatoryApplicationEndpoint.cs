@@ -1,3 +1,6 @@
+using RegOS.MasterData.Domain.Geography.Country;
+using RegOS.MasterData.Domain.Regulatory.Authority;
+using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Application.Commands.CreateRegulatoryApplication;
 
@@ -24,9 +27,9 @@ public static class CreateRegulatoryApplicationEndpoint
         var result = await handler.HandleAsync(
             new CreateRegulatoryApplicationCommand(
                 new ProductId(productId),
-                request.AuthorityId,
-                request.CountryId,
-                request.ApplicantOrganizationId,
+                new CountryId(request.CountryId),
+                new AuthorityId(request.AuthorityId),
+                new OrganizationId(request.ApplicantOrganizationId),
                 request.Name),
             cancellationToken);
 

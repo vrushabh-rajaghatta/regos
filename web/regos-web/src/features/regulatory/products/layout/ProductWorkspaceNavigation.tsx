@@ -10,8 +10,10 @@ export function ProductWorkspaceNavigation() {
         : "text-muted-foreground hover:bg-muted"
     }`;
 
+  const comingSoon = ["Documents", "Publishing", "History"];
+
   return (
-    <nav className="p-4 space-y-2">
+    <nav className="space-y-1 p-4">
       <NavLink
         end
         to={`/regulatory/products/${productId}`}
@@ -24,12 +26,22 @@ export function ProductWorkspaceNavigation() {
         to={`/regulatory/products/${productId}/applications`}
         className={linkClass}
       >
-        Applications
+        Regulatory Applications
       </NavLink>
 
-      <div className="rounded-md px-3 py-2 text-sm text-muted-foreground">
-        History
-      </div>
+      {comingSoon.map((label) => (
+        <div
+          key={label}
+          aria-disabled
+          title="Coming soon"
+          className="flex cursor-default items-center justify-between rounded-md px-3 py-2 text-sm text-muted-foreground/60"
+        >
+          <span>{label}</span>
+          <span className="text-[10px] uppercase tracking-wide">
+            Coming soon
+          </span>
+        </div>
+      ))}
     </nav>
   );
 }

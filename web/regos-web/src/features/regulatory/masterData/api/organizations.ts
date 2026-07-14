@@ -1,0 +1,12 @@
+import { buildUrl } from "@/shared/api/apiClient";
+import type { OrganizationDto } from "../types/OrganizationDto";
+
+export async function listOrganizations(): Promise<OrganizationDto[]> {
+  const response = await fetch(buildUrl("/organizations"));
+
+  if (!response.ok) {
+    throw new Error("Unable to load organizations.");
+  }
+
+  return response.json();
+}

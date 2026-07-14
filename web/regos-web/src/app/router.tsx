@@ -1,12 +1,12 @@
 import { RegulatoryLayout } from "@/features/regulatory/layout/RegulatoryLayout";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
 import { AppLayout } from "@/shared/layout/AppLayout";
 import { ProductListPage } from "@/features/regulatory/products/pages/ProductListPage";
-import { ProductDetailsPage } from "@/features/regulatory/products/components/ProductDetailsPage";
 import { ProductWorkspaceLayout } from "@/features/regulatory/products/layout/ProductWorkspaceLayout";
 import { ProductOverviewPage } from "@/features/regulatory/products/pages/ProductOverviewPage";
 import { RegulatoryApplicationListPage } from "@/features/regulatory/applications/pages/RegulatoryApplicationListPage";
+import { ApplicationOverviewPage } from "@/features/regulatory/applications/pages/ApplicationOverviewPage";
 
 export const router = createBrowserRouter([
   {
@@ -38,7 +38,16 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: "applications",
-                    element: <RegulatoryApplicationListPage />,
+                    children: [
+                      {
+                        index: true,
+                        element: <RegulatoryApplicationListPage />,
+                      },
+                      {
+                        path: ":applicationId",
+                        element: <ApplicationOverviewPage />,
+                      },
+                    ],
                   },
                 ],
               },

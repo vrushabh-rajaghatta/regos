@@ -1,4 +1,4 @@
-using RegOS.Product.Contracts.Readers;
+using RegOS.RegulatoryApplication.Application.Services;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 
@@ -6,14 +6,14 @@ namespace RegOS.RegulatoryApplication.Application.Commands.CreateRegulatoryAppli
 
 public sealed class CreateRegulatoryApplicationHandler
 {
-    private readonly IProductReader _productReader;
+    private readonly IRegulatoryApplicationCreationPolicy _creationPolicy;
     private readonly IRegulatoryApplicationRepository _repository;
 
     public CreateRegulatoryApplicationHandler(
-        IProductReader productReader,
+        IRegulatoryApplicationCreationPolicy creationPolicy,
         IRegulatoryApplicationRepository repository)
     {
-        _productReader = productReader;
+        _creationPolicy = creationPolicy;
         _repository = repository;
     }
 
@@ -21,20 +21,17 @@ public sealed class CreateRegulatoryApplicationHandler
         CreateRegulatoryApplicationCommand command,
         CancellationToken cancellationToken)
     {
-        var product = await _productReader.GetAsync(
+        await _creationPolicy.EnsureCanCreateAsync(
             command.ProductId,
+            command.CountryId,
+            command.AuthorityId,
+            command.ApplicantOrganizationId,
             cancellationToken);
-
-        if (product is null)
-        {
-            throw new InvalidOperationException(
-                $"Product '{command.ProductId}' does not exist.");
-        }
 
         var regulatoryApplication = RegulatoryApplicationAggregate.Create(
             command.ProductId,
-            command.AuthorityId,
             command.CountryId,
+            command.AuthorityId,
             command.ApplicantOrganizationId,
             command.Name);
 

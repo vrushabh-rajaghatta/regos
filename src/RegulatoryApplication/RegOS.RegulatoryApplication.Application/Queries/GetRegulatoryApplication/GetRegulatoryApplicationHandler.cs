@@ -2,35 +2,34 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
+using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
-namespace RegOS.RegulatoryApplication.Application.Queries.ListRegulatoryApplications;
+namespace RegOS.RegulatoryApplication.Application.Queries.GetRegulatoryApplication;
 
-public sealed class ListRegulatoryApplicationsHandler
+public sealed class GetRegulatoryApplicationHandler
 {
     private readonly RegOSDbContext _dbContext;
 
-    public ListRegulatoryApplicationsHandler(RegOSDbContext dbContext)
+    public GetRegulatoryApplicationHandler(RegOSDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
-    public async Task<ListRegulatoryApplicationsResult> HandleAsync(
+    public async Task<RegulatoryApplicationDetail?> HandleAsync(
         ProductId productId,
+        RegulatoryApplicationId applicationId,
         CancellationToken cancellationToken)
     {
-        // Read model joins the application to its jurisdiction (country +
-        // authority) and applicant organization. The aggregate stores only
-        // the ids; the names live in their owning capabilities.
-        var rows = await (
+        var row = await (
             from application in _dbContext.RegulatoryApplications.AsNoTracking()
             where application.ProductId == productId
+                && application.Id == applicationId
             join country in _dbContext.Countries
                 on application.CountryId equals country.Id
             join authority in _dbContext.Authorities
                 on application.AuthorityId equals authority.Id
             join organization in _dbContext.Organizations
                 on application.ApplicantOrganizationId equals organization.Id
-            orderby application.Name
             select new
             {
                 application.Id,
@@ -42,21 +41,20 @@ public sealed class ListRegulatoryApplicationsHandler
                 AuthorityName = authority.Name,
                 AuthorityCode = authority.Code,
                 OrganizationName = organization.LegalName,
-            }).ToListAsync(cancellationToken);
+            }).SingleOrDefaultAsync(cancellationToken);
 
-        var applications = rows
-            .Select(row => new RegulatoryApplicationInfo(
-                row.Id.Value,
-                row.Name,
-                row.ApplicationNumber,
-                row.Status.ToString(),
-                row.CountryName,
-                row.CountryCode,
-                row.AuthorityName,
-                row.AuthorityCode,
-                row.OrganizationName))
-            .ToList();
+        if (row is null)
+            return null;
 
-        return new ListRegulatoryApplicationsResult(applications);
+        return new RegulatoryApplicationDetail(
+            row.Id.Value,
+            row.Name,
+            row.ApplicationNumber,
+            row.Status.ToString(),
+            row.CountryName,
+            row.CountryCode,
+            row.AuthorityName,
+            row.AuthorityCode,
+            row.OrganizationName);
     }
 }

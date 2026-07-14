@@ -1,7 +1,7 @@
 namespace RegOS.Api.Endpoints.RegulatoryApplications;
 
 public sealed record CreateRegulatoryApplicationRequest(
-    Guid AuthorityId,
     Guid CountryId,
+    Guid AuthorityId,
     Guid ApplicantOrganizationId,
     string Name);
