@@ -4,6 +4,7 @@ using RegOS.Api.Endpoints.MasterData;
 using RegOS.Api.Endpoints.Organization;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.RegulatoryApplications;
+using RegOS.Api.Endpoints.Submissions;
 using RegOS.Api.Endpoints.SubmissionTypes;
 using RegOS.MasterData.Application;
 using RegOS.MasterData.Infrastructure;
@@ -16,6 +17,8 @@ using RegOS.Product.Application.DependencyInjection;
 using RegOS.Product.Infrastructure.DependencyInjection;
 using RegOS.RegulatoryApplication.Application;
 using RegOS.RegulatoryApplication.Infrastructure;
+using RegOS.Submission.Application;
+using RegOS.Submission.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +59,9 @@ builder.Services.AddReferenceDataApplication();
 builder.Services.AddRegulatoryApplicationServices();
 builder.Services.AddRegulatoryApplicationInfrastructure(builder.Configuration);
 
+builder.Services.AddSubmissionApplication();
+builder.Services.AddSubmissionInfrastructure();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -87,5 +93,9 @@ app.MapListProductsEndpoint();
 app.MapCreateRegulatoryApplication();
 app.MapListRegulatoryApplications();
 app.MapGetApplication();
+
+app.MapCreateSubmission();
+app.MapListSubmissions();
+app.MapGetSubmission();
 
 app.Run();

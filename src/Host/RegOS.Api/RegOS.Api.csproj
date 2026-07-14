@@ -19,6 +19,8 @@
     <ProjectReference Include="..\..\Organization\RegOS.Organization.Application\RegOS.Organization.Application.csproj" />
     <ProjectReference Include="..\..\Organization\RegOS.Organization.Infrastructure\RegOS.Organization.Infrastructure.csproj" />
     <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Application\RegOS.ReferenceData.Application.csproj" />
+    <ProjectReference Include="..\..\Submission\RegOS.Submission.Application\RegOS.Submission.Application.csproj" />
+    <ProjectReference Include="..\..\Submission\RegOS.Submission.Infrastructure\RegOS.Submission.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

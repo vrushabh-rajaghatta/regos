@@ -12,6 +12,11 @@ import { ApplicationSubmissionsPage } from "@/features/regulatory/applications/p
 import { ApplicationDocumentsPage } from "@/features/regulatory/applications/pages/ApplicationDocumentsPage";
 import { ApplicationPublishingPage } from "@/features/regulatory/applications/pages/ApplicationPublishingPage";
 import { ApplicationHistoryPage } from "@/features/regulatory/applications/pages/ApplicationHistoryPage";
+import { SubmissionWorkspaceLayout } from "@/features/regulatory/submissions/layout/SubmissionWorkspaceLayout";
+import { SubmissionOverviewPage } from "@/features/regulatory/submissions/pages/SubmissionOverviewPage";
+import { SubmissionDocumentsPage } from "@/features/regulatory/submissions/pages/SubmissionDocumentsPage";
+import { SubmissionPublishingPage } from "@/features/regulatory/submissions/pages/SubmissionPublishingPage";
+import { SubmissionHistoryPage } from "@/features/regulatory/submissions/pages/SubmissionHistoryPage";
 
 export const router = createBrowserRouter([
   {
@@ -79,6 +84,32 @@ export const router = createBrowserRouter([
                   {
                     path: "history",
                     element: <ApplicationHistoryPage />,
+                  },
+                ],
+              },
+              // Submission Workspace — deepest execution context. Also a
+              // full-screen sibling so its sidebar replaces the application
+              // sidebar. The URL preserves the full business hierarchy:
+              // product -> application -> submission.
+              {
+                path: ":productId/applications/:applicationId/submissions/:submissionId",
+                element: <SubmissionWorkspaceLayout />,
+                children: [
+                  {
+                    index: true,
+                    element: <SubmissionOverviewPage />,
+                  },
+                  {
+                    path: "documents",
+                    element: <SubmissionDocumentsPage />,
+                  },
+                  {
+                    path: "publishing",
+                    element: <SubmissionPublishingPage />,
+                  },
+                  {
+                    path: "history",
+                    element: <SubmissionHistoryPage />,
                   },
                 ],
               },
