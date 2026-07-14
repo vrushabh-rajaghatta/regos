@@ -72,7 +72,7 @@ Priority: High
 
 Description
 
-Regulatory Applications require:
+Applications require:
 
 - Country
 - Authority

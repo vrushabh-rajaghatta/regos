@@ -19,15 +19,10 @@ export function RegisterRegulatoryApplicationDialog({
   onOpenChange,
 }: RegisterRegulatoryApplicationDialogProps) {
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            New Regulatory Application
-          </DialogTitle>
+          <DialogTitle>New Application</DialogTitle>
         </DialogHeader>
 
         <RegisterRegulatoryApplicationForm

@@ -108,7 +108,7 @@ All developers and CI environments should build RegOS using the same SDK version
 
 ## ES-015 — Master Data Records Use Deterministic Identities
 
-> Master Data (Countries, Authorities, Languages, Dosage Forms, etc.) are assigned stable identifiers defined by the platform. Transactional aggregates (Products, Regulatory Applications, Submissions) continue to generate identities within the domain. This gives us two distinct identity strategies, each appropriate for its purpose.
+> Master Data (Countries, Authorities, Languages, Dosage Forms, etc.) are assigned stable identifiers defined by the platform. Transactional aggregates (Products, Applications, Submissions) continue to generate identities within the domain. This gives us two distinct identity strategies, each appropriate for its purpose.
 
 ---
 
@@ -120,7 +120,7 @@ All developers and CI environments should build RegOS using the same SDK version
 
 ## ES-018 — Prefer Lifecycle State Transitions Over Deletion
 
-> Long-lived business entities (Products, Organizations, Regulatory Applications, Submissions) should generally move through lifecycle states (e.g. Active ↔ Inactive) rather than being physically deleted. This preserves history, supports auditability, and aligns with regulatory systems, where records are typically retained even when they are no longer active.
+> Long-lived business entities (Products, Organizations, Applications, Submissions) should generally move through lifecycle states (e.g. Active ↔ Inactive) rather than being physically deleted. This preserves history, supports auditability, and aligns with regulatory systems, where records are typically retained even when they are no longer active.
 
 ---
 

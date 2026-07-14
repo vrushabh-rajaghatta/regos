@@ -6,7 +6,7 @@ using RegOS.Product.Domain.Product;
 namespace RegOS.RegulatoryApplication.Application.Services;
 
 /// <summary>
-/// Encapsulates the business rules that govern whether a regulatory application
+/// Encapsulates the business rules that govern whether a Application
 /// may be created. This is platform/business validation (dependencies exist,
 /// organization is active, authority belongs to country, no duplicate) — distinct
 /// from the aggregate's own invariant validation, which lives in the domain.

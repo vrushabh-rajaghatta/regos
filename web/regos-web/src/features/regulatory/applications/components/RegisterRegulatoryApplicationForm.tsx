@@ -69,18 +69,18 @@ export function RegisterRegulatoryApplicationForm({
   const filteredAuthorities = useMemo(
     () =>
       (authoritiesQuery.data ?? []).filter(
-        (authority) => authority.countryId === selectedCountryId
+        (authority) => authority.countryId === selectedCountryId,
       ),
-    [authoritiesQuery.data, selectedCountryId]
+    [authoritiesQuery.data, selectedCountryId],
   );
 
   // Mirror the backend rule: only active organizations may be selected.
   const activeOrganizations = useMemo(
     () =>
       (organizationsQuery.data ?? []).filter(
-        (organization) => organization.status === "Active"
+        (organization) => organization.status === "Active",
       ),
-    [organizationsQuery.data]
+    [organizationsQuery.data],
   );
 
   // Value->label maps so the Select triggers display the chosen label
@@ -91,9 +91,9 @@ export function RegisterRegulatoryApplicationForm({
         (countriesQuery.data ?? []).map((country) => [
           country.id,
           `${country.name} (${country.code})`,
-        ])
+        ]),
       ),
-    [countriesQuery.data]
+    [countriesQuery.data],
   );
 
   const authorityItems = useMemo(
@@ -102,9 +102,9 @@ export function RegisterRegulatoryApplicationForm({
         (authoritiesQuery.data ?? []).map((authority) => [
           authority.id,
           `${authority.name} (${authority.code})`,
-        ])
+        ]),
       ),
-    [authoritiesQuery.data]
+    [authoritiesQuery.data],
   );
 
   const organizationItems = useMemo(
@@ -113,9 +113,9 @@ export function RegisterRegulatoryApplicationForm({
         (organizationsQuery.data ?? []).map((organization) => [
           organization.id,
           organization.legalName,
-        ])
+        ]),
       ),
-    [organizationsQuery.data]
+    [organizationsQuery.data],
   );
 
   async function onSubmit(values: RegisterRegulatoryApplicationFormValues) {
@@ -253,7 +253,7 @@ export function RegisterRegulatoryApplicationForm({
 
       {mutation.isError && (
         <p className="text-sm font-normal text-destructive">
-          Failed to create regulatory application.
+          Failed to create Application.
         </p>
       )}
 

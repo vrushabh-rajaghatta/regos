@@ -19,5 +19,5 @@ public static class RegulatoryApplicationErrors
         "Authority does not belong to the selected country.";
 
     public const string DuplicateApplication =
-        "A Regulatory Application already exists for this product, country and authority.";
+        "A Application already exists for this product, country and authority.";
 }

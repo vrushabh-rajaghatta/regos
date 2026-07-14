@@ -44,7 +44,7 @@ export function ApplicationOverviewPage() {
         to={`/regulatory/products/${productId}/applications`}
         className="text-sm text-muted-foreground hover:underline"
       >
-        ← Back to Regulatory Applications
+        ← Back to Applications
       </Link>
 
       <PageSection title="Overview">

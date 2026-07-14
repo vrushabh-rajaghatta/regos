@@ -9,7 +9,7 @@ export interface CreateRegulatoryApplicationRequest {
 
 export async function createRegulatoryApplication(
   productId: string,
-  request: CreateRegulatoryApplicationRequest
+  request: CreateRegulatoryApplicationRequest,
 ): Promise<void> {
   const response = await fetch(
     buildUrl(`/api/products/${productId}/applications`),
@@ -19,10 +19,10 @@ export async function createRegulatoryApplication(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(request),
-    }
+    },
   );
 
   if (!response.ok) {
-    throw new Error("Failed to create regulatory application.");
+    throw new Error("Failed to create Application.");
   }
 }

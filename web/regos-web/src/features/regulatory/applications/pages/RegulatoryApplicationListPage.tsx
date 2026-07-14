@@ -19,12 +19,10 @@ export function RegulatoryApplicationListPage() {
   return (
     <Page>
       <PageHeader
-        title="Regulatory Applications"
-        description="Manage regulatory applications for this product."
+        title="Applications"
+        description="Manage Applications for this product."
         actions={
-          <Button onClick={() => setDialogOpen(true)}>
-            New Regulatory Application
-          </Button>
+          <Button onClick={() => setDialogOpen(true)}>New Application</Button>
         }
       />
 
@@ -44,14 +42,14 @@ export function RegulatoryApplicationListPage() {
 
       {!isLoading && !error && data?.length === 0 && (
         <div className="rounded-lg border border-dashed p-12 text-center">
-          <h3 className="text-lg font-semibold">No Regulatory Applications</h3>
+          <h3 className="text-lg font-semibold">No Applications</h3>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            Create your first Regulatory Application for this product.
+            Create your first Application for this product.
           </p>
 
           <Button className="mt-4" onClick={() => setDialogOpen(true)}>
-            New Regulatory Application
+            New Application
           </Button>
         </div>
       )}

@@ -64,7 +64,7 @@ Development reference data
 
 ### Sprint 13
 
-Regulatory Applications
+Applications
 
 Complete application workflow using reference data.
 

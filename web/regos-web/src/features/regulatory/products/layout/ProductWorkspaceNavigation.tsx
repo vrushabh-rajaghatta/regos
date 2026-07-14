@@ -26,7 +26,7 @@ export function ProductWorkspaceNavigation() {
         to={`/regulatory/products/${productId}/applications`}
         className={linkClass}
       >
-        Regulatory Applications
+        Applications
       </NavLink>
 
       {comingSoon.map((label) => (

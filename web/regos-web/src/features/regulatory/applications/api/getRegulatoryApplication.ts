@@ -3,14 +3,14 @@ import type { RegulatoryApplicationDetail } from "../types/RegulatoryApplication
 
 export async function getRegulatoryApplication(
   productId: string,
-  applicationId: string
+  applicationId: string,
 ): Promise<RegulatoryApplicationDetail> {
   const response = await fetch(
-    buildUrl(`/api/products/${productId}/applications/${applicationId}`)
+    buildUrl(`/api/products/${productId}/applications/${applicationId}`),
   );
 
   if (!response.ok) {
-    throw new Error("Failed to load regulatory application.");
+    throw new Error("Failed to load Application.");
   }
 
   return response.json();
