@@ -1,4 +1,4 @@
-using RegOS.MasterData.Domain.Regulatory.Authority;
+using RegOS.ReferenceData.Domain.Regulatory.Authority;
 
 namespace RegOS.ReferenceData.Domain.SubmissionType;
 

@@ -12,8 +12,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Product\RegOS.Product.Application\RegOS.Product.Application.csproj" />
     <ProjectReference Include="..\..\Product\RegOS.Product.Infrastructure\RegOS.Product.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\MasterData\RegOS.MasterData.Application\RegOS.MasterData.Application.csproj" />
-    <ProjectReference Include="..\..\MasterData\RegOS.MasterData.Infrastructure\RegOS.MasterData.Infrastructure.csproj" />
     <ProjectReference Include="..\..\RegulatoryApplication\RegOS.RegulatoryApplication.Application\RegOS.RegulatoryApplication.Application.csproj" />
     <ProjectReference Include="..\..\RegulatoryApplication\RegOS.RegulatoryApplication.Infrastructure\RegOS.RegulatoryApplication.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Organization\RegOS.Organization.Application\RegOS.Organization.Application.csproj" />

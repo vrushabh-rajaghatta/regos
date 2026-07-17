@@ -1,13 +1,11 @@
 using System.Text.Json.Serialization;
 using RegOS.Api.Endpoints.Applications;
-using RegOS.Api.Endpoints.MasterData;
 using RegOS.Api.Endpoints.Organization;
 using RegOS.Api.Endpoints.Products;
+using RegOS.Api.Endpoints.ReferenceData;
 using RegOS.Api.Endpoints.RegulatoryApplications;
 using RegOS.Api.Endpoints.Submissions;
 using RegOS.Api.Endpoints.SubmissionTypes;
-using RegOS.MasterData.Application;
-using RegOS.MasterData.Infrastructure;
 using RegOS.Organization.Application;
 using RegOS.Organization.Infrastructure;
 using RegOS.ReferenceData.Application;
@@ -47,9 +45,6 @@ builder.Services.AddPersistence(builder.Configuration);
 
 builder.Services.AddProductApplication();
 builder.Services.AddProductInfrastructure();
-
-builder.Services.AddMasterDataApplication();
-builder.Services.AddMasterDataInfrastructure();
 
 builder.Services.AddOrganizationApplication();
 builder.Services.AddOrganizationInfrastructure();

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.MasterData.Domain.Regulatory.Authority;
+using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Persistence;
 
 namespace RegOS.ReferenceData.Application.Queries.SubmissionTypes.ListSubmissionTypes;

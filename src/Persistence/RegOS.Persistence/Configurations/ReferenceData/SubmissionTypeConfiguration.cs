@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-using RegOS.MasterData.Domain.Regulatory.Authority;
+using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.ReferenceData.Domain.SubmissionType;
 
-using AuthorityAggregate = RegOS.MasterData.Domain.Regulatory.Authority.Authority;
+using AuthorityAggregate = RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
 using SubmissionTypeEntity = RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
 
 namespace RegOS.Persistence.Configurations.ReferenceData;

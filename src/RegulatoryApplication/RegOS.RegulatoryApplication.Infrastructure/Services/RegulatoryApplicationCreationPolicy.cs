@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.MasterData.Domain.Geography.Country;
-using RegOS.MasterData.Domain.Regulatory.Authority;
+using RegOS.ReferenceData.Domain.Geography.Country;
+using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
 using RegOS.Product.Domain.Product;

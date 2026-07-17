@@ -3,11 +3,6 @@
   <Folder Name="/src/Host/">
     <Project Path="src/Host/RegOS.Api/RegOS.Api.csproj" />
   </Folder>
-  <Folder Name="/src/MasterData/">
-    <Project Path="src/MasterData/RegOS.MasterData.Application/RegOS.MasterData.Application.csproj" />
-    <Project Path="src/MasterData/RegOS.MasterData.Domain/RegOS.MasterData.Domain.csproj" />
-    <Project Path="src/MasterData/RegOS.MasterData.Infrastructure/RegOS.MasterData.Infrastructure.csproj" />
-  </Folder>
   <Folder Name="/src/Organization/">
     <Project Path="src/Organization/RegOS.Organization.Application/RegOS.Organization.Application.csproj" />
     <Project Path="src/Organization/RegOS.Organization.Domain/RegOS.Organization.Domain.csproj" />

@@ -1,16 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-using RegOS.MasterData.Domain.Geography.Country;
-using RegOS.MasterData.Domain.Regulatory.Authority;
+using RegOS.ReferenceData.Domain.Geography.Country;
+using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 using ProductAggregate = RegOS.Product.Domain.Product.Product;
-using CountryAggregate = RegOS.MasterData.Domain.Geography.Country.Country;
-using AuthorityAggregate = RegOS.MasterData.Domain.Regulatory.Authority.Authority;
+using CountryAggregate = RegOS.ReferenceData.Domain.Geography.Country.Country;
+using AuthorityAggregate = RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
 using OrganizationAggregate = RegOS.Organization.Domain.Aggregates.Organization.Organization;
 
 namespace RegOS.Persistence.Configurations.RegulatoryApplication;

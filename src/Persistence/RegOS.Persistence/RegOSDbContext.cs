@@ -4,9 +4,9 @@ using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using RegulatoryApplicationAggregate =
     RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 using CountryAggregate =
-    RegOS.MasterData.Domain.Geography.Country.Country;
+    RegOS.ReferenceData.Domain.Geography.Country.Country;
 using AuthorityAggregate =
-    RegOS.MasterData.Domain.Regulatory.Authority.Authority;
+    RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
 using OrganizationAggregate =
     RegOS.Organization.Domain.Aggregates.Organization.Organization;
 using SubmissionTypeAggregate =

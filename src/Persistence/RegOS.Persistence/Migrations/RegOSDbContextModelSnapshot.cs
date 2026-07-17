@@ -22,7 +22,7 @@ namespace RegOS.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("RegOS.MasterData.Domain.Geography.Country.Country", b =>
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Geography.Country.Country", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -49,7 +49,7 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Countries", (string)null);
                 });
 
-            modelBuilder.Entity("RegOS.MasterData.Domain.Regulatory.Authority.Authority", b =>
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -233,9 +233,9 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Submissions", (string)null);
                 });
 
-            modelBuilder.Entity("RegOS.MasterData.Domain.Regulatory.Authority.Authority", b =>
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", b =>
                 {
-                    b.HasOne("RegOS.MasterData.Domain.Geography.Country.Country", null)
+                    b.HasOne("RegOS.ReferenceData.Domain.Geography.Country.Country", null)
                         .WithMany()
                         .HasForeignKey("CountryId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -244,7 +244,7 @@ namespace RegOS.Persistence.Migrations
 
             modelBuilder.Entity("RegOS.ReferenceData.Domain.SubmissionType.SubmissionType", b =>
                 {
-                    b.HasOne("RegOS.MasterData.Domain.Regulatory.Authority.Authority", null)
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
                         .WithMany()
                         .HasForeignKey("AuthorityId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -259,13 +259,13 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RegOS.MasterData.Domain.Regulatory.Authority.Authority", null)
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
                         .WithMany()
                         .HasForeignKey("AuthorityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RegOS.MasterData.Domain.Geography.Country.Country", null)
+                    b.HasOne("RegOS.ReferenceData.Domain.Geography.Country.Country", null)
                         .WithMany()
                         .HasForeignKey("CountryId")
                         .OnDelete(DeleteBehavior.Restrict)

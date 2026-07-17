@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Persistence.Initialization;
-using RegOS.Persistence.Initialization.MasterData;
 using RegOS.Persistence.Initialization.Organization;
 using RegOS.Persistence.Initialization.ReferenceData;
 
@@ -19,7 +18,7 @@ public static class DependencyInjection
             options.UseNpgsql(
                 configuration.GetConnectionString("RegOS")));
 
-        services.AddScoped<IDataInitializer, MasterDataInitializer>();
+        services.AddScoped<IDataInitializer, GeographyAndRegulatoryInitializer>();
         services.AddScoped<IDataInitializer, OrganizationInitializer>();
         services.AddScoped<IDataInitializer, SubmissionTypeDataInitializer>();
 
