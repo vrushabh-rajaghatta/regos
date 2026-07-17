@@ -8,6 +8,7 @@
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
@@ -17,8 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Submission\RegOS.Submission.Domain\RegOS.Submission.Domain.csproj" />
-    <ProjectReference Include="..\..\..\src\ProductDocument\RegOS.ProductDocument.Domain\RegOS.ProductDocument.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Submission\RegOS.Submission.Application\RegOS.Submission.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Submission\RegOS.Submission.Infrastructure\RegOS.Submission.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\ProductDocument\RegOS.ProductDocument.Infrastructure\RegOS.ProductDocument.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

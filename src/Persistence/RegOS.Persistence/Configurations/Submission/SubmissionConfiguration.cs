@@ -69,5 +69,17 @@ public sealed class SubmissionConfiguration
         // Secondary indexes on the cross-aggregate references.
         builder.HasIndex(x => x.ApplicationId);
         builder.HasIndex(x => x.SubmissionTypeId);
+
+        // Ownership: Submission (1) -> SubmissionDocuments (N). The child has
+        // no FK property, so EF uses a shadow "SubmissionId". Deleting a
+        // submission deletes its attachments.
+        builder.HasMany(x => x.Documents)
+            .WithOne()
+            .HasForeignKey("SubmissionId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(SubmissionAggregate.Documents))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

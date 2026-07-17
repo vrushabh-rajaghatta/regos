@@ -99,11 +99,16 @@ app.MapGetApplication();
 app.MapCreateSubmission();
 app.MapListSubmissions();
 app.MapGetSubmission();
+app.MapAttachProductDocument();
+app.MapRemoveProductDocument();
+app.MapListSubmissionDocuments();
+app.MapListAttachableProductDocuments();
 
 app.MapUploadProductDocument();
 app.MapListProductDocuments();
 app.MapGetProductDocument();
 app.MapActivateProductDocument();
 app.MapArchiveProductDocument();
+app.MapGetProductDocumentUsage();
 
 app.Run();

@@ -19,4 +19,20 @@ public static class SubmissionRuleErrors
 
     public const string ApplicationClosed =
         "Submission creation is not allowed for a closed application.";
+
+    // Document assembly (attach / remove)
+    public const string SubmissionDoesNotExist =
+        "Submission does not exist.";
+
+    public const string ProductDocumentDoesNotExist =
+        "Product Document does not exist.";
+
+    public const string ProductDocumentNotActive =
+        "Only an active Product Document can be attached.";
+
+    public const string ProductDocumentNotInSameProduct =
+        "The Product Document belongs to a different product.";
+
+    public const string ProductDocumentHasNoCurrentVersion =
+        "The Product Document has no current version to attach.";
 }

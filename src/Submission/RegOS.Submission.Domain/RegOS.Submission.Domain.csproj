@@ -3,6 +3,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\RegulatoryApplication\RegOS.RegulatoryApplication.Domain\RegOS.RegulatoryApplication.Domain.csproj" />
     <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Domain\RegOS.ReferenceData.Domain.csproj" />
+    <!-- Cross-context IDs only (ProductDocumentId, DocumentVersionId), held by
+         value. No navigation into the Product Document aggregate. -->
+    <ProjectReference Include="..\..\ProductDocument\RegOS.ProductDocument.Domain\RegOS.ProductDocument.Domain.csproj" />
   </ItemGroup>
 
 </Project>

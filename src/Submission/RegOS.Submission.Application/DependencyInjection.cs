@@ -1,7 +1,12 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using RegOS.Submission.Application.Commands.AttachProductDocument;
 using RegOS.Submission.Application.Commands.CreateSubmission;
+using RegOS.Submission.Application.Commands.RemoveProductDocument;
 using RegOS.Submission.Application.Queries.GetSubmission;
+using RegOS.Submission.Application.Queries.ListAttachableProductDocuments;
+using RegOS.Submission.Application.Queries.ListProductDocumentUsage;
+using RegOS.Submission.Application.Queries.ListSubmissionDocuments;
 using RegOS.Submission.Application.Queries.ListSubmissions;
 
 namespace RegOS.Submission.Application;
@@ -13,9 +18,19 @@ public static class DependencyInjection
     {
         services.AddScoped<CreateSubmissionHandler>();
 
+        services.AddScoped<AttachProductDocumentHandler>();
+
+        services.AddScoped<RemoveProductDocumentHandler>();
+
         services.AddScoped<ListSubmissionsHandler>();
 
         services.AddScoped<GetSubmissionHandler>();
+
+        services.AddScoped<ListSubmissionDocumentsHandler>();
+
+        services.AddScoped<ListAttachableProductDocumentsHandler>();
+
+        services.AddScoped<ListProductDocumentUsageHandler>();
 
         return services;
     }

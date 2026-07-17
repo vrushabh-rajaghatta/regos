@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 using RegOS.Persistence;
 using RegOS.Submission.Domain.Submission;
 
@@ -20,6 +22,23 @@ public sealed class SubmissionRepository : ISubmissionRepository
     {
         _dbContext.Submissions.Add(submission);
 
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<SubmissionAggregate?> GetByIdAsync(
+        SubmissionId id,
+        CancellationToken cancellationToken)
+    {
+        // Tracked (for mutation) and includes the owned document collection.
+        return await _dbContext.Submissions
+            .Include(x => x.Documents)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public async Task UpdateAsync(
+        SubmissionAggregate submission,
+        CancellationToken cancellationToken)
+    {
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }
