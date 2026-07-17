@@ -84,3 +84,6 @@ build/
 
 *.tmp
 *.temp
+
+# Local document storage (uploaded files — kept out of version control)
+storage/

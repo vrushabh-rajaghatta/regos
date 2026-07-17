@@ -6,6 +6,7 @@
     <ProjectReference Include="..\..\Organization\RegOS.Organization.Domain\RegOS.Organization.Domain.csproj" />
     <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Domain\RegOS.ReferenceData.Domain.csproj" />
     <ProjectReference Include="..\..\Submission\RegOS.Submission.Domain\RegOS.Submission.Domain.csproj" />
+    <ProjectReference Include="..\..\ProductDocument\RegOS.ProductDocument.Domain\RegOS.ProductDocument.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

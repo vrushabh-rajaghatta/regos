@@ -1,0 +1,22 @@
+namespace RegOS.Persistence.Initialization.ReferenceData;
+
+internal static class DocumentTypeIds
+{
+    // Document Types (5000...)
+    public static readonly Guid Cer =
+        Guid.Parse("50000000-0000-0000-0000-000000000001");
+    public static readonly Guid Rmf =
+        Guid.Parse("50000000-0000-0000-0000-000000000002");
+    public static readonly Guid Ssd =
+        Guid.Parse("50000000-0000-0000-0000-000000000003");
+    public static readonly Guid Ifu =
+        Guid.Parse("50000000-0000-0000-0000-000000000004");
+    public static readonly Guid Lbl =
+        Guid.Parse("50000000-0000-0000-0000-000000000005");
+    public static readonly Guid Rmp =
+        Guid.Parse("50000000-0000-0000-0000-000000000006");
+    public static readonly Guid Tvr =
+        Guid.Parse("50000000-0000-0000-0000-000000000007");
+    public static readonly Guid Val =
+        Guid.Parse("50000000-0000-0000-0000-000000000008");
+}

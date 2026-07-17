@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using RegOS.Api.Endpoints.Applications;
 using RegOS.Api.Endpoints.Organization;
+using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
 using RegOS.Api.Endpoints.RegulatoryApplications;
@@ -17,6 +18,8 @@ using RegOS.RegulatoryApplication.Application;
 using RegOS.RegulatoryApplication.Infrastructure;
 using RegOS.Submission.Application;
 using RegOS.Submission.Infrastructure;
+using RegOS.ProductDocument.Application;
+using RegOS.ProductDocument.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +60,9 @@ builder.Services.AddRegulatoryApplicationInfrastructure(builder.Configuration);
 builder.Services.AddSubmissionApplication();
 builder.Services.AddSubmissionInfrastructure();
 
+builder.Services.AddProductDocumentApplication();
+builder.Services.AddProductDocumentInfrastructure(builder.Configuration);
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -80,6 +86,7 @@ app.MapListCountries();
 app.MapListAuthorities();
 app.MapListOrganizations();
 app.MapListSubmissionTypes();
+app.MapListDocumentTypes();
 
 app.MapRegisterProductEndpoint();
 app.MapGetProductEndpoint();
@@ -92,5 +99,11 @@ app.MapGetApplication();
 app.MapCreateSubmission();
 app.MapListSubmissions();
 app.MapGetSubmission();
+
+app.MapUploadProductDocument();
+app.MapListProductDocuments();
+app.MapGetProductDocument();
+app.MapActivateProductDocument();
+app.MapArchiveProductDocument();
 
 app.Run();

@@ -10,7 +10,7 @@ export function ProductWorkspaceNavigation() {
         : "text-muted-foreground hover:bg-muted"
     }`;
 
-  const comingSoon = ["Documents", "Publishing", "History"];
+  const comingSoon = ["Publishing", "History"];
 
   return (
     <nav className="space-y-1 p-4">
@@ -27,6 +27,13 @@ export function ProductWorkspaceNavigation() {
         className={linkClass}
       >
         Applications
+      </NavLink>
+
+      <NavLink
+        to={`/regulatory/products/${productId}/documents`}
+        className={linkClass}
+      >
+        Documents
       </NavLink>
 
       {comingSoon.map((label) => (

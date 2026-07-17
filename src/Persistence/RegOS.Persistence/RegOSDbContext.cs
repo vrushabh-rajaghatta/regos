@@ -13,6 +13,10 @@ using SubmissionTypeAggregate =
     RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
 using SubmissionAggregate =
     RegOS.Submission.Domain.Submission.Submission;
+using DocumentTypeAggregate =
+    RegOS.ReferenceData.Domain.DocumentType.DocumentType;
+using ProductDocumentAggregate =
+    RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 
 namespace RegOS.Persistence;
 
@@ -44,6 +48,12 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<SubmissionAggregate> Submissions =>
         Set<SubmissionAggregate>();
+
+    public DbSet<DocumentTypeAggregate> DocumentTypes =>
+        Set<DocumentTypeAggregate>();
+
+    public DbSet<ProductDocumentAggregate> ProductDocuments =>
+        Set<ProductDocumentAggregate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

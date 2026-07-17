@@ -19,6 +19,8 @@
     <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Application\RegOS.ReferenceData.Application.csproj" />
     <ProjectReference Include="..\..\Submission\RegOS.Submission.Application\RegOS.Submission.Application.csproj" />
     <ProjectReference Include="..\..\Submission\RegOS.Submission.Infrastructure\RegOS.Submission.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\ProductDocument\RegOS.ProductDocument.Application\RegOS.ProductDocument.Application.csproj" />
+    <ProjectReference Include="..\..\ProductDocument\RegOS.ProductDocument.Infrastructure\RegOS.ProductDocument.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

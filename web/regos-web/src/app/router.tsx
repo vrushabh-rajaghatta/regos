@@ -17,6 +17,14 @@ import { SubmissionOverviewPage } from "@/features/regulatory/submissions/pages/
 import { SubmissionDocumentsPage } from "@/features/regulatory/submissions/pages/SubmissionDocumentsPage";
 import { SubmissionPublishingPage } from "@/features/regulatory/submissions/pages/SubmissionPublishingPage";
 import { SubmissionHistoryPage } from "@/features/regulatory/submissions/pages/SubmissionHistoryPage";
+import { ProductDocumentsListPage } from "@/features/regulatory/documents/pages/ProductDocumentsListPage";
+import { DocumentWorkspaceLayout } from "@/features/regulatory/documents/layout/DocumentWorkspaceLayout";
+import { DocumentOverviewPage } from "@/features/regulatory/documents/pages/DocumentOverviewPage";
+import { DocumentVersionsPage } from "@/features/regulatory/documents/pages/DocumentVersionsPage";
+import { DocumentUsagePage } from "@/features/regulatory/documents/pages/DocumentUsagePage";
+import { DocumentHistoryPage } from "@/features/regulatory/documents/pages/DocumentHistoryPage";
+import { DocumentAiInsightsPage } from "@/features/regulatory/documents/pages/DocumentAiInsightsPage";
+import { Navigate } from "react-router-dom";
 
 export const router = createBrowserRouter([
   {
@@ -55,6 +63,10 @@ export const router = createBrowserRouter([
                         element: <RegulatoryApplicationListPage />,
                       },
                     ],
+                  },
+                  {
+                    path: "documents",
+                    element: <ProductDocumentsListPage />,
                   },
                 ],
               },
@@ -110,6 +122,38 @@ export const router = createBrowserRouter([
                   {
                     path: "history",
                     element: <SubmissionHistoryPage />,
+                  },
+                ],
+              },
+              // Product Document Workspace — full-screen sibling under the
+              // product URL. Explicit sub-routes; index redirects to overview.
+              {
+                path: ":productId/documents/:documentId",
+                element: <DocumentWorkspaceLayout />,
+                children: [
+                  {
+                    index: true,
+                    element: <Navigate to="overview" replace />,
+                  },
+                  {
+                    path: "overview",
+                    element: <DocumentOverviewPage />,
+                  },
+                  {
+                    path: "versions",
+                    element: <DocumentVersionsPage />,
+                  },
+                  {
+                    path: "usage",
+                    element: <DocumentUsagePage />,
+                  },
+                  {
+                    path: "history",
+                    element: <DocumentHistoryPage />,
+                  },
+                  {
+                    path: "ai-insights",
+                    element: <DocumentAiInsightsPage />,
                   },
                 ],
               },

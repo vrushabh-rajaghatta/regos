@@ -31,6 +31,11 @@
     <Project Path="src/Submission/RegOS.Submission.Domain/RegOS.Submission.Domain.csproj" />
     <Project Path="src/Submission/RegOS.Submission.Infrastructure/RegOS.Submission.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/ProductDocument/">
+    <Project Path="src/ProductDocument/RegOS.ProductDocument.Application/RegOS.ProductDocument.Application.csproj" />
+    <Project Path="src/ProductDocument/RegOS.ProductDocument.Domain/RegOS.ProductDocument.Domain.csproj" />
+    <Project Path="src/ProductDocument/RegOS.ProductDocument.Infrastructure/RegOS.ProductDocument.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/RegOS.SDK/RegOS.SDK.csproj" />
   </Folder>
@@ -43,5 +48,9 @@
   </Folder>
   <Folder Name="/tests/Submission/">
     <Project Path="tests/Submission/RegOS.Submission.Domain.Tests/RegOS.Submission.Domain.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/ProductDocument/">
+    <Project Path="tests/ProductDocument/RegOS.ProductDocument.Domain.Tests/RegOS.ProductDocument.Domain.Tests.csproj" />
+    <Project Path="tests/ProductDocument/RegOS.ProductDocument.Persistence.Tests/RegOS.ProductDocument.Persistence.Tests.csproj" />
   </Folder>
 </Solution>

@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IDataInitializer, GeographyAndRegulatoryInitializer>();
         services.AddScoped<IDataInitializer, OrganizationInitializer>();
         services.AddScoped<IDataInitializer, SubmissionTypeDataInitializer>();
+        services.AddScoped<IDataInitializer, DocumentTypeDataInitializer>();
 
         return services;
     }
