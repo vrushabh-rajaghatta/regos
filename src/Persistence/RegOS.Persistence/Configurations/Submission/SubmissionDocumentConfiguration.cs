@@ -37,7 +37,7 @@ public sealed class SubmissionDocumentConfiguration
         builder.Property(x => x.DisplayOrder)
             .IsRequired();
 
-        builder.Property(x => x.AttachedOnUtc)
+        builder.Property(x => x.AttachedAt)
             .HasColumnType("timestamp with time zone")
             .IsRequired();
 

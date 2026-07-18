@@ -2,8 +2,8 @@ namespace RegOS.Submission.Domain.Submission;
 
 public static class SubmissionErrors
 {
-    public const string NameRequired =
-        "Submission name is required.";
+    public const string TitleRequired =
+        "Submission title is required.";
 
     public const string ApplicationRequired =
         "Application is required.";
@@ -29,5 +29,5 @@ public static class SubmissionErrors
 
     // Lifecycle
     public const string SubmissionNotDraft =
-        "Only a draft submission can be submitted.";
+        "Only a draft submission can be published.";
 }

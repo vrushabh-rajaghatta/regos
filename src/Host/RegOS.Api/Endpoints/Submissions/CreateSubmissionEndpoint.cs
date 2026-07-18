@@ -29,7 +29,7 @@ public static class CreateSubmissionEndpoint
                 new CreateSubmissionCommand(
                     new RegulatoryApplicationId(applicationId),
                     new SubmissionTypeId(request.SubmissionTypeId),
-                    request.Name),
+                    request.Title),
                 cancellationToken);
 
             return Results.Created(

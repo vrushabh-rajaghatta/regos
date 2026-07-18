@@ -53,7 +53,7 @@ public sealed class ListSubmissionDocumentsHandler
                 DocumentName = document.Name,
                 DocumentType = documentType.Name,
                 version.VersionNumber,
-                attachment.AttachedOnUtc,
+                attachment.AttachedAt,
             }).ToListAsync(cancellationToken);
 
         return rows
@@ -63,7 +63,7 @@ public sealed class ListSubmissionDocumentsHandler
                 row.DocumentName,
                 row.DocumentType,
                 row.VersionNumber,
-                row.AttachedOnUtc))
+                row.AttachedAt))
             .ToList();
     }
 }

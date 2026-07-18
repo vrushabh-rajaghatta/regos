@@ -12,13 +12,13 @@ public sealed class Submission
         SubmissionId id,
         RegulatoryApplicationId applicationId,
         SubmissionTypeId submissionTypeId,
-        string name,
+        string title,
         DateTime createdOn)
     {
         Id = id;
         ApplicationId = applicationId;
         SubmissionTypeId = submissionTypeId;
-        Name = name;
+        Title = title;
         Status = SubmissionStatus.Draft;
         CreatedOn = createdOn;
     }
@@ -29,7 +29,7 @@ public sealed class Submission
 
     public SubmissionTypeId SubmissionTypeId { get; }
 
-    public string Name { get; private set; }
+    public string Title { get; private set; }
 
     public SubmissionStatus Status { get; private set; }
 
@@ -43,7 +43,7 @@ public sealed class Submission
     public static Submission Create(
         RegulatoryApplicationId applicationId,
         SubmissionTypeId submissionTypeId,
-        string name)
+        string title)
     {
         if (applicationId == default)
             throw new ArgumentException(
@@ -55,16 +55,16 @@ public sealed class Submission
                 SubmissionErrors.SubmissionTypeRequired,
                 nameof(submissionTypeId));
 
-        if (string.IsNullOrWhiteSpace(name))
+        if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException(
-                SubmissionErrors.NameRequired,
-                nameof(name));
+                SubmissionErrors.TitleRequired,
+                nameof(title));
 
         return new Submission(
             SubmissionId.New(),
             applicationId,
             submissionTypeId,
-            name.Trim(),
+            title.Trim(),
             DateTime.UtcNow);
     }
 
@@ -75,7 +75,8 @@ public sealed class Submission
     /// only once. Existence, product ownership, active status, and version
     /// resolution are the application layer's responsibility.
     /// </summary>
-    public void AttachDocument(
+    /// <returns>The newly created attachment.</returns>
+    public SubmissionDocument AttachDocument(
         ProductDocumentId productDocumentId,
         DocumentVersionId documentVersionId)
     {
@@ -105,12 +106,16 @@ public sealed class Submission
             ? 1
             : _documents.Max(d => d.DisplayOrder) + 1;
 
-        _documents.Add(new SubmissionDocument(
+        var document = new SubmissionDocument(
             SubmissionDocumentId.New(),
             productDocumentId,
             documentVersionId,
             displayOrder,
-            DateTime.UtcNow));
+            DateTime.UtcNow);
+
+        _documents.Add(document);
+
+        return document;
     }
 
     /// <summary>
@@ -136,13 +141,17 @@ public sealed class Submission
         _documents.Remove(document);
     }
 
-    /// <summary>Draft -> Submitted. Freezes the dossier's document set.</summary>
-    public void Submit()
+    /// <summary>
+    /// Draft -> Published. Freezes the dossier's document set. Publishing makes
+    /// the submission immutable; transmission to the authority is a separate,
+    /// later step.
+    /// </summary>
+    public void Publish()
     {
         if (Status != SubmissionStatus.Draft)
             throw new InvalidOperationException(
                 SubmissionErrors.SubmissionNotDraft);
 
-        Status = SubmissionStatus.Submitted;
+        Status = SubmissionStatus.Published;
     }
 }

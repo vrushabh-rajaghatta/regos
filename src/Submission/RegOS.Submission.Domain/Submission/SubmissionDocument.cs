@@ -20,13 +20,13 @@ public sealed class SubmissionDocument
         ProductDocumentId productDocumentId,
         DocumentVersionId documentVersionId,
         int displayOrder,
-        DateTime attachedOnUtc)
+        DateTime attachedAt)
     {
         Id = id;
         ProductDocumentId = productDocumentId;
         DocumentVersionId = documentVersionId;
         DisplayOrder = displayOrder;
-        AttachedOnUtc = attachedOnUtc;
+        AttachedAt = attachedAt;
     }
 
     public SubmissionDocumentId Id { get; }
@@ -39,5 +39,5 @@ public sealed class SubmissionDocument
 
     public int DisplayOrder { get; }
 
-    public DateTime AttachedOnUtc { get; }
+    public DateTime AttachedAt { get; }
 }

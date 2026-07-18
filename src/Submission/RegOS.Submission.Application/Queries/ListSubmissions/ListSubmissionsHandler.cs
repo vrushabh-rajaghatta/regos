@@ -30,7 +30,7 @@ public sealed class ListSubmissionsHandler
             select new
             {
                 submission.Id,
-                submission.Name,
+                submission.Title,
                 submission.Status,
                 SubmissionTypeName = submissionType.Name,
                 submission.CreatedOn,
@@ -39,7 +39,7 @@ public sealed class ListSubmissionsHandler
         return rows
             .Select(row => new SubmissionSummary(
                 row.Id.Value,
-                row.Name,
+                row.Title,
                 row.Status.ToString(),
                 row.SubmissionTypeName,
                 row.CreatedOn))

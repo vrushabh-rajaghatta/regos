@@ -43,27 +43,27 @@ public sealed class ListProductDocumentUsageHandler
                 on submission.SubmissionTypeId equals submissionType.Id
             join version in _dbContext.Set<DocumentVersion>()
                 on usage.DocumentVersionId equals version.Id
-            orderby usage.AttachedOnUtc descending
+            orderby usage.AttachedAt descending
             select new
             {
                 submission.Id,
                 submission.ApplicationId,
-                SubmissionName = submission.Name,
+                SubmissionTitle = submission.Title,
                 SubmissionType = submissionType.Name,
                 Authority = authority.Name,
                 version.VersionNumber,
-                usage.AttachedOnUtc,
+                usage.AttachedAt,
             }).ToListAsync(cancellationToken);
 
         return rows
             .Select(row => new SubmissionDocumentUsage(
                 row.Id.Value,
                 row.ApplicationId.Value,
-                row.SubmissionName,
+                row.SubmissionTitle,
                 row.SubmissionType,
                 row.Authority,
                 row.VersionNumber,
-                row.AttachedOnUtc))
+                row.AttachedAt))
             .ToList();
     }
 }

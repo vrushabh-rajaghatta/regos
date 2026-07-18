@@ -81,14 +81,11 @@ public sealed class AttachProductDocumentHandler
             throw new BusinessRuleViolationException(
                 SubmissionRuleErrors.ProductDocumentHasNoCurrentVersion);
 
-        submission.AttachDocument(
+        var attachment = submission.AttachDocument(
             command.ProductDocumentId,
             productDocument.CurrentVersionId.Value);
 
         await _repository.UpdateAsync(submission, cancellationToken);
-
-        var attachment = submission.Documents
-            .Single(d => d.ProductDocumentId == command.ProductDocumentId);
 
         return new AttachProductDocumentResult(attachment.Id);
     }

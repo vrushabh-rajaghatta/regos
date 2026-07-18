@@ -6,4 +6,4 @@ namespace RegOS.Submission.Application.Commands.CreateSubmission;
 public sealed record CreateSubmissionCommand(
     RegulatoryApplicationId ApplicationId,
     SubmissionTypeId SubmissionTypeId,
-    string Name);
+    string Title);

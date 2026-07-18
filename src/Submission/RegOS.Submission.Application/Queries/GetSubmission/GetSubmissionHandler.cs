@@ -32,7 +32,7 @@ public sealed class GetSubmissionHandler
             select new
             {
                 submission.Id,
-                submission.Name,
+                submission.Title,
                 submission.ApplicationId,
                 ApplicationName = application.Name,
                 submission.SubmissionTypeId,
@@ -46,7 +46,7 @@ public sealed class GetSubmissionHandler
 
         return new SubmissionDetailDto(
             row.Id.Value,
-            row.Name,
+            row.Title,
             row.ApplicationId.Value,
             row.ApplicationName,
             row.SubmissionTypeId.Value,

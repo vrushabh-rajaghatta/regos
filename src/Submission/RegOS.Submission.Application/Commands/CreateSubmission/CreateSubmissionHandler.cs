@@ -64,7 +64,7 @@ public sealed class CreateSubmissionHandler
         var submission = SubmissionAggregate.Create(
             command.ApplicationId,
             command.SubmissionTypeId,
-            command.Name);
+            command.Title);
 
         await _repository.AddAsync(submission, cancellationToken);
 

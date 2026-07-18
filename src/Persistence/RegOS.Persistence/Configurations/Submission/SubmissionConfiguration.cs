@@ -37,7 +37,7 @@ public sealed class SubmissionConfiguration
                 value => new SubmissionTypeId(value))
             .IsRequired();
 
-        builder.Property(x => x.Name)
+        builder.Property(x => x.Title)
             .HasMaxLength(200)
             .IsRequired();
 

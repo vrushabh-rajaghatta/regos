@@ -13,7 +13,7 @@ namespace RegOS.Submission.Application.Queries.ListProductDocumentUsage;
 public sealed record SubmissionDocumentUsage(
     Guid SubmissionId,
     Guid ApplicationId,
-    string SubmissionName,
+    string SubmissionTitle,
     string SubmissionType,
     string Authority,
     int VersionNumber,

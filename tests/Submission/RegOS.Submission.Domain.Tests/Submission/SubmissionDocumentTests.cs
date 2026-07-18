@@ -62,7 +62,7 @@ public class SubmissionDocumentTests
         attachment.Id.Value.Should().NotBe(Guid.Empty);
         attachment.ProductDocumentId.Should().Be(doc);
         attachment.DocumentVersionId.Should().Be(version);
-        attachment.AttachedOnUtc.Should().NotBe(default);
+        attachment.AttachedAt.Should().NotBe(default);
     }
 
     [Fact]
@@ -136,10 +136,10 @@ public class SubmissionDocumentTests
     // --- Draft protection ----------------------------------------------------
 
     [Fact]
-    public void Attach_WhenSubmitted_Throws()
+    public void Attach_WhenPublished_Throws()
     {
         var submission = NewDraft();
-        submission.Submit();
+        submission.Publish();
 
         var (doc, version) = NewRef();
         var act = () => submission.AttachDocument(doc, version);
@@ -149,13 +149,13 @@ public class SubmissionDocumentTests
     }
 
     [Fact]
-    public void Remove_WhenSubmitted_Throws()
+    public void Remove_WhenPublished_Throws()
     {
         var submission = NewDraft();
         var (doc, version) = NewRef();
         submission.AttachDocument(doc, version);
         var id = submission.Documents.Single().Id;
-        submission.Submit();
+        submission.Publish();
 
         var act = () => submission.RemoveDocument(id);
 
@@ -227,22 +227,22 @@ public class SubmissionDocumentTests
     // --- Lifecycle enabler ---------------------------------------------------
 
     [Fact]
-    public void Submit_FromDraft_BecomesSubmitted()
+    public void Publish_FromDraft_BecomesPublished()
     {
         var submission = NewDraft();
 
-        submission.Submit();
+        submission.Publish();
 
-        submission.Status.Should().Be(SubmissionStatus.Submitted);
+        submission.Status.Should().Be(SubmissionStatus.Published);
     }
 
     [Fact]
-    public void Submit_WhenAlreadySubmitted_Throws()
+    public void Publish_WhenAlreadyPublished_Throws()
     {
         var submission = NewDraft();
-        submission.Submit();
+        submission.Publish();
 
-        var act = () => submission.Submit();
+        var act = () => submission.Publish();
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage(SubmissionErrors.SubmissionNotDraft);
