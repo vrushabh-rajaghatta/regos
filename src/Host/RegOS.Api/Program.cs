@@ -103,6 +103,8 @@ app.MapAttachProductDocument();
 app.MapRemoveProductDocument();
 app.MapListSubmissionDocuments();
 app.MapListAttachableProductDocuments();
+app.MapValidateSubmission();
+app.MapPublishSubmission();
 
 app.MapUploadProductDocument();
 app.MapListProductDocuments();

@@ -19,6 +19,10 @@ export function SubmissionWorkspaceNavigation() {
         Documents
       </NavLink>
 
+      <NavLink to="validation" className={linkClass}>
+        Validation
+      </NavLink>
+
       <NavLink to="publishing" className={linkClass}>
         Publishing
       </NavLink>
