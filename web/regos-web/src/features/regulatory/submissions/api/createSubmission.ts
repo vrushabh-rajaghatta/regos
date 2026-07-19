@@ -2,7 +2,7 @@ import { buildUrl } from "@/shared/api/apiClient";
 
 export interface CreateSubmissionRequest {
   submissionTypeId: string;
-  name: string;
+  title: string;
 }
 
 export interface CreateSubmissionResponse {

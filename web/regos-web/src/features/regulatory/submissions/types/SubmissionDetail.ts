@@ -1,6 +1,6 @@
 export interface SubmissionDetail {
   id: string;
-  name: string;
+  title: string;
   applicationId: string;
   applicationName: string;
   submissionTypeId: string;

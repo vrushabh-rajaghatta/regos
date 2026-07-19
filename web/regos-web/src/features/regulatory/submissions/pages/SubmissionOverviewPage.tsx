@@ -36,8 +36,8 @@ export function SubmissionOverviewPage() {
         </h2>
 
         <div>
-          <div className="text-sm text-muted-foreground">Name</div>
-          <div className="font-medium">{submission.name}</div>
+          <div className="text-sm text-muted-foreground">Title</div>
+          <div className="font-medium">{submission.title}</div>
         </div>
 
         <div>

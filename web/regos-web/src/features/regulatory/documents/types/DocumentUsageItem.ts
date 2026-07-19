@@ -1,7 +1,7 @@
 export interface DocumentUsageItem {
   submissionId: string;
   applicationId: string;
-  submissionName: string;
+  submissionTitle: string;
   submissionType: string;
   authority: string;
   versionNumber: number;

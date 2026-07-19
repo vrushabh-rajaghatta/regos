@@ -54,7 +54,7 @@ export function DocumentUsagePage() {
               {data.map((usage) => (
                 <tr key={usage.submissionId} className="border-b last:border-0">
                   <td className="px-4 py-2 font-medium">
-                    {usage.submissionName}
+                    {usage.submissionTitle}
                   </td>
                   <td className="px-4 py-2 text-muted-foreground">
                     {usage.submissionType}

@@ -18,7 +18,7 @@ export function SubmissionWorkspaceHeader() {
     <header className="border-b px-6 py-4">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold">{submission.name}</h1>
+          <h1 className="text-xl font-semibold">{submission.title}</h1>
 
           <p className="text-sm text-muted-foreground">
             {submission.submissionTypeName}

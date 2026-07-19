@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createSubmissionSchema = z.object({
-  name: z.string().trim().min(1, "Submission name is required."),
+  title: z.string().trim().min(1, "Submission title is required."),
 
   submissionTypeId: z.string().min(1, "Submission Type is required."),
 });

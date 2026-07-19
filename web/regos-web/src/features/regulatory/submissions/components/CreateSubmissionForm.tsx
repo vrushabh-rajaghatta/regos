@@ -55,7 +55,7 @@ export function CreateSubmissionForm({
   } = useForm<CreateSubmissionFormValues>({
     resolver: zodResolver(createSubmissionSchema),
     defaultValues: {
-      name: "",
+      title: "",
       submissionTypeId: "",
     },
   });
@@ -72,7 +72,7 @@ export function CreateSubmissionForm({
 
   async function onSubmit(values: CreateSubmissionFormValues) {
     const { id } = await mutation.mutateAsync({
-      name: values.name,
+      title: values.title,
       submissionTypeId: values.submissionTypeId,
     });
 
@@ -91,14 +91,14 @@ export function CreateSubmissionForm({
       <FieldGroup>
         <Controller
           control={control}
-          name="name"
+          name="title"
           render={({ field }) => (
-            <Field data-invalid={!!errors.name}>
-              <FieldLabel htmlFor="name">Submission Name</FieldLabel>
+            <Field data-invalid={!!errors.title}>
+              <FieldLabel htmlFor="title">Submission Title</FieldLabel>
 
-              <Input id="name" placeholder="e.g. Initial 510(k)" {...field} />
+              <Input id="title" placeholder="e.g. Initial 510(k)" {...field} />
 
-              <FieldError errors={[errors.name]} />
+              <FieldError errors={[errors.title]} />
             </Field>
           )}
         />

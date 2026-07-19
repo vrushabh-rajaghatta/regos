@@ -1,6 +1,6 @@
 export interface SubmissionSummary {
   id: string;
-  name: string;
+  title: string;
   status: string;
   submissionTypeName: string;
   createdOn: string;
