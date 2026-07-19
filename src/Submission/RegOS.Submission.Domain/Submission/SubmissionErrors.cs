@@ -30,4 +30,7 @@ public static class SubmissionErrors
     // Lifecycle
     public const string SubmissionNotDraft =
         "Only a draft submission can be published.";
+
+    public const string PublishedAtRequired =
+        "A publication timestamp is required to publish a submission.";
 }

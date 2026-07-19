@@ -114,7 +114,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
             sub.AttachDocument(document.Id, document.CurrentVersionId!.Value);
 
         if (publish)
-            sub.Publish();
+            sub.Publish(DateTimeOffset.UtcNow);
 
         ctx.Submissions.Add(sub);
         await ctx.SaveChangesAsync();

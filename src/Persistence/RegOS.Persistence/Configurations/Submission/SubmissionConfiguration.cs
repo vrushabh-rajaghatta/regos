@@ -49,6 +49,10 @@ public sealed class SubmissionConfiguration
             .HasColumnType("timestamp with time zone")
             .IsRequired();
 
+        // Null until published.
+        builder.Property(x => x.PublishedAt)
+            .HasColumnType("timestamp with time zone");
+
         // Cross-aggregate foreign keys. The domain exposes no navigation
         // properties, but EF still models the relationships.
         //

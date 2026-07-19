@@ -35,6 +35,10 @@ public sealed class Submission
 
     public DateTime CreatedOn { get; }
 
+    // Null while Draft; set when the submission is published. PublishedBy is
+    // deferred until the project has a current-user identity to record.
+    public DateTimeOffset? PublishedAt { get; private set; }
+
     // Never expose a mutable collection — the document set is only ever
     // changed through the aggregate's own behaviors.
     public IReadOnlyCollection<SubmissionDocument> Documents
@@ -146,12 +150,20 @@ public sealed class Submission
     /// the submission immutable; transmission to the authority is a separate,
     /// later step.
     /// </summary>
-    public void Publish()
+    public void Publish(DateTimeOffset publishedAt)
     {
+        // The application supplies the timestamp — the aggregate never reads the
+        // clock, keeping Publish deterministic and testable.
+        if (publishedAt == default)
+            throw new ArgumentException(
+                SubmissionErrors.PublishedAtRequired,
+                nameof(publishedAt));
+
         if (Status != SubmissionStatus.Draft)
             throw new InvalidOperationException(
                 SubmissionErrors.SubmissionNotDraft);
 
         Status = SubmissionStatus.Published;
+        PublishedAt = publishedAt;
     }
 }

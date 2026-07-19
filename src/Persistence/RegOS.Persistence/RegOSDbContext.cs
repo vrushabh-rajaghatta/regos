@@ -13,6 +13,8 @@ using SubmissionTypeAggregate =
     RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
 using SubmissionAggregate =
     RegOS.Submission.Domain.Submission.Submission;
+using SubmissionSnapshotAggregate =
+    RegOS.Submission.Domain.Snapshot.SubmissionSnapshot;
 using DocumentTypeAggregate =
     RegOS.ReferenceData.Domain.DocumentType.DocumentType;
 using ProductDocumentAggregate =
@@ -48,6 +50,9 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<SubmissionAggregate> Submissions =>
         Set<SubmissionAggregate>();
+
+    public DbSet<SubmissionSnapshotAggregate> SubmissionSnapshots =>
+        Set<SubmissionSnapshotAggregate>();
 
     public DbSet<DocumentTypeAggregate> DocumentTypes =>
         Set<DocumentTypeAggregate>();

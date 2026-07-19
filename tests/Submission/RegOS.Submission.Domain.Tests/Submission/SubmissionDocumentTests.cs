@@ -139,7 +139,7 @@ public class SubmissionDocumentTests
     public void Attach_WhenPublished_Throws()
     {
         var submission = NewDraft();
-        submission.Publish();
+        submission.Publish(DateTimeOffset.UtcNow);
 
         var (doc, version) = NewRef();
         var act = () => submission.AttachDocument(doc, version);
@@ -155,7 +155,7 @@ public class SubmissionDocumentTests
         var (doc, version) = NewRef();
         submission.AttachDocument(doc, version);
         var id = submission.Documents.Single().Id;
-        submission.Publish();
+        submission.Publish(DateTimeOffset.UtcNow);
 
         var act = () => submission.RemoveDocument(id);
 
@@ -231,7 +231,7 @@ public class SubmissionDocumentTests
     {
         var submission = NewDraft();
 
-        submission.Publish();
+        submission.Publish(DateTimeOffset.UtcNow);
 
         submission.Status.Should().Be(SubmissionStatus.Published);
     }
@@ -240,9 +240,9 @@ public class SubmissionDocumentTests
     public void Publish_WhenAlreadyPublished_Throws()
     {
         var submission = NewDraft();
-        submission.Publish();
+        submission.Publish(DateTimeOffset.UtcNow);
 
-        var act = () => submission.Publish();
+        var act = () => submission.Publish(DateTimeOffset.UtcNow);
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage(SubmissionErrors.SubmissionNotDraft);

@@ -5,6 +5,7 @@ using RegOS.Submission.Application.Commands.CreateSubmission;
 using RegOS.Submission.Application.Commands.PublishSubmission;
 using RegOS.Submission.Application.Commands.RemoveProductDocument;
 using RegOS.Submission.Application.Queries.GetSubmission;
+using RegOS.Submission.Application.Queries.GetSubmissionSnapshot;
 using RegOS.Submission.Application.Queries.ListAttachableProductDocuments;
 using RegOS.Submission.Application.Queries.ListProductDocumentUsage;
 using RegOS.Submission.Application.Queries.ListSubmissionDocuments;
@@ -40,6 +41,8 @@ public static class DependencyInjection
         services.AddScoped<ValidateSubmissionHandler>();
 
         services.AddScoped<PublishSubmissionHandler>();
+
+        services.AddScoped<GetSubmissionSnapshotHandler>();
 
         return services;
     }

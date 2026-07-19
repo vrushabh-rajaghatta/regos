@@ -10,6 +10,9 @@ namespace RegOS.Submission.Domain.Tests.Submission;
 
 public class SubmissionPublishTests
 {
+    private static readonly DateTimeOffset PublishedAt =
+        new(2026, 7, 19, 10, 15, 0, TimeSpan.Zero);
+
     private static SubmissionAggregate NewDraft() =>
         SubmissionAggregate.Create(
             new RegulatoryApplicationId(Guid.NewGuid()),
@@ -17,24 +20,50 @@ public class SubmissionPublishTests
             "Initial 510(k)");
 
     [Fact]
-    public void Publish_FromDraft_TransitionsToPublished()
+    public void Draft_HasNoPublicationMetadata()
     {
         var submission = NewDraft();
 
-        submission.Publish();
-
-        submission.Status.Should().Be(SubmissionStatus.Published);
+        submission.Status.Should().Be(SubmissionStatus.Draft);
+        submission.PublishedAt.Should().BeNull();
     }
 
     [Fact]
-    public void Publish_WhenAlreadyPublished_Throws()
+    public void Publish_FromDraft_SetsStatusAndPublishedAt()
     {
         var submission = NewDraft();
-        submission.Publish();
 
-        var act = () => submission.Publish();
+        submission.Publish(PublishedAt);
+
+        submission.Status.Should().Be(SubmissionStatus.Published);
+        submission.PublishedAt.Should().Be(PublishedAt);
+    }
+
+    [Fact]
+    public void Publish_WhenAlreadyPublished_ThrowsAndKeepsOriginalPublishedAt()
+    {
+        var submission = NewDraft();
+        submission.Publish(PublishedAt);
+
+        var act = () => submission.Publish(PublishedAt.AddDays(1));
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage(SubmissionErrors.SubmissionNotDraft);
+        // The original publication timestamp is unchanged.
+        submission.PublishedAt.Should().Be(PublishedAt);
+    }
+
+    [Fact]
+    public void Publish_WithDefaultTimestamp_Throws()
+    {
+        var submission = NewDraft();
+
+        var act = () => submission.Publish(default);
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage(SubmissionErrors.PublishedAtRequired + "*");
+        // Rejected before any state change.
+        submission.Status.Should().Be(SubmissionStatus.Draft);
+        submission.PublishedAt.Should().BeNull();
     }
 }

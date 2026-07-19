@@ -105,6 +105,7 @@ app.MapListSubmissionDocuments();
 app.MapListAttachableProductDocuments();
 app.MapValidateSubmission();
 app.MapPublishSubmission();
+app.MapGetSubmissionSnapshot();
 
 app.MapUploadProductDocument();
 app.MapListProductDocuments();
