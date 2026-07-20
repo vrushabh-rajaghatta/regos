@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
 using RegOS.Product.Application.Persistence;
 using RegOS.Product.Domain.Product;
@@ -37,12 +36,4 @@ public sealed class ProductRepository : IProductRepository
         CancellationToken cancellationToken)
         => await _dbContext.Products
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-    public async Task<IReadOnlyList<ProductAggregate>> ListAsync(
-        OrganizationId organizationId,
-        CancellationToken cancellationToken)
-        => await _dbContext.Products
-            .Where(p => p.OrganizationId == organizationId)
-            .OrderBy(p => p.Name)
-            .ToListAsync(cancellationToken);
 }

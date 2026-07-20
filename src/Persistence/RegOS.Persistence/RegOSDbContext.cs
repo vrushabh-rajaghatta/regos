@@ -69,6 +69,10 @@ public sealed class RegOSDbContext : DbContext
     public DbSet<ReadModels.UserDirectoryRow> UserDirectory =>
         Set<ReadModels.UserDirectoryRow>();
 
+    /// <summary>Read-only projection over Products for the product directory.</summary>
+    public DbSet<ReadModels.ProductDirectoryRow> ProductDirectory =>
+        Set<ReadModels.ProductDirectoryRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

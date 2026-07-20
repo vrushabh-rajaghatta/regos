@@ -15,7 +15,15 @@ export const registerProductSchema = z.object({
 
   name: z.string().trim().min(1, "Product name is required."),
 
-  type: z.enum(["Drug", "MedicalDevice", "Biologic"]),
+  // Must list every value in PRODUCT_TYPES: the dropdown offered
+  // CombinationProduct and IVD while the schema rejected them.
+  type: z.enum([
+    "MedicalDevice",
+    "Drug",
+    "Biologic",
+    "CombinationProduct",
+    "IVD",
+  ]),
 });
 
 export type RegisterProductFormValues = z.infer<typeof registerProductSchema>;
