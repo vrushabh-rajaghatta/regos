@@ -15,7 +15,9 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="space-y-1">
           <h3 className="text-lg font-semibold">{product.name}</h3>
 
-          <p className="text-sm text-muted-foreground">{product.type}</p>
+          <p className="text-sm text-muted-foreground">
+            {product.code} · {product.type}
+          </p>
         </div>
 
         <Badge>{product.status}</Badge>

@@ -17,6 +17,7 @@ using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Submission.Application.Tests.Fixtures;
 
 namespace RegOS.Submission.Application.Tests;
 
@@ -77,8 +78,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
     private static async Task<(RegulatoryApplicationId AppId, ProductId ProductId)>
         FirstApplicationAsync(RegOSDbContext ctx)
     {
-        var app = await ctx.RegulatoryApplications.AsNoTracking().FirstAsync();
-        return (app.Id, app.ProductId);
+        return await TestApplications.EnsureAsync(ctx);
     }
 
     private async Task<ProductDocumentAggregate> SeedActiveDocumentAsync(

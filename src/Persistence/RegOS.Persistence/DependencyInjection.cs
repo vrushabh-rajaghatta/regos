@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Persistence.Initialization;
 using RegOS.Persistence.Initialization.Organization;
+using RegOS.Persistence.Initialization.Product;
 using RegOS.Persistence.Initialization.ReferenceData;
 
 namespace RegOS.Persistence;
@@ -20,6 +21,7 @@ public static class DependencyInjection
 
         services.AddScoped<IDataInitializer, GeographyAndRegulatoryInitializer>();
         services.AddScoped<IDataInitializer, OrganizationInitializer>();
+        services.AddScoped<IDataInitializer, ProductInitializer>();
         services.AddScoped<IDataInitializer, SubmissionTypeDataInitializer>();
         services.AddScoped<IDataInitializer, DocumentTypeDataInitializer>();
 

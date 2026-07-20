@@ -4,6 +4,7 @@ namespace RegOS.Product.Application.Queries.ListProducts;
 
 public sealed record ProductSummaryResponse(
     Guid Id,
+    string Code,
     string Name,
     ProductType Type,
     ProductStatus Status);

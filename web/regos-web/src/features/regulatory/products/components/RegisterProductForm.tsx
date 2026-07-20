@@ -39,6 +39,7 @@ export function RegisterProductForm({ onSuccess }: RegisterProductFormProps) {
   } = useForm<RegisterProductFormValues>({
     resolver: zodResolver(registerProductSchema),
     defaultValues: {
+      code: "",
       name: "",
       type: "Drug",
     },
@@ -55,6 +56,25 @@ export function RegisterProductForm({ onSuccess }: RegisterProductFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <FieldGroup>
+        <Controller
+          control={control}
+          name="code"
+          render={({ field }) => (
+            <Field data-invalid={!!errors.code}>
+              <FieldLabel htmlFor="code">Product Code</FieldLabel>
+
+              <Input
+                id="code"
+                placeholder="e.g. ACE-500"
+                autoCapitalize="characters"
+                {...field}
+              />
+
+              <FieldError errors={[errors.code]} />
+            </Field>
+          )}
+        />
+
         <Controller
           control={control}
           name="name"

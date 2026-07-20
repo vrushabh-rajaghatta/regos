@@ -1,5 +1,6 @@
 using FluentAssertions;
 
+using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Exceptions;
 
@@ -9,28 +10,48 @@ namespace RegOS.Product.Domain.Tests.Product;
 
 public sealed class ProductTests
 {
+    private static readonly OrganizationId Owner = OrganizationId.New();
+
     [Fact]
     public void Register_starts_the_product_as_registered()
     {
-        var product = ProductAggregate.Register("Ozempic", ProductType.Drug);
+        var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
 
         product.Status.Should().Be(ProductStatus.Registered);
+        product.OrganizationId.Should().Be(Owner);
+        product.Code.Value.Should().Be("OZE-1");
         product.Name.Value.Should().Be("Ozempic");
         product.Type.Should().Be(ProductType.Drug);
         product.Id.Should().NotBeNull();
     }
 
     [Fact]
+    public void Register_normalizes_the_code()
+    {
+        ProductAggregate.Register(Owner, " oze-1 ", "Ozempic", ProductType.Drug)
+            .Code.Value.Should().Be("OZE-1");
+    }
+
+    [Fact]
+    public void Register_rejects_a_missing_code()
+    {
+        var act = () => ProductAggregate.Register(Owner, "  ", "Ozempic", ProductType.Drug);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(ProductErrors.CodeRequired);
+    }
+
+    [Fact]
     public void Register_normalizes_the_name()
     {
-        ProductAggregate.Register("  Ozempic  ", ProductType.Drug)
+        ProductAggregate.Register(Owner, "OZE-1", "  Ozempic  ", ProductType.Drug)
             .Name.Value.Should().Be("Ozempic");
     }
 
     [Fact]
     public void Register_rejects_a_missing_name()
     {
-        var act = () => ProductAggregate.Register("  ", ProductType.Drug);
+        var act = () => ProductAggregate.Register(Owner, "OZE-1", "  ", ProductType.Drug);
 
         act.Should().Throw<DomainException>()
             .WithMessage(ProductErrors.NameRequired);
@@ -39,7 +60,7 @@ public sealed class ProductTests
     [Fact]
     public void Rename_replaces_the_name()
     {
-        var product = ProductAggregate.Register("Ozempic", ProductType.Drug);
+        var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
 
         product.Rename("Wegovy");
 
@@ -49,7 +70,7 @@ public sealed class ProductTests
     [Fact]
     public void Rename_rejects_a_missing_name_and_leaves_the_product_unchanged()
     {
-        var product = ProductAggregate.Register("Ozempic", ProductType.Drug);
+        var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
 
         var act = () => product.Rename(null);
 
@@ -60,7 +81,7 @@ public sealed class ProductTests
     [Fact]
     public void Archive_marks_the_product_archived()
     {
-        var product = ProductAggregate.Register("Ozempic", ProductType.Drug);
+        var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
 
         product.Archive();
 
@@ -70,7 +91,7 @@ public sealed class ProductTests
     [Fact]
     public void Archive_is_idempotent_so_retries_are_safe()
     {
-        var product = ProductAggregate.Register("Ozempic", ProductType.Drug);
+        var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
 
         product.Archive();
         product.Archive();
@@ -81,8 +102,8 @@ public sealed class ProductTests
     [Fact]
     public void Two_registrations_are_distinct_products()
     {
-        var first = ProductAggregate.Register("Ozempic", ProductType.Drug);
-        var second = ProductAggregate.Register("Ozempic", ProductType.Drug);
+        var first = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
+        var second = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
 
         first.Should().NotBe(second);
     }

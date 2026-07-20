@@ -14,6 +14,7 @@ using RegOS.Submission.Infrastructure.Repositories;
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using RegOS.Submission.Application.Tests.Fixtures;
 
 namespace RegOS.Submission.Application.Tests;
 
@@ -83,22 +84,22 @@ public sealed class GetSubmissionSnapshotTests : IAsyncLifetime
     private async Task<(SubmissionId Id, List<Guid> Versions)> SeedDraftAsync(int count)
     {
         await using var ctx = New();
-        var app = await ctx.RegulatoryApplications.AsNoTracking().FirstAsync();
+        var (applicationId, productId) = await TestApplications.EnsureAsync(ctx);
 
         var submission = SubmissionAggregate.Create(
-            app.Id, SeededSubmissionType, "Snapshot Query Sub " + Guid.NewGuid());
+            applicationId, SeededSubmissionType, "Snapshot Query Sub " + Guid.NewGuid());
 
         var versions = new List<Guid>();
         for (var i = 0; i < count; i++)
         {
             var doc = ProductDocumentAggregate.Create(
-                app.ProductId, SeededCer, "Snapshot Query Doc " + Guid.NewGuid());
+                productId, SeededCer, "Snapshot Query Doc " + Guid.NewGuid());
             doc.AddInitialVersion(
                 originalFileName: "cer.pdf",
                 storedFileName: "v1.pdf",
                 contentType: "application/pdf",
                 fileSize: 1024,
-                storagePath: $"products/{app.ProductId.Value}/{doc.Id.Value}/v1.pdf",
+                storagePath: $"products/{productId.Value}/{doc.Id.Value}/v1.pdf",
                 checksum: "sha256-x");
             doc.Activate();
             ctx.ProductDocuments.Add(doc);

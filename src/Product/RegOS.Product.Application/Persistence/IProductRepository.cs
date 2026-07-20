@@ -1,3 +1,4 @@
+using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
 
 using ProductAggregate = RegOS.Product.Domain.Product.Product;
@@ -16,5 +17,7 @@ public interface IProductRepository
         ProductId id,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<ProductAggregate>> ListAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<ProductAggregate>> ListAsync(
+        OrganizationId organizationId,
+        CancellationToken cancellationToken);
 }

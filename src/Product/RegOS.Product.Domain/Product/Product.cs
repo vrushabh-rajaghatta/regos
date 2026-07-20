@@ -1,3 +1,4 @@
+using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.SharedKernel.Abstractions;
 
 namespace RegOS.Product.Domain.Product;
@@ -14,15 +15,28 @@ public sealed class Product : AggregateRoot<ProductId>
     // resorting to `= default!`. Same shape as the User aggregate.
     private Product(
         ProductId id,
+        OrganizationId organizationId,
+        ProductCode code,
         ProductName name,
         ProductType type,
         ProductStatus status)
     {
         Id = id;
+        OrganizationId = organizationId;
+        Code = code;
         Name = name;
         Type = type;
         Status = status;
     }
+
+    /// <summary>
+    /// The owning organization - the tenant. Set once at registration and never
+    /// changed: moving a product between organizations would be a transfer, a
+    /// different capability with its own rules.
+    /// </summary>
+    public OrganizationId OrganizationId { get; }
+
+    public ProductCode Code { get; }
 
     public ProductName Name { get; private set; }
 
@@ -30,9 +44,15 @@ public sealed class Product : AggregateRoot<ProductId>
 
     public ProductStatus Status { get; private set; }
 
-    public static Product Register(string? name, ProductType type)
+    public static Product Register(
+        OrganizationId organizationId,
+        string? code,
+        string? name,
+        ProductType type)
         => new(
             ProductId.New(),
+            organizationId,
+            ProductCode.Create(code),
             ProductName.Create(name),
             type,
             ProductStatus.Registered);

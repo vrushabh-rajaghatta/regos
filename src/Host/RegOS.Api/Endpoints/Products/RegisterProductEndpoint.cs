@@ -18,7 +18,8 @@ public static class RegisterProductEndpoint
         CancellationToken cancellationToken)
     {
         var productId = await handler.HandleAsync(
-            new RegisterProductCommand(request.Name, request.Type),
+            new RegisterProductCommand(
+                request.Code, request.Name, request.Type),
             cancellationToken);
 
         return Results.Created(
