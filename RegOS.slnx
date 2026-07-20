@@ -8,6 +8,11 @@
     <Project Path="src/Organization/RegOS.Organization.Domain/RegOS.Organization.Domain.csproj" />
     <Project Path="src/Organization/RegOS.Organization.Infrastructure/RegOS.Organization.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Platform/">
+    <Project Path="src/Platform/RegOS.Platform.Application/RegOS.Platform.Application.csproj" />
+    <Project Path="src/Platform/RegOS.Platform.Domain/RegOS.Platform.Domain.csproj" />
+    <Project Path="src/Platform/RegOS.Platform.Infrastructure/RegOS.Platform.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Persistence/">
     <Project Path="src/Persistence/RegOS.Persistence/RegOS.Persistence.csproj" />
   </Folder>
@@ -40,6 +45,10 @@
     <Project Path="src/Shared/RegOS.SharedKernel/RegOS.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/tests/" />
+  <Folder Name="/tests/Platform/">
+    <Project Path="tests/Platform/RegOS.Platform.Application.Tests/RegOS.Platform.Application.Tests.csproj" />
+    <Project Path="tests/Platform/RegOS.Platform.Domain.Tests/RegOS.Platform.Domain.Tests.csproj" />
+  </Folder>
   <Folder Name="/tests/Product/">
     <Project Path="tests/Product/RegOS.Product.Domain.Tests/RegOS.Product.Domain.Tests.csproj" />
   </Folder>
