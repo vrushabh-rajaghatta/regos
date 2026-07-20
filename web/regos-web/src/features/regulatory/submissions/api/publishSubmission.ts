@@ -21,11 +21,25 @@ export async function publishSubmission(
   }
 
   // Not ready — the body is the validation result, same shape as the
-  // validation endpoint.
+  // validation endpoint. These are readiness issues the user can resolve.
   if (response.status === 400) {
     const validation: SubmissionValidationResult = await response.json();
     return { published: false, validation };
   }
 
-  throw new Error("Unable to publish submission.");
+  // 409 means a lifecycle conflict (already published). There is no checklist
+  // to show, so surface the API's reason rather than a generic failure.
+  let message = "Unable to publish submission.";
+
+  try {
+    const problem = await response.json();
+
+    if (typeof problem?.detail === "string") {
+      message = problem.detail;
+    }
+  } catch {
+    // No problem body — fall back to the generic message.
+  }
+
+  throw new Error(message);
 }

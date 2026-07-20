@@ -16,6 +16,7 @@ using RegOS.Submission.Infrastructure.Repositories;
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Application.Tests;
 
@@ -224,10 +225,13 @@ public sealed class PublishSubmissionSnapshotTests : IAsyncLifetime
 
         await using (var ctx = New())
         {
-            // Already published — the validator stops it before any snapshot work.
-            var second = await PublishHandlerFor(ctx).HandleAsync(
+            // Already published — rejected as a lifecycle conflict before any
+            // snapshot work happens. The assertion below is the point: the
+            // failed republish must leave no second snapshot behind.
+            var call = () => PublishHandlerFor(ctx).HandleAsync(
                 new PublishSubmissionCommand(submissionId), default);
-            second.Published.Should().BeFalse();
+
+            await call.Should().ThrowAsync<BusinessRuleViolationException>();
         }
 
         await using (var ctx = New())
