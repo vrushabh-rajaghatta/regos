@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Product\RegOS.Product.Domain\RegOS.Product.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Organization\RegOS.Organization.Domain\RegOS.Organization.Domain.csproj" />
   </ItemGroup>
 
 </Project>

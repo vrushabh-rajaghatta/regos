@@ -1,12 +1,15 @@
-namespace RegOS.Persistence.Configurations.Product;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using RegOS.Product.Domain.Product;
 
-public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
+using ProductAggregate = RegOS.Product.Domain.Product.Product;
+
+namespace RegOS.Persistence.Configurations.Product;
+
+public sealed class ProductConfiguration : IEntityTypeConfiguration<ProductAggregate>
 {
-    public void Configure(EntityTypeBuilder<Product> builder)
+    public void Configure(EntityTypeBuilder<ProductAggregate> builder)
     {
         builder.ToTable("Products");
 
@@ -21,8 +24,8 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(x => x.Name)
             .HasConversion(
                 name => name.Value,
-                value => new ProductName(value))
-            .HasMaxLength(200)
+                value => ProductName.Create(value))
+            .HasMaxLength(ProductName.MaxLength)
             .IsRequired();
 
         builder.Property(x => x.Type)

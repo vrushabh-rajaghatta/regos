@@ -1,3 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\RegOS.SharedKernel\RegOS.SharedKernel.csproj" />
+  </ItemGroup>
+
 </Project>

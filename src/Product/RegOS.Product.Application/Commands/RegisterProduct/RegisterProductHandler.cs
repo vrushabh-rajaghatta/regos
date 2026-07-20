@@ -1,26 +1,28 @@
-namespace RegOS.Product.Application.Commands.RegisterProduct;
-
 using RegOS.Product.Application.Persistence;
 using RegOS.Product.Domain.Product;
+
+using ProductAggregate = RegOS.Product.Domain.Product.Product;
+
+namespace RegOS.Product.Application.Commands.RegisterProduct;
 
 public sealed class RegisterProductHandler
 {
     private readonly IProductRepository _repository;
-    private readonly IUnitOfWork _unitOfWork;
 
-    public RegisterProductHandler(IProductRepository productRepository, IUnitOfWork unitOfWork)
+    public RegisterProductHandler(IProductRepository repository)
     {
-        _repository = productRepository;
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
-    public async Task<ProductId> HandleAsync(RegisterProductCommand command, CancellationToken cancellationToken = default)
+    public async Task<ProductId> HandleAsync(
+        RegisterProductCommand command,
+        CancellationToken cancellationToken)
     {
-        var product = Product.Create(command.Name, command.Type);
+        // The aggregate owns the invariants (name required, length); the
+        // handler never reimplements them.
+        var product = ProductAggregate.Register(command.Name, command.Type);
 
         await _repository.AddAsync(product, cancellationToken);
-
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return product.Id;
     }

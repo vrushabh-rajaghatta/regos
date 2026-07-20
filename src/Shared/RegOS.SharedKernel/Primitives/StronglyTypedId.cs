@@ -1,3 +1,5 @@
+using RegOS.SharedKernel.Exceptions;
+
 namespace RegOS.SharedKernel.Primitives;
 
 /// <summary>
@@ -16,10 +18,12 @@ public abstract class StronglyTypedId : IEquatable<StronglyTypedId>
 {
     protected StronglyTypedId(Guid value)
     {
+        // DomainException, not ArgumentException: an empty id almost always
+        // arrives from a caller (an all-zero guid in a route or body), so it is
+        // an invalid request (400) rather than an unexpected fault (500). See
+        // ADR-009 - this is the "decidable from the request alone" branch.
         if (value == Guid.Empty)
-            throw new ArgumentException(
-                "A strongly typed id cannot be empty.",
-                nameof(value));
+            throw new DomainException("A strongly typed id cannot be empty.");
 
         Value = value;
     }

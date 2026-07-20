@@ -1,4 +1,5 @@
 using RegOS.Product.Application.Persistence;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Product.Application.Queries.GetProduct;
 
@@ -11,16 +12,17 @@ public sealed class GetProductHandler
         _repository = repository;
     }
 
-    public async Task<ProductResponse?> HandleAsync(
+    public async Task<ProductResponse> HandleAsync(
         GetProductQuery query,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         var product = await _repository.GetByIdAsync(
-            query.Id,
-            cancellationToken);
+            query.Id, cancellationToken);
 
+        // Queries signal "not found" explicitly rather than returning null, so
+        // the API has one contract and nullability does not leak upwards.
         if (product is null)
-            return null;
+            throw new NotFoundException(ProductQueryErrors.ProductNotFound);
 
         return new ProductResponse(
             product.Id.Value,
