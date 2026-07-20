@@ -1,360 +1,42 @@
-# Technology Decisions
-
-Version: 1.0 (Draft)
-
----
-
-# Purpose
-
-This document records the significant architectural and technology decisions made during the development of the Regulatory Operating System (RegOS).
-
-Each decision captures:
-
-- The problem being solved
-- The decision that was made
-- The rationale behind the decision
-- Alternatives that were considered
-- The implications of the decision
-
-The objective is to preserve architectural intent and avoid repeatedly revisiting previously resolved discussions.
-
----
-
-# Decision Status
-
-| Status     | Meaning                      |
-| ---------- | ---------------------------- |
-| Proposed   | Under discussion             |
-| Accepted   | Approved and adopted         |
-| Superseded | Replaced by a newer decision |
-| Deprecated | No longer recommended        |
-
----
-
-# ADR-001 — Modular Architecture
-
-## Status
-
-Accepted
-
-## Decision
-
-Organize the system around business modules rather than technical layers.
-
-## Rationale
-
-Business modules provide clear ownership, improve discoverability, and reduce coupling between unrelated functionality.
-
-## Alternatives Considered
-
-- Layer-first architecture
-- Namespace-by-technical-layer
-
-## Consequences
-
-- Higher cohesion
-- Easier navigation
-- Better long-term scalability
-
----
-
-# ADR-002 — CQRS
-
-## Status
-
-Accepted
-
-## Decision
-
-Separate commands and queries.
-
-Commands modify business state.
-
-Queries build read models.
-
-## Rationale
-
-Read and write operations have different responsibilities.
-
-Keeping them separate improves maintainability and simplifies testing.
-
-## Alternatives Considered
-
-Traditional CRUD services.
-
-## Consequences
-
-- Clear separation of responsibilities.
-- Simpler query optimization.
-- Easier evolution of read models.
-
----
-
-# ADR-003 — No MediatR
-
-## Status
-
-Accepted
-
-## Decision
-
-Use explicit handlers with dependency injection instead of MediatR.
-
-## Rationale
-
-The project values explicit dependencies and straightforward execution flow over indirection.
-
-Handlers are easy to discover, test, and debug without introducing an additional mediator abstraction.
-
-## Alternatives Considered
-
-- MediatR
-- Custom mediator implementation
-
-## Consequences
-
-- Less abstraction
-- Simpler debugging
-- Explicit dependency registration
-
----
-
-# ADR-004 — Explicit Dependency Injection
-
-## Status
-
-Accepted
-
-## Decision
-
-Register handlers and services explicitly.
-
-## Rationale
-
-Explicit registrations make dependencies visible and simplify troubleshooting.
-
-Automatic assembly scanning was considered unnecessary for the current scale of the project.
-
-## Alternatives Considered
-
-Assembly scanning
-
-## Consequences
-
-- Clear registrations
-- Predictable startup
-- Easier maintenance
-
----
-
-# ADR-005 — DbContext Usage
-
-## Status
-
-Accepted
-
-## Decision
-
-Application handlers may use RegOSDbContext directly.
-
-## Rationale
-
-Introducing repositories would add abstraction without providing sufficient value for the current architecture.
-
-Entity Framework Core already provides a repository and unit-of-work pattern.
-
-## Alternatives Considered
-
-Repository pattern
-
-## Consequences
-
-- Less boilerplate
-- Simpler implementation
-- Easier query composition
-
----
-
-# ADR-006 — Read Model Composition
-
-## Status
-
-Accepted
-
-## Decision
-
-Query handlers compose their own read models.
-
-Query handlers should not invoke other query handlers.
-
-## Rationale
-
-Read model composition remains explicit and avoids unnecessary coupling between handlers.
-
-## Consequences
-
-- Predictable query flow
-- Better performance
-- Easier optimization
-
----
-
-# ADR-007 — Module Ownership
-
-## Status
-
-Accepted
-
-## Decision
-
-Every business capability belongs to exactly one module.
-
-## Rationale
-
-Clear ownership prevents duplicated business logic and establishes well-defined architectural boundaries.
-
-## Consequences
-
-- Single source of truth
-- Reduced duplication
-- Clear maintenance responsibility
-
----
-
-# ADR-008 — Composition Modules
-
-## Status
-
-Accepted
-
-## Decision
-
-Experience modules aggregate information but never own business state.
-
-Examples include:
-
-- Application Workspace
-- Dashboard
-- Reporting
-- Analytics
-
-## Rationale
-
-Business rules remain within producer modules while composition modules focus exclusively on presenting information.
-
-## Consequences
-
-- Clear separation of concerns
-- Simpler maintenance
-- Flexible user experiences
-
----
-
-# ADR-009 — Development Lifecycle
-
-## Status
-
-Accepted
-
-## Decision
-
-Every capability follows the same engineering lifecycle.
-
-Capability
-
-↓
-
-Design
-
-↓
-
-Sprint
-
-↓
-
-Milestone
-
-↓
-
-Implementation
-
-↓
-
-Review
-
-↓
-
-Freeze
-
-## Rationale
-
-A consistent process improves predictability, reduces rework, and ensures architectural alignment.
-
-## Consequences
-
-- Higher implementation quality
-- Repeatable delivery
-- Better documentation
-
----
-
-# ADR-010 — Documentation as Code
-
-## Status
-
-Accepted
-
-## Decision
-
-Architecture documentation evolves alongside the codebase.
-
-Documentation updates are part of the Definition of Done.
-
-## Rationale
-
-Keeping documentation synchronized with implementation preserves architectural knowledge and supports onboarding.
-
-## Consequences
-
-- Living documentation
-- Reduced knowledge loss
-- Easier long-term maintenance
-
----
-
-# Future Decisions
-
-As RegOS evolves, additional decisions may be recorded, including:
-
-- Event-driven architecture
-- Background job processing
-- Search infrastructure
-- Caching strategy
-- API versioning
-- Multi-region deployment
-- AI integration
-- Plugin architecture
-- External authority integrations
-
----
-
-# Decision Process
-
-New architectural decisions should follow this process.
-
-1. Identify the problem.
-2. Evaluate alternatives.
-3. Record the proposed decision.
-4. Review with stakeholders.
-5. Approve or reject.
-6. Update this document.
-
-Architecture decisions should be made deliberately and documented before widespread implementation.
-
----
-
-# Guiding Principle
-
-Every significant technical decision should have a recorded rationale.
-
-Future contributors should be able to understand not only _what_ the system does, but _why_ it was designed that way.
+# Technology Decisions — Retired
+
+**This document was retired on 2026-07-20.** Its contents have been extracted
+into individual Architecture Decision Records.
+
+The canonical location for every RegOS architecture decision is
+[`docs/adr/`](../adr/README.md).
+
+## Why
+
+This file held ADR-001 through ADR-010 as numbered sections. A second, parallel
+ADR series was meanwhile growing in `docs/adr/`, and the two disagreed about
+what ADR-007, ADR-008 and ADR-009 meant — while source code cited numbers from
+both. A decision log that returns a different answer depending on which file you
+open is worse than no log.
+
+The reconciliation, and how each collision was resolved, is documented in
+[`docs/adr/README.md`](../adr/README.md#the-2026-07-20-reconciliation).
+
+## Where each decision went
+
+| Was | Now |
+|---|---|
+| ADR-001 Modular Architecture | [ADR-001](../adr/ADR-001-modular-architecture.md) |
+| ADR-002 CQRS | [ADR-002](../adr/ADR-002-cqrs.md) |
+| ADR-003 No MediatR | [ADR-003](../adr/ADR-003-no-mediatr.md) |
+| ADR-004 Explicit Dependency Injection | [ADR-004](../adr/ADR-004-explicit-dependency-injection.md) |
+| ADR-005 DbContext Usage | [ADR-005](../adr/ADR-005-dbcontext-usage.md) — **superseded** by [ADR-016](../adr/ADR-016-persistence-access-model.md) |
+| ADR-006 Read Model Composition | [ADR-006](../adr/ADR-006-read-model-composition.md) |
+| ADR-007 Module Ownership | [ADR-007](../adr/ADR-007-module-ownership.md) |
+| ADR-008 Composition Modules | [ADR-008](../adr/ADR-008-composition-modules.md) |
+| ADR-009 Development Lifecycle | **[ADR-011](../adr/ADR-011-development-lifecycle.md)** — renumbered |
+| ADR-010 Documentation as Code | [ADR-010](../adr/ADR-010-documentation-as-code.md) |
+
+`ADR-009` now means the [Command Validation Model](../adr/ADR-009-command-validation-model.md),
+which is cited by that number in four source files.
+
+## Future decisions
+
+The "Future Decisions" list previously kept here — event-driven architecture,
+background job processing — belongs in the roadmap, not in a decision log. A
+decision that has not been made does not get a number.

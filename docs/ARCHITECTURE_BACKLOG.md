@@ -4,11 +4,28 @@ This document tracks architectural improvements that have been intentionally def
 
 These are not bugs. They are engineering improvements that should be completed before the platform reaches production maturity.
 
+Statuses were reconciled against the codebase on **2026-07-20**. Three items had
+been completed without being closed here. An item is `Done` only when the code
+was checked, and the check is named.
+
+| Item | Status |
+|---|---|
+| AB-001 Consolidate EF Core DbContexts | Done |
+| AB-002 Global Exception Handling | Done |
+| AB-003 Replace Temporary Reference Data | Done |
+| AB-004 Pin .NET SDK with global.json | Done |
+| AB-005 Product Document deferred enhancements | Planned (mixed) |
+| AB-006 Extract Shared Workspace Pattern | Planned |
+
 ---
 
 ## AB-001 - Consolidate EF Core DbContexts
 
-Status: Planned
+Status: **Done** (verified 2026-07-20)
+
+Verified by: a single `RegOSDbContext` in `RegOS.Persistence` is the only
+context in the solution; every module's query handlers inject it. See
+[ADR-016](adr/ADR-016-persistence-access-model.md).
 
 Priority: High
 
@@ -42,7 +59,17 @@ Sprint 10
 
 ## AB-002 - Global Exception Handling
 
-Status: Planned
+Status: **Done** (verified 2026-07-20)
+
+Verified by: `ExceptionHandlingMiddleware` registered at `Program.cs:92`; the
+three shared exception types of
+[ADR-012](adr/ADR-012-shared-semantic-exception-model.md); and **zero of 35
+endpoints containing a try/catch** — the duplication described below is gone.
+`GetProductEndpoint.cs:16` carries a comment explaining the absence.
+
+Which rejection maps to which status is now decided by
+[ADR-009](adr/ADR-009-command-validation-model.md) rather than by handler-author
+preference.
 
 Priority: Medium
 
@@ -50,15 +77,15 @@ Description
 
 Introduce a consistent exception handling middleware.
 
-Current state
+Original state (resolved)
 
 Unhandled exceptions are returned directly from ASP.NET.
 
-Desired state
+Desired state (achieved)
 
 Map domain/application exceptions to ProblemDetails responses.
 
-Concrete instances observed
+Concrete instances observed (all resolved)
 
 - Product Document upload with a duplicate name (same ProductId + Name)
   hits the unique constraint. The orphaned file is cleaned up correctly,
@@ -80,7 +107,11 @@ TBD
 
 ## AB-003 - Replace Temporary Reference Data
 
-Status: Planned
+Status: **Done** (verified 2026-07-20)
+
+Verified by: `Country`, `Authority`, `DocumentType` and `SubmissionType`
+aggregates in `RegOS.ReferenceData.Domain`, each with a list query and endpoint;
+`Organization` in `src/Organization`, with `ListOrganizations`.
 
 Priority: High
 
@@ -97,6 +128,8 @@ These capabilities should replace temporary assumptions in the Application workf
 Target Sprint
 
 Sprint 11-13
+
+---
 
 ## AB-004 - Pin .NET SDK with global.json
 
@@ -174,7 +207,11 @@ Distributed across Sprint 19+ per the notes above.
 
 ## AB-006 - Extract Shared Workspace Pattern
 
-Status: Planned
+Status: Planned (re-verified 2026-07-20 — still outstanding)
+
+Verified by: four `*WorkspaceLayout.tsx` / `*WorkspaceNavigation.tsx` pairs still
+exist under `features/regulatory/{products,applications,submissions,documents}`,
+and `web/regos-web/src/shared/` contains no `workspace/` directory.
 
 Priority: Medium
 

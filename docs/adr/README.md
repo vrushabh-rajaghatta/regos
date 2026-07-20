@@ -102,10 +102,27 @@ The reconciliation surfaced three decisions the codebase had already made:
   *contradicted* ADR-005, which had rejected repositories; ADR-005 is now
   superseded.
 
-### Known unresolved citation
+---
 
-`docs/capabilities/register-product.md:21` and `docs/domain-model/product.md:21`
-both cite **`ADR-0002`** — a four-digit format belonging to neither series. Its
-intended target is ambiguous (ADR-002 CQRS is the likeliest reading, but nothing
-confirms it). **Not guessed at during reconciliation.** Resolve it deliberately,
-then delete this section.
+## Unresolved references
+
+Citations whose provenance cannot be established. **Architecture documentation
+does not fabricate history** — an unresolvable reference is recorded as unknown
+rather than guessed at.
+
+### `ADR-0002`
+
+**Referenced by**
+- `docs/capabilities/register-product.md:21`
+- `docs/domain-model/product.md:21`
+
+**Meaning**
+Unknown. The four-digit format belongs to neither historical series. ADR-002
+(CQRS) is the likeliest reading, but nothing corroborates it and both citing
+documents concern product registration, where CQRS is not an obviously relevant
+decision.
+
+**Action**
+Resolve before any further ADR renumbering. Whoever wrote these documents is the
+cheapest source of truth. Once resolved, correct both citations and delete this
+entry.
