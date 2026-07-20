@@ -1,7 +1,16 @@
 # ADR-009 — Command Validation Model
 
 **Status:** Accepted · **Date:** 2026-07-20 · **Supersedes:** nothing ·
-**Related:** ADR-007 (shared exception contract), ADR-008 (tenant context)
+**Related:** [ADR-012](ADR-012-shared-semantic-exception-model.md) (shared
+exception contract), [ADR-013](ADR-013-ambient-tenant-context.md) (tenant context)
+
+> **Reference correction, 2026-07-20.** This ADR was written against a parallel
+> numbering series in which the shared exception contract was "ADR-007" and the
+> tenant context was "ADR-008". In the canonical series those numbers belong to
+> Module Ownership and Composition Modules. The two decisions this ADR depends
+> on are now ADR-012 and ADR-013; references below have been updated. The
+> number of *this* ADR is unchanged — it is cited as ADR-009 in four source
+> files.
 
 ## Context
 
@@ -119,7 +128,7 @@ Consistency is not worth removing the one place where reporting several
 failures at once is the correct behaviour.
 
 **Make every rejection a validation result.** Would require every handler to
-return a result type, replacing exceptions we unified in ADR-007 one story ago.
+return a result type, replacing exceptions we unified in ADR-012 one story ago.
 
 **Introduce FluentValidation.** Explicitly out of scope. No new mechanism is
 needed; the question was which of two existing mechanisms to use.

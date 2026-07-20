@@ -40,3 +40,9 @@ Each was learned from a check that reported the wrong answer:
 3. **Verify the consumer of invalidated state.** Checking that a detail page
    shows an edit proves little; that view holds fresh state anyway. Check the
    *list* too, which only refreshes if the cache was genuinely invalidated.
+
+4. **Never depend on ambient database contents.** Seed what you need and clean
+   it up. Two specs here were written against seeded rows and broke as soon as
+   the data changed — once asserting "no products are archived", once picking
+   the first search result for a product that later got archived. If a spec
+   needs a product, it registers one.
