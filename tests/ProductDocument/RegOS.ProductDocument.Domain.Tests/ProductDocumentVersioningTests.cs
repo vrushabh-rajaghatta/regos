@@ -3,6 +3,7 @@ using System.Linq;
 using FluentAssertions;
 
 using RegOS.ProductDocument.Domain.Errors;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ProductDocument.Domain.Tests;
 
@@ -55,7 +56,7 @@ public class ProductDocumentVersioningTests
 
         var act = () => TestFactory.AddInitial(document);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ProductDocumentErrors.DocumentAlreadyHasInitialVersion);
     }
 
@@ -117,7 +118,7 @@ public class ProductDocumentVersioningTests
 
         var act = () => TestFactory.AddNext(document);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ProductDocumentErrors.DocumentHasNoInitialVersion);
     }
 }

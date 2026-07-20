@@ -7,7 +7,6 @@ using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.DocumentType;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Application.Validation;
 using RegOS.Submission.Application.Validation.Models;
@@ -17,6 +16,7 @@ using RegOS.Submission.Infrastructure.Repositories;
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Application.Tests;
 
@@ -212,7 +212,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
 
         var call = () => ValidatorFor(act).ValidateAsync(SubmissionId.New(), default);
 
-        await call.Should().ThrowAsync<SubmissionNotFoundException>();
+        await call.Should().ThrowAsync<NotFoundException>();
     }
 
     // --- Query handler: response contract ------------------------------------

@@ -1,6 +1,5 @@
 using RegOS.Product.Domain.Product;
 using RegOS.ProductDocument.Application.Commands.ArchiveProductDocument;
-using RegOS.ProductDocument.Application.Exceptions;
 using RegOS.ProductDocument.Domain.IDs;
 
 namespace RegOS.Api.Endpoints.ProductDocuments;
@@ -24,28 +23,12 @@ public static class ArchiveProductDocumentEndpoint
         ArchiveProductDocumentHandler handler,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await handler.HandleAsync(
-                new ArchiveProductDocumentCommand(
-                    new ProductId(productId),
-                    new ProductDocumentId(documentId)),
-                cancellationToken);
+        await handler.HandleAsync(
+            new ArchiveProductDocumentCommand(
+                new ProductId(productId),
+                new ProductDocumentId(documentId)),
+            cancellationToken);
 
-            return Results.NoContent();
-        }
-        catch (DocumentNotFoundException ex)
-        {
-            return Results.Problem(
-                detail: ex.Message,
-                statusCode: StatusCodes.Status404NotFound);
-        }
-        catch (InvalidOperationException ex)
-        {
-            // Invalid lifecycle transition -> state conflict.
-            return Results.Problem(
-                detail: ex.Message,
-                statusCode: StatusCodes.Status409Conflict);
-        }
+        return Results.NoContent();
     }
 }

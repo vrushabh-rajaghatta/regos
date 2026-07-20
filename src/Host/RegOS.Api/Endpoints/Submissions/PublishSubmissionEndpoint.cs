@@ -1,5 +1,4 @@
 using RegOS.Submission.Application.Commands.PublishSubmission;
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Domain.Submission;
 
@@ -23,27 +22,17 @@ public static class PublishSubmissionEndpoint
         PublishSubmissionHandler handler,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await handler.HandleAsync(
-                new PublishSubmissionCommand(new SubmissionId(submissionId)),
-                cancellationToken);
+        var result = await handler.HandleAsync(
+            new PublishSubmissionCommand(new SubmissionId(submissionId)),
+            cancellationToken);
 
-            if (result.Published)
-            {
-                return Results.Ok();
-            }
-
-            // Not ready — return the reasons as structured data, not an error string.
-            return Results.BadRequest(
-                ValidateSubmissionResponse.From(result.Validation!));
-        }
-        catch (SubmissionNotFoundException ex)
+        if (result.Published)
         {
-            // The addressed resource (the Submission) does not exist.
-            return Results.Problem(
-                detail: ex.Message,
-                statusCode: StatusCodes.Status404NotFound);
+            return Results.Ok();
         }
+
+        // Not ready — return the reasons as structured data, not an error string.
+        return Results.BadRequest(
+            ValidateSubmissionResponse.From(result.Validation!));
     }
 }

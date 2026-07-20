@@ -4,6 +4,7 @@ using RegOS.ProductDocument.Domain.Enums;
 using RegOS.ProductDocument.Domain.Errors;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.DocumentType;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ProductDocument.Domain.Aggregates;
 
@@ -54,26 +55,18 @@ public sealed class ProductDocument
         string name)
     {
         if (productId == default)
-            throw new ArgumentException(
-                ProductDocumentErrors.ProductRequired,
-                nameof(productId));
+            throw new DomainException(ProductDocumentErrors.ProductRequired);
 
         if (documentTypeId == default)
-            throw new ArgumentException(
-                ProductDocumentErrors.DocumentTypeRequired,
-                nameof(documentTypeId));
+            throw new DomainException(ProductDocumentErrors.DocumentTypeRequired);
 
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(
-                ProductDocumentErrors.DocumentNameRequired,
-                nameof(name));
+            throw new DomainException(ProductDocumentErrors.DocumentNameRequired);
 
         var trimmedName = name.Trim();
 
         if (trimmedName.Length > NameMaxLength)
-            throw new ArgumentException(
-                ProductDocumentErrors.DocumentNameTooLong,
-                nameof(name));
+            throw new DomainException(ProductDocumentErrors.DocumentNameTooLong);
 
         return new ProductDocument(
             ProductDocumentId.New(),
@@ -93,7 +86,7 @@ public sealed class ProductDocument
         string checksum)
     {
         if (_versions.Count > 0)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ProductDocumentErrors.DocumentAlreadyHasInitialVersion);
 
         AppendVersion(
@@ -120,7 +113,7 @@ public sealed class ProductDocument
         string checksum)
     {
         if (_versions.Count == 0)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ProductDocumentErrors.DocumentHasNoInitialVersion);
 
         var nextVersionNumber = _versions.Max(v => v.VersionNumber) + 1;
@@ -139,18 +132,18 @@ public sealed class ProductDocument
     public void Activate()
     {
         if (Status == ProductDocumentStatus.Archived)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ProductDocumentErrors.DocumentArchived);
 
         if (Status == ProductDocumentStatus.Active)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ProductDocumentErrors.DocumentAlreadyActive);
 
         // A document with no content is not something the business can
         // approve — the aggregate enforces this rather than trusting the
         // upload workflow to always have run first.
         if (CurrentVersionId is null)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ProductDocumentErrors.CannotActivateWithoutVersion);
 
         Status = ProductDocumentStatus.Active;
@@ -160,11 +153,11 @@ public sealed class ProductDocument
     public void Archive()
     {
         if (Status == ProductDocumentStatus.Archived)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ProductDocumentErrors.DocumentArchived);
 
         if (Status == ProductDocumentStatus.Draft)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ProductDocumentErrors.CannotArchiveDraft);
 
         Status = ProductDocumentStatus.Archived;

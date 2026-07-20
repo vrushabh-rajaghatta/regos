@@ -1,4 +1,5 @@
 using RegOS.ReferenceData.Domain.Geography.Country;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ReferenceData.Domain.Regulatory.Authority;
 
@@ -23,19 +24,13 @@ public sealed class Authority
         CountryId countryId)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException(
-                AuthorityErrors.CodeRequired,
-                nameof(code));
+            throw new DomainException(AuthorityErrors.CodeRequired);
 
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(
-                AuthorityErrors.NameRequired,
-                nameof(name));
+            throw new DomainException(AuthorityErrors.NameRequired);
 
         if (countryId == default)
-            throw new ArgumentException(
-                AuthorityErrors.CountryRequired,
-                nameof(countryId));
+            throw new DomainException(AuthorityErrors.CountryRequired);
 
         return new Authority
         {

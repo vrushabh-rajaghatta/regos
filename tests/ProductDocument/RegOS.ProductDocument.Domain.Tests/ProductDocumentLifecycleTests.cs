@@ -2,6 +2,7 @@ using FluentAssertions;
 
 using RegOS.ProductDocument.Domain.Enums;
 using RegOS.ProductDocument.Domain.Errors;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ProductDocument.Domain.Tests;
 
@@ -58,7 +59,7 @@ public class ProductDocumentLifecycleTests
 
         var act = () => document.Activate();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ProductDocumentErrors.CannotActivateWithoutVersion);
     }
 
@@ -69,7 +70,7 @@ public class ProductDocumentLifecycleTests
 
         var act = () => document.Archive();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ProductDocumentErrors.CannotArchiveDraft);
     }
 
@@ -81,7 +82,7 @@ public class ProductDocumentLifecycleTests
 
         var act = () => document.Activate();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ProductDocumentErrors.DocumentAlreadyActive);
     }
 
@@ -94,7 +95,7 @@ public class ProductDocumentLifecycleTests
 
         var act = () => document.Activate();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ProductDocumentErrors.DocumentArchived);
     }
 
@@ -107,7 +108,7 @@ public class ProductDocumentLifecycleTests
 
         var act = () => document.Archive();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ProductDocumentErrors.DocumentArchived);
     }
 }

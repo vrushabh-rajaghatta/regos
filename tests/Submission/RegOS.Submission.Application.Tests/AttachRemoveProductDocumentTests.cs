@@ -9,13 +9,13 @@ using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Application.Commands.AttachProductDocument;
 using RegOS.Submission.Application.Commands.RemoveProductDocument;
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Domain.Submission;
 using RegOS.Submission.Infrastructure.Repositories;
 
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Application.Tests;
 
@@ -168,7 +168,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
     // --- Attach: validation --------------------------------------------------
 
     [Fact]
-    public async Task Attach_UnknownProductDocument_ThrowsBusinessRule()
+    public async Task Attach_UnknownProductDocument_ThrowsInvalidRequest()
     {
         SubmissionId submissionId;
         await using (var ctx = New())
@@ -186,7 +186,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
                 submissionId, ProductDocumentId.New()),
             default);
 
-        await call.Should().ThrowAsync<BusinessRuleViolationException>()
+        await call.Should().ThrowAsync<DomainException>()
             .WithMessage(SubmissionRuleErrors.ProductDocumentDoesNotExist);
     }
 
@@ -217,7 +217,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Attach_DocumentFromAnotherProduct_ThrowsBusinessRule()
+    public async Task Attach_DocumentFromAnotherProduct_ThrowsInvalidRequest()
     {
         SubmissionId submissionId;
         ProductDocumentId documentId;
@@ -244,7 +244,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
             new AttachProductDocumentCommand(submissionId, documentId),
             default);
 
-        await call.Should().ThrowAsync<BusinessRuleViolationException>()
+        await call.Should().ThrowAsync<DomainException>()
             .WithMessage(SubmissionRuleErrors.ProductDocumentNotInSameProduct);
     }
 
@@ -260,7 +260,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
                 SubmissionId.New(), ProductDocumentId.New()),
             default);
 
-        await call.Should().ThrowAsync<SubmissionNotFoundException>()
+        await call.Should().ThrowAsync<NotFoundException>()
             .WithMessage(SubmissionRuleErrors.SubmissionDoesNotExist);
     }
 
@@ -296,7 +296,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
                 new AttachProductDocumentCommand(submissionId, documentId),
                 default);
 
-            await call.Should().ThrowAsync<InvalidOperationException>()
+            await call.Should().ThrowAsync<BusinessRuleViolationException>()
                 .WithMessage(SubmissionErrors.ProductDocumentAlreadyAttached);
         }
     }
@@ -360,7 +360,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
                 submissionId, SubmissionDocumentId.New()),
             default);
 
-        await call.Should().ThrowAsync<InvalidOperationException>()
+        await call.Should().ThrowAsync<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.DocumentNotAttached);
     }
 
@@ -375,7 +375,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
                 SubmissionId.New(), SubmissionDocumentId.New()),
             default);
 
-        await call.Should().ThrowAsync<SubmissionNotFoundException>()
+        await call.Should().ThrowAsync<NotFoundException>()
             .WithMessage(SubmissionRuleErrors.SubmissionDoesNotExist);
     }
 }

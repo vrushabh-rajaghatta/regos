@@ -19,6 +19,8 @@ using DocumentTypeAggregate =
     RegOS.ReferenceData.Domain.DocumentType.DocumentType;
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
+using UserAggregate =
+    RegOS.Platform.Domain.Aggregates.User.User;
 
 namespace RegOS.Persistence;
 
@@ -59,6 +61,13 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<ProductDocumentAggregate> ProductDocuments =>
         Set<ProductDocumentAggregate>();
+
+    public DbSet<UserAggregate> Users =>
+        Set<UserAggregate>();
+
+    /// <summary>Read-only projection over Users for the user directory.</summary>
+    public DbSet<ReadModels.UserDirectoryRow> UserDirectory =>
+        Set<ReadModels.UserDirectoryRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

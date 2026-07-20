@@ -6,6 +6,7 @@ using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Domain.Submission;
 
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Domain.Tests.Submission;
 
@@ -73,7 +74,7 @@ public class SubmissionDocumentTests
         var act = () => submission.AttachDocument(
             default, DocumentVersionId.New());
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{SubmissionErrors.ProductDocumentRequired}*");
     }
 
@@ -85,7 +86,7 @@ public class SubmissionDocumentTests
         var act = () => submission.AttachDocument(
             ProductDocumentId.New(), default);
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{SubmissionErrors.DocumentVersionRequired}*");
     }
 
@@ -102,7 +103,7 @@ public class SubmissionDocumentTests
         // entry per Product Document.
         var act = () => submission.AttachDocument(doc, DocumentVersionId.New());
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.ProductDocumentAlreadyAttached);
         submission.Documents.Should().ContainSingle();
     }
@@ -129,7 +130,7 @@ public class SubmissionDocumentTests
 
         var act = () => submission.RemoveDocument(SubmissionDocumentId.New());
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.DocumentNotAttached);
     }
 
@@ -144,7 +145,7 @@ public class SubmissionDocumentTests
         var (doc, version) = NewRef();
         var act = () => submission.AttachDocument(doc, version);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.DocumentsLockedUnlessDraft);
     }
 
@@ -159,7 +160,7 @@ public class SubmissionDocumentTests
 
         var act = () => submission.RemoveDocument(id);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.DocumentsLockedUnlessDraft);
     }
 
@@ -244,7 +245,7 @@ public class SubmissionDocumentTests
 
         var act = () => submission.Publish(DateTimeOffset.UtcNow);
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.SubmissionNotDraft);
     }
 }

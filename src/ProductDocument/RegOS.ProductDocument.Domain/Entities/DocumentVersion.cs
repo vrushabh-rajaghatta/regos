@@ -1,5 +1,6 @@
 using RegOS.ProductDocument.Domain.Errors;
 using RegOS.ProductDocument.Domain.IDs;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ProductDocument.Domain.Entities;
 
@@ -20,29 +21,19 @@ public sealed class DocumentVersion
         DateTime uploadedOnUtc)
     {
         if (string.IsNullOrWhiteSpace(originalFileName))
-            throw new ArgumentException(
-                ProductDocumentErrors.OriginalFileNameRequired,
-                nameof(originalFileName));
+            throw new DomainException(ProductDocumentErrors.OriginalFileNameRequired);
 
         if (string.IsNullOrWhiteSpace(storedFileName))
-            throw new ArgumentException(
-                ProductDocumentErrors.StoredFileNameRequired,
-                nameof(storedFileName));
+            throw new DomainException(ProductDocumentErrors.StoredFileNameRequired);
 
         if (string.IsNullOrWhiteSpace(contentType))
-            throw new ArgumentException(
-                ProductDocumentErrors.ContentTypeRequired,
-                nameof(contentType));
+            throw new DomainException(ProductDocumentErrors.ContentTypeRequired);
 
         if (string.IsNullOrWhiteSpace(storagePath))
-            throw new ArgumentException(
-                ProductDocumentErrors.InvalidStoragePath,
-                nameof(storagePath));
+            throw new DomainException(ProductDocumentErrors.InvalidStoragePath);
 
         if (fileSize <= 0)
-            throw new ArgumentException(
-                ProductDocumentErrors.InvalidFileSize,
-                nameof(fileSize));
+            throw new DomainException(ProductDocumentErrors.InvalidFileSize);
 
         Id = id;
         VersionNumber = versionNumber;

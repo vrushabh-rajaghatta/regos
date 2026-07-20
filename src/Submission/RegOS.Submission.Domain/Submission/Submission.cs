@@ -1,6 +1,7 @@
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Domain.Submission;
 
@@ -50,19 +51,13 @@ public sealed class Submission
         string title)
     {
         if (applicationId == default)
-            throw new ArgumentException(
-                SubmissionErrors.ApplicationRequired,
-                nameof(applicationId));
+            throw new DomainException(SubmissionErrors.ApplicationRequired);
 
         if (submissionTypeId == default)
-            throw new ArgumentException(
-                SubmissionErrors.SubmissionTypeRequired,
-                nameof(submissionTypeId));
+            throw new DomainException(SubmissionErrors.SubmissionTypeRequired);
 
         if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException(
-                SubmissionErrors.TitleRequired,
-                nameof(title));
+            throw new DomainException(SubmissionErrors.TitleRequired);
 
         return new Submission(
             SubmissionId.New(),
@@ -85,24 +80,20 @@ public sealed class Submission
         DocumentVersionId documentVersionId)
     {
         if (productDocumentId == default)
-            throw new ArgumentException(
-                SubmissionErrors.ProductDocumentRequired,
-                nameof(productDocumentId));
+            throw new DomainException(SubmissionErrors.ProductDocumentRequired);
 
         if (documentVersionId == default)
-            throw new ArgumentException(
-                SubmissionErrors.DocumentVersionRequired,
-                nameof(documentVersionId));
+            throw new DomainException(SubmissionErrors.DocumentVersionRequired);
 
         // Rule 1 — only a draft dossier may change.
         if (Status != SubmissionStatus.Draft)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 SubmissionErrors.DocumentsLockedUnlessDraft);
 
         // Rule 2 — the same document cannot be attached twice. Changing the
         // version of an existing attachment is a future capability.
         if (_documents.Any(d => d.ProductDocumentId == productDocumentId))
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 SubmissionErrors.ProductDocumentAlreadyAttached);
 
         // Rule 3 — the aggregate owns ordering; callers never supply it.
@@ -131,7 +122,7 @@ public sealed class Submission
     {
         // Rule 1 — only a draft dossier may change.
         if (Status != SubmissionStatus.Draft)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 SubmissionErrors.DocumentsLockedUnlessDraft);
 
         // Rule 4 — can only remove something that is actually attached.
@@ -139,7 +130,7 @@ public sealed class Submission
             d => d.Id == submissionDocumentId);
 
         if (document is null)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 SubmissionErrors.DocumentNotAttached);
 
         _documents.Remove(document);
@@ -155,12 +146,10 @@ public sealed class Submission
         // The application supplies the timestamp — the aggregate never reads the
         // clock, keeping Publish deterministic and testable.
         if (publishedAt == default)
-            throw new ArgumentException(
-                SubmissionErrors.PublishedAtRequired,
-                nameof(publishedAt));
+            throw new DomainException(SubmissionErrors.PublishedAtRequired);
 
         if (Status != SubmissionStatus.Draft)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 SubmissionErrors.SubmissionNotDraft);
 
         Status = SubmissionStatus.Published;

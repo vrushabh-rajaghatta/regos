@@ -1,5 +1,4 @@
 using RegOS.Submission.Application.Commands.RemoveProductDocument;
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Domain.Submission;
 
 namespace RegOS.Api.Endpoints.Submissions;
@@ -22,29 +21,12 @@ public static class RemoveProductDocumentEndpoint
         RemoveProductDocumentHandler handler,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            await handler.HandleAsync(
-                new RemoveProductDocumentCommand(
-                    new SubmissionId(submissionId),
-                    new SubmissionDocumentId(submissionDocumentId)),
-                cancellationToken);
+        await handler.HandleAsync(
+            new RemoveProductDocumentCommand(
+                new SubmissionId(submissionId),
+                new SubmissionDocumentId(submissionDocumentId)),
+            cancellationToken);
 
-            return Results.NoContent();
-        }
-        catch (SubmissionNotFoundException ex)
-        {
-            return Results.Problem(
-                detail: ex.Message,
-                statusCode: StatusCodes.Status404NotFound);
-        }
-        catch (InvalidOperationException ex)
-        {
-            // Aggregate invariant violated (submission not draft, or the
-            // attachment is not part of this submission).
-            return Results.Problem(
-                detail: ex.Message,
-                statusCode: StatusCodes.Status409Conflict);
-        }
+        return Results.NoContent();
     }
 }

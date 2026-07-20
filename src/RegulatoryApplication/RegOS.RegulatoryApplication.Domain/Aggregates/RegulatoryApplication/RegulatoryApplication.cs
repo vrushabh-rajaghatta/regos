@@ -2,6 +2,7 @@ using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
@@ -58,19 +59,19 @@ public sealed class RegulatoryApplication
         string name)
     {
         if (productId == default)
-            throw new ArgumentException(ProductRequired, nameof(productId));
+            throw new DomainException(ProductRequired);
 
         if (countryId == default)
-            throw new ArgumentException(CountryRequired, nameof(countryId));
+            throw new DomainException(CountryRequired);
 
         if (authorityId == default)
-            throw new ArgumentException(AuthorityRequired, nameof(authorityId));
+            throw new DomainException(AuthorityRequired);
 
         if (applicantOrganizationId == default)
-            throw new ArgumentException(ApplicantOrganizationRequired, nameof(applicantOrganizationId));
+            throw new DomainException(ApplicantOrganizationRequired);
 
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(NameRequired, nameof(name));
+            throw new DomainException(NameRequired);
 
         return new RegulatoryApplication(
             RegulatoryApplicationId.New(),
@@ -85,7 +86,7 @@ public sealed class RegulatoryApplication
     public void Rename(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(NameRequired, nameof(name));
+            throw new DomainException(NameRequired);
 
         Name = name.Trim();
     }
@@ -94,11 +95,11 @@ public sealed class RegulatoryApplication
     public void Activate()
     {
         if (Status == ApplicationStatus.Closed)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ApplicationErrors.ApplicationAlreadyClosed);
 
         if (Status == ApplicationStatus.Active)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ApplicationErrors.ApplicationAlreadyActive);
 
         // Status is Draft or OnHold.
@@ -109,11 +110,11 @@ public sealed class RegulatoryApplication
     public void PutOnHold()
     {
         if (Status == ApplicationStatus.Closed)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ApplicationErrors.ApplicationAlreadyClosed);
 
         if (Status != ApplicationStatus.Active)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ApplicationErrors.InvalidStatusTransition);
 
         Status = ApplicationStatus.OnHold;
@@ -123,11 +124,11 @@ public sealed class RegulatoryApplication
     public void Close()
     {
         if (Status == ApplicationStatus.Closed)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ApplicationErrors.ApplicationAlreadyClosed);
 
         if (Status != ApplicationStatus.Active)
-            throw new InvalidOperationException(
+            throw new BusinessRuleViolationException(
                 ApplicationErrors.InvalidStatusTransition);
 
         Status = ApplicationStatus.Closed;

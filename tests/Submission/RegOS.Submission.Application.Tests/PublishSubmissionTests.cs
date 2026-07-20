@@ -16,6 +16,7 @@ using RegOS.Submission.Infrastructure.Repositories;
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Application.Tests;
 
@@ -198,7 +199,7 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Publish_AlreadyPublished_ReturnsAlreadyPublishedIssue()
+    public async Task Publish_AlreadyPublished_ThrowsBusinessRuleViolation()
     {
         SubmissionId submissionId;
         await using (var ctx = New())
@@ -215,17 +216,16 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
                 new PublishSubmissionCommand(submissionId), default);
         }
 
-        // Second publish is stopped by the validator (already published).
-        PublishSubmissionResult second;
-        await using (var act = New())
-        {
-            second = await PublishHandlerFor(act).HandleAsync(
-                new PublishSubmissionCommand(submissionId), default);
-        }
+        // Republishing is a lifecycle conflict, not an unmet readiness
+        // criterion: there is no checklist the caller could work through, so it
+        // raises rather than returning issues. (ADR-009)
+        await using var act = New();
 
-        second.Published.Should().BeFalse();
-        second.Validation!.Issues.Select(i => i.Code).Should()
-            .Contain(SubmissionValidationCodes.SubmissionAlreadyPublished);
+        var call = () => PublishHandlerFor(act).HandleAsync(
+            new PublishSubmissionCommand(submissionId), default);
+
+        await call.Should().ThrowAsync<BusinessRuleViolationException>()
+            .WithMessage(SubmissionErrors.SubmissionNotDraft);
     }
 
     // --- Publish: immutability -----------------------------------------------
@@ -258,6 +258,6 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
         var call = () => attach.HandleAsync(
             new AttachProductDocumentCommand(submissionId, secondDocId), default);
 
-        await call.Should().ThrowAsync<InvalidOperationException>();
+        await call.Should().ThrowAsync<BusinessRuleViolationException>();
     }
 }

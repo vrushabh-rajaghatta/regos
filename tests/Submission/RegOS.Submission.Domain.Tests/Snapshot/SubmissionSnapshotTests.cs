@@ -3,6 +3,7 @@ using FluentAssertions;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.Submission.Domain.Snapshot;
 using RegOS.Submission.Domain.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Domain.Tests.Snapshot;
 
@@ -56,7 +57,7 @@ public class SubmissionSnapshotTests
     {
         var act = () => SubmissionSnapshot.Create(default, new[] { Doc(1) });
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<DomainException>();
     }
 
     [Fact]
@@ -66,7 +67,7 @@ public class SubmissionSnapshotTests
             SubmissionId.New(),
             new[] { (default(DocumentVersionId), 1) });
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<DomainException>();
     }
 
     [Fact]
@@ -76,7 +77,7 @@ public class SubmissionSnapshotTests
             SubmissionId.New(),
             new[] { (DocumentVersionId.New(), 1), (DocumentVersionId.New(), 1) });
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<DomainException>();
     }
 
     [Theory]
@@ -88,7 +89,7 @@ public class SubmissionSnapshotTests
             SubmissionId.New(),
             new[] { (DocumentVersionId.New(), order) });
 
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<DomainException>();
     }
 
     [Fact]

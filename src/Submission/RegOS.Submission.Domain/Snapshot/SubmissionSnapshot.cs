@@ -1,5 +1,6 @@
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.Submission.Domain.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Domain.Snapshot;
 
@@ -61,9 +62,7 @@ public sealed class SubmissionSnapshot
         IEnumerable<(DocumentVersionId VersionId, int DisplayOrder)> documents)
     {
         if (submissionId == default)
-            throw new ArgumentException(
-                "A snapshot must belong to a submission.",
-                nameof(submissionId));
+            throw new DomainException("A snapshot must belong to a submission.");
 
         ArgumentNullException.ThrowIfNull(documents);
 
@@ -76,9 +75,7 @@ public sealed class SubmissionSnapshot
         {
             // Cross-document invariant (Invariant 3) — belongs to the aggregate.
             if (!seenDisplayOrders.Add(displayOrder))
-                throw new ArgumentException(
-                    "Snapshot document display order must be unique.",
-                    nameof(documents));
+                throw new DomainException("Snapshot document display order must be unique.");
 
             snapshot._documents.Add(new SnapshotDocument(
                 SnapshotDocumentId.New(),

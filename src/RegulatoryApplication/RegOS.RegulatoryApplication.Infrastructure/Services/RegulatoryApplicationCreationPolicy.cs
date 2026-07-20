@@ -6,8 +6,8 @@ using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Application;
-using RegOS.RegulatoryApplication.Application.Exceptions;
 using RegOS.RegulatoryApplication.Application.Services;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.RegulatoryApplication.Infrastructure.Services;
 
@@ -28,12 +28,16 @@ public sealed class RegulatoryApplicationCreationPolicy
         OrganizationId organizationId,
         CancellationToken cancellationToken)
     {
-        // Rule 1 — Product exists.
+        // Rule 1 — Product exists. The product is ADDRESSED by the route
+        // (POST /api/products/{productId}/applications), so its absence is a
+        // 404 like any other missing resource — not a 400 about a bad value in
+        // the body. The country, authority and organization below are
+        // *referenced* values and stay 400.
         var productExists = await _dbContext.Products
             .AnyAsync(x => x.Id == productId, cancellationToken);
 
         if (!productExists)
-            throw new BusinessRuleViolationException(
+            throw new NotFoundException(
                 RegulatoryApplicationErrors.ProductDoesNotExist);
 
         // Rule 2 — Country exists.
@@ -41,7 +45,7 @@ public sealed class RegulatoryApplicationCreationPolicy
             .AnyAsync(x => x.Id == countryId, cancellationToken);
 
         if (!countryExists)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 RegulatoryApplicationErrors.CountryDoesNotExist);
 
         // Rule 3 — Authority exists (loaded once; reused for Rule 6).
@@ -50,7 +54,7 @@ public sealed class RegulatoryApplicationCreationPolicy
             .SingleOrDefaultAsync(x => x.Id == authorityId, cancellationToken);
 
         if (authority is null)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 RegulatoryApplicationErrors.AuthorityDoesNotExist);
 
         // Rule 4 — Organization exists (loaded because Rule 5 needs its status).
@@ -59,7 +63,7 @@ public sealed class RegulatoryApplicationCreationPolicy
             .SingleOrDefaultAsync(x => x.Id == organizationId, cancellationToken);
 
         if (organization is null)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 RegulatoryApplicationErrors.OrganizationDoesNotExist);
 
         // Rule 5 — Organization must be active.
@@ -69,7 +73,7 @@ public sealed class RegulatoryApplicationCreationPolicy
 
         // Rule 6 — Authority belongs to the selected country.
         if (authority.CountryId != countryId)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 RegulatoryApplicationErrors.AuthorityNotInCountry);
 
         // Rule 7 — No duplicate application for the same jurisdiction.

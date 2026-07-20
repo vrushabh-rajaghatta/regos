@@ -3,6 +3,7 @@ using FluentAssertions;
 using RegOS.Product.Domain.Product;
 using RegOS.ProductDocument.Domain.Errors;
 using RegOS.ReferenceData.Domain.DocumentType;
+using RegOS.SharedKernel.Exceptions;
 
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
@@ -25,7 +26,7 @@ public class ProductDocumentValidationTests
             new DocumentTypeId(Guid.NewGuid()),
             "Label");
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{ProductDocumentErrors.ProductRequired}*");
     }
 
@@ -37,7 +38,7 @@ public class ProductDocumentValidationTests
             default,
             "Label");
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{ProductDocumentErrors.DocumentTypeRequired}*");
     }
 
@@ -52,7 +53,7 @@ public class ProductDocumentValidationTests
             new DocumentTypeId(Guid.NewGuid()),
             name!);
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{ProductDocumentErrors.DocumentNameRequired}*");
     }
 
@@ -66,7 +67,7 @@ public class ProductDocumentValidationTests
             new DocumentTypeId(Guid.NewGuid()),
             name);
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{ProductDocumentErrors.DocumentNameTooLong}*");
     }
 
@@ -78,7 +79,7 @@ public class ProductDocumentValidationTests
         var act = () => document.AddInitialVersion(
             " ", "stored.pdf", "application/pdf", 10, "path", "sum");
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{ProductDocumentErrors.OriginalFileNameRequired}*");
     }
 
@@ -90,7 +91,7 @@ public class ProductDocumentValidationTests
         var act = () => document.AddInitialVersion(
             "original.pdf", " ", "application/pdf", 10, "path", "sum");
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{ProductDocumentErrors.StoredFileNameRequired}*");
     }
 
@@ -102,7 +103,7 @@ public class ProductDocumentValidationTests
         var act = () => document.AddInitialVersion(
             "original.pdf", "stored.pdf", " ", 10, "path", "sum");
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{ProductDocumentErrors.ContentTypeRequired}*");
     }
 
@@ -114,7 +115,7 @@ public class ProductDocumentValidationTests
         var act = () => document.AddInitialVersion(
             "original.pdf", "stored.pdf", "application/pdf", 10, " ", "sum");
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{ProductDocumentErrors.InvalidStoragePath}*");
     }
 
@@ -128,7 +129,7 @@ public class ProductDocumentValidationTests
         var act = () => document.AddInitialVersion(
             "original.pdf", "stored.pdf", "application/pdf", fileSize, "path", "sum");
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage($"{ProductDocumentErrors.InvalidFileSize}*");
     }
 }

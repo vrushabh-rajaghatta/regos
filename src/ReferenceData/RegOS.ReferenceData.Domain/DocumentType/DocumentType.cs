@@ -1,4 +1,5 @@
 using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ReferenceData.Domain.DocumentType;
 
@@ -32,14 +33,10 @@ public sealed class DocumentType
         string? description)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException(
-                DocumentTypeErrors.CodeRequired,
-                nameof(code));
+            throw new DomainException(DocumentTypeErrors.CodeRequired);
 
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(
-                DocumentTypeErrors.NameRequired,
-                nameof(name));
+            throw new DomainException(DocumentTypeErrors.NameRequired);
 
         return new DocumentType
         {

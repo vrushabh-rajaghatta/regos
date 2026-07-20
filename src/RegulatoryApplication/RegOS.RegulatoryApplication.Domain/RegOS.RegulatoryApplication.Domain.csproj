@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Shared\RegOS.SharedKernel\RegOS.SharedKernel.csproj" />
     <ProjectReference Include="..\..\Product\RegOS.Product.Domain\RegOS.Product.Domain.csproj" />
     <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Domain\RegOS.ReferenceData.Domain.csproj" />
     <ProjectReference Include="..\..\Organization\RegOS.Organization.Domain\RegOS.Organization.Domain.csproj" />

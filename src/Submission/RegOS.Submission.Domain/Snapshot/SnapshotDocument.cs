@@ -1,4 +1,5 @@
 using RegOS.ProductDocument.Domain.IDs;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Domain.Snapshot;
 
@@ -25,14 +26,10 @@ public sealed class SnapshotDocument
         int displayOrder)
     {
         if (documentVersionId == default)
-            throw new ArgumentException(
-                "A snapshot document must reference a document version.",
-                nameof(documentVersionId));
+            throw new DomainException("A snapshot document must reference a document version.");
 
         if (displayOrder <= 0)
-            throw new ArgumentException(
-                "Display order must be greater than zero.",
-                nameof(displayOrder));
+            throw new DomainException("Display order must be greater than zero.");
 
         Id = id;
         DocumentVersionId = documentVersionId;

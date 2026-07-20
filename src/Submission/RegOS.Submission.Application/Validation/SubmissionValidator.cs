@@ -2,11 +2,11 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.ProductDocument.Domain.Entities;
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Application.Validation.Models;
 using RegOS.Submission.Domain.Submission;
 
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Application.Validation;
 
@@ -20,7 +20,7 @@ namespace RegOS.Submission.Application.Validation;
 /// and the validator reports <em>all</em> of them rather than stopping at the first —
 /// it never throws for a validation failure. The one exception is the addressed
 /// resource itself: a submission that does not exist is a 404 concern, not a validation
-/// issue, so it surfaces as a <see cref="SubmissionNotFoundException"/> to stay consistent
+/// issue, so it surfaces as a <see cref="NotFoundException"/> to stay consistent
 /// with the rest of the Submission capability.
 /// </remarks>
 public sealed class SubmissionValidator
@@ -38,7 +38,7 @@ public sealed class SubmissionValidator
 
     /// <summary>
     /// Validates whether the submission is ready to publish. Throws
-    /// <see cref="SubmissionNotFoundException"/> when the submission does not exist;
+    /// <see cref="NotFoundException"/> when the submission does not exist;
     /// otherwise returns a result carrying every issue found (possibly none).
     /// </summary>
     public async Task<SubmissionValidationResult> ValidateAsync(
@@ -49,7 +49,7 @@ public sealed class SubmissionValidator
 
         if (submission is null)
         {
-            throw new SubmissionNotFoundException(
+            throw new NotFoundException(
                 $"Submission '{submissionId}' does not exist.");
         }
 

@@ -5,6 +5,7 @@ using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.SharedKernel.Exceptions;
 
 using RegulatoryApplicationAggregate =
     RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
@@ -50,7 +51,7 @@ public class RegulatoryApplicationLifecycleTests
     {
         var act = () => NewDraft().PutOnHold();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ApplicationErrors.InvalidStatusTransition);
     }
 
@@ -59,7 +60,7 @@ public class RegulatoryApplicationLifecycleTests
     {
         var act = () => NewDraft().Close();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ApplicationErrors.InvalidStatusTransition);
     }
 
@@ -71,7 +72,7 @@ public class RegulatoryApplicationLifecycleTests
 
         var act = () => application.Activate();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ApplicationErrors.ApplicationAlreadyActive);
     }
 
@@ -84,7 +85,7 @@ public class RegulatoryApplicationLifecycleTests
 
         var act = () => application.Close();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ApplicationErrors.InvalidStatusTransition);
     }
 
@@ -97,7 +98,7 @@ public class RegulatoryApplicationLifecycleTests
 
         var act = () => application.PutOnHold();
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ApplicationErrors.InvalidStatusTransition);
     }
 
@@ -109,15 +110,15 @@ public class RegulatoryApplicationLifecycleTests
         application.Close();
 
         var activate = () => application.Activate();
-        activate.Should().Throw<InvalidOperationException>()
+        activate.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ApplicationErrors.ApplicationAlreadyClosed);
 
         var putOnHold = () => application.PutOnHold();
-        putOnHold.Should().Throw<InvalidOperationException>()
+        putOnHold.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ApplicationErrors.ApplicationAlreadyClosed);
 
         var close = () => application.Close();
-        close.Should().Throw<InvalidOperationException>()
+        close.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(ApplicationErrors.ApplicationAlreadyClosed);
     }
 }

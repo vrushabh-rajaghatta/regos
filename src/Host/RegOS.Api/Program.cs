@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using RegOS.Api.Endpoints.Applications;
 using RegOS.Api.Endpoints.Organization;
+using RegOS.Api.Endpoints.Platform;
 using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
@@ -9,6 +10,11 @@ using RegOS.Api.Endpoints.Submissions;
 using RegOS.Api.Endpoints.SubmissionTypes;
 using RegOS.Organization.Application;
 using RegOS.Organization.Infrastructure;
+using RegOS.Platform.Application;
+using RegOS.Platform.Infrastructure;
+using RegOS.Api.Middleware;
+using RegOS.Api.Tenancy;
+using RegOS.SharedKernel.Abstractions;
 using RegOS.ReferenceData.Application;
 using RegOS.Persistence;
 using RegOS.Persistence.Initialization;
@@ -44,6 +50,11 @@ builder.Services.ConfigureHttpJsonOptions(options =>
         new JsonStringEnumConverter());
 });
 
+// Tenant context is scoped: one per request, resolved from the request itself.
+// Registered before the modules so every handler can depend on it.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantContext, HeaderTenantContext>();
+
 builder.Services.AddPersistence(builder.Configuration);
 
 builder.Services.AddProductApplication();
@@ -51,6 +62,9 @@ builder.Services.AddProductInfrastructure();
 
 builder.Services.AddOrganizationApplication();
 builder.Services.AddOrganizationInfrastructure();
+
+builder.Services.AddPlatformApplication();
+builder.Services.AddPlatformInfrastructure(builder.Configuration);
 
 builder.Services.AddReferenceDataApplication();
 
@@ -75,6 +89,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -85,6 +101,13 @@ if (app.Environment.IsDevelopment())
 app.MapListCountries();
 app.MapListAuthorities();
 app.MapListOrganizations();
+
+app.MapInviteUser();
+app.MapListUsers();
+app.MapGetUser();
+app.MapUpdateUserProfile();
+app.MapActivateUser();
+app.MapDeactivateUser();
 app.MapListSubmissionTypes();
 app.MapListDocumentTypes();
 
