@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <ItemGroup>
-    <ProjectReference Include="..\RegOS.Product.Domain\RegOS.Product.Domain.csproj" />
-  </ItemGroup>
-
-</Project>

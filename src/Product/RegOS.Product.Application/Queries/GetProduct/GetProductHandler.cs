@@ -1,41 +1,51 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
-using RegOS.Product.Application.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+using RegOS.Persistence;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Product.Application.Queries.GetProduct;
 
+/// <summary>
+/// Reads a single product straight from the database: no repository, no
+/// aggregate, no tracking. Projects from the flat directory read model so the
+/// query stays fully translatable, exactly like the product list and like
+/// Platform's user detail query.
+/// </summary>
 public sealed class GetProductHandler
 {
-    private readonly IProductRepository _repository;
+    private readonly RegOSDbContext _dbContext;
     private readonly ITenantContext _tenantContext;
 
     public GetProductHandler(
-        IProductRepository repository,
+        RegOSDbContext dbContext,
         ITenantContext tenantContext)
     {
-        _repository = repository;
+        _dbContext = dbContext;
         _tenantContext = tenantContext;
     }
 
-    public async Task<ProductResponse> HandleAsync(
+    public async Task<ProductDetails> HandleAsync(
         GetProductQuery query,
         CancellationToken cancellationToken)
     {
-        var product = await _repository.GetByIdAsync(
-            query.Id, cancellationToken);
+        var productId = query.Id.Value;
+        var tenantId = _tenantContext.TenantId;
 
-        // A product in another organization is indistinguishable from one that
-        // does not exist, so the API never reveals that it is there.
-        if (product is null
-            || product.OrganizationId != new OrganizationId(_tenantContext.TenantId))
-            throw new NotFoundException(ProductQueryErrors.ProductNotFound);
+        // Tenant isolation: a product in another organization is
+        // indistinguishable from one that does not exist.
+        var product = await _dbContext.ProductDirectory
+            .AsNoTracking()
+            .Where(x => x.Id == productId && x.OrganizationId == tenantId)
+            .Select(x => new ProductDetails(
+                x.Id,
+                x.Code,
+                x.Name,
+                x.Type,
+                x.Status))
+            .SingleOrDefaultAsync(cancellationToken);
 
-        return new ProductResponse(
-            product.Id.Value,
-            product.Code.Value,
-            product.Name.Value,
-            product.Type,
-            product.Status);
+        return product
+            ?? throw new NotFoundException(ProductQueryErrors.ProductNotFound);
     }
 }
