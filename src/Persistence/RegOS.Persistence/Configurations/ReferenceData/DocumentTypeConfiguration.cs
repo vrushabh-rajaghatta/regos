@@ -26,7 +26,7 @@ public sealed class DocumentTypeConfiguration
         // Nullable strongly-typed reference: null => system type.
         builder.Property(x => x.OrganizationId)
             .HasConversion(
-                id => id != null ? id.Value.Value : (Guid?)null,
+                id => id != null ? id.Value : (Guid?)null,
                 value => value != null
                     ? new OrganizationId(value.Value)
                     : (OrganizationId?)null);
