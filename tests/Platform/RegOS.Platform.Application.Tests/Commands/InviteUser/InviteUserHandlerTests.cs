@@ -2,7 +2,6 @@ using FluentAssertions;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Commands.InviteUser;
-using RegOS.Platform.Application.Exceptions;
 using RegOS.Platform.Application.Tests.Fakes;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;

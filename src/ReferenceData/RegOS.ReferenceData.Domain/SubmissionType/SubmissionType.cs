@@ -1,4 +1,5 @@
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ReferenceData.Domain.SubmissionType;
 
@@ -25,19 +26,13 @@ public sealed class SubmissionType
         AuthorityId authorityId)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException(
-                SubmissionTypeErrors.CodeRequired,
-                nameof(code));
+            throw new DomainException(SubmissionTypeErrors.CodeRequired);
 
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(
-                SubmissionTypeErrors.NameRequired,
-                nameof(name));
+            throw new DomainException(SubmissionTypeErrors.NameRequired);
 
         if (authorityId == default)
-            throw new ArgumentException(
-                SubmissionTypeErrors.AuthorityRequired,
-                nameof(authorityId));
+            throw new DomainException(SubmissionTypeErrors.AuthorityRequired);
 
         return new SubmissionType
         {

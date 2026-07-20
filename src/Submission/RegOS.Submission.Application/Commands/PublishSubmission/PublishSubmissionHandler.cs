@@ -9,7 +9,7 @@ namespace RegOS.Submission.Application.Commands.PublishSubmission;
 /// the same operation. The handler orchestrates but owns no business rules: readiness
 /// is decided solely by the <see cref="SubmissionValidator"/>, the Draft-only
 /// transition is enforced by the aggregate, and the snapshot copies published state.
-/// A missing submission surfaces as the validator's <c>SubmissionNotFoundException</c> (404).
+/// A missing submission surfaces as the validator's <c>NotFoundException</c> (404).
 /// </summary>
 public sealed class PublishSubmissionHandler
 {
@@ -31,7 +31,7 @@ public sealed class PublishSubmissionHandler
         PublishSubmissionCommand command,
         CancellationToken cancellationToken)
     {
-        // Single source of readiness. Throws SubmissionNotFoundException when the
+        // Single source of readiness. Throws NotFoundException when the
         // submission does not exist, so a missing resource stays a 404.
         var validation = await _validator.ValidateAsync(
             command.SubmissionId, cancellationToken);

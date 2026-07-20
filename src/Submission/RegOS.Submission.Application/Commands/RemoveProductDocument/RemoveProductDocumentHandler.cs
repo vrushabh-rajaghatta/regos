@@ -1,5 +1,5 @@
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Domain.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Application.Commands.RemoveProductDocument;
 
@@ -25,7 +25,7 @@ public sealed class RemoveProductDocumentHandler
             cancellationToken);
 
         if (submission is null)
-            throw new SubmissionNotFoundException(
+            throw new NotFoundException(
                 SubmissionRuleErrors.SubmissionDoesNotExist);
 
         submission.RemoveDocument(command.SubmissionDocumentId);

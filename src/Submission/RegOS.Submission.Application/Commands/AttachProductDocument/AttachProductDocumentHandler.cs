@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.ProductDocument.Domain.Enums;
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Domain.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Application.Commands.AttachProductDocument;
 
@@ -37,7 +37,7 @@ public sealed class AttachProductDocumentHandler
             cancellationToken);
 
         if (submission is null)
-            throw new SubmissionNotFoundException(
+            throw new NotFoundException(
                 SubmissionRuleErrors.SubmissionDoesNotExist);
 
         // The Product Document is supplied in the request body — an unknown id
@@ -49,7 +49,7 @@ public sealed class AttachProductDocumentHandler
                 cancellationToken);
 
         if (productDocument is null)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 SubmissionRuleErrors.ProductDocumentDoesNotExist);
 
         // Only governed (Active) assets may join a dossier.
@@ -67,18 +67,18 @@ public sealed class AttachProductDocumentHandler
                 cancellationToken);
 
         if (application is null)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 SubmissionRuleErrors.ProductDocumentNotInSameProduct);
 
         if (productDocument.ProductId != application.ProductId)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 SubmissionRuleErrors.ProductDocumentNotInSameProduct);
 
         // The handler resolves the current version — the aggregate never
         // performs this lookup. An Active document always has one, but we
         // guard defensively.
         if (productDocument.CurrentVersionId is null)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 SubmissionRuleErrors.ProductDocumentHasNoCurrentVersion);
 
         var attachment = submission.AttachDocument(

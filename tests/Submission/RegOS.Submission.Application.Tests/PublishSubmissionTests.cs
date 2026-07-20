@@ -16,6 +16,7 @@ using RegOS.Submission.Infrastructure.Repositories;
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Application.Tests;
 
@@ -258,6 +259,6 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
         var call = () => attach.HandleAsync(
             new AttachProductDocumentCommand(submissionId, secondDocId), default);
 
-        await call.Should().ThrowAsync<InvalidOperationException>();
+        await call.Should().ThrowAsync<BusinessRuleViolationException>();
     }
 }

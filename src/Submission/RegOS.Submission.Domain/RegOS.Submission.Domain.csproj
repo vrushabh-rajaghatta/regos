@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Shared\RegOS.SharedKernel\RegOS.SharedKernel.csproj" />
     <ProjectReference Include="..\..\RegulatoryApplication\RegOS.RegulatoryApplication.Domain\RegOS.RegulatoryApplication.Domain.csproj" />
     <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Domain\RegOS.ReferenceData.Domain.csproj" />
     <!-- Cross-context IDs only (ProductDocumentId, DocumentVersionId), held by

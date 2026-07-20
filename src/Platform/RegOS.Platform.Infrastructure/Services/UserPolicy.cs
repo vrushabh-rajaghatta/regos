@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
 using RegOS.Platform.Application;
-using RegOS.Platform.Application.Exceptions;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Platform.Infrastructure.Services;
 
@@ -27,8 +27,11 @@ public sealed class UserPolicy : IUserPolicy
             .AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == organizationId, cancellationToken);
 
+        // The organization the caller named does not exist, so the *request* is
+        // wrong (400) rather than the system state being in conflict (409).
+        // Matches how RegulatoryApplication classifies the same condition.
         if (organization is null)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 PlatformErrors.OrganizationDoesNotExist);
 
         if (organization.Status != OrganizationStatus.Active)

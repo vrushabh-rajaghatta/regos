@@ -2,12 +2,12 @@ using FluentAssertions;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Commands.DeactivateUser;
-using RegOS.Platform.Application.Exceptions;
 using RegOS.Platform.Application.Tests.Fakes;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Platform.Application.Tests.Commands.DeactivateUser;
 

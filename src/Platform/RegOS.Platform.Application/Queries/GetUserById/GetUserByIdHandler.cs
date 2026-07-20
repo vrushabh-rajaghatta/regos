@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
-using RegOS.Platform.Application.Exceptions;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Platform.Application.Queries.GetUserById;
 

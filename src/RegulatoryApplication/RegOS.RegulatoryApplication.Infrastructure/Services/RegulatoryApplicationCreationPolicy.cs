@@ -6,8 +6,8 @@ using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Application;
-using RegOS.RegulatoryApplication.Application.Exceptions;
 using RegOS.RegulatoryApplication.Application.Services;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.RegulatoryApplication.Infrastructure.Services;
 
@@ -33,7 +33,7 @@ public sealed class RegulatoryApplicationCreationPolicy
             .AnyAsync(x => x.Id == productId, cancellationToken);
 
         if (!productExists)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 RegulatoryApplicationErrors.ProductDoesNotExist);
 
         // Rule 2 — Country exists.
@@ -41,7 +41,7 @@ public sealed class RegulatoryApplicationCreationPolicy
             .AnyAsync(x => x.Id == countryId, cancellationToken);
 
         if (!countryExists)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 RegulatoryApplicationErrors.CountryDoesNotExist);
 
         // Rule 3 — Authority exists (loaded once; reused for Rule 6).
@@ -50,7 +50,7 @@ public sealed class RegulatoryApplicationCreationPolicy
             .SingleOrDefaultAsync(x => x.Id == authorityId, cancellationToken);
 
         if (authority is null)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 RegulatoryApplicationErrors.AuthorityDoesNotExist);
 
         // Rule 4 — Organization exists (loaded because Rule 5 needs its status).
@@ -59,7 +59,7 @@ public sealed class RegulatoryApplicationCreationPolicy
             .SingleOrDefaultAsync(x => x.Id == organizationId, cancellationToken);
 
         if (organization is null)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 RegulatoryApplicationErrors.OrganizationDoesNotExist);
 
         // Rule 5 — Organization must be active.
@@ -69,7 +69,7 @@ public sealed class RegulatoryApplicationCreationPolicy
 
         // Rule 6 — Authority belongs to the selected country.
         if (authority.CountryId != countryId)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 RegulatoryApplicationErrors.AuthorityNotInCountry);
 
         // Rule 7 — No duplicate application for the same jurisdiction.

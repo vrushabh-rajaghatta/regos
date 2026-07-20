@@ -1,6 +1,5 @@
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.Submission.Application.Commands.AttachProductDocument;
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Domain.Submission;
 
 namespace RegOS.Api.Endpoints.Submissions;
@@ -25,39 +24,14 @@ public static class AttachProductDocumentEndpoint
         AttachProductDocumentHandler handler,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await handler.HandleAsync(
-                new AttachProductDocumentCommand(
-                    new SubmissionId(submissionId),
-                    new ProductDocumentId(request.ProductDocumentId)),
-                cancellationToken);
+        var result = await handler.HandleAsync(
+            new AttachProductDocumentCommand(
+                new SubmissionId(submissionId),
+                new ProductDocumentId(request.ProductDocumentId)),
+            cancellationToken);
 
-            return Results.Created(
-                $"/submissions/{submissionId}/documents/{result.Id.Value}",
-                new AttachProductDocumentResponse(result.Id.Value));
-        }
-        catch (SubmissionNotFoundException ex)
-        {
-            // The addressed resource (the Submission) does not exist.
-            return Results.Problem(
-                detail: ex.Message,
-                statusCode: StatusCodes.Status404NotFound);
-        }
-        catch (BusinessRuleViolationException ex)
-        {
-            // Cross-aggregate validation failed (unknown/inactive document,
-            // product mismatch).
-            return Results.Problem(
-                detail: ex.Message,
-                statusCode: StatusCodes.Status400BadRequest);
-        }
-        catch (InvalidOperationException ex)
-        {
-            // Aggregate invariant violated (duplicate, submission not draft).
-            return Results.Problem(
-                detail: ex.Message,
-                statusCode: StatusCodes.Status409Conflict);
-        }
+        return Results.Created(
+            $"/submissions/{submissionId}/documents/{result.Id.Value}",
+            new AttachProductDocumentResponse(result.Id.Value));
     }
 }

@@ -1,4 +1,3 @@
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Domain.Submission;
 
@@ -23,20 +22,10 @@ public static class ValidateSubmissionEndpoint
         ValidateSubmissionHandler handler,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var response = await handler.HandleAsync(
-                new SubmissionId(submissionId),
-                cancellationToken);
+        var response = await handler.HandleAsync(
+            new SubmissionId(submissionId),
+            cancellationToken);
 
-            return Results.Ok(response);
-        }
-        catch (SubmissionNotFoundException ex)
-        {
-            // The addressed resource (the Submission) does not exist.
-            return Results.Problem(
-                detail: ex.Message,
-                statusCode: StatusCodes.Status404NotFound);
-        }
+        return Results.Ok(response);
     }
 }

@@ -3,12 +3,12 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
-using RegOS.Platform.Application.Exceptions;
 using RegOS.Platform.Application.Queries.GetUserById;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Platform.Application.Tests.Queries.GetUserById;
 

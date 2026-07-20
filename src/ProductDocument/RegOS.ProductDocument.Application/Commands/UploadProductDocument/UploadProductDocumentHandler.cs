@@ -3,9 +3,9 @@ using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
-using RegOS.ProductDocument.Application.Exceptions;
 using RegOS.ProductDocument.Application.Storage;
 using RegOS.ProductDocument.Domain.Repositories;
+using RegOS.SharedKernel.Exceptions;
 
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
@@ -38,7 +38,7 @@ public sealed class UploadProductDocumentHandler
         var bytes = buffer.ToArray();
 
         if (bytes.LongLength == 0)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 ProductDocumentUploadErrors.EmptyFile);
 
         // Rule 1 — Product exists (the addressed resource).
@@ -46,7 +46,7 @@ public sealed class UploadProductDocumentHandler
             .AnyAsync(p => p.Id == command.ProductId, cancellationToken);
 
         if (!productExists)
-            throw new ProductNotFoundException(
+            throw new NotFoundException(
                 ProductDocumentUploadErrors.ProductDoesNotExist);
 
         // Rule 2 — Document Type exists and is active.
@@ -57,7 +57,7 @@ public sealed class UploadProductDocumentHandler
                 cancellationToken);
 
         if (documentType is null)
-            throw new BusinessRuleViolationException(
+            throw new DomainException(
                 ProductDocumentUploadErrors.DocumentTypeDoesNotExist);
 
         if (!documentType.IsActive)

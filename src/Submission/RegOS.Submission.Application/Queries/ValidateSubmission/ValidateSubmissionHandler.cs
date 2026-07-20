@@ -1,6 +1,6 @@
-using RegOS.Submission.Application.Exceptions;
 using RegOS.Submission.Application.Validation;
 using RegOS.Submission.Domain.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Application.Queries.ValidateSubmission;
 
@@ -20,7 +20,7 @@ public sealed class ValidateSubmissionHandler
 
     /// <summary>
     /// Validates the submission and returns its status. Propagates
-    /// <see cref="SubmissionNotFoundException"/> when the submission does not exist so
+    /// <see cref="NotFoundException"/> when the submission does not exist so
     /// the endpoint can 404.
     /// </summary>
     public async Task<ValidateSubmissionResponse> HandleAsync(

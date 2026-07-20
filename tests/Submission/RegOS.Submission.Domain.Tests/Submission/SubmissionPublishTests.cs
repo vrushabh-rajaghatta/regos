@@ -5,6 +5,7 @@ using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Domain.Submission;
 
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Domain.Tests.Submission;
 
@@ -47,7 +48,7 @@ public class SubmissionPublishTests
 
         var act = () => submission.Publish(PublishedAt.AddDays(1));
 
-        act.Should().Throw<InvalidOperationException>()
+        act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.SubmissionNotDraft);
         // The original publication timestamp is unchanged.
         submission.PublishedAt.Should().Be(PublishedAt);
@@ -60,7 +61,7 @@ public class SubmissionPublishTests
 
         var act = () => submission.Publish(default);
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().Throw<DomainException>()
             .WithMessage(SubmissionErrors.PublishedAtRequired + "*");
         // Rejected before any state change.
         submission.Status.Should().Be(SubmissionStatus.Draft);

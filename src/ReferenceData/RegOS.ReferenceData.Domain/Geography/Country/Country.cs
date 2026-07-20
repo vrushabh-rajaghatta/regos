@@ -1,3 +1,5 @@
+using RegOS.SharedKernel.Exceptions;
+
 namespace RegOS.ReferenceData.Domain.Geography.Country;
 
 public sealed class Country
@@ -24,10 +26,10 @@ public sealed class Country
         string? regionCode = null)
     {
         if (string.IsNullOrWhiteSpace(code))
-            throw new ArgumentException(CountryErrors.CodeRequired, nameof(code));
+            throw new DomainException(CountryErrors.CodeRequired);
 
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException(CountryErrors.NameRequired, nameof(name));
+            throw new DomainException(CountryErrors.NameRequired);
 
         return new Country
         {
