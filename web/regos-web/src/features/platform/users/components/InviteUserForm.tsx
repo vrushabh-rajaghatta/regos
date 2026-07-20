@@ -34,10 +34,30 @@ export function InviteUserForm({ onSuccess }: InviteUserFormProps) {
 
   // No authenticated user context yet, so the organization is chosen explicitly.
   // Only active organizations can accept users (the API enforces this too).
-  const { data: organizations } = useOrganizations();
+  const {
+    data: organizations,
+    isPending: organizationsPending,
+    isError: organizationsFailed,
+  } = useOrganizations();
+
   const activeOrganizations =
     organizations?.filter((organization) => organization.status === "Active") ??
     [];
+
+  const noOrganizations =
+    !organizationsPending &&
+    !organizationsFailed &&
+    activeOrganizations.length === 0;
+
+  // Never leave the dropdown silently empty: say which of loading / failed /
+  // none-available is actually happening.
+  const organizationPlaceholder = organizationsPending
+    ? "Loading organizations..."
+    : organizationsFailed
+      ? "Could not load organizations"
+      : noOrganizations
+        ? "No active organizations"
+        : "Select an organization";
 
   const {
     control,
@@ -72,9 +92,15 @@ export function InviteUserForm({ onSuccess }: InviteUserFormProps) {
             <Field data-invalid={!!errors.organizationId}>
               <FieldLabel htmlFor="organizationId">Organization</FieldLabel>
 
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value}
+                disabled={
+                  organizationsPending || organizationsFailed || noOrganizations
+                }
+              >
                 <SelectTrigger id="organizationId">
-                  <SelectValue placeholder="Select an organization" />
+                  <SelectValue placeholder={organizationPlaceholder} />
                 </SelectTrigger>
 
                 <SelectContent>
@@ -85,6 +111,18 @@ export function InviteUserForm({ onSuccess }: InviteUserFormProps) {
                   ))}
                 </SelectContent>
               </Select>
+
+              {organizationsFailed && (
+                <p className="text-sm text-destructive" role="alert">
+                  Could not load organizations. Check that the API is running.
+                </p>
+              )}
+
+              {noOrganizations && (
+                <p className="text-sm text-muted-foreground">
+                  No active organizations are available to invite users into.
+                </p>
+              )}
 
               <FieldError errors={[errors.organizationId]} />
             </Field>
