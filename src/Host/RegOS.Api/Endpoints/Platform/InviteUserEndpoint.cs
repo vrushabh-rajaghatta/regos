@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Commands.InviteUser;
 
 namespace RegOS.Api.Endpoints.Platform;
@@ -22,7 +21,6 @@ public static class InviteUserEndpoint
     {
         var result = await handler.HandleAsync(
             new InviteUserCommand(
-                new OrganizationId(request.OrganizationId),
                 request.FirstName,
                 request.LastName,
                 request.Email),

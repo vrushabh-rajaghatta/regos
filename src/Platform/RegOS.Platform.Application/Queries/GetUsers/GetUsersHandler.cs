@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.Platform.Application.Common;
+using RegOS.SharedKernel.Abstractions;
 
 namespace RegOS.Platform.Application.Queries.GetUsers;
 
@@ -14,10 +15,14 @@ namespace RegOS.Platform.Application.Queries.GetUsers;
 public sealed class GetUsersHandler
 {
     private readonly RegOSDbContext _dbContext;
+    private readonly ITenantContext _tenantContext;
 
-    public GetUsersHandler(RegOSDbContext dbContext)
+    public GetUsersHandler(
+        RegOSDbContext dbContext,
+        ITenantContext tenantContext)
     {
         _dbContext = dbContext;
+        _tenantContext = tenantContext;
     }
 
     public async Task<PagedResult<UserListItem>> HandleAsync(
@@ -30,13 +35,14 @@ public sealed class GetUsersHandler
         var pageSize = Math.Clamp(
             query.PageSize, 1, GetUsersQuery.MaxPageSize);
 
-        var users = _dbContext.UserDirectory.AsNoTracking();
+        // Tenant filter first, and unconditionally. There is no branch that can
+        // skip it, which is the entire point: a directory read cannot be
+        // widened past the caller's own organization.
+        var tenantId = _tenantContext.TenantId;
 
-        if (query.OrganizationId is not null)
-        {
-            var organizationId = query.OrganizationId.Value;
-            users = users.Where(x => x.OrganizationId == organizationId);
-        }
+        var users = _dbContext.UserDirectory
+            .AsNoTracking()
+            .Where(x => x.OrganizationId == tenantId);
 
         if (query.Status is not null)
         {

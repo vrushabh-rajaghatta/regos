@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
 
 export interface UpdateUserProfileRequest {
   firstName: string;
@@ -14,6 +14,7 @@ export async function updateUserProfile(
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
+      ...tenantHeaders(),
     },
     body: JSON.stringify(request),
   });

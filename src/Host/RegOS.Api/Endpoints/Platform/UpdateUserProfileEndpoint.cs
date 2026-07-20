@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Commands.UpdateUserProfile;
 using RegOS.Platform.Domain.Aggregates.User;
 
@@ -25,18 +24,14 @@ public static class UpdateUserProfileEndpoint
         Guid id,
         UpdateUserProfileRequest request,
         UpdateUserProfileHandler handler,
-        CancellationToken cancellationToken,
-        Guid? organizationId = null)
+        CancellationToken cancellationToken)
     {
         await handler.HandleAsync(
             new UpdateUserProfileCommand(
                 UserId.From(id),
                 request.FirstName,
                 request.LastName,
-                request.Email,
-                organizationId is null
-                    ? null
-                    : new OrganizationId(organizationId.Value)),
+                request.Email),
             cancellationToken);
 
         return Results.NoContent();

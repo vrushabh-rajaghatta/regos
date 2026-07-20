@@ -13,13 +13,16 @@ namespace RegOS.Platform.Application.Tests.Commands.InviteUser;
 
 public sealed class InviteUserHandlerTests
 {
+    private static readonly OrganizationId Tenant = OrganizationId.New();
+
     private static InviteUserCommand ValidCommand() =>
-        new(OrganizationId.New(), "John", "Doe", "john.doe@example.com");
+        new("John", "Doe", "john.doe@example.com");
 
     [Fact]
     public async Task Invite_Succeeds_ReturnsInvitedStatus()
     {
-        var handler = new InviteUserHandler(new FakeUserPolicy(), new FakeUserRepository());
+        var handler = new InviteUserHandler(
+            new FakeUserPolicy(), new FakeUserRepository(), new FakeTenantContext(Tenant));
 
         var result = await handler.HandleAsync(ValidCommand(), CancellationToken.None);
 
@@ -32,12 +35,14 @@ public sealed class InviteUserHandlerTests
     {
         var repository = new FakeUserRepository();
         var command = ValidCommand();
-        var handler = new InviteUserHandler(new FakeUserPolicy(), repository);
+        var handler = new InviteUserHandler(
+            new FakeUserPolicy(), repository, new FakeTenantContext(Tenant));
 
         await handler.HandleAsync(command, CancellationToken.None);
 
         repository.Added.Should().NotBeNull();
-        repository.Added!.OrganizationId.Should().Be(command.OrganizationId);
+        // The organization comes from the tenant, never from the command.
+        repository.Added!.OrganizationId.Should().Be(Tenant);
         repository.Added.Email.Value.Should().Be("john.doe@example.com");
         repository.Added.Status.Should().Be(UserStatus.Invited);
     }
@@ -48,7 +53,8 @@ public sealed class InviteUserHandlerTests
         var repository = new FakeUserRepository();
         var policy = new FakeUserPolicy(
             organizationError: new BusinessRuleViolationException(PlatformErrors.OrganizationInactive));
-        var handler = new InviteUserHandler(policy, repository);
+        var handler = new InviteUserHandler(
+            policy, repository, new FakeTenantContext(Tenant));
 
         var act = () => handler.HandleAsync(ValidCommand(), CancellationToken.None);
 
@@ -62,7 +68,8 @@ public sealed class InviteUserHandlerTests
         var repository = new FakeUserRepository();
         var policy = new FakeUserPolicy(
             emailError: new BusinessRuleViolationException(PlatformErrors.EmailAlreadyInUse));
-        var handler = new InviteUserHandler(policy, repository);
+        var handler = new InviteUserHandler(
+            policy, repository, new FakeTenantContext(Tenant));
 
         var act = () => handler.HandleAsync(ValidCommand(), CancellationToken.None);
 
@@ -73,9 +80,9 @@ public sealed class InviteUserHandlerTests
     [Fact]
     public async Task Invite_WhenEmailMalformed_ThrowsDomainException()
     {
-        var handler = new InviteUserHandler(new FakeUserPolicy(), new FakeUserRepository());
-        var command = new InviteUserCommand(
-            OrganizationId.New(), "John", "Doe", "not-an-email");
+        var handler = new InviteUserHandler(
+            new FakeUserPolicy(), new FakeUserRepository(), new FakeTenantContext(Tenant));
+        var command = new InviteUserCommand("John", "Doe", "not-an-email");
 
         var act = () => handler.HandleAsync(command, CancellationToken.None);
 

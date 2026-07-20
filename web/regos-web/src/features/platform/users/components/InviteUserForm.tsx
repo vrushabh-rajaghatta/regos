@@ -9,15 +9,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-import { useOrganizations } from "@/features/regulatory/masterData/hooks/useOrganizations";
 
 import { useInviteUser } from "../hooks/useInviteUser";
 import {
@@ -32,33 +23,10 @@ interface InviteUserFormProps {
 export function InviteUserForm({ onSuccess }: InviteUserFormProps) {
   const mutation = useInviteUser();
 
-  // No authenticated user context yet, so the organization is chosen explicitly.
-  // Only active organizations can accept users (the API enforces this too).
-  const {
-    data: organizations,
-    isPending: organizationsPending,
-    isError: organizationsFailed,
-  } = useOrganizations();
-
-  const activeOrganizations =
-    organizations?.filter((organization) => organization.status === "Active") ??
-    [];
-
-  const noOrganizations =
-    !organizationsPending &&
-    !organizationsFailed &&
-    activeOrganizations.length === 0;
-
-  // Never leave the dropdown silently empty: say which of loading / failed /
-  // none-available is actually happening.
-  const organizationPlaceholder = organizationsPending
-    ? "Loading organizations..."
-    : organizationsFailed
-      ? "Could not load organizations"
-      : noOrganizations
-        ? "No active organizations"
-        : "Select an organization";
-
+  // There is no organization picker: a user is invited into the caller's own
+  // tenant, which the API reads from the X-Tenant-Id header. Inviting into
+  // someone else's organization is not a permission check that could be
+  // forgotten — it cannot be expressed.
   const {
     control,
     handleSubmit,
@@ -67,7 +35,6 @@ export function InviteUserForm({ onSuccess }: InviteUserFormProps) {
   } = useForm<InviteUserFormValues>({
     resolver: zodResolver(inviteUserSchema),
     defaultValues: {
-      organizationId: "",
       firstName: "",
       lastName: "",
       email: "",
@@ -85,50 +52,6 @@ export function InviteUserForm({ onSuccess }: InviteUserFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <FieldGroup>
-        <Controller
-          control={control}
-          name="organizationId"
-          render={({ field }) => (
-            <Field data-invalid={!!errors.organizationId}>
-              <FieldLabel htmlFor="organizationId">Organization</FieldLabel>
-
-              <Select
-                onValueChange={field.onChange}
-                value={field.value}
-                disabled={
-                  organizationsPending || organizationsFailed || noOrganizations
-                }
-              >
-                <SelectTrigger id="organizationId">
-                  <SelectValue placeholder={organizationPlaceholder} />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {activeOrganizations.map((organization) => (
-                    <SelectItem key={organization.id} value={organization.id}>
-                      {organization.legalName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {organizationsFailed && (
-                <p className="text-sm text-destructive" role="alert">
-                  Could not load organizations. Check that the API is running.
-                </p>
-              )}
-
-              {noOrganizations && (
-                <p className="text-sm text-muted-foreground">
-                  No active organizations are available to invite users into.
-                </p>
-              )}
-
-              <FieldError errors={[errors.organizationId]} />
-            </Field>
-          )}
-        />
-
         <Controller
           control={control}
           name="firstName"

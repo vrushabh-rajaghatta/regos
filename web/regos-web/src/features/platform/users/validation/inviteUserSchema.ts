@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const inviteUserSchema = z.object({
-  organizationId: z.string().min(1, "Select an organization."),
 
   firstName: z.string().trim().min(1, "First name is required."),
 

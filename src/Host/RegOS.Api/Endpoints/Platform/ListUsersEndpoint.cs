@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Queries.GetUsers;
 using RegOS.Platform.Domain.Aggregates.User;
 
@@ -22,7 +21,6 @@ public static class ListUsersEndpoint
     private static async Task<IResult> HandleAsync(
         GetUsersHandler handler,
         CancellationToken cancellationToken,
-        Guid? organizationId = null,
         string? search = null,
         string? status = null,
         int page = GetUsersQuery.DefaultPage,
@@ -43,7 +41,6 @@ public static class ListUsersEndpoint
 
         var result = await handler.HandleAsync(
             new GetUsersQuery(
-                organizationId is null ? null : new OrganizationId(organizationId.Value),
                 search,
                 parsedStatus,
                 page,

@@ -9,6 +9,7 @@ using RegOS.Platform.Domain.ValueObjects;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Platform.Application.Tests.Fakes;
 
 namespace RegOS.Platform.Application.Tests.Queries.GetUserById;
 
@@ -60,11 +61,14 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
             _organizationId.Value);
     }
 
-    private async Task<UserDetails> QueryAsync(GetUserByIdQuery query)
+    private async Task<UserDetails> QueryAsync(
+        GetUserByIdQuery query,
+        OrganizationId? tenant = null)
     {
         await using var context = NewContext();
 
-        return await new GetUserByIdHandler(context)
+        return await new GetUserByIdHandler(
+                context, new FakeTenantContext(tenant ?? _organizationId))
             .HandleAsync(query, CancellationToken.None);
     }
 
@@ -72,7 +76,7 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
     public async Task Returns_the_user_when_found()
     {
         var user = await QueryAsync(
-            new GetUserByIdQuery(_userId, _organizationId));
+            new GetUserByIdQuery(_userId));
 
         user.Id.Should().Be(_userId.Value);
     }
@@ -81,7 +85,7 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
     public async Task Projects_every_field_correctly()
     {
         var user = await QueryAsync(
-            new GetUserByIdQuery(_userId, _organizationId));
+            new GetUserByIdQuery(_userId));
 
         user.FirstName.Should().Be("Grace");
         user.LastName.Should().Be("Hopper");
@@ -91,18 +95,10 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Finds_the_user_without_an_organization_scope()
-    {
-        var user = await QueryAsync(new GetUserByIdQuery(_userId));
-
-        user.Id.Should().Be(_userId.Value);
-    }
-
-    [Fact]
     public async Task Throws_not_found_when_the_user_does_not_exist()
     {
         var act = () => QueryAsync(
-            new GetUserByIdQuery(UserId.New(), _organizationId));
+            new GetUserByIdQuery(UserId.New()));
 
         await act.Should().ThrowAsync<NotFoundException>();
     }
@@ -113,7 +109,7 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
         // Tenant isolation: an existing user outside the caller's organization
         // must be indistinguishable from one that does not exist.
         var act = () => QueryAsync(
-            new GetUserByIdQuery(_userId, _otherOrganizationId));
+            new GetUserByIdQuery(_userId), tenant: _otherOrganizationId);
 
         await act.Should().ThrowAsync<NotFoundException>();
     }

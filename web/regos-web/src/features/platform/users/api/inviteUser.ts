@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
 
 import type { InviteUserRequest } from "../types/InviteUserRequest";
 import type { InviteUserResponse } from "../types/InviteUserResponse";
@@ -10,6 +10,7 @@ export async function inviteUser(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...tenantHeaders(),
     },
     body: JSON.stringify(request),
   });

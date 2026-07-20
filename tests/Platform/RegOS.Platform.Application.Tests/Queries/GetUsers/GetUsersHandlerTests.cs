@@ -8,6 +8,7 @@ using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using RegOS.Platform.Application.Tests.Fakes;
 
 namespace RegOS.Platform.Application.Tests.Queries.GetUsers;
 
@@ -59,19 +60,25 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
             _organizationId.Value);
     }
 
+    /// <summary>
+    /// The tenant is supplied to the handler, never to the query - there is no
+    /// longer any way for a query to widen its own scope.
+    /// </summary>
     private async Task<Common.PagedResult<UserListItem>> QueryAsync(
-        GetUsersQuery query)
+        GetUsersQuery query,
+        OrganizationId? tenant = null)
     {
         await using var context = NewContext();
 
-        return await new GetUsersHandler(context)
+        return await new GetUsersHandler(
+                context, new FakeTenantContext(tenant ?? _organizationId))
             .HandleAsync(query, CancellationToken.None);
     }
 
     [Fact]
     public async Task Returns_first_page_with_total_count()
     {
-        var result = await QueryAsync(new GetUsersQuery(_organizationId));
+        var result = await QueryAsync(new GetUsersQuery());
 
         result.TotalCount.Should().Be(3);
         result.Page.Should().Be(1);
@@ -82,7 +89,7 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     [Fact]
     public async Task Orders_newest_first()
     {
-        var result = await QueryAsync(new GetUsersQuery(_organizationId));
+        var result = await QueryAsync(new GetUsersQuery());
 
         result.Items.Should().BeInDescendingOrder(x => x.CreatedOn);
     }
@@ -91,7 +98,7 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     public async Task Applies_search_across_last_name()
     {
         var result = await QueryAsync(
-            new GetUsersQuery(_organizationId, Search: "hopper"));
+            new GetUsersQuery(Search: "hopper"));
 
         result.TotalCount.Should().Be(1);
         result.Items.Single().LastName.Should().Be("Hopper");
@@ -101,7 +108,7 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     public async Task Applies_search_across_email()
     {
         var result = await QueryAsync(
-            new GetUsersQuery(_organizationId, Search: "alan.turing@"));
+            new GetUsersQuery(Search: "alan.turing@"));
 
         result.TotalCount.Should().Be(1);
         result.Items.Single().FirstName.Should().Be("Alan");
@@ -111,7 +118,7 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     public async Task Search_is_case_insensitive()
     {
         var result = await QueryAsync(
-            new GetUsersQuery(_organizationId, Search: "LOVELACE"));
+            new GetUsersQuery(Search: "LOVELACE"));
 
         result.Items.Single().LastName.Should().Be("Lovelace");
     }
@@ -120,13 +127,13 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     public async Task Applies_status_filter()
     {
         var active = await QueryAsync(
-            new GetUsersQuery(_organizationId, Status: UserStatus.Active));
+            new GetUsersQuery(Status: UserStatus.Active));
 
         active.TotalCount.Should().Be(1);
         active.Items.Single().FirstName.Should().Be("Alan");
 
         var invited = await QueryAsync(
-            new GetUsersQuery(_organizationId, Status: UserStatus.Invited));
+            new GetUsersQuery(Status: UserStatus.Invited));
 
         invited.TotalCount.Should().Be(2);
     }
@@ -135,7 +142,7 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     public async Task Returns_empty_collection_when_nothing_matches()
     {
         var result = await QueryAsync(
-            new GetUsersQuery(_organizationId, Search: "no-such-person"));
+            new GetUsersQuery(Search: "no-such-person"));
 
         result.Items.Should().BeEmpty();
         result.TotalCount.Should().Be(0);
@@ -145,13 +152,13 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     public async Task Respects_page_size_and_keeps_total_count()
     {
         var firstPage = await QueryAsync(
-            new GetUsersQuery(_organizationId, Page: 1, PageSize: 2));
+            new GetUsersQuery(Page: 1, PageSize: 2));
 
         firstPage.Items.Should().HaveCount(2);
         firstPage.TotalCount.Should().Be(3);
 
         var secondPage = await QueryAsync(
-            new GetUsersQuery(_organizationId, Page: 2, PageSize: 2));
+            new GetUsersQuery(Page: 2, PageSize: 2));
 
         secondPage.Items.Should().HaveCount(1);
         secondPage.TotalCount.Should().Be(3);
@@ -166,7 +173,7 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     public async Task Clamps_page_size(int requested, int expected)
     {
         var result = await QueryAsync(
-            new GetUsersQuery(_organizationId, PageSize: requested));
+            new GetUsersQuery(PageSize: requested));
 
         result.PageSize.Should().Be(expected);
     }
@@ -175,16 +182,16 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     public async Task Defaults_invalid_page_to_first_page()
     {
         var result = await QueryAsync(
-            new GetUsersQuery(_organizationId, Page: 0));
+            new GetUsersQuery(Page: 0));
 
         result.Page.Should().Be(1);
     }
 
     [Fact]
-    public async Task Scopes_results_to_the_requested_organization()
+    public async Task Scopes_results_to_the_callers_tenant()
     {
         var other = await QueryAsync(
-            new GetUsersQuery(OrganizationId.From(Guid.NewGuid())));
+            new GetUsersQuery(), tenant: OrganizationId.From(Guid.NewGuid()));
 
         other.Items.Should().BeEmpty();
         other.TotalCount.Should().Be(0);

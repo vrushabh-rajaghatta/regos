@@ -1,9 +1,9 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
 
 export async function deactivateUser(userId: string): Promise<void> {
   const response = await fetch(
     buildUrl(`/api/platform/users/${userId}/deactivate`),
-    { method: "POST" },
+    { method: "POST", headers: tenantHeaders() },
   );
 
   if (response.ok) return;

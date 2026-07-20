@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Commands.ActivateUser;
 using RegOS.Platform.Domain.Aggregates.User;
 
@@ -24,15 +23,11 @@ public static class ActivateUserEndpoint
     private static async Task<IResult> HandleAsync(
         Guid id,
         ActivateUserHandler handler,
-        CancellationToken cancellationToken,
-        Guid? organizationId = null)
+        CancellationToken cancellationToken)
     {
         await handler.HandleAsync(
             new ActivateUserCommand(
-                UserId.From(id),
-                organizationId is null
-                    ? null
-                    : new OrganizationId(organizationId.Value)),
+                UserId.From(id)),
             cancellationToken);
 
         return Results.NoContent();

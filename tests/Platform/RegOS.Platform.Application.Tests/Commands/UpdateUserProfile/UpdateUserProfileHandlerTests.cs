@@ -30,7 +30,8 @@ public sealed class UpdateUserProfileHandlerTests
     {
         var user = ExistingUser();
         var repository = new FakeUserRepository(user);
-        var handler = new UpdateUserProfileHandler(new FakeUserPolicy(), repository);
+        var handler = new UpdateUserProfileHandler(
+            new FakeUserPolicy(), repository, new FakeTenantContext(Organization));
 
         await handler.HandleAsync(Command(user.Id), CancellationToken.None);
 
@@ -45,7 +46,8 @@ public sealed class UpdateUserProfileHandlerTests
     {
         var user = ExistingUser();
         var repository = new FakeUserRepository(user);
-        var handler = new UpdateUserProfileHandler(new FakeUserPolicy(), repository);
+        var handler = new UpdateUserProfileHandler(
+            new FakeUserPolicy(), repository, new FakeTenantContext(Organization));
 
         await handler.HandleAsync(Command(user.Id), CancellationToken.None);
 
@@ -57,7 +59,8 @@ public sealed class UpdateUserProfileHandlerTests
     public async Task Throws_not_found_when_the_user_does_not_exist()
     {
         var repository = new FakeUserRepository();
-        var handler = new UpdateUserProfileHandler(new FakeUserPolicy(), repository);
+        var handler = new UpdateUserProfileHandler(
+            new FakeUserPolicy(), repository, new FakeTenantContext(Organization));
 
         var act = () => handler.HandleAsync(
             Command(UserId.New()), CancellationToken.None);
@@ -71,14 +74,14 @@ public sealed class UpdateUserProfileHandlerTests
     {
         var user = ExistingUser();
         var repository = new FakeUserRepository(user);
-        var handler = new UpdateUserProfileHandler(new FakeUserPolicy(), repository);
+        // The caller's tenant is a different organization, so the user is
+        // invisible. The command can no longer carry a tenant at all.
+        var handler = new UpdateUserProfileHandler(
+            new FakeUserPolicy(), repository,
+            new FakeTenantContext(OrganizationId.New()));
 
-        var command = Command(user.Id) with
-        {
-            OrganizationId = OrganizationId.New(),
-        };
-
-        var act = () => handler.HandleAsync(command, CancellationToken.None);
+        var act = () => handler.HandleAsync(
+            Command(user.Id), CancellationToken.None);
 
         await act.Should().ThrowAsync<NotFoundException>();
         repository.Updated.Should().BeNull();
@@ -92,7 +95,8 @@ public sealed class UpdateUserProfileHandlerTests
         var policy = new FakeUserPolicy(
             updateEmailError: new BusinessRuleViolationException(
                 PlatformErrors.EmailAlreadyInUse));
-        var handler = new UpdateUserProfileHandler(policy, repository);
+        var handler = new UpdateUserProfileHandler(
+            policy, repository, new FakeTenantContext(Organization));
 
         var act = () => handler.HandleAsync(
             Command(user.Id), CancellationToken.None);
@@ -106,7 +110,8 @@ public sealed class UpdateUserProfileHandlerTests
     {
         var user = ExistingUser();
         var repository = new FakeUserRepository(user);
-        var handler = new UpdateUserProfileHandler(new FakeUserPolicy(), repository);
+        var handler = new UpdateUserProfileHandler(
+            new FakeUserPolicy(), repository, new FakeTenantContext(Organization));
 
         var command = Command(user.Id) with { Email = "not-an-email" };
 
@@ -121,7 +126,8 @@ public sealed class UpdateUserProfileHandlerTests
     {
         var user = ExistingUser();
         var repository = new FakeUserRepository(user);
-        var handler = new UpdateUserProfileHandler(new FakeUserPolicy(), repository);
+        var handler = new UpdateUserProfileHandler(
+            new FakeUserPolicy(), repository, new FakeTenantContext(Organization));
 
         var command = Command(user.Id) with { FirstName = "   " };
 

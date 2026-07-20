@@ -27,7 +27,8 @@ public sealed class ActivateUserHandlerTests
     {
         var user = InvitedUser();
         var repository = new FakeUserRepository(user);
-        var handler = new ActivateUserHandler(repository);
+        var handler = new ActivateUserHandler(
+            repository, new FakeTenantContext(Organization));
 
         await handler.HandleAsync(
             new ActivateUserCommand(user.Id), CancellationToken.None);
@@ -42,7 +43,8 @@ public sealed class ActivateUserHandlerTests
         var user = InvitedUser();
         user.Deactivate();
         var repository = new FakeUserRepository(user);
-        var handler = new ActivateUserHandler(repository);
+        var handler = new ActivateUserHandler(
+            repository, new FakeTenantContext(Organization));
 
         await handler.HandleAsync(
             new ActivateUserCommand(user.Id), CancellationToken.None);
@@ -55,7 +57,8 @@ public sealed class ActivateUserHandlerTests
     {
         var user = InvitedUser();
         var repository = new FakeUserRepository(user);
-        var handler = new ActivateUserHandler(repository);
+        var handler = new ActivateUserHandler(
+            repository, new FakeTenantContext(Organization));
 
         await handler.HandleAsync(
             new ActivateUserCommand(user.Id), CancellationToken.None);
@@ -70,7 +73,8 @@ public sealed class ActivateUserHandlerTests
     {
         var user = InvitedUser();
         var repository = new FakeUserRepository(user);
-        var handler = new ActivateUserHandler(repository);
+        var handler = new ActivateUserHandler(
+            repository, new FakeTenantContext(Organization));
 
         await handler.HandleAsync(
             new ActivateUserCommand(user.Id), CancellationToken.None);
@@ -84,7 +88,8 @@ public sealed class ActivateUserHandlerTests
     public async Task Throws_not_found_when_the_user_does_not_exist()
     {
         var repository = new FakeUserRepository();
-        var handler = new ActivateUserHandler(repository);
+        var handler = new ActivateUserHandler(
+            repository, new FakeTenantContext(Organization));
 
         var act = () => handler.HandleAsync(
             new ActivateUserCommand(UserId.New()), CancellationToken.None);
@@ -98,11 +103,13 @@ public sealed class ActivateUserHandlerTests
     {
         var user = InvitedUser();
         var repository = new FakeUserRepository(user);
-        var handler = new ActivateUserHandler(repository);
+        // The caller's tenant is a different organization, so the user must be
+        // invisible. The command cannot express a tenant at all any more.
+        var handler = new ActivateUserHandler(
+            repository, new FakeTenantContext(OrganizationId.New()));
 
         var act = () => handler.HandleAsync(
-            new ActivateUserCommand(user.Id, OrganizationId.New()),
-            CancellationToken.None);
+            new ActivateUserCommand(user.Id), CancellationToken.None);
 
         await act.Should().ThrowAsync<NotFoundException>();
         repository.Updated.Should().BeNull();

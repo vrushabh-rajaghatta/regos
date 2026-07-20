@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
+using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Platform.Application.Queries.GetUserById;
@@ -13,10 +14,14 @@ namespace RegOS.Platform.Application.Queries.GetUserById;
 public sealed class GetUserByIdHandler
 {
     private readonly RegOSDbContext _dbContext;
+    private readonly ITenantContext _tenantContext;
 
-    public GetUserByIdHandler(RegOSDbContext dbContext)
+    public GetUserByIdHandler(
+        RegOSDbContext dbContext,
+        ITenantContext tenantContext)
     {
         _dbContext = dbContext;
+        _tenantContext = tenantContext;
     }
 
     public async Task<UserDetails> HandleAsync(
@@ -24,20 +29,14 @@ public sealed class GetUserByIdHandler
         CancellationToken cancellationToken)
     {
         var userId = query.UserId.Value;
-
-        var users = _dbContext.UserDirectory
-            .AsNoTracking()
-            .Where(x => x.Id == userId);
+        var tenantId = _tenantContext.TenantId;
 
         // Tenant isolation: a user in another organization is indistinguishable
-        // from one that does not exist.
-        if (query.OrganizationId is not null)
-        {
-            var organizationId = query.OrganizationId.Value;
-            users = users.Where(x => x.OrganizationId == organizationId);
-        }
-
-        var user = await users
+        // from one that does not exist. Applied unconditionally - there is no
+        // longer a code path that reads across tenants.
+        var user = await _dbContext.UserDirectory
+            .AsNoTracking()
+            .Where(x => x.Id == userId && x.OrganizationId == tenantId)
             .Select(x => new UserDetails(
                 x.Id,
                 x.FirstName,
