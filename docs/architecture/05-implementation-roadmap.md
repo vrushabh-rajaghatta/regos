@@ -59,7 +59,7 @@ Establish the core tenant and security infrastructure required by all other modu
 
 ---
 
-## Wave 2 — Regulatory Configuration
+## Wave 2 — Reference Data
 
 Objective
 
@@ -67,7 +67,7 @@ Configure the regulatory landscape supported by RegOS.
 
 ### Modules
 
-- Regulatory Configuration
+- Reference Data
 
 ### Capabilities
 

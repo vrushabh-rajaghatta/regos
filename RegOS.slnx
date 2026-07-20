@@ -37,7 +37,7 @@
     <Project Path="src/ProductDocument/RegOS.ProductDocument.Infrastructure/RegOS.ProductDocument.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Shared/">
-    <Project Path="src/Shared/RegOS.SDK/RegOS.SDK.csproj" />
+    <Project Path="src/Shared/RegOS.SharedKernel/RegOS.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/Product/">

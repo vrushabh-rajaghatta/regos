@@ -93,7 +93,7 @@ Organization
 
 ---
 
-## Regulatory Configuration
+## Reference Data
 
 Defines the regulatory landscape supported by RegOS.
 
@@ -461,23 +461,23 @@ Organization
 
 # Ownership Matrix
 
-| Business Entity    | Owning Module            |
-| ------------------ | ------------------------ |
-| Organization       | Platform                 |
-| User               | Platform                 |
-| Country            | Regulatory Configuration |
-| Authority          | Regulatory Configuration |
-| Authority Template | Regulatory Configuration |
-| Product            | Product Management       |
-| Application        | Application Management   |
-| Submission         | Submission Management    |
-| Document           | Document Management      |
-| Validation Run     | Validation               |
-| Validation Result  | Validation               |
-| Review             | Review                   |
-| Published Package  | Publishing               |
-| Task               | Workflow                 |
-| Activity           | Activity                 |
+| Business Entity    | Owning Module          |
+| ------------------ | ---------------------- |
+| Organization       | Platform               |
+| User               | Platform               |
+| Country            | Reference Data         |
+| Authority          | Reference Data         |
+| Authority Template | Reference Data         |
+| Product            | Product Management     |
+| Application        | Application Management |
+| Submission         | Submission Management  |
+| Document           | Document Management    |
+| Validation Run     | Validation             |
+| Validation Result  | Validation             |
+| Review             | Review                 |
+| Published Package  | Publishing             |
+| Task               | Workflow               |
+| Activity           | Activity               |
 
 ---
 

@@ -100,7 +100,7 @@ Platform
 └── Audit
 │
 ▼
-Regulatory Configuration
+Reference Data
 │
 ├── Countries
 ├── Authorities
@@ -180,20 +180,20 @@ Experience
 
 # Module Dependencies
 
-| Module                   | Depends On                                                           |
-| ------------------------ | -------------------------------------------------------------------- |
-| Platform                 | None                                                                 |
-| Regulatory Configuration | Platform                                                             |
-| Product Management       | Platform                                                             |
-| Application Management   | Product Management, Regulatory Configuration                         |
-| Submission Management    | Application Management                                               |
-| Document Management      | Submission Management                                                |
-| Validation               | Submission Management, Document Management, Regulatory Configuration |
-| Review                   | Validation                                                           |
-| Publishing               | Review                                                               |
-| Workflow                 | Application Management, Submission Management                        |
-| Activity                 | All business modules                                                 |
-| Experience               | All business modules                                                 |
+| Module                 | Depends On                                                 |
+| ---------------------- | ---------------------------------------------------------- |
+| Platform               | None                                                       |
+| Reference Data         | Platform                                                   |
+| Product Management     | Platform                                                   |
+| Application Management | Product Management, Reference Data                         |
+| Submission Management  | Application Management                                     |
+| Document Management    | Submission Management                                      |
+| Validation             | Submission Management, Document Management, Reference Data |
+| Review                 | Validation                                                 |
+| Publishing             | Review                                                     |
+| Workflow               | Application Management, Submission Management              |
+| Activity               | All business modules                                       |
+| Experience             | All business modules                                       |
 
 ---
 
@@ -215,7 +215,7 @@ Platform
 
 ## Phase 2
 
-Regulatory Configuration
+Reference Data
 
 - Countries
 - Authorities

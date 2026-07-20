@@ -147,7 +147,7 @@ Includes:
 
 ---
 
-## Regulatory Configuration
+## Reference Data
 
 Defines the regulatory landscape supported by the platform.
 

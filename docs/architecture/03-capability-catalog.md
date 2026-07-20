@@ -44,7 +44,7 @@ Provides the foundational capabilities required by RegOS.
 
 ---
 
-# Regulatory Configuration Module
+# Reference Data Module
 
 Defines the regulatory landscape supported by RegOS.
 
