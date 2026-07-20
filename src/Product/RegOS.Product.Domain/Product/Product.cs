@@ -1,5 +1,6 @@
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.SharedKernel.Abstractions;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Product.Domain.Product;
 
@@ -74,11 +75,24 @@ public sealed class Product : AggregateRoot<ProductId>
     /// </summary>
     public void ChangeType(ProductType type) => Type = type;
 
-    /// <summary>Idempotent: archiving an archived product is a no-op.</summary>
+    /// <summary>
+    /// Retires the product from new work. It stays readable, and existing
+    /// applications, submissions and documents that reference it are
+    /// untouched - archiving says "do not start anything new with this", not
+    /// "pretend it never existed".
+    /// </summary>
+    /// <remarks>
+    /// Not idempotent, deliberately, and unlike a user's Activate/Deactivate.
+    /// Those are toggles: a caller asking for a state the user is already in
+    /// has got what it wanted. This is a one-way lifecycle transition, so a
+    /// second call is a caller acting on a stale view of the product, and
+    /// silently succeeding would hide that. It raises a conflict instead.
+    /// </remarks>
     public void Archive()
     {
         if (Status == ProductStatus.Archived)
-            return;
+            throw new BusinessRuleViolationException(
+                ProductErrors.AlreadyArchived);
 
         Status = ProductStatus.Archived;
     }

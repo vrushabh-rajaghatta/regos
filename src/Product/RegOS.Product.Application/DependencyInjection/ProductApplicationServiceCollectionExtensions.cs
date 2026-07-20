@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using RegOS.Product.Application.Commands.ArchiveProduct;
 using RegOS.Product.Application.Commands.RegisterProduct;
 using RegOS.Product.Application.Commands.UpdateProduct;
 using RegOS.Product.Application.Queries.GetProduct;
@@ -13,6 +14,7 @@ public static class ProductApplicationServiceCollectionExtensions
     {
         services.AddScoped<RegisterProductHandler>();
         services.AddScoped<UpdateProductHandler>();
+        services.AddScoped<ArchiveProductHandler>();
         services.AddScoped<GetProductHandler>();
         services.AddScoped<ListProductsHandler>();
 

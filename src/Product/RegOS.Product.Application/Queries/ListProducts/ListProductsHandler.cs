@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.Product.Application.Common;
+using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Abstractions;
 
 namespace RegOS.Product.Application.Queries.ListProducts;
@@ -53,6 +54,15 @@ public sealed class ListProductsHandler
         {
             var status = query.Status.Value;
             products = products.Where(x => x.Status == status);
+        }
+        else
+        {
+            // Archived products are retired from new work, so the directory
+            // hides them by default. They are not deleted: asking for
+            // ?status=Archived still lists them, and their detail page and
+            // every existing reference keep working.
+            products = products.Where(
+                x => x.Status != ProductStatus.Archived);
         }
 
         if (!string.IsNullOrWhiteSpace(query.Search))

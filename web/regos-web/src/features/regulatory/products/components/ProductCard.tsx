@@ -20,7 +20,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </p>
         </div>
 
-        <Badge>{product.status}</Badge>
+        <Badge data-testid="product-status-badge">{product.status}</Badge>
       </div>
     </Link>
   );

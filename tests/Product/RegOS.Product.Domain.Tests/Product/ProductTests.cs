@@ -89,14 +89,31 @@ public sealed class ProductTests
     }
 
     [Fact]
-    public void Archive_is_idempotent_so_retries_are_safe()
+    public void Archive_rejects_a_second_attempt()
     {
         var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
 
         product.Archive();
+        var act = () => product.Archive();
+
+        // A one-way lifecycle transition, not a toggle: a repeat means the
+        // caller is acting on a stale view, and succeeding would hide that.
+        act.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(ProductErrors.AlreadyArchived);
+        product.Status.Should().Be(ProductStatus.Archived);
+    }
+
+    [Fact]
+    public void Archive_preserves_the_product_because_it_is_not_a_deletion()
+    {
+        var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
+
         product.Archive();
 
-        product.Status.Should().Be(ProductStatus.Archived);
+        product.Code.Value.Should().Be("OZE-1");
+        product.Name.Value.Should().Be("Ozempic");
+        product.Type.Should().Be(ProductType.Drug);
+        product.OrganizationId.Should().Be(Owner);
     }
 
     [Fact]

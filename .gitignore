@@ -87,3 +87,7 @@ build/
 
 # Local document storage (uploaded files — kept out of version control)
 storage/
+# Browser verification (tests/Browser)
+tests/Browser/node_modules/
+tests/Browser/test-results/
+tests/Browser/playwright-report/

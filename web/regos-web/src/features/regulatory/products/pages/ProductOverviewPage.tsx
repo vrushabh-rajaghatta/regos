@@ -8,12 +8,14 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { PageSection } from "@/shared/components/PageSection";
 
 import { ProductNotFoundError } from "../api/getProduct";
+import { ArchiveProductDialog } from "../components/ArchiveProductDialog";
 import { EditProductDialog } from "../components/EditProductDialog";
 import { useProduct } from "../hooks/useProduct";
 
 export function ProductOverviewPage() {
   const { productId } = useParams();
   const [editOpen, setEditOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const { data: product, isPending, error } = useProduct(productId!);
 
@@ -40,13 +42,31 @@ export function ProductOverviewPage() {
       <PageHeader
         title={product.name}
         description={product.code}
-        actions={<Button onClick={() => setEditOpen(true)}>Edit</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(true)}>
+              Edit
+            </Button>
+
+            {/* An archived product has nowhere further to go, so the action
+                disappears rather than failing when pressed. */}
+            {product.status !== "Archived" && (
+              <Button onClick={() => setArchiveOpen(true)}>Archive</Button>
+            )}
+          </div>
+        }
       />
 
       <EditProductDialog
         product={product}
         open={editOpen}
         onOpenChange={setEditOpen}
+      />
+
+      <ArchiveProductDialog
+        product={product}
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
       />
 
       <PageSection title="Overview">

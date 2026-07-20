@@ -12,6 +12,8 @@ public static class ProductErrors
     public const string CodeTooLong =
         "Product code must be 50 characters or fewer.";
 
+    public const string AlreadyArchived = "This product is already archived.";
+
     public const string CodeInvalidCharacters =
         "Product code may contain only letters, digits, dashes and underscores.";
 }

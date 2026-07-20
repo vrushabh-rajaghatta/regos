@@ -2,6 +2,7 @@
 export * from "./components/ProductCard";
 export * from "./components/RegisterProductDialog";
 export * from "./components/EditProductDialog";
+export * from "./components/ArchiveProductDialog";
 export * from "./components/EditProductForm";
 export * from "./components/RegisterProductForm";
 
@@ -10,6 +11,7 @@ export * from "./hooks/useProduct";
 export * from "./hooks/useProducts";
 export * from "./hooks/useRegisterProduct";
 export * from "./hooks/useUpdateProduct";
+export * from "./hooks/useArchiveProduct";
 
 // Types
 export * from "./types/RegisterProductRequest";
