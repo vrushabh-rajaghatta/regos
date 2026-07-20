@@ -12,7 +12,7 @@ never changes meaning once assigned.
 2. **One decision per file.** No aggregate documents.
 3. **Append-only.** Edit an ADR to correct a broken reference or change its
    status — never to change what was decided.
-4. **New ADRs take the next free number.** Today that is **ADR-017**.
+4. **New ADRs take the next free number.** Today that is **ADR-021**.
 5. **Cite by number in code and commits.** `// ADR-009` in a source file is the
    reason the ADR must never be renumbered.
 
@@ -47,6 +47,10 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [014](ADR-014-invitation-is-a-user-status.md) | Invitation is a user status | Accepted | Current |
 | [015](ADR-015-organization-is-the-tenant.md) | Organization is the tenant | Accepted | Current |
 | [016](ADR-016-persistence-access-model.md) | Repositories for writes, DbContext for reads | Accepted | Current |
+| [017](ADR-017-shared-kernel-scope.md) | Shared kernel scope | Accepted | Current |
+| [018](ADR-018-rule-of-three.md) | Duplicate twice, abstract on the third | Accepted | Current |
+| [019](ADR-019-testing-strategy.md) | Testing strategy | Accepted | Current |
+| [020](ADR-020-ef-read-model-strategy.md) | EF Core read model strategy | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly
