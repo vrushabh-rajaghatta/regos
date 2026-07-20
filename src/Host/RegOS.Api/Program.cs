@@ -113,6 +113,7 @@ app.MapListDocumentTypes();
 
 app.MapRegisterProductEndpoint();
 app.MapGetProductEndpoint();
+app.MapUpdateProductEndpoint();
 app.MapListProductsEndpoint();
 
 app.MapCreateRegulatoryApplication();

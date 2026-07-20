@@ -107,4 +107,41 @@ public sealed class ProductTests
 
         first.Should().NotBe(second);
     }
+
+    [Fact]
+    public void ChangeType_reclassifies_the_product()
+    {
+        var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
+
+        product.ChangeType(ProductType.Biologic);
+
+        product.Type.Should().Be(ProductType.Biologic);
+    }
+
+    [Fact]
+    public void ChangeType_leaves_the_code_and_owner_untouched()
+    {
+        var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
+
+        product.ChangeType(ProductType.Biologic);
+        product.Rename("Wegovy");
+
+        // The code identifies the product within its organization; nothing on
+        // the update path may change it or move the product between tenants.
+        product.Code.Value.Should().Be("OZE-1");
+        product.OrganizationId.Should().Be(Owner);
+    }
+
+    [Fact]
+    public void Updating_does_not_change_status()
+    {
+        var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
+
+        product.Rename("Wegovy");
+        product.ChangeType(ProductType.Biologic);
+
+        // Lifecycle is a separate capability - Archive - not a side effect of
+        // editing descriptive fields.
+        product.Status.Should().Be(ProductStatus.Registered);
+    }
 }

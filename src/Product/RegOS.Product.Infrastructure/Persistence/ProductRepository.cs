@@ -31,6 +31,14 @@ public sealed class ProductRepository : IProductRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task UpdateAsync(
+        ProductAggregate product,
+        CancellationToken cancellationToken)
+    {
+        _dbContext.Products.Update(product);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<ProductAggregate?> GetByIdAsync(
         ProductId id,
         CancellationToken cancellationToken)

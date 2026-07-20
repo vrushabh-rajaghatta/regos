@@ -36,11 +36,17 @@ public sealed class Product : AggregateRoot<ProductId>
     /// </summary>
     public OrganizationId OrganizationId { get; }
 
+    /// <summary>
+    /// Immutable once registered. The code identifies the product within its
+    /// organization - it is the unique key the database enforces - and
+    /// organizations cite it in authority correspondence. Changing it is a
+    /// distinct business capability with its own rules, not a field edit.
+    /// </summary>
     public ProductCode Code { get; }
 
     public ProductName Name { get; private set; }
 
-    public ProductType Type { get; }
+    public ProductType Type { get; private set; }
 
     public ProductStatus Status { get; private set; }
 
@@ -58,6 +64,15 @@ public sealed class Product : AggregateRoot<ProductId>
             ProductStatus.Registered);
 
     public void Rename(string? name) => Name = ProductName.Create(name);
+
+    /// <summary>
+    /// Reclassifies the product. Separate from <see cref="Rename"/> rather than
+    /// a single UpdateDetails: the two carry different intent and will grow
+    /// different rules - reclassifying a product that already has applications
+    /// or documents is a conversation we have not had yet, and an explicit
+    /// method is where that rule will live when we do.
+    /// </summary>
+    public void ChangeType(ProductType type) => Type = type;
 
     /// <summary>Idempotent: archiving an archived product is a no-op.</summary>
     public void Archive()

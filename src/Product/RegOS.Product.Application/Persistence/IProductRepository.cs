@@ -15,4 +15,6 @@ public interface IProductRepository
     Task<ProductAggregate?> GetByIdAsync(
         ProductId id,
         CancellationToken cancellationToken);
+
+    Task UpdateAsync(ProductAggregate product, CancellationToken cancellationToken);
 }

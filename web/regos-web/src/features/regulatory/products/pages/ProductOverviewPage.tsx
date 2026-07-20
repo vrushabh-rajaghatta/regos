@@ -1,15 +1,19 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { PageSection } from "@/shared/components/PageSection";
 
 import { ProductNotFoundError } from "../api/getProduct";
+import { EditProductDialog } from "../components/EditProductDialog";
 import { useProduct } from "../hooks/useProduct";
 
 export function ProductOverviewPage() {
   const { productId } = useParams();
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data: product, isPending, error } = useProduct(productId!);
 
@@ -33,7 +37,17 @@ export function ProductOverviewPage() {
 
   return (
     <Page>
-      <PageHeader title={product.name} description={product.code} />
+      <PageHeader
+        title={product.name}
+        description={product.code}
+        actions={<Button onClick={() => setEditOpen(true)}>Edit</Button>}
+      />
+
+      <EditProductDialog
+        product={product}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
 
       <PageSection title="Overview">
         <dl className="grid grid-cols-2 gap-6">
