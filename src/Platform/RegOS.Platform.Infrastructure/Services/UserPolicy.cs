@@ -5,6 +5,7 @@ using RegOS.Persistence;
 using RegOS.Platform.Application;
 using RegOS.Platform.Application.Exceptions;
 using RegOS.Platform.Application.Services;
+using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 
 namespace RegOS.Platform.Infrastructure.Services;
@@ -44,6 +45,27 @@ public sealed class UserPolicy : IUserPolicy
             .AsNoTracking()
             .AnyAsync(
                 x => x.OrganizationId == organizationId && x.Email == email,
+                cancellationToken);
+
+        if (alreadyInUse)
+            throw new BusinessRuleViolationException(
+                PlatformErrors.EmailAlreadyInUse);
+    }
+
+    public async Task EnsureEmailIsUniqueForUpdateAsync(
+        OrganizationId organizationId,
+        UserId userId,
+        Email email,
+        CancellationToken cancellationToken)
+    {
+        // Identical to the invite rule, except the user being updated is not
+        // allowed to collide with itself.
+        var alreadyInUse = await _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(
+                x => x.OrganizationId == organizationId
+                    && x.Email == email
+                    && x.Id != userId,
                 cancellationToken);
 
         if (alreadyInUse)

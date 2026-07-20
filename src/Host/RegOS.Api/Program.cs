@@ -96,6 +96,11 @@ app.MapListAuthorities();
 app.MapListOrganizations();
 
 app.MapInviteUser();
+app.MapListUsers();
+app.MapGetUser();
+app.MapUpdateUserProfile();
+app.MapActivateUser();
+app.MapDeactivateUser();
 app.MapListSubmissionTypes();
 app.MapListDocumentTypes();
 

@@ -1,0 +1,76 @@
+using Microsoft.EntityFrameworkCore;
+
+using RegOS.Persistence;
+using RegOS.Platform.Application.Common;
+
+namespace RegOS.Platform.Application.Queries.GetUsers;
+
+/// <summary>
+/// Reads the user directory straight from the database. This is reporting, not
+/// domain modelling: no repository, no aggregate loading, no tracking, no
+/// Include — only the columns the directory screen needs, projected from a flat
+/// read model rather than through the User aggregate's value converters.
+/// </summary>
+public sealed class GetUsersHandler
+{
+    private readonly RegOSDbContext _dbContext;
+
+    public GetUsersHandler(RegOSDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public async Task<PagedResult<UserListItem>> HandleAsync(
+        GetUsersQuery query,
+        CancellationToken cancellationToken)
+    {
+        // Clamp rather than reject: a caller asking for page 0 or 5000 rows gets
+        // a sensible page, never an unbounded read.
+        var page = query.Page < 1 ? GetUsersQuery.DefaultPage : query.Page;
+        var pageSize = Math.Clamp(
+            query.PageSize, 1, GetUsersQuery.MaxPageSize);
+
+        var users = _dbContext.UserDirectory.AsNoTracking();
+
+        if (query.OrganizationId is not null)
+        {
+            var organizationId = query.OrganizationId.Value;
+            users = users.Where(x => x.OrganizationId == organizationId);
+        }
+
+        if (query.Status is not null)
+        {
+            var status = query.Status.Value;
+            users = users.Where(x => x.Status == status);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            // One search box across first name, last name and email.
+            var pattern = $"%{query.Search.Trim()}%";
+
+            users = users.Where(x =>
+                EF.Functions.ILike(x.FirstName, pattern)
+                || EF.Functions.ILike(x.LastName, pattern)
+                || EF.Functions.ILike(x.Email, pattern));
+        }
+
+        var totalCount = await users.CountAsync(cancellationToken);
+
+        var items = await users
+            .OrderByDescending(x => x.CreatedOn) // newest invitations first
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new UserListItem(
+                x.Id,
+                x.FirstName,
+                x.LastName,
+                x.Email,
+                x.Status,
+                x.CreatedOn))
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<UserListItem>(
+            items, totalCount, page, pageSize);
+    }
+}

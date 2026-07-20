@@ -11,6 +11,9 @@ public static class PlatformErrors
     public const string OrganizationInactive =
         "Organization is inactive and cannot accept users.";
 
+    public const string UserNotFound =
+        "User not found.";
+
     public const string EmailAlreadyInUse =
         "A user with this email already exists in the organization.";
 }

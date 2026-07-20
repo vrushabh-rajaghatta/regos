@@ -10,6 +10,8 @@ namespace RegOS.Api.Middleware;
 ///   <item><see cref="DomainException"/> (a broken domain invariant) -> 400.</item>
 ///   <item><see cref="BusinessRuleViolationException"/> (an application rule such
 ///   as an inactive organization or duplicate email) -> 409.</item>
+///   <item><see cref="NotFoundException"/> (missing record, or one outside the
+///   caller's organization) -> 404.</item>
 /// </list>
 /// Anything else is left to propagate to the default handler (500), preserving
 /// today's behaviour for the modules that have not yet adopted this mapping.
@@ -28,6 +30,11 @@ public sealed class ExceptionHandlingMiddleware
         try
         {
             await _next(context);
+        }
+        catch (NotFoundException exception)
+        {
+            await WriteProblemAsync(
+                context, StatusCodes.Status404NotFound, exception.Message);
         }
         catch (BusinessRuleViolationException exception)
         {

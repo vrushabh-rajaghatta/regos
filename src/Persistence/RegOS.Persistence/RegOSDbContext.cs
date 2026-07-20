@@ -65,6 +65,10 @@ public sealed class RegOSDbContext : DbContext
     public DbSet<UserAggregate> Users =>
         Set<UserAggregate>();
 
+    /// <summary>Read-only projection over Users for the user directory.</summary>
+    public DbSet<ReadModels.UserDirectoryRow> UserDirectory =>
+        Set<ReadModels.UserDirectoryRow>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

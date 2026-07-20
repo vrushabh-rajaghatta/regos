@@ -132,6 +132,28 @@ public class UserTests
         user.LastName.Should().Be("Smith");
     }
 
+    [Fact]
+    public void ChangeName_WithSameValues_IsNoOp()
+    {
+        var user = NewInvitedUser();
+
+        user.ChangeName("John", "Doe");
+
+        user.FirstName.Should().Be("John");
+        user.LastName.Should().Be("Doe");
+    }
+
+    [Fact]
+    public void ChangeName_WithSameValuesButUntrimmed_IsNoOp()
+    {
+        var user = NewInvitedUser();
+
+        user.ChangeName("  John  ", "  Doe  ");
+
+        user.FirstName.Should().Be("John");
+        user.LastName.Should().Be("Doe");
+    }
+
     [Theory]
     [InlineData("", "Smith")]
     [InlineData("Jane", "   ")]

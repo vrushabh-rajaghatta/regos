@@ -1,4 +1,5 @@
 using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 
 namespace RegOS.Platform.Application.Services;
@@ -17,6 +18,17 @@ public interface IUserPolicy
 
     Task EnsureEmailIsUniqueAsync(
         OrganizationId organizationId,
+        Email email,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Same rule as <see cref="EnsureEmailIsUniqueAsync"/>, but ignores the user
+    /// being updated — otherwise saving a profile without changing the email
+    /// would collide with itself.
+    /// </summary>
+    Task EnsureEmailIsUniqueForUpdateAsync(
+        OrganizationId organizationId,
+        UserId userId,
         Email email,
         CancellationToken cancellationToken);
 }

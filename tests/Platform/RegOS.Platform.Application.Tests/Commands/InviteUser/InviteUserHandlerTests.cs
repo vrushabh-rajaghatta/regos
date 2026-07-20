@@ -3,7 +3,7 @@ using FluentAssertions;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Commands.InviteUser;
 using RegOS.Platform.Application.Exceptions;
-using RegOS.Platform.Application.Services;
+using RegOS.Platform.Application.Tests.Fakes;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 using RegOS.SharedKernel.Exceptions;
@@ -81,51 +81,5 @@ public sealed class InviteUserHandlerTests
         var act = () => handler.HandleAsync(command, CancellationToken.None);
 
         await act.Should().ThrowAsync<DomainException>();
-    }
-
-    private sealed class FakeUserRepository : IUserRepository
-    {
-        public UserAggregate? Added { get; private set; }
-
-        public Task AddAsync(UserAggregate user, CancellationToken cancellationToken)
-        {
-            Added = user;
-            return Task.CompletedTask;
-        }
-
-        public Task<UserAggregate?> GetByIdAsync(UserId id, CancellationToken cancellationToken)
-            => Task.FromResult<UserAggregate?>(null);
-
-        public Task UpdateAsync(UserAggregate user, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-    }
-
-    private sealed class FakeUserPolicy : IUserPolicy
-    {
-        private readonly Exception? _organizationError;
-        private readonly Exception? _emailError;
-
-        public FakeUserPolicy(
-            Exception? organizationError = null,
-            Exception? emailError = null)
-        {
-            _organizationError = organizationError;
-            _emailError = emailError;
-        }
-
-        public Task EnsureOrganizationCanAcceptUsersAsync(
-            OrganizationId organizationId,
-            CancellationToken cancellationToken)
-            => _organizationError is null
-                ? Task.CompletedTask
-                : Task.FromException(_organizationError);
-
-        public Task EnsureEmailIsUniqueAsync(
-            OrganizationId organizationId,
-            Email email,
-            CancellationToken cancellationToken)
-            => _emailError is null
-                ? Task.CompletedTask
-                : Task.FromException(_emailError);
     }
 }
