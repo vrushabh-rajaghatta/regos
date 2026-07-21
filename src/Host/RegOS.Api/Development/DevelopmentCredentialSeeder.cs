@@ -1,8 +1,8 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
 using RegOS.Platform.Domain.ValueObjects;
+using RegOS.SharedKernel.Primitives;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
 
@@ -26,10 +26,12 @@ public static class DevelopmentCredentialSeeder
     public const string Password = "development-password";
 
     /// <summary>
-    /// Demo MAH Ltd. — the organization that owns the seeded demo catalogue,
-    /// and the tenant the UI acted as through the X-Tenant-Id header. Now that
-    /// tenancy comes from this account's token, it has to be the same
-    /// organization or the development UI would open onto an empty system.
+    /// Demo MAH Ltd. — the tenant that owns the seeded demo catalogue, and the
+    /// tenant the UI acted as through the X-Tenant-Id header. Now that tenancy
+    /// comes from this account's token, it has to be the same tenant or the
+    /// development UI would open onto an empty system. The guid is shared with
+    /// the seeded organization of the same name: the Tenants backfill preserved
+    /// organization ids (ADR-030).
     /// </summary>
     private static readonly Guid DemoTenantId =
         Guid.Parse("30000000-0000-0000-0000-000000000003");
@@ -49,7 +51,7 @@ public static class DevelopmentCredentialSeeder
         if (user is null)
         {
             user = UserAggregate.Create(
-                new OrganizationId(DemoTenantId),
+                new TenantId(DemoTenantId),
                 email,
                 "Development",
                 "User");

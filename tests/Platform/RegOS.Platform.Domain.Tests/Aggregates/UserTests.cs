@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 using RegOS.SharedKernel.Exceptions;
@@ -11,7 +11,7 @@ public class UserTests
 {
     private static User NewInvitedUser() =>
         User.Create(
-            OrganizationId.New(),
+            TenantId.New(),
             Email.Create("john.doe@example.com"),
             "John",
             "Doe");
@@ -25,16 +25,16 @@ public class UserTests
     [Fact]
     public void Create_PopulatesAllFields()
     {
-        var organizationId = OrganizationId.New();
+        var tenantId = TenantId.New();
 
         var user = User.Create(
-            organizationId,
+            tenantId,
             Email.Create("john.doe@example.com"),
             "  John  ",
             "  Doe  ");
 
         user.Id.Should().NotBeNull();
-        user.OrganizationId.Should().Be(organizationId);
+        user.TenantId.Should().Be(tenantId);
         user.Email.Value.Should().Be("john.doe@example.com");
         user.FirstName.Should().Be("John");   // trimmed
         user.LastName.Should().Be("Doe");     // trimmed
@@ -49,7 +49,7 @@ public class UserTests
     public void Create_WithMissingName_ThrowsDomainException(string first, string last)
     {
         var act = () => User.Create(
-            OrganizationId.New(),
+            TenantId.New(),
             Email.Create("john.doe@example.com"),
             first,
             last);

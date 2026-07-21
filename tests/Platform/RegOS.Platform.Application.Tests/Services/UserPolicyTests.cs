@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Persistence;
 using RegOS.Platform.Domain.ValueObjects;
 using RegOS.Platform.Infrastructure.Services;
@@ -12,19 +12,19 @@ using RegOS.SharedKernel.Exceptions;
 namespace RegOS.Platform.Application.Tests.Services;
 
 // Integration tests for the uniqueness rules — the exclude-self behaviour is
-// SQL, so fakes cannot prove it. Scoped to a throwaway OrganizationId.
+// SQL, so fakes cannot prove it. Scoped to a throwaway TenantId.
 public sealed class UserPolicyTests : IAsyncLifetime
 {
     private const string ConnectionString =
         "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
 
-    private readonly OrganizationId _organizationId =
-        OrganizationId.From(Guid.NewGuid());
+    private readonly TenantId _tenantId =
+        TenantId.From(Guid.NewGuid());
 
     // A second, unrelated organization. Uniqueness is global (ADR-021), so a
     // collision across these two must be rejected exactly like one within.
-    private readonly OrganizationId _otherOrganizationId =
-        OrganizationId.From(Guid.NewGuid());
+    private readonly TenantId _otherTenantId =
+        TenantId.From(Guid.NewGuid());
 
     private UserAggregate _existing = default!;
     private UserAggregate _other = default!;
@@ -40,13 +40,13 @@ public sealed class UserPolicyTests : IAsyncLifetime
         await using var context = NewContext();
 
         _existing = UserAggregate.Create(
-            _organizationId, Email.Create("taken@policy.example"), "Taken", "User");
+            _tenantId, Email.Create("taken@policy.example"), "Taken", "User");
 
         _other = UserAggregate.Create(
-            _organizationId, Email.Create("other@policy.example"), "Other", "User");
+            _tenantId, Email.Create("other@policy.example"), "Other", "User");
 
         _elsewhere = UserAggregate.Create(
-            _otherOrganizationId,
+            _otherTenantId,
             Email.Create("elsewhere@policy.example"),
             "Else",
             "Where");
@@ -61,9 +61,9 @@ public sealed class UserPolicyTests : IAsyncLifetime
         await using var context = NewContext();
 
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM \"Users\" WHERE \"OrganizationId\" IN ({0}, {1})",
-            _organizationId.Value,
-            _otherOrganizationId.Value);
+            "DELETE FROM \"Users\" WHERE \"TenantId\" IN ({0}, {1})",
+            _tenantId.Value,
+            _otherTenantId.Value);
     }
 
     [Fact]

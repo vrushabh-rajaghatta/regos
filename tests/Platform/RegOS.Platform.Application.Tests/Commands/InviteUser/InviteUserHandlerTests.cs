@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Platform.Application.Invitations;
 using RegOS.Platform.Infrastructure.Authentication;
 using RegOS.Platform.Application.Commands.InviteUser;
@@ -16,7 +16,7 @@ namespace RegOS.Platform.Application.Tests.Commands.InviteUser;
 
 public sealed class InviteUserHandlerTests
 {
-    private static readonly OrganizationId Tenant = OrganizationId.New();
+    private static readonly TenantId Tenant = TenantId.New();
 
     private static InviteUserCommand ValidCommand() =>
         new("John", "Doe", "john.doe@example.com");
@@ -58,7 +58,7 @@ public sealed class InviteUserHandlerTests
 
         repository.Added.Should().NotBeNull();
         // The organization comes from the tenant, never from the command.
-        repository.Added!.OrganizationId.Should().Be(Tenant);
+        repository.Added!.TenantId.Should().Be(Tenant);
         repository.Added.Email.Value.Should().Be("john.doe@example.com");
         repository.Added.Status.Should().Be(UserStatus.Invited);
     }
@@ -68,7 +68,7 @@ public sealed class InviteUserHandlerTests
     {
         var repository = new FakeUserRepository();
         var policy = new FakeUserPolicy(
-            organizationError: new BusinessRuleViolationException(PlatformErrors.OrganizationInactive));
+            tenantError: new BusinessRuleViolationException(PlatformErrors.TenantInactive));
         var handler = new InviteUserHandler(
             NewInvitationIssuer(), policy, repository, new FakeTenantContext(Tenant));
 

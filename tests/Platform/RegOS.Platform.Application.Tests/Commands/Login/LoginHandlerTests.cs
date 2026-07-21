@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Persistence;
 using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Application.Commands.Login;
@@ -29,8 +29,8 @@ public sealed class LoginHandlerTests : IAsyncLifetime
 
     private const string CorrectPassword = "correct horse battery";
 
-    private readonly OrganizationId _organizationId =
-        OrganizationId.From(Guid.NewGuid());
+    private readonly TenantId _tenantId =
+        TenantId.From(Guid.NewGuid());
 
     private readonly string _email =
         $"login.{Guid.NewGuid():N}@policy.example";
@@ -71,7 +71,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
         await using var context = NewContext();
 
         _user = UserAggregate.Create(
-            _organizationId, Email.Create(_email), "Login", "User");
+            _tenantId, Email.Create(_email), "Login", "User");
 
         _user.Activate();
 
@@ -95,8 +95,8 @@ public sealed class LoginHandlerTests : IAsyncLifetime
         // four orphaned credentials because it deleted users by organization
         // and credentials one at a time; that is now impossible to get wrong.
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
-            _organizationId.Value);
+            "DELETE FROM \"Users\" WHERE \"TenantId\" = {0}",
+            _tenantId.Value);
     }
 
     private async Task<AuthenticatedSession> LoginAsync(string email, string password)
@@ -167,7 +167,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
         await using var context = NewContext();
 
         var withoutCredential = UserAggregate.Create(
-            _organizationId,
+            _tenantId,
             Email.Create($"nocred.{Guid.NewGuid():N}@policy.example"),
             "No",
             "Credential");
@@ -201,7 +201,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
         await using var context = NewContext();
 
         var invited = UserAggregate.Create(
-            _organizationId,
+            _tenantId,
             Email.Create($"invited.{Guid.NewGuid():N}@policy.example"),
             "Invited",
             "User");

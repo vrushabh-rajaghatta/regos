@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.SharedKernel.Primitives;
 
 using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using RegulatoryApplicationAggregate =
@@ -26,7 +27,7 @@ namespace RegOS.Submission.Application.Tests.Fixtures;
 /// The fixture is identified by a fixed product code rather than "whatever came
 /// back first", so that test classes running in parallel converge on one row
 /// instead of each creating their own. The unique index on
-/// (OrganizationId, Code) is what actually settles the race: the loser of a
+/// (TenantId, Code) is what actually settles the race: the loser of a
 /// concurrent insert catches the violation and re-reads the winner's row.
 /// </para>
 /// </remarks>
@@ -49,8 +50,14 @@ internal static class TestApplications
         var authorityId = await ctx.Authorities
             .AsNoTracking().Select(x => x.Id).FirstAsync();
 
+        // The product's owner is a tenant; the application's applicant is an
+        // organization (ADR-030 split them). The seeded tenants share their
+        // guids with the seeded organizations, so aligning the two keeps the
+        // fixture equivalent to a customer filing for itself.
+        var tenantId = new TenantId(organizationId.Value);
+
         var product = ProductAggregate.Register(
-            organizationId, FixtureCode, "Submission Test Product", ProductType.Drug);
+            tenantId, FixtureCode, "Submission Test Product", ProductType.Drug);
 
         var application = RegulatoryApplicationAggregate.Create(
             product.Id, countryId, authorityId, organizationId,

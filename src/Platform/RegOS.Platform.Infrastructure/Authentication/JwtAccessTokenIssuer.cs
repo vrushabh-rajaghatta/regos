@@ -48,13 +48,13 @@ public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
             SigningCredentials = _credentials,
             Claims = new Dictionary<string, object>
             {
-                // The user id is the subject; the organization travels beside it
-                // and becomes the tenant once validation exists.
+                // The user id is the subject; the tenant travels beside it and
+                // is what every scoped query is filtered by.
                 [JwtRegisteredClaimNames.Sub] = user.Id.Value.ToString(),
                 [JwtRegisteredClaimNames.Email] = user.Email.Value,
                 [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
-                [RegOSClaims.OrganizationId] =
-                    user.OrganizationId.Value.ToString()
+                [RegOSClaims.TenantId] =
+                    user.TenantId.Value.ToString()
             }
         };
 

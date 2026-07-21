@@ -1,5 +1,5 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.ReferenceData.Domain.DocumentType;
 
@@ -12,8 +12,8 @@ public sealed class DocumentType
     public DocumentTypeId Id { get; private set; }
 
     // null  => platform-provided system document type.
-    // value => organization-specific extension.
-    public OrganizationId? OrganizationId { get; private set; }
+    // value => tenant-specific extension.
+    public TenantId? TenantId { get; private set; }
 
     public string Code { get; private set; } = default!;
 
@@ -27,7 +27,7 @@ public sealed class DocumentType
 
     public static DocumentType Create(
         DocumentTypeId id,
-        OrganizationId? organizationId,
+        TenantId? tenantId,
         string code,
         string name,
         string? description)
@@ -41,7 +41,7 @@ public sealed class DocumentType
         return new DocumentType
         {
             Id = id,
-            OrganizationId = organizationId,
+            TenantId = tenantId,
             // Code is normalized and, having no setter or mutator, is
             // immutable after creation.
             Code = code.Trim().ToUpperInvariant(),
@@ -60,5 +60,5 @@ public sealed class DocumentType
         string code,
         string name,
         string? description = null)
-        => Create(id, organizationId: null, code, name, description);
+        => Create(id, tenantId: null, code, name, description);
 }

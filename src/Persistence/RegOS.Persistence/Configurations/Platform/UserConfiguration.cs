@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
+using RegOS.SharedKernel.Primitives;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
 
@@ -22,10 +22,10 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<UserAggregate>
                 id => id.Value,
                 value => new UserId(value));
 
-        builder.Property(x => x.OrganizationId)
+        builder.Property(x => x.TenantId)
             .HasConversion(
                 id => id.Value,
-                value => new OrganizationId(value))
+                value => new TenantId(value))
             .IsRequired();
 
         // The Email value object is stored as its normalized string. Email.Create
@@ -54,12 +54,12 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<UserAggregate>
             .IsRequired();
 
         // Defense in depth for the uniqueness policy: an email address
-        // identifies exactly one user across RegOS, not one per organization
+        // identifies exactly one user across RegOS, not one per tenant
         // (ADR-021). Authentication resolves a user before a tenant exists, so
         // the index cannot be tenant-scoped.
         builder.HasIndex(x => x.Email)
             .IsUnique();
 
-        builder.HasIndex(x => x.OrganizationId);
+        builder.HasIndex(x => x.TenantId);
     }
 }

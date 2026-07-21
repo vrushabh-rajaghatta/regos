@@ -1,5 +1,5 @@
 export interface CurrentUser {
   userId: string;
-  organizationId: string;
+  tenantId: string;
   email: string;
 }

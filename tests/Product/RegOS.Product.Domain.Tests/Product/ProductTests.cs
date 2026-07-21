@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Exceptions;
 
@@ -10,7 +10,7 @@ namespace RegOS.Product.Domain.Tests.Product;
 
 public sealed class ProductTests
 {
-    private static readonly OrganizationId Owner = OrganizationId.New();
+    private static readonly TenantId Owner = TenantId.New();
 
     [Fact]
     public void Register_starts_the_product_as_registered()
@@ -18,7 +18,7 @@ public sealed class ProductTests
         var product = ProductAggregate.Register(Owner, "OZE-1", "Ozempic", ProductType.Drug);
 
         product.Status.Should().Be(ProductStatus.Registered);
-        product.OrganizationId.Should().Be(Owner);
+        product.TenantId.Should().Be(Owner);
         product.Code.Value.Should().Be("OZE-1");
         product.Name.Value.Should().Be("Ozempic");
         product.Type.Should().Be(ProductType.Drug);
@@ -113,7 +113,7 @@ public sealed class ProductTests
         product.Code.Value.Should().Be("OZE-1");
         product.Name.Value.Should().Be("Ozempic");
         product.Type.Should().Be(ProductType.Drug);
-        product.OrganizationId.Should().Be(Owner);
+        product.TenantId.Should().Be(Owner);
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public sealed class ProductTests
         // The code identifies the product within its organization; nothing on
         // the update path may change it or move the product between tenants.
         product.Code.Value.Should().Be("OZE-1");
-        product.OrganizationId.Should().Be(Owner);
+        product.TenantId.Should().Be(Owner);
     }
 
     [Fact]

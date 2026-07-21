@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Application.Commands.UpdateProduct;
 using RegOS.Product.Application.Persistence;
 using RegOS.SharedKernel.Abstractions;
@@ -34,12 +33,10 @@ public sealed class ArchiveProductHandler
         ArchiveProductCommand command,
         CancellationToken cancellationToken)
     {
-        var organizationId = new OrganizationId(_tenantContext.TenantId);
-
         var product = await _repository.GetByIdAsync(
             command.ProductId, cancellationToken);
 
-        if (product is null || product.OrganizationId != organizationId)
+        if (product is null || product.TenantId != _tenantContext.TenantId)
             throw new NotFoundException(ProductCommandErrors.ProductNotFound);
 
         // The aggregate owns the transition, including refusing a repeat.

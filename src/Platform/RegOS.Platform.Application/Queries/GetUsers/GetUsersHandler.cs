@@ -37,12 +37,12 @@ public sealed class GetUsersHandler
 
         // Tenant filter first, and unconditionally. There is no branch that can
         // skip it, which is the entire point: a directory read cannot be
-        // widened past the caller's own organization.
-        var tenantId = _tenantContext.TenantId;
+        // widened past the caller's own tenant.
+        var tenantId = _tenantContext.TenantId.Value;
 
         var users = _dbContext.UserDirectory
             .AsNoTracking()
-            .Where(x => x.OrganizationId == tenantId);
+            .Where(x => x.TenantId == tenantId);
 
         if (query.Status is not null)
         {

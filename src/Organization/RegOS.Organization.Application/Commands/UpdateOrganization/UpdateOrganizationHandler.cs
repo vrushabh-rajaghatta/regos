@@ -1,5 +1,6 @@
 using RegOS.Organization.Application.Persistence;
 using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Organization.Application.Commands.UpdateOrganization;
@@ -12,10 +13,14 @@ namespace RegOS.Organization.Application.Commands.UpdateOrganization;
 public sealed class UpdateOrganizationHandler
 {
     private readonly IOrganizationRepository _repository;
+    private readonly ITenantContext _tenantContext;
 
-    public UpdateOrganizationHandler(IOrganizationRepository repository)
+    public UpdateOrganizationHandler(
+        IOrganizationRepository repository,
+        ITenantContext tenantContext)
     {
         _repository = repository;
+        _tenantContext = tenantContext;
     }
 
     public async Task HandleAsync(
@@ -26,9 +31,17 @@ public sealed class UpdateOrganizationHandler
             command.Id,
             cancellationToken);
 
-        // Addressed by the route and absent: 404, not 400 (ADR-009).
-        if (organization is null)
+        // Interim ownership rule until organizations belong to a tenant
+        // (ADR-030): the only organization a caller may mutate is the one that
+        // shares their tenant's id — its pre-split alter ego. Without this,
+        // any signed-in user could rename any customer's organization by guid.
+        // Reported as not found, never forbidden, like every other tenant
+        // mismatch. Reads stay global by design: the directory is shared.
+        if (organization is null
+            || organization.Id.Value != _tenantContext.TenantId.Value)
+        {
             throw new NotFoundException(OrganizationErrors.NotFound);
+        }
 
         // The aggregate owns the invariants and the intent of each change; the
         // handler never reimplements them. Submitting unchanged values is a

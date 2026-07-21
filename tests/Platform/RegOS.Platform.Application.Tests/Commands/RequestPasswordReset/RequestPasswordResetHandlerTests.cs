@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Platform.Application.Commands.RequestPasswordReset;
 using RegOS.Platform.Application.PasswordResets;
 using RegOS.Platform.Application.Tests.Fakes;
@@ -24,7 +24,7 @@ public sealed class RequestPasswordResetHandlerTests
 
     private static UserAggregate NewUser() =>
         UserAggregate.Create(
-            OrganizationId.New(), Email.Create(Address), "John", "Doe");
+            TenantId.New(), Email.Create(Address), "John", "Doe");
 
     private static UserAggregate ActiveUser()
     {

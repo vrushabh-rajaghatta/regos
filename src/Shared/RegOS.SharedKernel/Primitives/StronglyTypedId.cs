@@ -5,7 +5,7 @@ namespace RegOS.SharedKernel.Primitives;
 /// <summary>
 /// Base class for a strongly typed identifier that wraps a single <see cref="Guid"/>.
 /// Gives every id the same value-equality, hashing and string behaviour while each
-/// module keeps its own distinct id type (an <c>OrganizationId</c> is never equal to a
+/// module keeps its own distinct id type (a <c>TenantId</c> is never equal to a
 /// <c>UserId</c>, even when they wrap the same <see cref="Guid"/>).
 /// </summary>
 /// <remarks>

@@ -36,13 +36,13 @@ public sealed class ListProductsHandler
         var pageSize = Math.Clamp(
             query.PageSize, 1, ListProductsQuery.MaxPageSize);
 
-        var tenantId = _tenantContext.TenantId;
+        var tenantId = _tenantContext.TenantId.Value;
 
         // Tenant filter first and unconditionally — there is no branch that can
         // skip it.
         var products = _dbContext.ProductDirectory
             .AsNoTracking()
-            .Where(x => x.OrganizationId == tenantId);
+            .Where(x => x.TenantId == tenantId);
 
         if (query.Type is not null)
         {

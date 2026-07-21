@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Common;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.User;
@@ -27,14 +26,12 @@ public sealed class UpdateUserProfileHandler
         UpdateUserProfileCommand command,
         CancellationToken cancellationToken)
     {
-        var organizationId = new OrganizationId(_tenantContext.TenantId);
-
         var user = await _repository.GetRequiredAsync(
-            command.UserId, organizationId, cancellationToken);
+            command.UserId, _tenantContext.TenantId, cancellationToken);
 
         var email = Email.Create(command.Email);
 
-        // Unscoped by organization (ADR-021), and excluding the user itself so
+        // Unscoped by tenant (ADR-021), and excluding the user itself so
         // an unchanged email never collides with its own row.
         await _userPolicy.EnsureEmailIsUniqueForUpdateAsync(
             user.Id,

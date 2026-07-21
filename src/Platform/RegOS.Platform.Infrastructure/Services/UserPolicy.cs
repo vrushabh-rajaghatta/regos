@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
 using RegOS.Platform.Application;
 using RegOS.Platform.Application.Services;
+using RegOS.Platform.Domain.Aggregates.Tenant;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Platform.Infrastructure.Services;
 
@@ -19,27 +20,27 @@ public sealed class UserPolicy : IUserPolicy
         _dbContext = dbContext;
     }
 
-    public async Task EnsureOrganizationCanAcceptUsersAsync(
-        OrganizationId organizationId,
+    public async Task EnsureTenantCanAcceptUsersAsync(
+        TenantId tenantId,
         CancellationToken cancellationToken)
     {
-        var organization = await _dbContext.Organizations
+        var tenant = await _dbContext.Tenants
             .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == organizationId, cancellationToken);
+            .SingleOrDefaultAsync(x => x.Id == tenantId, cancellationToken);
 
-        // The organization the caller named does not exist, so the *request* is
+        // The tenant the caller named does not exist, so the *request* is
         // wrong (400) rather than the system state being in conflict (409).
         // Matches how RegulatoryApplication classifies the same condition.
-        if (organization is null)
+        if (tenant is null)
             throw new DomainException(
-                PlatformErrors.OrganizationDoesNotExist);
+                PlatformErrors.TenantDoesNotExist);
 
-        if (organization.Status != OrganizationStatus.Active)
+        if (tenant.Status != TenantStatus.Active)
             throw new BusinessRuleViolationException(
-                PlatformErrors.OrganizationInactive);
+                PlatformErrors.TenantInactive);
     }
 
-    // Both rules are deliberately unscoped by organization: an email address
+    // Both rules are deliberately unscoped by tenant: an email address
     // identifies exactly one user across RegOS (ADR-021).
 
     public async Task EnsureEmailIsUniqueAsync(

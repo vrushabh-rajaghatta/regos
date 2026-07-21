@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Persistence;
 using RegOS.Platform.Application.Queries.GetUserById;
 using RegOS.Platform.Domain.Aggregates.User;
@@ -14,17 +14,17 @@ using RegOS.Platform.Application.Tests.Fakes;
 namespace RegOS.Platform.Application.Tests.Queries.GetUserById;
 
 // Integration tests against the real dev Postgres, scoped to a throwaway
-// OrganizationId so they cannot collide with existing data.
+// TenantId so they cannot collide with existing data.
 public sealed class GetUserByIdHandlerTests : IAsyncLifetime
 {
     private const string ConnectionString =
         "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
 
-    private readonly OrganizationId _organizationId =
-        OrganizationId.From(Guid.NewGuid());
+    private readonly TenantId _tenantId =
+        TenantId.From(Guid.NewGuid());
 
-    private readonly OrganizationId _otherOrganizationId =
-        OrganizationId.From(Guid.NewGuid());
+    private readonly TenantId _otherTenantId =
+        TenantId.From(Guid.NewGuid());
 
     private UserId _userId = default!;
 
@@ -40,7 +40,7 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
         await using var context = NewContext();
 
         var user = UserAggregate.Create(
-            _organizationId,
+            _tenantId,
             Email.Create("grace.hopper@details.example"),
             "Grace",
             "Hopper");
@@ -57,18 +57,18 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
         await using var context = NewContext();
 
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
-            _organizationId.Value);
+            "DELETE FROM \"Users\" WHERE \"TenantId\" = {0}",
+            _tenantId.Value);
     }
 
     private async Task<UserDetails> QueryAsync(
         GetUserByIdQuery query,
-        OrganizationId? tenant = null)
+        TenantId? tenant = null)
     {
         await using var context = NewContext();
 
         return await new GetUserByIdHandler(
-                context, new FakeTenantContext(tenant ?? _organizationId))
+                context, new FakeTenantContext(tenant ?? _tenantId))
             .HandleAsync(query, CancellationToken.None);
     }
 
@@ -109,7 +109,7 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
         // Tenant isolation: an existing user outside the caller's organization
         // must be indistinguishable from one that does not exist.
         var act = () => QueryAsync(
-            new GetUserByIdQuery(_userId), tenant: _otherOrganizationId);
+            new GetUserByIdQuery(_userId), tenant: _otherTenantId);
 
         await act.Should().ThrowAsync<NotFoundException>();
     }

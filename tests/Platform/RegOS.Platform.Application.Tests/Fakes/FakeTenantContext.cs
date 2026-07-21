@@ -1,5 +1,5 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.SharedKernel.Abstractions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Platform.Application.Tests.Fakes;
 
@@ -9,11 +9,13 @@ namespace RegOS.Platform.Application.Tests.Fakes;
 /// </summary>
 internal sealed class FakeTenantContext : ITenantContext
 {
-    public FakeTenantContext(OrganizationId organizationId)
-        => TenantId = organizationId.Value;
-
-    public FakeTenantContext(Guid tenantId)
+    public FakeTenantContext(TenantId tenantId)
         => TenantId = tenantId;
 
-    public Guid TenantId { get; }
+    public FakeTenantContext(Guid tenantId)
+        => TenantId = new TenantId(tenantId);
+
+    public TenantId TenantId { get; }
+
+    public TenantId? TenantIdOrNull => TenantId;
 }

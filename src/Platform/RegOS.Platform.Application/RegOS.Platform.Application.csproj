@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RegOS.Platform.Domain\RegOS.Platform.Domain.csproj" />
-    <ProjectReference Include="..\..\Organization\RegOS.Organization.Domain\RegOS.Organization.Domain.csproj" />
     <ProjectReference Include="..\..\Persistence\RegOS.Persistence\RegOS.Persistence.csproj" />
   </ItemGroup>
 

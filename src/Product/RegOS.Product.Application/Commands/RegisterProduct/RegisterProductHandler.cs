@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Application.Persistence;
 using RegOS.Product.Application.Services;
 using RegOS.Product.Domain.Product;
@@ -28,18 +27,18 @@ public sealed class RegisterProductHandler
         RegisterProductCommand command,
         CancellationToken cancellationToken)
     {
-        var organizationId = new OrganizationId(_tenantContext.TenantId);
+        var tenantId = _tenantContext.TenantId;
 
         // Parse before checking uniqueness so a malformed code is a 400 rather
         // than being compared as-is against stored, normalized codes.
         var code = ProductCode.Create(command.Code);
 
         await _productPolicy.EnsureCodeIsUniqueAsync(
-            organizationId, code, cancellationToken);
+            tenantId, code, cancellationToken);
 
         // The aggregate owns the invariants; the handler never reimplements them.
         var product = ProductAggregate.Register(
-            organizationId, code.Value, command.Name, command.Type);
+            tenantId, code.Value, command.Name, command.Type);
 
         await _repository.AddAsync(product, cancellationToken);
 

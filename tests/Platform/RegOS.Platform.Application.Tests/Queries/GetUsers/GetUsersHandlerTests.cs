@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Persistence;
 using RegOS.Platform.Application.Queries.GetUsers;
 using RegOS.Platform.Domain.Aggregates.User;
@@ -15,14 +15,14 @@ namespace RegOS.Platform.Application.Tests.Queries.GetUsers;
 // Integration tests - the user directory is a database projection, so it is
 // exercised against the real dev Postgres (docker postgres-local) like the
 // Submission application tests. Every test is scoped to a throwaway
-// OrganizationId so it cannot collide with existing data.
+// TenantId so it cannot collide with existing data.
 public sealed class GetUsersHandlerTests : IAsyncLifetime
 {
     private const string ConnectionString =
         "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
 
-    private readonly OrganizationId _organizationId =
-        OrganizationId.From(Guid.NewGuid());
+    private readonly TenantId _tenantId =
+        TenantId.From(Guid.NewGuid());
 
     private static DbContextOptions<RegOSDbContext> Options() =>
         new DbContextOptionsBuilder<RegOSDbContext>()
@@ -36,13 +36,13 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
         await using var context = NewContext();
 
         var ada = UserAggregate.Create(
-            _organizationId, Email.Create("ada.lovelace@test.example"), "Ada", "Lovelace");
+            _tenantId, Email.Create("ada.lovelace@test.example"), "Ada", "Lovelace");
 
         var grace = UserAggregate.Create(
-            _organizationId, Email.Create("grace.hopper@test.example"), "Grace", "Hopper");
+            _tenantId, Email.Create("grace.hopper@test.example"), "Grace", "Hopper");
 
         var alan = UserAggregate.Create(
-            _organizationId, Email.Create("alan.turing@test.example"), "Alan", "Turing");
+            _tenantId, Email.Create("alan.turing@test.example"), "Alan", "Turing");
 
         alan.Activate();
 
@@ -56,8 +56,8 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
         await using var context = NewContext();
 
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
-            _organizationId.Value);
+            "DELETE FROM \"Users\" WHERE \"TenantId\" = {0}",
+            _tenantId.Value);
     }
 
     /// <summary>
@@ -66,12 +66,12 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     /// </summary>
     private async Task<Common.PagedResult<UserListItem>> QueryAsync(
         GetUsersQuery query,
-        OrganizationId? tenant = null)
+        TenantId? tenant = null)
     {
         await using var context = NewContext();
 
         return await new GetUsersHandler(
-                context, new FakeTenantContext(tenant ?? _organizationId))
+                context, new FakeTenantContext(tenant ?? _tenantId))
             .HandleAsync(query, CancellationToken.None);
     }
 
@@ -191,7 +191,7 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     public async Task Scopes_results_to_the_callers_tenant()
     {
         var other = await QueryAsync(
-            new GetUsersQuery(), tenant: OrganizationId.From(Guid.NewGuid()));
+            new GetUsersQuery(), tenant: TenantId.From(Guid.NewGuid()));
 
         other.Items.Should().BeEmpty();
         other.TotalCount.Should().Be(0);

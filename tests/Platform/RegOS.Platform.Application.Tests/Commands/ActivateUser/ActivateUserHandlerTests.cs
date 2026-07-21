@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Platform.Application.Commands.ActivateUser;
 using RegOS.Platform.Application.Tests.Fakes;
 using RegOS.Platform.Domain.Aggregates.User;
@@ -13,7 +13,7 @@ namespace RegOS.Platform.Application.Tests.Commands.ActivateUser;
 
 public sealed class ActivateUserHandlerTests
 {
-    private static readonly OrganizationId Organization = OrganizationId.New();
+    private static readonly TenantId Organization = TenantId.New();
 
     private static UserAggregate InvitedUser() =>
         UserAggregate.Create(
@@ -128,7 +128,7 @@ public sealed class ActivateUserHandlerTests
         // The caller's tenant is a different organization, so the user must be
         // invisible. The command cannot express a tenant at all any more.
         var handler = new ActivateUserHandler(
-            repository, new FakeTenantContext(OrganizationId.New()));
+            repository, new FakeTenantContext(TenantId.New()));
 
         var act = () => handler.HandleAsync(
             new ActivateUserCommand(user.Id), CancellationToken.None);

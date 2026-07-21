@@ -1,6 +1,6 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Platform.Application.Services;
 
@@ -25,7 +25,7 @@ namespace RegOS.Platform.Application.Services;
 /// <em>which tenant is this request scoped to</em>, which is an infrastructure
 /// question every context asks; this answers <em>which person is calling</em>,
 /// which is a Platform concept and typed accordingly. They agree today because
-/// a user belongs to exactly one organization (ADR-015).
+/// a user belongs to exactly one tenant (ADR-030).
 /// </para>
 /// </remarks>
 public interface ICurrentUser
@@ -45,9 +45,9 @@ public interface ICurrentUser
     UserId UserId { get; }
 
     /// <summary>
-    /// The organization the caller belongs to. Throws when unauthenticated.
+    /// The tenant the caller belongs to. Throws when unauthenticated.
     /// </summary>
-    OrganizationId OrganizationId { get; }
+    TenantId TenantId { get; }
 
     /// <summary>
     /// The caller's email address. Throws when unauthenticated.

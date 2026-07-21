@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Common;
 using RegOS.Platform.Application.Invitations;
 using RegOS.Platform.Domain.Aggregates.User;
@@ -12,7 +11,7 @@ namespace RegOS.Platform.Application.Commands.ResendInvitation;
 /// </summary>
 /// <remarks>
 /// Tenant-scoped, unlike acceptance: an administrator is asking, on behalf of
-/// their own organization, so the same rules as every other user-administration
+/// their own tenant, so the same rules as every other user-administration
 /// command apply.
 ///
 /// Also the remediation path for users invited before invitations carried
@@ -38,10 +37,8 @@ public sealed class ResendInvitationHandler
         ResendInvitationCommand command,
         CancellationToken cancellationToken)
     {
-        var organizationId = new OrganizationId(_tenantContext.TenantId);
-
         var user = await _repository.GetRequiredAsync(
-            command.UserId, organizationId, cancellationToken);
+            command.UserId, _tenantContext.TenantId, cancellationToken);
 
         // Only someone still waiting to accept can be re-invited. Resending to
         // an active user would hand out a token that acceptance would refuse,

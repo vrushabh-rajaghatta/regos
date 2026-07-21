@@ -24,6 +24,6 @@ public static class GetCurrentUserEndpoint
     private static IResult Handle(ICurrentUser currentUser) =>
         Results.Ok(new CurrentUserResponse(
             currentUser.UserId.Value,
-            currentUser.OrganizationId.Value,
+            currentUser.TenantId.Value,
             currentUser.Email.Value));
 }

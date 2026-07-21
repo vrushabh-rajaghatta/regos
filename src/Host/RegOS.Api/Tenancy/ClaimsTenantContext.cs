@@ -1,10 +1,12 @@
 using RegOS.Platform.Application.Services;
 using RegOS.SharedKernel.Abstractions;
+using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Api.Tenancy;
 
 /// <summary>
-/// Resolves the tenant from the authenticated caller's organization claim.
+/// Resolves the tenant from the authenticated caller's tenant claim.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -38,5 +40,29 @@ public sealed class ClaimsTenantContext : ITenantContext
     // stricter failure than the old 400: asking for tenant-scoped data without
     // proving who you are is now a question about identity, not about a
     // malformed request.
-    public Guid TenantId => _currentUser.OrganizationId.Value;
+    public TenantId TenantId => _currentUser.TenantId;
+
+    // The lenient sibling, for the global query filters only: they evaluate on
+    // requests that have no identity yet (login, refresh, password reset) and
+    // must resolve to *no rows* there rather than throw. Routed through
+    // ICurrentUser so there is exactly one place that reads the claim; the
+    // catch covers a caller who is authenticated but carries no tenant, which
+    // a platform user will be.
+    public TenantId? TenantIdOrNull
+    {
+        get
+        {
+            if (!_currentUser.IsAuthenticated)
+                return null;
+
+            try
+            {
+                return _currentUser.TenantId;
+            }
+            catch (AuthenticationFailedException)
+            {
+                return null;
+            }
+        }
+    }
 }

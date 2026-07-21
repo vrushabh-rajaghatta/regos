@@ -21,6 +21,8 @@ using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
+using TenantAggregate =
+    RegOS.Platform.Domain.Aggregates.Tenant.Tenant;
 using UserCredentialAggregate =
     RegOS.Platform.Domain.Aggregates.UserCredential.UserCredential;
 using RefreshTokenAggregate =
@@ -71,6 +73,9 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<ProductDocumentAggregate> ProductDocuments =>
         Set<ProductDocumentAggregate>();
+
+    public DbSet<TenantAggregate> Tenants =>
+        Set<TenantAggregate>();
 
     public DbSet<UserAggregate> Users =>
         Set<UserAggregate>();

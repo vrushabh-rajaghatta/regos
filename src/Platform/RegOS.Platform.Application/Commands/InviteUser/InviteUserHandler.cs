@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Invitations;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.User;
@@ -32,18 +31,18 @@ public sealed class InviteUserHandler
         InviteUserCommand command,
         CancellationToken cancellationToken)
     {
-        // You invite people into your own organization. The caller no longer
+        // You invite people into your own tenant. The caller no longer
         // chooses which one, so inviting into someone else's tenant is not an
         // authorization check that could be forgotten - it is unexpressible.
-        var organizationId = new OrganizationId(_tenantContext.TenantId);
+        var tenantId = _tenantContext.TenantId;
 
-        await _userPolicy.EnsureOrganizationCanAcceptUsersAsync(
-            organizationId,
+        await _userPolicy.EnsureTenantCanAcceptUsersAsync(
+            tenantId,
             cancellationToken);
 
         var email = Email.Create(command.Email);
 
-        // Unscoped by organization: an email identifies exactly one user across
+        // Unscoped by tenant: an email identifies exactly one user across
         // RegOS, so an address already invited elsewhere is a conflict here too
         // (ADR-021).
         await _userPolicy.EnsureEmailIsUniqueAsync(
@@ -51,7 +50,7 @@ public sealed class InviteUserHandler
             cancellationToken);
 
         var user = UserAggregate.Create(
-            organizationId,
+            tenantId,
             email,
             command.FirstName,
             command.LastName);

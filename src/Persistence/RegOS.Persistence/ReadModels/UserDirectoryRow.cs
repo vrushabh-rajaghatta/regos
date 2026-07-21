@@ -17,7 +17,7 @@ public sealed class UserDirectoryRow
 {
     public Guid Id { get; init; }
 
-    public Guid OrganizationId { get; init; }
+    public Guid TenantId { get; init; }
 
     public string FirstName { get; init; } = default!;
 
