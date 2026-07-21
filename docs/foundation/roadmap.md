@@ -216,9 +216,18 @@ the way through — so **every Active user has exactly one credential**, and the
 admin shortcut that used to violate it is gone (ADR-027).
 
 **AUTH-008 is done.** Password reset is a second consumable grant, and the test
-of whether `Invitation` generalizes has been run: `PasswordReset` was written
-without reading `Invitation`, and with names normalized and comments stripped
-the two differ only in the name of one predicate and one error constant.
+of whether `Invitation` generalizes has been run — with a caveat that matters
+more than the result. `PasswordReset` was written without opening
+`Invitation`, and with names normalized and comments stripped the two differ
+only in the name of one predicate and one error constant. But this was **not**
+a clean-room experiment: prior context already listed `Invitation`'s fields, so
+the structural convergence proves recall, not domain truth.
+
+The meaningful evidence was behavioural. `Consume` refusing a second use, and
+`Revoke` preserving the first terminal state, were independently re-derived
+before any comparison, and justified in writing with different reasoning that
+reached the same rules. That supports a shared *lifecycle* concept. It does not
+prove the aggregates should be merged.
 
 They are still separate aggregates. The similarity is structural; the
 distinction is semantic — different meaning, expiry (one hour against seven
@@ -459,6 +468,63 @@ removed.
   `null`.
 - Audit history is viewable in the browser by a user with `CanViewAudit`, and
   not by anyone else.
+
+---
+
+## Release gate — SEC-001, abuse resistance
+
+**Required before any deployment reachable from the internet.** Not before MVP,
+and deliberately so — but the gate binds on *exposure*, not on the word
+"production". A shared demo or UAT box with realistic data and unlimited
+password guesses is the same risk under a friendlier name.
+
+**The gap, verified 2026-07-21.** Searching `src/` for `RateLimiter`,
+`AddRateLimiter`, `Lockout` and `AccessFailedCount` returns nothing. Sign-in
+resists *enumeration* — uniform 401, decoy hash, status checked after the
+password (ADR-022) — but nothing resists *guessing*. An attacker who knows one
+real address may try passwords as fast as the network allows, indefinitely,
+with no lockout, no backoff and no signal that it is happening. The same is
+true of `/api/auth/refresh`, of `/api/auth/password-reset/request` (an
+unauthenticated endpoint that sends mail), and of `/api/auth/change-password`,
+which since AUTH-009A answers a wrong current password with 400 and is
+therefore an unbounded password oracle to anyone holding a stolen access token.
+
+This is a deliberate product decision: authentication is *correct* but not
+*abuse resistant*, and correctness was the MVP requirement. It belongs to
+Production Readiness, alongside security headers, CSP/HSTS, observability,
+backup validation, penetration testing and a dependency audit.
+
+**Design notes from the AUTH-011 review, kept so the work does not restart from
+zero:**
+
+- **Partition on what the attacker controls, and answer identically for
+  accounts that do and do not exist.** A per-account limiter keyed on "user
+  found in the database" would hand back the enumeration oracle ADR-022 closed:
+  a 429 would mean the address is real. Key it on the submitted string,
+  normalised, *before* any lookup.
+- **Per-IP tight, per-account generous.** Per-account limiting is a backstop
+  against distributed guessing, not the primary control — if a stranger can
+  throttle any account by guessing at it, it becomes a targeted denial of
+  service.
+- **`change-password` partitions by user id, not IP.** The caller is
+  authenticated; IP is the wrong key.
+- **A rejected request never reaches `ExceptionHandlingMiddleware`**, so the
+  default 429 has no body. Every client error path reads `problem.detail`, so
+  `OnRejected` must write ProblemDetails and `Retry-After` itself.
+- **The client IP is not trustworthy today.** There is no `UseForwardedHeaders`
+  anywhere in `src/`. Behind any proxy, `RemoteIpAddress` is the proxy and every
+  request shares one partition — the limiter would throttle everyone at once or
+  nothing at all. That is a hosting gap this feature is simply the first to
+  depend on.
+- **Limits must be configurable**, bound and validated at startup like
+  `JwtOptions`. Realistic limits would otherwise fail both test suites outright,
+  which sign in on nearly every test from `127.0.0.1`. Disabling the limiter
+  outside Production is the wrong answer, because then nothing exercises it; the
+  host factory should override the limits instead, as it already does for the
+  invitation notifier.
+- **The in-memory limiter is per process**, so limits multiply by instance
+  count. Honest at one instance; record it rather than reaching for a
+  distributed store nobody needs yet.
 
 ---
 
