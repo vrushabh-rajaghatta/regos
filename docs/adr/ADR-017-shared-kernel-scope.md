@@ -34,7 +34,8 @@ by one team in one context.
 | `DomainException` | The request itself is invalid (400) |
 | `BusinessRuleViolationException` | Valid request, business state forbids it (409) |
 | `NotFoundException` | Absent, or invisible to this caller (404) |
-| `ITenantContext` | Who is asking, as a bare `Guid` |
+| `ITenantContext` | Who is asking |
+| `TenantId` | The tenant's identity — the kernel's one concrete id (ADR-030) |
 
 Two rules govern additions:
 
@@ -44,10 +45,14 @@ Two rules govern additions:
    in `Platform.Application` and `Product.Application` rather than shared — see
    [ADR-018](ADR-018-rule-of-three.md).
 
-2. **It must not know about a bounded context.** `ITenantContext` exposes a
-   `Guid` rather than an `OrganizationId` precisely because `OrganizationId`
-   belongs to the Organization context. Each context converts at its own
-   boundary with `new OrganizationId(tenantContext.TenantId)`.
+2. **It must not know about a bounded context.** `ITenantContext` originally
+   exposed a `Guid` rather than an `OrganizationId` precisely because
+   `OrganizationId` belongs to the Organization context, with each context
+   converting at its own boundary. [ADR-030](ADR-030-tenant-is-its-own-aggregate.md)
+   resolved this differently: the tenant is an infrastructure concept every
+   context shares, so `TenantId` became the kernel's one concrete id and the
+   conversion seam was deleted. The rule stands — the kernel still knows no
+   bounded context; the tenant simply stopped being one context's concept.
 
 ### Kernel types obey the architecture they define
 

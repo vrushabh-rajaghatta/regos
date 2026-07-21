@@ -12,7 +12,7 @@ never changes meaning once assigned.
 2. **One decision per file.** No aggregate documents.
 3. **Append-only.** Edit an ADR to correct a broken reference or change its
    status — never to change what was decided.
-4. **New ADRs take the next free number.** Today that is **ADR-030**.
+4. **New ADRs take the next free number.** Today that is **ADR-032**.
 5. **Cite by number in code and commits.** `// ADR-009` in a source file is the
    reason the ADR must never be renumbered.
 
@@ -45,7 +45,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [012](ADR-012-shared-semantic-exception-model.md) | Shared semantic exception model | Accepted | Current |
 | [013](ADR-013-ambient-tenant-context.md) | Tenant context is ambient | Accepted | Current (partial) |
 | [014](ADR-014-invitation-is-a-user-status.md) | Invitation is a user status | **Superseded** by 027 | — |
-| [015](ADR-015-organization-is-the-tenant.md) | Organization is the tenant | Accepted | Current |
+| [015](ADR-015-organization-is-the-tenant.md) | Organization is the tenant | **Superseded** by 030 | — |
 | [016](ADR-016-persistence-access-model.md) | Repositories for writes, DbContext for reads | Accepted | Current |
 | [017](ADR-017-shared-kernel-scope.md) | Shared kernel scope | Accepted | Current |
 | [018](ADR-018-rule-of-three.md) | Duplicate twice, abstract on the third | Accepted | Current |
@@ -60,6 +60,8 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [027](ADR-027-invitation-is-a-consumable-grant.md) | An invitation is a consumable grant against an existing user | Accepted | Current |
 | [028](ADR-028-credential-replacement-revokes-derived-trust.md) | Replacing a credential revokes everything derived from it | Accepted | Current |
 | [029](ADR-029-sessions-record-minimal-device-context.md) | A session is first-class, and records minimal device context | Accepted | Current |
+| [030](ADR-030-tenant-is-its-own-aggregate.md) | Tenant is its own aggregate, separate from Organization | Accepted | Current |
+| [031](ADR-031-tenant-isolation-by-query-filters.md) | Tenant isolation is enforced by global query filters | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly
