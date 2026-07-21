@@ -10,9 +10,11 @@ namespace RegOS.Organization.Application.Queries.Organizations.GetOrganization;
 /// Reads a single organization straight from the database: no repository, no
 /// aggregate, no tracking (ADR-016).
 ///
-/// No tenant filter, unlike the product and user detail queries. An
-/// organization *is* a tenant, so scoping this read to the caller's own
-/// organization would reduce the directory to a single row.
+/// No manual tenant clause — the global query filter scopes this to the
+/// caller's registry (ADR-032). Another tenant's organization is
+/// indistinguishable from one that does not exist. (This handler once
+/// documented the opposite: under the fused model an organization *was* a
+/// tenant, and scoping the read would have reduced the directory to one row.)
 /// </summary>
 public sealed class GetOrganizationHandler
 {

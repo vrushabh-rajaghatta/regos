@@ -6,7 +6,11 @@ using RegOS.Platform.Application.Tests.Fakes;
 using RegOS.Platform.Domain.ValueObjects;
 using RegOS.SharedKernel.Primitives;
 
+using RegOS.Organization.Domain.Aggregates.Organization;
+
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using OrganizationAggregate =
+    RegOS.Organization.Domain.Aggregates.Organization.Organization;
 
 namespace RegOS.Platform.Application.Tests.Tenancy;
 
@@ -118,6 +122,41 @@ public sealed class TenantIsolationTests : IAsyncLifetime
             .Should().BeFalse();
         (await contextB.Users.AnyAsync(x => x.Id == _platformUser.Id))
             .Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task An_organization_belongs_to_one_registry()
+    {
+        // ADR-032: even the *names* in another tenant's registry are
+        // competitively sensitive. Created bare, queried bare — the filter
+        // does all the isolating.
+        var org = OrganizationAggregate.Create(
+            _tenantA, $"Registry Test {Guid.NewGuid():N}", OrganizationType.Manufacturer);
+
+        await using (var contextA = ContextFor(_tenantA))
+        {
+            contextA.Organizations.Add(org);
+            await contextA.SaveChangesAsync();
+        }
+
+        try
+        {
+            await using var contextA = ContextFor(_tenantA);
+            await using var contextB = ContextFor(_tenantB);
+
+            (await contextA.Organizations.AnyAsync(x => x.Id == org.Id))
+                .Should().BeTrue();
+            (await contextB.Organizations.AnyAsync(x => x.Id == org.Id))
+                .Should().BeFalse(
+                    "tenant B must not even learn the organization exists");
+        }
+        finally
+        {
+            await using var cleanup = ContextWithoutIdentity();
+            await cleanup.Database.ExecuteSqlRawAsync(
+                "DELETE FROM \"Organizations\" WHERE \"Id\" = {0}",
+                org.Id.Value);
+        }
     }
 
     [Fact]

@@ -58,7 +58,9 @@ tiers, and each is a modelling statement:
 | Extensible taxonomies | `DocumentTypes` | nullable | `null or mine` |
 | Tenant-owned | everything in part 1 | required (Users: nullable) | fail-closed |
 
-`Tenants` and `Organizations` are global directories. The person-scoped
+`Tenants` is the global directory. (`Organizations` was classified beside it
+here, on fused-model reasoning; [ADR-032](ADR-032-organizations-are-tenant-owned.md)
+corrected that — the registry is tenant-owned.) The person-scoped
 satellites (`UserCredentials`, `RefreshTokens`, `Invitations`,
 `PasswordResets`, `Sessions`) carry no tenant: they belong to a person
 (ADR-029), are reachable only by user id or unguessable token hash, and

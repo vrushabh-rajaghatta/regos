@@ -1,13 +1,25 @@
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Organization.Domain.Aggregates.Organization;
 
 public sealed class Organization : AggregateRoot<OrganizationId>
 {
+    public const string TenantRequired =
+        "An organization must belong to a tenant.";
+
     private Organization()
     {
     }
+
+    /// <summary>
+    /// The tenant whose registry this organization belongs to (ADR-032).
+    /// Organizations are a tenant's business relationships — visible to no
+    /// other tenant. The one whose id equals the owning tenant's id is the
+    /// tenant's own company, its mirror entry.
+    /// </summary>
+    public TenantId TenantId { get; private set; } = default!;
 
     public string LegalName { get; private set; } = default!;
 
@@ -17,20 +29,24 @@ public sealed class Organization : AggregateRoot<OrganizationId>
 
     public static Organization Create(
         OrganizationId id,
+        TenantId tenantId,
         string legalName,
         OrganizationType type)
         => new()
         {
             Id = id,
+            TenantId = tenantId
+                ?? throw new DomainException(TenantRequired),
             LegalName = NormalizeLegalName(legalName),
             Type = Validated(type),
             Status = OrganizationStatus.Active
         };
 
     public static Organization Create(
+        TenantId tenantId,
         string legalName,
         OrganizationType type)
-        => Create(OrganizationId.New(), legalName, type);
+        => Create(OrganizationId.New(), tenantId, legalName, type);
 
     /// <summary>
     /// Corrects the registered legal name. Permitted while inactive: retiring an

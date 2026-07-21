@@ -12,7 +12,7 @@ never changes meaning once assigned.
 2. **One decision per file.** No aggregate documents.
 3. **Append-only.** Edit an ADR to correct a broken reference or change its
    status — never to change what was decided.
-4. **New ADRs take the next free number.** Today that is **ADR-032**.
+4. **New ADRs take the next free number.** Today that is **ADR-033**.
 5. **Cite by number in code and commits.** `// ADR-009` in a source file is the
    reason the ADR must never be renumbered.
 
@@ -61,7 +61,8 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [028](ADR-028-credential-replacement-revokes-derived-trust.md) | Replacing a credential revokes everything derived from it | Accepted | Current |
 | [029](ADR-029-sessions-record-minimal-device-context.md) | A session is first-class, and records minimal device context | Accepted | Current |
 | [030](ADR-030-tenant-is-its-own-aggregate.md) | Tenant is its own aggregate, separate from Organization | Accepted | Current |
-| [031](ADR-031-tenant-isolation-by-query-filters.md) | Tenant isolation is enforced by global query filters | Accepted | Current |
+| [031](ADR-031-tenant-isolation-by-query-filters.md) | Tenant isolation is enforced by global query filters | Accepted (amended by 032) | Current |
+| [032](ADR-032-organizations-are-tenant-owned.md) | Organizations are tenant-owned, not shared | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

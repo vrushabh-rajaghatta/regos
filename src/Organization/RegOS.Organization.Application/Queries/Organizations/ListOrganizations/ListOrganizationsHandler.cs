@@ -4,6 +4,11 @@ using RegOS.Persistence;
 
 namespace RegOS.Organization.Application.Queries.Organizations.ListOrganizations;
 
+/// <summary>
+/// Lists the caller's own registry. No manual tenant clause — the global
+/// query filter does the scoping (ADR-032), so this deliberately bare query
+/// returns each tenant its own organizations and nothing else.
+/// </summary>
 public sealed class ListOrganizationsHandler
 {
     private readonly RegOSDbContext _dbContext;

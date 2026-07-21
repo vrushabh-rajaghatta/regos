@@ -34,9 +34,9 @@ regulatory party. The two directories share seeded guids because the
 | `Product.TenantId` | **Tenant**, persisted | Filtered |
 | `ReferenceData` — `DocumentType.TenantId?` | Tier-2 discriminator | Null ⇒ system type visible to all tenants; value ⇒ tenant extension |
 | `RegulatoryApplication.TenantId` | **Tenant** (owner) | Filtered; stamped from `ITenantContext` at creation |
-| `RegulatoryApplication.ApplicantOrganizationId` | **Applicant** (business data) | Explicit command property, FK → `Organizations`. Names who the filing is for, not who owns the record. The one record carrying both concepts, visibly different |
+| `RegulatoryApplication.ApplicantOrganizationId` | **Applicant** (business data) | Explicit command property, FK → `Organizations`. Names who the filing is for, not who owns the record. Since ADR-032 the applicant must exist in the caller's own registry |
 | `Submission.TenantId`, `SubmissionSnapshot.TenantId`, `ProductDocument.TenantId` | **Tenant**, derived from parent | Filtered; a child structurally cannot disagree with its parent's tenant |
-| `Organization` context | The regulatory party | Not tenancy. Untouched by ADR-030 except the interim write guard |
+| `Organization.TenantId` | **Tenant** (registry owner) | Filtered (ADR-032). The org sharing its owning tenant's guid is that tenant's own company — the mirror entry |
 
 ## Enforcement (ADR-031)
 
@@ -50,7 +50,7 @@ small: `IUserRepository` (identity-scoped), `UserPolicy` email uniqueness
 
 | Tables | Why |
 |---|---|
-| `Tenants`, `Organizations` | Global directories |
+| `Tenants` | The global directory (the one table global by definition) |
 | `Countries`, `Authorities`, `SubmissionTypes` | World facts (tier 1) — a tenant column here is a modelling error the architecture tests reject |
 | `UserCredentials`, `RefreshTokens`, `Invitations`, `PasswordResets`, `Sessions` | Person-scoped (ADR-029); reachable only by user id or token hash |
 | `SubmissionDocuments`, `DocumentVersions`, `SnapshotDocuments` | Children reachable only through a filtered root |

@@ -186,6 +186,13 @@ public sealed class RegOSDbContext : DbContext
         modelBuilder.Entity<ProductDocumentAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
+        // A tenant's registry of business relationships — even the *names*
+        // in another tenant's registry are competitively sensitive, so the
+        // directory that started global under the fused model is tenant-owned
+        // since ADR-032.
+        modelBuilder.Entity<OrganizationAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
         // System types (null tenant) are visible to every authenticated
         // tenant; a tenant's own extensions only to that tenant.
         modelBuilder.Entity<DocumentTypeAggregate>().HasQueryFilter(

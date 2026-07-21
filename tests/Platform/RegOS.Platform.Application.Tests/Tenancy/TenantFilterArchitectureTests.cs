@@ -20,14 +20,16 @@ public sealed class TenantFilterArchitectureTests
             .Options);
 
     /// <summary>
-    /// Tier-1 reference data (ADR-031): world facts and the global
-    /// directories. Deliberately unfiltered AND deliberately without a tenant
-    /// column — adding either would be a modelling error, not an improvement.
+    /// Tier-1 reference data (ADR-031): world facts and the tenant directory.
+    /// Deliberately unfiltered AND deliberately without a tenant column —
+    /// adding either would be a modelling error, not an improvement.
+    /// Organization left this list at ADR-032: the registry is a tenant's
+    /// business relationships, so it is tenant-owned like any other data —
+    /// the first test above now *requires* its filter instead.
     /// </summary>
     private static readonly string[] DeliberatelyGlobal =
     [
         "Tenant",
-        "Organization",
         "Country",
         "Authority",
         "SubmissionType"

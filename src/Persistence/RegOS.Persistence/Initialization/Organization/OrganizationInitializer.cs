@@ -16,7 +16,11 @@ public sealed class OrganizationInitializer : IDataInitializer
     public async Task InitializeAsync(
         CancellationToken cancellationToken = default)
     {
-        if (!await _dbContext.Organizations.AnyAsync(cancellationToken))
+        // IgnoreQueryFilters: startup has no tenant, so the filter would
+        // report an empty table every boot and this would re-insert (ADR-032).
+        if (!await _dbContext.Organizations
+                .IgnoreQueryFilters()
+                .AnyAsync(cancellationToken))
         {
             _dbContext.Organizations.AddRange(Organizations.Data);
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -42,6 +46,7 @@ public sealed class OrganizationInitializer : IDataInitializer
         var intended = Organizations.Data.ToDictionary(x => x.Id);
 
         var existing = await _dbContext.Organizations
+            .IgnoreQueryFilters()
             .Where(x => intended.Keys.Contains(x.Id))
             .ToListAsync(cancellationToken);
 

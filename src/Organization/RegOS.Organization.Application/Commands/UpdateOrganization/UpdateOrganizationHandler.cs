@@ -1,6 +1,5 @@
 using RegOS.Organization.Application.Persistence;
 using RegOS.Organization.Domain.Aggregates.Organization;
-using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Organization.Application.Commands.UpdateOrganization;
@@ -13,14 +12,10 @@ namespace RegOS.Organization.Application.Commands.UpdateOrganization;
 public sealed class UpdateOrganizationHandler
 {
     private readonly IOrganizationRepository _repository;
-    private readonly ITenantContext _tenantContext;
 
-    public UpdateOrganizationHandler(
-        IOrganizationRepository repository,
-        ITenantContext tenantContext)
+    public UpdateOrganizationHandler(IOrganizationRepository repository)
     {
         _repository = repository;
-        _tenantContext = tenantContext;
     }
 
     public async Task HandleAsync(
@@ -31,17 +26,13 @@ public sealed class UpdateOrganizationHandler
             command.Id,
             cancellationToken);
 
-        // Interim ownership rule until organizations belong to a tenant
-        // (ADR-030): the only organization a caller may mutate is the one that
-        // shares their tenant's id — its pre-split alter ego. Without this,
-        // any signed-in user could rename any customer's organization by guid.
-        // Reported as not found, never forbidden, like every other tenant
-        // mismatch. Reads stay global by design: the directory is shared.
-        if (organization is null
-            || organization.Id.Value != _tenantContext.TenantId.Value)
-        {
+        // Absent OR in another tenant's registry — the global query filter
+        // (ADR-032) makes the two indistinguishable here, which is the point:
+        // 404 either way, and no interim ownership guard to maintain. This
+        // handler briefly carried one, between the tenant split and the
+        // registry becoming tenant-owned.
+        if (organization is null)
             throw new NotFoundException(OrganizationErrors.NotFound);
-        }
 
         // The aggregate owns the invariants and the intent of each change; the
         // handler never reimplements them. Submitting unchanged values is a

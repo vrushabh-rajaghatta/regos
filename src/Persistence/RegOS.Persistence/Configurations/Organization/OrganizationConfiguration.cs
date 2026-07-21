@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using OrganizationAggregate = RegOS.Organization.Domain.Aggregates.Organization.Organization;
 
 namespace RegOS.Persistence.Configurations.Organization;
@@ -19,6 +20,17 @@ public sealed class OrganizationConfiguration
             .HasConversion(
                 id => id.Value,
                 value => new OrganizationId(value));
+
+        // The owning tenant's registry (ADR-032). Held by value, no FK to
+        // Tenants — cross-context references are held by value, like
+        // Products.TenantId.
+        builder.Property(x => x.TenantId)
+            .HasConversion(
+                id => id.Value,
+                value => new TenantId(value))
+            .IsRequired();
+
+        builder.HasIndex(x => x.TenantId);
 
         builder.Property(x => x.LegalName)
             .HasMaxLength(250)

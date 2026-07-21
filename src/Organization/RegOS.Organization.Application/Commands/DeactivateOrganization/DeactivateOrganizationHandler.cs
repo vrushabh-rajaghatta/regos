@@ -1,6 +1,5 @@
 using RegOS.Organization.Application.Persistence;
 using RegOS.Organization.Domain.Aggregates.Organization;
-using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Organization.Application.Commands.DeactivateOrganization;
@@ -8,14 +7,10 @@ namespace RegOS.Organization.Application.Commands.DeactivateOrganization;
 public sealed class DeactivateOrganizationHandler
 {
     private readonly IOrganizationRepository _repository;
-    private readonly ITenantContext _tenantContext;
 
-    public DeactivateOrganizationHandler(
-        IOrganizationRepository repository,
-        ITenantContext tenantContext)
+    public DeactivateOrganizationHandler(IOrganizationRepository repository)
     {
         _repository = repository;
-        _tenantContext = tenantContext;
     }
 
     public async Task HandleAsync(
@@ -26,14 +21,10 @@ public sealed class DeactivateOrganizationHandler
             command.Id,
             cancellationToken);
 
-        // Interim ownership rule until organizations belong to a tenant
-        // (ADR-030): see UpdateOrganizationHandler. Deactivating another
-        // customer's organization would be a cross-tenant denial of service.
-        if (organization is null
-            || organization.Id.Value != _tenantContext.TenantId.Value)
-        {
+        // Absent or another tenant's — the query filter (ADR-032) makes both
+        // a 404. See UpdateOrganizationHandler.
+        if (organization is null)
             throw new NotFoundException(OrganizationErrors.NotFound);
-        }
 
         // The aggregate decides whether the transition is legal; deactivating
         // an already-inactive organization raises from there.
