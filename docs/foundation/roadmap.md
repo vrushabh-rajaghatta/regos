@@ -71,40 +71,61 @@ consumer needs them (principle P4).
 
 **Goal:** the organization lifecycle works from browser to database.
 
+### Slices, in order
+
+Reordered on 2026-07-20 by an implementation constraint, not a preference —
+see *The retirement-path rule* below.
+
+| # | Slice | Status |
+|---|---|---|
+| 1 | Create Organization | ✅ Done — `28a3893` (ORG-001) |
+| 2 | **Deactivate Organization** | Next |
+| 3 | Get Organization | |
+| 4 | Update Organization | |
+| 5 | Activate Organization | |
+
+Deactivate moved from last to second because until it exists, nothing can
+return the database to a known state: an organization cannot be deleted, so
+every automated create test leaks a row. Activate is last because it is the
+inverse of Deactivate and reads more cleanly once Get exists to inspect the
+result.
+
 ### Current state
 
 ✅ `Organization` aggregate — `LegalName`, `Type`, `Status`; `Create`,
 `Activate`, `Deactivate`
 ✅ `OrganizationId`, `OrganizationStatus`, `OrganizationType`,
 `OrganizationErrors`
-✅ `ListOrganizations` query + endpoint (consumed today only by the invite-user
-organization dropdown)
+✅ `ListOrganizations` query + endpoint
+✅ `IOrganizationRepository`, `OrganizationRepository`, DI wiring
+✅ `CreateOrganization` command, handler and `POST /organizations`
+✅ Organization type is validated against the defined values
+✅ `features/platform/organizations/` — list, create dialog, create form
+✅ `tests/Organization/RegOS.Organization.Domain.Tests` — 9 tests
 
 ❌ `Activate` / `Deactivate` exist on the aggregate but **no command, handler or
 endpoint reaches them** — working behavior, unreachable from outside
-❌ No `CreateOrganization`, `UpdateOrganization`, `GetOrganization`
-❌ No `IOrganizationRepository`; `RegOS.Organization.Infrastructure` registers
-nothing at all
-❌ **No UI whatsoever** — `web/regos-web/src/features/platform/` contains
-`layout/` and `users/`, and no `organizations/`
+❌ No `UpdateOrganization`, `GetOrganization`
 ❌ No `Code` field — the UI sketch shows Name / Code / Status; the aggregate has
 `LegalName` / `Type` / `Status`
 ❌ No settings (time zone, culture)
-❌ No tests — `tests/` has no Organization project
+❌ No organization detail page
 
-This is the least-built module in the Foundation, which is why it is first.
+### The retirement-path rule
 
-### Scope
+Discovered while writing the browser spec for slice 1, and general enough to
+apply to every future slice:
 
-Backend: repository + DI registration; `CreateOrganization`,
-`UpdateOrganization`, `ActivateOrganization`, `DeactivateOrganization`,
-`GetOrganization`; endpoints.
+> **A feature that creates long-lived business data needs its corresponding
+> lifecycle operation before we can rely on automated end-to-end testing.**
 
-Frontend: organizations list, organization details, create and edit forms,
-activate/deactivate actions, navigation entry — mirroring the existing
-`features/platform/users/` structure, which is the proven pattern.
+The operation differs by domain — delete, archive, deactivate, cancel — but the
+requirement is the same: **run the suite N times, and the repository is
+unchanged afterwards** ([ADR-019](../adr/ADR-019-testing-strategy.md) rule 1).
 
-Tests: Organization domain and application test projects.
+When a create slice ships without one, the browser spec for it is deferred to
+the slice that provides the retirement path. That is not a defect in the create
+slice; it is what makes the retirement slice urgent.
 
 ### Exit criteria — behaviors
 
@@ -124,7 +145,8 @@ Tests: Organization domain and application test projects.
 
 - **Does `Organization` need a `Code` separate from its id?** The UI sketch says
   yes; the domain has never had one. If adopted, decide its uniqueness scope.
-  Write it as ADR-017 when the command is written — not before.
+  Write it when the Update slice is built — not before. (Next free ADR number is
+  **021**; ADR-017 through ADR-020 were taken on 2026-07-20.)
 
 ---
 

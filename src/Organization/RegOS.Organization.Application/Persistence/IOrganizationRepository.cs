@@ -18,4 +18,8 @@ public interface IOrganizationRepository
     Task<OrganizationAggregate?> GetByIdAsync(
         OrganizationId id,
         CancellationToken cancellationToken);
+
+    Task UpdateAsync(
+        OrganizationAggregate organization,
+        CancellationToken cancellationToken);
 }

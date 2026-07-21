@@ -1,11 +1,13 @@
 // Components
 export * from "./components/CreateOrganizationDialog";
 export * from "./components/CreateOrganizationForm";
+export * from "./components/DeactivateOrganizationDialog";
 export * from "./components/OrganizationStatusBadge";
 export * from "./components/OrganizationsTable";
 
 // Hooks
 export * from "./hooks/useCreateOrganization";
+export * from "./hooks/useDeactivateOrganization";
 export * from "./hooks/useOrganizationDirectory";
 
 // Pages

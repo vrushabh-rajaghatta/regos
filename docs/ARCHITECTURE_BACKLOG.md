@@ -16,6 +16,7 @@ was checked, and the check is named.
 | AB-004 Pin .NET SDK with global.json | Done |
 | AB-005 Product Document deferred enhancements | Planned (mixed) |
 | AB-006 Extract Shared Workspace Pattern | Planned |
+| AB-007 Reject out-of-range enum values in aggregates | Planned |
 
 ---
 
@@ -243,3 +244,47 @@ work, so the change is low-risk and diffable against four stable examples.
 Target Sprint
 
 After Sprint 18 (dedicated refactor).
+
+---
+
+## AB-007 - Reject Out-of-Range Enum Values in Aggregates
+
+Status: Planned (found 2026-07-20 during ORG-001)
+
+Priority: Medium
+
+Description
+
+ASP.NET model binding turns an out-of-range integer into an enum value
+without complaint, so a request body can persist a value that has no
+name. `POST /api/products` with `{"type": 99}` returns **201 Created**
+and stores a product whose `ProductType` renders as `99`.
+
+`Organization.Create` was fixed during ORG-001 with `Enum.IsDefined`,
+raising `DomainException` — decidable from the request alone, therefore
+400 ([ADR-009](adr/ADR-009-command-validation-model.md)). The same guard
+is missing elsewhere.
+
+Known instances
+
+- `Product.Register` — `ProductType`.
+- Audit every other aggregate factory and behavior method that accepts an
+  enum: ProductDocument, RegulatoryApplication and Submission were not
+  checked.
+
+Reason
+
+An unnamed enum value is invalid data that every read path downstream has
+to tolerate, and it is silently accepted at the one place designed to
+reject invalid input.
+
+Constraint
+
+Not fixed during ORG-001 deliberately — it is outside that slice. Do it
+as one sweep with a test per aggregate, so the guard is applied
+consistently rather than wherever someone happened to notice.
+
+Target Sprint
+
+Milestone 6 (Hardening), or sooner if a bad value reaches production
+data.

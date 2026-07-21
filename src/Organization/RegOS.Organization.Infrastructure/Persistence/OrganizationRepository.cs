@@ -36,4 +36,12 @@ public sealed class OrganizationRepository : IOrganizationRepository
         CancellationToken cancellationToken)
         => await _dbContext.Organizations
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public async Task UpdateAsync(
+        OrganizationAggregate organization,
+        CancellationToken cancellationToken)
+    {
+        _dbContext.Organizations.Update(organization);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
 }

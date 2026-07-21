@@ -43,8 +43,20 @@ public sealed class Organization : AggregateRoot<OrganizationId>
         OrganizationType type)
         => Create(OrganizationId.New(), legalName, type);
 
+    /// <summary>
+    /// Retires the organization. It stays readable and its users and regulatory
+    /// work are untouched — deactivating says "do not start anything new with
+    /// this", not "pretend it never existed".
+    /// </summary>
     public void Deactivate()
     {
+        // Valid request, business state forbids it: 409, not a silent no-op
+        // (ADR-009). A caller deactivating twice has a stale view of the world
+        // and should be told so.
+        if (Status == OrganizationStatus.Inactive)
+            throw new BusinessRuleViolationException(
+                OrganizationErrors.AlreadyInactive);
+
         Status = OrganizationStatus.Inactive;
     }
 
