@@ -83,6 +83,9 @@ if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddScoped<
         IInvitationNotifier, DevelopmentInvitationNotifier>();
+
+    builder.Services.AddScoped<
+        IPasswordResetNotifier, DevelopmentPasswordResetNotifier>();
 }
 
 builder.Services.AddReferenceDataApplication();
@@ -136,6 +139,8 @@ app.MapLogin();
 app.MapRefreshSession();
 app.MapLogout();
 app.MapAcceptInvitation();
+app.MapRequestPasswordReset();
+app.MapCompletePasswordReset();
 app.MapGetCurrentUser();
 
 app.MapActivateOrganization();

@@ -21,4 +21,15 @@ public static class AuthenticationErrors
     public const string InvalidInvitation =
         "This invitation link is no longer valid. "
             + "It may have expired or already been used.";
+
+    /// <summary>
+    /// Every way a password reset can fail to be redeemable — unknown, expired,
+    /// already used, superseded by a newer request, or the account deactivated
+    /// since. Same reasoning as <see cref="InvalidInvitation"/>: the token is
+    /// unguessable, so naming the likely causes enumerates nothing and tells a
+    /// stuck user to ask again.
+    /// </summary>
+    public const string InvalidPasswordReset =
+        "This password reset link is no longer valid. "
+            + "It may have expired or already been used.";
 }

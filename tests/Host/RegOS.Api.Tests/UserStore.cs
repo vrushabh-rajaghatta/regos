@@ -30,6 +30,20 @@ internal static class UserStore
             """,
             userId);
 
+    public static Task ExpirePasswordResetsForAsync(Guid userId) =>
+        ExecuteAsync(
+            """
+            UPDATE "PasswordResets" SET "ExpiresAt" = now() - interval '1 day'
+            WHERE "UserId" = @id
+            """,
+            userId);
+
+    public static async Task<IReadOnlyList<string>> PasswordResetHashesForAsync(
+        Guid userId) =>
+        await StringsAsync(
+            """SELECT "TokenHash" FROM "PasswordResets" WHERE "UserId" = @id""",
+            userId);
+
     public static Task<int> StatusOfAsync(Guid userId) =>
         ScalarAsync<int>("""SELECT "Status" FROM "Users" WHERE "Id" = @id""", userId);
 
@@ -38,25 +52,29 @@ internal static class UserStore
             """SELECT count(*)::int FROM "UserCredentials" WHERE "UserId" = @id""",
             userId);
 
-    public static async Task<IReadOnlyList<string>> InvitationHashesForAsync(
-        Guid userId)
+    public static Task<IReadOnlyList<string>> InvitationHashesForAsync(
+        Guid userId) =>
+        StringsAsync(
+            """SELECT "TokenHash" FROM "Invitations" WHERE "UserId" = @id""",
+            userId);
+
+    private static async Task<IReadOnlyList<string>> StringsAsync(
+        string sql, Guid id)
     {
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
 
-        await using var command = new NpgsqlCommand(
-            """SELECT "TokenHash" FROM "Invitations" WHERE "UserId" = @id""",
-            connection);
+        await using var command = new NpgsqlCommand(sql, connection);
 
-        command.Parameters.AddWithValue("id", userId);
+        command.Parameters.AddWithValue("id", id);
 
-        var hashes = new List<string>();
+        var values = new List<string>();
 
         await using var reader = await command.ExecuteReaderAsync();
 
-        while (await reader.ReadAsync()) hashes.Add(reader.GetString(0));
+        while (await reader.ReadAsync()) values.Add(reader.GetString(0));
 
-        return hashes;
+        return values;
     }
 
     private static async Task ExecuteAsync(string sql, object value)

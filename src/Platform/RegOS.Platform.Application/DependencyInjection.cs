@@ -9,7 +9,10 @@ using RegOS.Platform.Application.Commands.AcceptInvitation;
 using RegOS.Platform.Application.Commands.Login;
 using RegOS.Platform.Application.Commands.Logout;
 using RegOS.Platform.Application.Commands.RefreshSession;
+using RegOS.Platform.Application.Commands.CompletePasswordReset;
+using RegOS.Platform.Application.Commands.RequestPasswordReset;
 using RegOS.Platform.Application.Commands.ResendInvitation;
+using RegOS.Platform.Application.PasswordResets;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Application.Commands.UpdateUserProfile;
 using RegOS.Platform.Application.Queries.GetUserById;
@@ -37,6 +40,12 @@ public static class DependencyInjection
         services.AddScoped<UpdateUserProfileHandler>();
 
         services.AddScoped<SetUserPasswordHandler>();
+
+        services.AddScoped<PasswordResetIssuer>();
+
+        services.AddScoped<RequestPasswordResetHandler>();
+
+        services.AddScoped<CompletePasswordResetHandler>();
 
         // Stateless: it composes two issuers and holds nothing per request.
         services.AddSingleton<SessionFactory>();

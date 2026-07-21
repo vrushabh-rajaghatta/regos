@@ -27,6 +27,8 @@ using RefreshTokenAggregate =
     RegOS.Platform.Domain.Aggregates.RefreshToken.RefreshToken;
 using InvitationAggregate =
     RegOS.Platform.Domain.Aggregates.Invitation.Invitation;
+using PasswordResetAggregate =
+    RegOS.Platform.Domain.Aggregates.PasswordReset.PasswordReset;
 
 namespace RegOS.Persistence;
 
@@ -79,6 +81,9 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<InvitationAggregate> Invitations =>
         Set<InvitationAggregate>();
+
+    public DbSet<PasswordResetAggregate> PasswordResets =>
+        Set<PasswordResetAggregate>();
 
     /// <summary>Read-only projection over Users for the user directory.</summary>
     public DbSet<ReadModels.UserDirectoryRow> UserDirectory =>

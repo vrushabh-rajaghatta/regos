@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Infrastructure.Authentication;
 using RegOS.Platform.Domain.Aggregates.Invitation;
+using RegOS.Platform.Domain.Aggregates.PasswordReset;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
@@ -29,6 +30,9 @@ public static class DependencyInjection
             IRefreshTokenRepository, RefreshTokenRepository>();
 
         services.AddScoped<IInvitationRepository, InvitationRepository>();
+
+        services.AddScoped<
+            IPasswordResetRepository, PasswordResetRepository>();
 
         services.AddScoped<IUserPolicy, UserPolicy>();
 
@@ -89,6 +93,22 @@ public static class DependencyInjection
         // delivery did not happen and deliberately never logs the token.
         services.AddScoped<
             IInvitationNotifier, UnconfiguredInvitationNotifier>();
+
+        services.AddOptions<PasswordResetOptions>()
+            .Bind(configuration.GetSection(PasswordResetOptions.SectionName))
+            .Validate(
+                options => options.Minutes > 0,
+                $"{PasswordResetOptions.SectionName}:Minutes must be positive.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.CompleteUrl),
+                $"{PasswordResetOptions.SectionName}:CompleteUrl is required.")
+            .ValidateOnStart();
+
+        services.AddSingleton<
+            IPasswordResetTokenIssuer, PasswordResetTokenIssuer>();
+
+        services.AddScoped<
+            IPasswordResetNotifier, UnconfiguredPasswordResetNotifier>();
 
         return services;
     }

@@ -31,17 +31,24 @@ public sealed class RegOSApiFactory : WebApplicationFactory<Program>
     /// </summary>
     public CapturingInvitationNotifier Invitations { get; } = new();
 
+    /// <summary>
+    /// Captures the reset links the API would have emailed. Shared across the
+    /// fixture, because the factory is shared.
+    /// </summary>
+    public CapturingPasswordResetNotifier PasswordResets { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
 
-        // The only substitution these tests make. Everything else - the real
+        // The only substitutions these tests make. Everything else - the real
         // authentication handler, the real middleware order, the real database
-        // - is exercised as it ships. An acceptance token exists only in transit,
-        // so without this there is no way to test accepting one.
+        // - is exercised as it ships. Acceptance and reset tokens exist only in
+        // transit, so without these there is no way to test redeeming one.
         builder.ConfigureTestServices(services =>
         {
             services.AddScoped<IInvitationNotifier>(_ => Invitations);
+            services.AddScoped<IPasswordResetNotifier>(_ => PasswordResets);
         });
     }
 
