@@ -104,6 +104,7 @@ app.MapCreateOrganization();
 app.MapDeactivateOrganization();
 app.MapGetOrganization();
 app.MapListOrganizations();
+app.MapUpdateOrganization();
 
 app.MapInviteUser();
 app.MapListUsers();

@@ -19,29 +19,49 @@ public sealed class Organization : AggregateRoot<OrganizationId>
         OrganizationId id,
         string legalName,
         OrganizationType type)
-    {
-        if (string.IsNullOrWhiteSpace(legalName))
-            throw new DomainException(OrganizationErrors.LegalNameRequired);
-
-        // Model binding happily turns {"type": 99} into an OrganizationType,
-        // so without this an organization persists with a type that has no
-        // name. Decidable from the request alone, therefore 400 (ADR-009).
-        if (!Enum.IsDefined(type))
-            throw new DomainException(OrganizationErrors.TypeInvalid);
-
-        return new Organization
+        => new()
         {
             Id = id,
-            LegalName = legalName.Trim(),
-            Type = type,
+            LegalName = NormalizeLegalName(legalName),
+            Type = Validated(type),
             Status = OrganizationStatus.Active
         };
-    }
 
     public static Organization Create(
         string legalName,
         OrganizationType type)
         => Create(OrganizationId.New(), legalName, type);
+
+    /// <summary>
+    /// Corrects the registered legal name. Permitted while inactive: retiring an
+    /// organization says "do not start new work with this", not "freeze the
+    /// record", and a misspelled legal name is worth fixing either way. This
+    /// matches Product, where an archived product can still be renamed.
+    /// </summary>
+    public void Rename(string? legalName)
+        => LegalName = NormalizeLegalName(legalName);
+
+    /// <summary>
+    /// Reclassifies the organization. Separate from <see cref="Rename"/> rather
+    /// than one UpdateDetails: the two carry different intent and will grow
+    /// different rules — reclassifying an organization that already holds
+    /// marketing authorizations is a conversation we have not had yet, and an
+    /// explicit method is where that rule will live when we do.
+    /// </summary>
+    public void Reclassify(OrganizationType type) => Type = Validated(type);
+
+    private static string NormalizeLegalName(string? legalName)
+        => string.IsNullOrWhiteSpace(legalName)
+            ? throw new DomainException(OrganizationErrors.LegalNameRequired)
+            : legalName.Trim();
+
+    // Model binding happily turns {"type": 99} into an OrganizationType, so
+    // without this an organization persists with a type that has no name.
+    // Decidable from the request alone, therefore 400 (ADR-009).
+    private static OrganizationType Validated(OrganizationType type)
+        => Enum.IsDefined(type)
+            ? type
+            : throw new DomainException(OrganizationErrors.TypeInvalid);
 
     /// <summary>
     /// Retires the organization. It stays readable and its users and regulatory

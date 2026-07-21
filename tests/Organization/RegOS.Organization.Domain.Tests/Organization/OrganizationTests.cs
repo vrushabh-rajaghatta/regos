@@ -10,6 +10,11 @@ namespace RegOS.Organization.Domain.Tests.Organization;
 
 public sealed class OrganizationTests
 {
+    private static OrganizationAggregate Active() =>
+        OrganizationAggregate.Create(
+            "Acme Pharma Ltd.",
+            OrganizationType.Manufacturer);
+
     [Fact]
     public void Creates_an_organization_with_the_supplied_details()
     {
@@ -120,6 +125,95 @@ public sealed class OrganizationTests
 
         organization.LegalName.Should().Be("Acme Pharma Ltd.");
         organization.Type.Should().Be(OrganizationType.Sponsor);
+    }
+
+    [Fact]
+    public void Renames_the_organization()
+    {
+        var organization = Active();
+
+        organization.Rename("  Acme Pharmaceuticals Ltd.  ");
+
+        organization.LegalName.Should().Be("Acme Pharmaceuticals Ltd.");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Rejects_renaming_to_a_missing_legal_name(string? legalName)
+    {
+        var organization = Active();
+
+        var act = () => organization.Rename(legalName);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(OrganizationErrors.LegalNameRequired);
+    }
+
+    [Fact]
+    public void Reclassifies_the_organization()
+    {
+        var organization = Active();
+
+        organization.Reclassify(OrganizationType.ContractResearchOrganization);
+
+        organization.Type.Should()
+            .Be(OrganizationType.ContractResearchOrganization);
+    }
+
+    [Fact]
+    public void Rejects_reclassifying_to_an_undefined_type()
+    {
+        var organization = Active();
+
+        var act = () => organization.Reclassify((OrganizationType)99);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(OrganizationErrors.TypeInvalid);
+    }
+
+    [Fact]
+    public void Allows_editing_an_inactive_organization()
+    {
+        // Deliberate: deactivation says "do not start new work with this", not
+        // "freeze the record". A misspelled legal name is worth correcting
+        // whether or not the organization is still trading. Product takes the
+        // same position — an archived product can still be renamed.
+        var organization = Active();
+        organization.Deactivate();
+
+        organization.Rename("Acme Pharmaceuticals Ltd.");
+        organization.Reclassify(OrganizationType.Sponsor);
+
+        organization.LegalName.Should().Be("Acme Pharmaceuticals Ltd.");
+        organization.Type.Should().Be(OrganizationType.Sponsor);
+        organization.Status.Should().Be(OrganizationStatus.Inactive);
+    }
+
+    [Fact]
+    public void Editing_does_not_change_status()
+    {
+        // Status belongs to Activate and Deactivate. An edit is a correction to
+        // a record, never a lifecycle transition.
+        var organization = Active();
+
+        organization.Rename("Acme Pharmaceuticals Ltd.");
+        organization.Reclassify(OrganizationType.Sponsor);
+
+        organization.Status.Should().Be(OrganizationStatus.Active);
+    }
+
+    [Fact]
+    public void Renaming_to_the_same_value_is_a_no_op()
+    {
+        // No version to increment and nothing to reject: submitting unchanged
+        // values simply leaves the aggregate as it was.
+        var organization = Active();
+
+        organization.Rename("Acme Pharma Ltd.");
+
+        organization.LegalName.Should().Be("Acme Pharma Ltd.");
     }
 
     [Fact]

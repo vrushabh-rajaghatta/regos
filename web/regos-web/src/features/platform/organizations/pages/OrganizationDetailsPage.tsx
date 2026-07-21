@@ -1,15 +1,21 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { PageSection } from "@/shared/components/PageSection";
 
 import { OrganizationNotFoundError } from "../api/getOrganization";
+import { DeactivateOrganizationDialog } from "../components/DeactivateOrganizationDialog";
+import { EditOrganizationDialog } from "../components/EditOrganizationDialog";
 import { OrganizationStatusBadge } from "../components/OrganizationStatusBadge";
 import { useOrganization } from "../hooks/useOrganization";
 import { organizationTypeLabel } from "../types/OrganizationType";
 
 export function OrganizationDetailsPage() {
   const { organizationId } = useParams();
+  const [editOpen, setEditOpen] = useState(false);
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
 
   const { data: organization, isPending, error } = useOrganization(
     organizationId!,
@@ -52,13 +58,41 @@ export function OrganizationDetailsPage() {
         title={organization.legalName}
         description={organizationTypeLabel(organization.type)}
         actions={
-          <Link
-            to="/platform/organizations"
-            className="text-sm hover:underline"
-          >
-            Back to organizations
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/platform/organizations"
+              className="text-sm hover:underline"
+            >
+              Back
+            </Link>
+
+            <Button variant="outline" onClick={() => setEditOpen(true)}>
+              Edit
+            </Button>
+
+            {/* An inactive organization has nowhere further to go, so the
+                action disappears rather than failing with a 409 when
+                pressed. */}
+            {organization.status === "Active" && (
+              <Button onClick={() => setDeactivateOpen(true)}>
+                Deactivate
+              </Button>
+            )}
+          </div>
         }
+      />
+
+      <EditOrganizationDialog
+        organization={organization}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+
+      <DeactivateOrganizationDialog
+        organizationId={organization.id}
+        legalName={organization.legalName}
+        open={deactivateOpen}
+        onOpenChange={setDeactivateOpen}
       />
 
       <div className="mt-6">
