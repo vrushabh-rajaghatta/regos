@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Infrastructure.Authentication;
+using RegOS.Platform.Domain.Aggregates.RefreshToken;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
 using RegOS.Platform.Infrastructure.Repositories;
@@ -22,6 +23,9 @@ public static class DependencyInjection
 
         services.AddScoped<
             IUserCredentialRepository, UserCredentialRepository>();
+
+        services.AddScoped<
+            IRefreshTokenRepository, RefreshTokenRepository>();
 
         services.AddScoped<IUserPolicy, UserPolicy>();
 
@@ -51,6 +55,15 @@ public static class DependencyInjection
             .ValidateOnStart();
 
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
+
+        services.AddOptions<RefreshTokenOptions>()
+            .Bind(configuration.GetSection(RefreshTokenOptions.SectionName))
+            .Validate(
+                options => options.Days > 0,
+                $"{RefreshTokenOptions.SectionName}:Days must be positive.")
+            .ValidateOnStart();
+
+        services.AddSingleton<IRefreshTokenIssuer, RefreshTokenIssuer>();
 
         return services;
     }

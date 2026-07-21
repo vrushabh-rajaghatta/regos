@@ -23,6 +23,8 @@ using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
 using UserCredentialAggregate =
     RegOS.Platform.Domain.Aggregates.UserCredential.UserCredential;
+using RefreshTokenAggregate =
+    RegOS.Platform.Domain.Aggregates.RefreshToken.RefreshToken;
 
 namespace RegOS.Persistence;
 
@@ -69,6 +71,9 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<UserCredentialAggregate> UserCredentials =>
         Set<UserCredentialAggregate>();
+
+    public DbSet<RefreshTokenAggregate> RefreshTokens =>
+        Set<RefreshTokenAggregate>();
 
     /// <summary>Read-only projection over Users for the user directory.</summary>
     public DbSet<ReadModels.UserDirectoryRow> UserDirectory =>

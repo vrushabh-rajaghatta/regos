@@ -57,10 +57,10 @@ consumer needs them (principle P4).
 | `AggregateRoot<TId>`, `Entity`, `ValueObject`, `StronglyTypedId` | ✅ `RegOS.SharedKernel` |
 | Three shared exception types | ✅ [ADR-012](../adr/ADR-012-shared-semantic-exception-model.md) |
 | Exception → ProblemDetails middleware | ✅ `Program.cs:92`; 0 of 35 endpoints carry a try/catch |
-| `ITenantContext` (ambient tenant) | ✅ [ADR-013](../adr/ADR-013-ambient-tenant-context.md) |
+| `ITenantContext` (from the caller's claim) | ✅ [ADR-013](../adr/ADR-013-ambient-tenant-context.md), [ADR-024](../adr/ADR-024-tenancy-is-derived-from-identity.md) |
 | Single `RegOSDbContext`, shared migrations | ✅ |
 | Repositories for writes, DbContext for reads | ✅ [ADR-016](../adr/ADR-016-persistence-access-model.md) |
-| `ICurrentUser` | ❌ Milestone 2 — cannot be designed honestly before then |
+| `ICurrentUser` | ✅ AUTH-004 — `UserId`, `OrganizationId`, `Email`, `IsAuthenticated`, and deliberately nothing else |
 | `IClock` | ❌ Not built |
 | Domain events | ❌ Not built — Milestone 5 is the first real consumer |
 | Structured logging, correlation id | ❌ Milestone 6 |
@@ -197,21 +197,26 @@ against `X-Tenant-Id`, once against a real identity.
 | AUTH-003 | Sign in and receive an access token (ADR-022) | `592494a` |
 | — | A credential cannot outlive its user (ADR-023) | `e6c6041` |
 | AUTH-004 | Validate access tokens; `ICurrentUser` | `b7fbe13` |
-| AUTH-005 | Tenancy from identity; `X-Tenant-Id` removed (ADR-024) | this slice |
+| AUTH-005 | Tenancy from identity; `X-Tenant-Id` removed (ADR-024) | `b5a9e85` |
+| AUTH-006 | Refresh tokens, rotation, cookie sessions (ADR-025) | this slice |
 
 `HeaderTenantContext` is **deleted**. The tenant is the authenticated caller's
 organization claim, so it is proven rather than asserted.
 
-Remaining in Milestone 2: refresh tokens with rotation (AUTH-006), and
-invitation acceptance / first password (AUTH-007), which is where ADR-014 comes
-back into focus. Forgot-password shares the token mechanism with invitation
-acceptance and is deliberately undecided until that code exists.
+Remaining in Milestone 2: invitation acceptance / first password (AUTH-007),
+which is where ADR-014 comes back into focus. Forgot-password shares the token
+mechanism with invitation acceptance and is deliberately undecided until that
+code exists.
+
+Known gap carried forward: **nothing deletes expired or revoked refresh
+tokens.** The table grows with every sign-in and every rotation. Harmless at
+current scale, unbounded at any other.
 
 ### Scope
 
 - `UserCredential`, password hashing.
 - Login, logout.
-- JWT access token; refresh token with rotation.
+- ~~JWT access token; refresh token with rotation.~~ Done in AUTH-003/AUTH-006.
 - Forgot password / reset password.
 - ~~**Replace `HeaderTenantContext` with a claims-based `ITenantContext`.**~~
   Done in AUTH-005. Nothing above it changed, by design (ADR-013) — all

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
+using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Application.Commands.Login;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Domain.Aggregates.User;
@@ -50,9 +51,16 @@ public sealed class LoginHandlerTests : IAsyncLifetime
             AccessTokenMinutes = 15
         }));
 
+    private static SessionFactory NewSessionFactory() =>
+        new(NewIssuer(), NewRefreshTokenIssuer());
+
+    private static RefreshTokenIssuer NewRefreshTokenIssuer() =>
+        new(Options.Create(new RefreshTokenOptions { Days = 14 }));
+
     private static LoginHandler NewHandler(RegOSDbContext context) =>
-        new(NewIssuer(),
+        new(NewSessionFactory(),
             new PasswordHasher(),
+            new RefreshTokenRepository(context),
             new UserCredentialRepository(context),
             new UserRepository(context));
 
@@ -89,7 +97,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
             _organizationId.Value);
     }
 
-    private async Task<LoginResult> LoginAsync(string email, string password)
+    private async Task<AuthenticatedSession> LoginAsync(string email, string password)
     {
         await using var context = NewContext();
 
@@ -121,7 +129,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         var result = await LoginAsync(_email, CorrectPassword);
 
-        result.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
+        result.AccessTokenExpiresAt.Should().BeAfter(DateTime.UtcNow);
     }
 
     [Fact]

@@ -1,39 +1,39 @@
 import { buildUrl } from "@/shared/api/apiClient";
 
 import type { LoginRequest } from "../types/LoginRequest";
-import type { LoginResponse } from "../types/LoginResponse";
 
 /**
- * The one API call that uses plain `fetch` rather than `apiFetch`: it is the
- * request that has no token yet, and routing it through the authenticated
- * client would clear a stored token on every failed sign-in attempt.
+ * Signs in. Returns nothing: the session arrives as HttpOnly cookies the
+ * browser stores itself, and there is no token for JavaScript to hold.
+ *
+ * Uses plain `fetch` rather than `apiFetch` — a 401 here means the credentials
+ * were wrong, and attempting a refresh would be nonsense.
  */
-export async function login(request: LoginRequest): Promise<LoginResponse> {
+export async function login(request: LoginRequest): Promise<void> {
   const response = await fetch(buildUrl("/api/auth/login"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(request),
   });
 
-  if (!response.ok) {
-    // The API answers every failure with one message on purpose (ADR-022), so
-    // this shows what it said rather than inventing a more specific reason.
-    let message = "Unable to sign in.";
+  if (response.ok) return;
 
-    try {
-      const problem = await response.json();
+  // The API answers every failure with one message on purpose (ADR-022), so
+  // this shows what it said rather than inventing a more specific reason.
+  let message = "Unable to sign in.";
 
-      if (typeof problem?.detail === "string") {
-        message = problem.detail;
-      }
-    } catch {
-      // No problem body - fall back to the generic message.
+  try {
+    const problem = await response.json();
+
+    if (typeof problem?.detail === "string") {
+      message = problem.detail;
     }
-
-    throw new Error(message);
+  } catch {
+    // No problem body - fall back to the generic message.
   }
 
-  return response.json();
+  throw new Error(message);
 }

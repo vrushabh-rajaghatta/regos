@@ -1,7 +1,6 @@
 @host = http://localhost:5225
 
-### Sign in. Development credentials, seeded by DevelopmentCredentialSeeder.
-# @name login
+### Sign in. Returns 204 and two HttpOnly cookies; no token in the body.
 POST {{host}}/api/auth/login
 Content-Type: application/json
 
@@ -10,16 +9,21 @@ Content-Type: application/json
   "password": "development-password"
 }
 
-### Who am I? The first endpoint in RegOS that requires authentication.
-GET {{host}}/api/auth/me
-Authorization: Bearer {{login.response.body.accessToken}}
-
-### No token at all -> 401, WWW-Authenticate: Bearer
+### Who am I? Authenticated by the access cookie the request above set.
 GET {{host}}/api/auth/me
 
-### An unsigned token -> 401. Nothing about it is trusted.
+### Renew the session. Rotates the refresh token: the old one dies here.
+POST {{host}}/api/auth/refresh
+
+### Sign out. Revokes the refresh token and clears both cookies.
+POST {{host}}/api/auth/logout
+
+### Now unauthenticated -> 401.
 GET {{host}}/api/auth/me
-Authorization: Bearer not.a.token
+
+### Presenting the rotated refresh token again ends every session for the user.
+POST {{host}}/api/auth/refresh
+Cookie: regos_refresh=a-token-that-was-never-issued
 
 ### Every failed sign-in returns one status and one message (ADR-022).
 POST {{host}}/api/auth/login
@@ -28,13 +32,4 @@ Content-Type: application/json
 {
   "email": "dev@regos.local",
   "password": "wrong"
-}
-
-### ...including for an address that does not exist.
-POST {{host}}/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "nobody@regos.local",
-  "password": "development-password"
 }

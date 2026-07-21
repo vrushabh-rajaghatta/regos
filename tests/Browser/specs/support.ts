@@ -9,26 +9,29 @@ export const API_URL = process.env.REGOS_API_URL ?? "http://localhost:5225";
 export const DEV_EMAIL = "dev@regos.local";
 export const DEV_PASSWORD = "development-password";
 
-/** Must match web/regos-web/src/shared/auth/accessToken.ts. */
-const STORAGE_KEY = "regos.accessToken";
-
 /**
  * The organization the development account belongs to, and therefore the
- * tenant every spec now acts as. It is no longer a value the caller chooses:
- * it arrives inside the token, and this constant exists only so assertions can
+ * tenant every spec acts as. It is no longer a value the caller chooses: it
+ * arrives inside the token, and this constant exists only so assertions can
  * name it (ADR-024).
  */
 export const TENANT = "30000000-0000-0000-0000-000000000003";
 
-let cachedToken: Promise<string> | undefined;
+let cachedCookies: Promise<string> | undefined;
 
-/** Signs in once per run; every spec and every page share the token. */
-export function accessToken(): Promise<string> {
-  cachedToken ??= fetch(`${API_URL}/api/auth/login`, {
+/**
+ * Signs in once per run and keeps the cookies the API set.
+ *
+ * The session now lives in HttpOnly cookies (ADR-025), so there is no token to
+ * capture. Node's fetch has no cookie jar, so the Set-Cookie headers are parsed
+ * once and replayed on every subsequent call.
+ */
+export function sessionCookies(): Promise<string> {
+  cachedCookies ??= fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: DEV_EMAIL, password: DEV_PASSWORD }),
-  }).then(async (response) => {
+  }).then((response) => {
     if (!response.ok) {
       throw new Error(
         `Unable to sign in as ${DEV_EMAIL} (${response.status}). Is the API ` +
@@ -36,12 +39,13 @@ export function accessToken(): Promise<string> {
       );
     }
 
-    const { accessToken } = await response.json();
-
-    return accessToken as string;
+    return response.headers
+      .getSetCookie()
+      .map((cookie) => cookie.split(";")[0])
+      .join("; ");
   });
 
-  return cachedToken;
+  return cachedCookies;
 }
 
 export const api = async (path: string, init: RequestInit = {}) =>
@@ -49,7 +53,7 @@ export const api = async (path: string, init: RequestInit = {}) =>
     ...init,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${await accessToken()}`,
+      Cookie: await sessionCookies(),
       ...(init.headers ?? {}),
     },
   });
@@ -57,20 +61,28 @@ export const api = async (path: string, init: RequestInit = {}) =>
 /**
  * `test`, with the browser already signed in.
  *
- * Specs import this instead of Playwright's `test`. The token is injected
- * before any page script runs, which leaves the app in the same state a real
- * sign-in would — the login form itself is covered by its own spec rather than
- * replayed at the top of every other one.
+ * Specs import this instead of Playwright's `test`, so each one starts with a
+ * real session already established — the login form is covered by its own spec
+ * rather than replayed at the top of every other one.
  */
 export const test = base.extend<{ signedIn: void }>({
   signedIn: [
-    async ({ page }, use) => {
-      const token = await accessToken();
-
-      await page.addInitScript(
-        ([key, value]) => window.localStorage.setItem(key, value),
-        [STORAGE_KEY, token],
+    async ({ context }, use) => {
+      // Sign in through the browser's own request context, so the API's
+      // Set-Cookie lands in the cookie jar every page in this context shares.
+      // Nothing is injected: these are the real session cookies, HttpOnly and
+      // unreadable by page scripts, exactly as a user would have them.
+      const response = await context.request.post(
+        `${API_URL}/api/auth/login`,
+        { data: { email: DEV_EMAIL, password: DEV_PASSWORD } },
       );
+
+      if (!response.ok()) {
+        throw new Error(
+          `Unable to sign in as ${DEV_EMAIL} (${response.status()}). Is the ` +
+            `API running in Development, so the account is seeded?`,
+        );
+      }
 
       await use();
     },
@@ -79,11 +91,11 @@ export const test = base.extend<{ signedIn: void }>({
 });
 
 /**
- * `test` with no token injected, for specs that exercise signing in.
+ * `test` with no session, for specs that exercise signing in.
  *
- * A separate export rather than an opt-out flag, because the obvious
- * alternative — an init script that removes the token — silently re-runs on
- * every navigation and signs the user back out mid-test.
+ * A separate export rather than an opt-out flag: the fixture above signs in
+ * before the test body runs, and there is no way to un-sign-in a context
+ * without racing the navigation that is under test.
  */
 export const anonymousTest = base;
 

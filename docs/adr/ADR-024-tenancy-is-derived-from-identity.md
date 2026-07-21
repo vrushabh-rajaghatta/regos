@@ -7,6 +7,13 @@
 the tenant), [ADR-021](ADR-021-email-is-globally-unique.md) (email identifies a
 user), [ADR-022](ADR-022-authentication-failure-is-a-fourth-exception.md) (401)
 
+> **The transport described in Decision points 2 and 3 is superseded.** The
+> browser no longer sends a bearer header or holds a token in `localStorage`;
+> the session is `HttpOnly` cookies
+> ([ADR-025](ADR-025-sessions-are-server-owned-cookies.md)). The decision this
+> ADR records — that tenancy comes from the authenticated caller's claim and
+> never from a request header — is unchanged.
+
 ## Context
 
 ADR-013 introduced `ITenantContext` and implemented it with
@@ -75,13 +82,14 @@ Three supporting decisions come with it:
   and authorities are not tenant-scoped and arguably need not be protected.
   They are, because a default-open list is a list someone will add a
   tenant-scoped endpoint to.
-- **The access token is stored in `localStorage`,** which any script on the
-  origin can read. An httpOnly cookie is more secure and is what this should
-  become; it needs the server to set and clear it, which is AUTH-006's work.
-  This is a known weakness with a scheduled fix, not an oversight.
-- **Signing out is client-side only.** The token stays valid until it expires,
-  and nothing tells the server. That is inherent to stateless tokens without
-  revocation, and the reason access tokens last fifteen minutes.
+- ~~**The access token is stored in `localStorage`**~~ — **closed 2026-07-21
+  (AUTH-006).** Superseded by
+  [ADR-025](ADR-025-sessions-are-server-owned-cookies.md): the session is now
+  two `HttpOnly` cookies no script can read.
+- ~~**Signing out is client-side only.**~~ **Partly closed 2026-07-21
+  (AUTH-006).** Sign-out now revokes the refresh token server-side (ADR-025).
+  The access token still cannot be revoked and remains valid until it expires,
+  which is why it lasts fifteen minutes.
 - **The development account moved to Demo MAH Ltd.** It previously belonged to
   Demo Manufacturer, but the UI had always acted as Demo MAH through the
   header. Now that the account's organization *is* the tenant, the two had to

@@ -1,4 +1,6 @@
+using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Application.Services;
+using RegOS.Platform.Domain.Aggregates.RefreshToken;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
 using RegOS.Platform.Domain.ValueObjects;
@@ -27,19 +29,22 @@ public sealed class LoginHandler
     /// </summary>
     private readonly Lazy<string> _decoyHash;
 
-    private readonly IAccessTokenIssuer _tokens;
+    private readonly SessionFactory _sessions;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IRefreshTokenRepository _refreshTokens;
     private readonly IUserCredentialRepository _credentials;
     private readonly IUserRepository _users;
 
     public LoginHandler(
-        IAccessTokenIssuer tokens,
+        SessionFactory sessions,
         IPasswordHasher passwordHasher,
+        IRefreshTokenRepository refreshTokens,
         IUserCredentialRepository credentials,
         IUserRepository users)
     {
-        _tokens = tokens;
+        _sessions = sessions;
         _passwordHasher = passwordHasher;
+        _refreshTokens = refreshTokens;
         _credentials = credentials;
         _users = users;
 
@@ -47,7 +52,7 @@ public sealed class LoginHandler
             Password.Create(Guid.NewGuid().ToString())));
     }
 
-    public async Task<LoginResult> HandleAsync(
+    public async Task<AuthenticatedSession> HandleAsync(
         LoginCommand command,
         CancellationToken cancellationToken)
     {
@@ -83,18 +88,22 @@ public sealed class LoginHandler
         // The user has just proven they know the password, which is the only
         // moment the plaintext is available to rehash with current parameters.
         // Deferring this means it never happens.
+        var now = DateTime.UtcNow;
+
         if (verification == PasswordVerification.SucceededNeedsRehash)
         {
             credential.ChangePassword(
                 _passwordHasher.Hash(Password.Create(command.Password)),
-                DateTime.UtcNow);
+                now);
 
             await _credentials.UpdateAsync(credential, cancellationToken);
         }
 
-        var token = _tokens.Issue(user);
+        var (session, record) = _sessions.Create(user, now);
 
-        return new LoginResult(token.Value, token.ExpiresAt);
+        await _refreshTokens.AddAsync(record, cancellationToken);
+
+        return session;
     }
 
     /// <summary>

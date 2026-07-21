@@ -1,25 +1,30 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-import { clearAccessToken } from "@/shared/auth/accessToken";
+import { logout } from "../api/logout";
 
 /**
- * Signing out is entirely a client-side act today: the token stays valid until
- * it expires, and nothing tells the server. That is a real limitation of
- * stateless tokens with no revocation, and the reason access tokens are kept to
- * fifteen minutes. Revocation belongs with refresh tokens (AUTH-006).
+ * Signing out is now a server-side act: the refresh token is revoked, so it
+ * cannot be used again even by someone who captured it.
+ *
+ * The access token is not revoked and cannot be — it is a signed statement, not
+ * a database row. Clearing the cookie stops this browser from sending it, but
+ * anyone who had extracted it keeps it until it expires. That is the reason
+ * access tokens last fifteen minutes.
  */
 export function useSignOut() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  return () => {
-    clearAccessToken();
+  return useMutation({
+    mutationFn: logout,
 
-    // Drop every cached response with it, so the next person to sign in on
-    // this browser never sees the previous one's data.
-    queryClient.clear();
+    onSettled: () => {
+      // Drop every cached response, so the next person to sign in on this
+      // browser never sees the previous one's data.
+      queryClient.clear();
 
-    navigate("/login", { replace: true });
-  };
+      navigate("/login", { replace: true });
+    },
+  });
 }

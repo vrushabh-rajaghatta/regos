@@ -49,6 +49,26 @@ public static class AuthenticationRegistration
                 // takes out.
                 bearer.MapInboundClaims = false;
 
+                // The browser sends the access token as an HttpOnly cookie, so
+                // there is no Authorization header to read. The header path is
+                // kept for non-browser callers — curl, the .http file, the
+                // integration tests — and wins when both are present, because a
+                // caller that set a header meant it.
+                bearer.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        if (string.IsNullOrEmpty(context.Token)
+                            && context.Request.Cookies.TryGetValue(
+                                SessionCookies.AccessToken, out var fromCookie))
+                        {
+                            context.Token = fromCookie;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
+
                 bearer.TokenValidationParameters = new TokenValidationParameters
                 {
                     // Every one of these is on. A validation parameter turned

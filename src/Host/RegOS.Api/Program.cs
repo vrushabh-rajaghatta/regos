@@ -43,7 +43,11 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            // Required for the session cookies to travel at all: the browser
+            // withholds them from cross-origin requests otherwise. Only legal
+            // beside a specific origin, never AllowAnyOrigin.
+            .AllowCredentials();
     });
 });
 
@@ -119,6 +123,8 @@ app.UseAuthorization();
 app.MapListCountries();
 app.MapListAuthorities();
 app.MapLogin();
+app.MapRefreshSession();
+app.MapLogout();
 app.MapGetCurrentUser();
 
 app.MapActivateOrganization();
@@ -166,3 +172,10 @@ app.MapArchiveProductDocument();
 app.MapGetProductDocumentUsage();
 
 app.Run();
+/// <summary>
+/// Exposed so the integration tests can host this exact application through
+/// <c>WebApplicationFactory</c>. Nothing else references it: the tests must
+/// exercise the real pipeline — authentication handler, middleware order,
+/// cookie writing — rather than a rebuilt approximation of it.
+/// </summary>
+public partial class Program;

@@ -9,12 +9,15 @@ import {
 } from "./support";
 
 /**
- * The only spec that starts signed out. Everything else gets a token injected
- * by the `test` fixture; this one exercises the form that produces it.
+ * The only spec that starts signed out. Everything else is signed in by the
+ * `test` fixture; this one exercises the form that produces the session.
  */
 test.describe("Sign in", () => {
   test("signs in and lands on the application", async ({ page }) => {
-    const errors = collectErrors(page);
+    // Two 401s are expected before signing in: the app asks /api/auth/me who
+    // it is, then tries one refresh. With HttpOnly cookies it cannot know it
+    // has no session without asking (ADR-025).
+    const errors = collectErrors(page, [EXPECTED_401]);
 
     await page.goto("/login");
 
@@ -23,7 +26,7 @@ test.describe("Sign in", () => {
     await page.getByRole("button", { name: "Sign In", exact: true }).click();
 
     // The header renders the email the API reports, so seeing it proves the
-    // token was stored, sent, validated, and read back as claims.
+    // cookies were set, sent back, validated, and read as claims.
     await expect(page.getByText(DEV_EMAIL)).toBeVisible();
 
     expect(errors()).toEqual([]);
@@ -56,6 +59,46 @@ test.describe("Sign in", () => {
     await expect(page.locator('[data-testid="product-list"]')).toBeVisible();
 
     expect(offenders).toEqual([]);
+  });
+
+  test("keeps the session out of reach of page scripts", async ({ page }) => {
+    // The reason for moving off localStorage (ADR-025). An XSS flaw can still
+    // act as the user, but it can no longer read the tokens and replay them
+    // somewhere else, later.
+    await page.goto("/login");
+
+    await page.getByLabel("Email Address").fill(DEV_EMAIL);
+    await page.getByLabel("Password").fill(DEV_PASSWORD);
+    await page.getByRole("button", { name: "Sign In", exact: true }).click();
+
+    await expect(page.getByText(DEV_EMAIL)).toBeVisible();
+
+    const reachable = await page.evaluate(() => ({
+      cookie: document.cookie,
+      storage: JSON.stringify(window.localStorage),
+      session: JSON.stringify(window.sessionStorage),
+    }));
+
+    expect(reachable.cookie).not.toContain("regos_access");
+    expect(reachable.cookie).not.toContain("regos_refresh");
+    expect(reachable.storage).not.toContain("eyJ");
+    expect(reachable.session).not.toContain("eyJ");
+  });
+
+  test("stays signed in across a full page reload", async ({ page }) => {
+    // localStorage used to provide this. Cookies must too, or every refresh
+    // would sign the user out.
+    await page.goto("/login");
+
+    await page.getByLabel("Email Address").fill(DEV_EMAIL);
+    await page.getByLabel("Password").fill(DEV_PASSWORD);
+    await page.getByRole("button", { name: "Sign In", exact: true }).click();
+
+    await expect(page.getByText(DEV_EMAIL)).toBeVisible();
+
+    await page.reload();
+
+    await expect(page.getByText(DEV_EMAIL)).toBeVisible();
   });
 
   test("rejects a wrong password without saying why", async ({ page }) => {
@@ -95,7 +138,10 @@ test.describe("Sign in", () => {
   test("redirects a signed-out visitor away from a protected page", async ({
     page,
   }) => {
-    const errors = collectErrors(page);
+    // Two 401s are expected before signing in: the app asks /api/auth/me who
+    // it is, then tries one refresh. With HttpOnly cookies it cannot know it
+    // has no session without asking (ADR-025).
+    const errors = collectErrors(page, [EXPECTED_401]);
 
     await page.goto("/platform/organizations");
 
@@ -111,7 +157,10 @@ test.describe("Sign in", () => {
   test("returns to the page that was originally requested", async ({
     page,
   }) => {
-    const errors = collectErrors(page);
+    // Two 401s are expected before signing in: the app asks /api/auth/me who
+    // it is, then tries one refresh. With HttpOnly cookies it cannot know it
+    // has no session without asking (ADR-025).
+    const errors = collectErrors(page, [EXPECTED_401]);
 
     await page.goto("/platform/organizations");
     await expect(page).toHaveURL(/\/login$/);
@@ -128,7 +177,10 @@ test.describe("Sign in", () => {
   test("signs out and cannot get back in without signing in again", async ({
     page,
   }) => {
-    const errors = collectErrors(page);
+    // Two 401s are expected before signing in: the app asks /api/auth/me who
+    // it is, then tries one refresh. With HttpOnly cookies it cannot know it
+    // has no session without asking (ADR-025).
+    const errors = collectErrors(page, [EXPECTED_401]);
 
     await page.goto("/login");
     await page.getByLabel("Email Address").fill(DEV_EMAIL);

@@ -45,6 +45,7 @@
   </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/Platform/">
+    <Project Path="tests/Host/RegOS.Api.Tests/RegOS.Api.Tests.csproj" />
     <Project Path="tests/Platform/RegOS.Platform.Application.Tests/RegOS.Platform.Application.Tests.csproj" />
     <Project Path="tests/Platform/RegOS.Platform.Domain.Tests/RegOS.Platform.Domain.Tests.csproj" />
   </Folder>

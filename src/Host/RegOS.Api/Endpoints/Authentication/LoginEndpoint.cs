@@ -1,3 +1,4 @@
+using RegOS.Api.Authentication;
 using RegOS.Platform.Application.Commands.Login;
 
 namespace RegOS.Api.Endpoints.Authentication;
@@ -12,7 +13,7 @@ public static class LoginEndpoint
             HandleAsync)
         .AllowAnonymous()
         .WithName("Login")
-        .WithSummary("Exchange an email and password for an access token")
+        .WithSummary("Exchange an email and password for a session")
         .WithTags("Authentication");
 
         return app;
@@ -24,13 +25,19 @@ public static class LoginEndpoint
     private static async Task<IResult> HandleAsync(
         LoginRequest request,
         LoginHandler handler,
+        HttpResponse response,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(
+        var session = await handler.HandleAsync(
             new LoginCommand(request.Email, request.Password),
             cancellationToken);
 
-        return Results.Ok(
-            new LoginResponse(result.AccessToken, result.ExpiresAt));
+        SessionCookies.Write(response, session);
+
+        // 204, not the tokens. The response body used to carry the access token
+        // for JavaScript to store; the whole point of AUTH-006 is that it no
+        // longer does. Returning it "just for convenience" would put it back
+        // within reach of any script on the page.
+        return Results.NoContent();
     }
 }

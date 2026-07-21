@@ -19,7 +19,12 @@ export function Header() {
           {currentUser?.email ?? ""}
         </span>
 
-        <Button variant="ghost" size="sm" onClick={signOut}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => signOut.mutate()}
+          disabled={signOut.isPending}
+        >
           Sign Out
         </Button>
       </div>
