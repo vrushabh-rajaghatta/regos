@@ -215,14 +215,35 @@ Exactly one edge into `Active` from `Invited`, and it establishes a password on
 the way through — so **every Active user has exactly one credential**, and the
 admin shortcut that used to violate it is gone (ADR-027).
 
-Remaining: password reset (AUTH-008). It is the second consumable grant, and
-the first honest test of whether `Invitation` generalizes or whether the two
-merely share a token generator. Deliberately undecided until that code exists.
+**AUTH-008 is done.** Password reset is a second consumable grant, and the test
+of whether `Invitation` generalizes has been run: `PasswordReset` was written
+without reading `Invitation`, and with names normalized and comments stripped
+the two differ only in the name of one predicate and one error constant.
+
+They are still separate aggregates. The similarity is structural; the
+distinction is semantic — different meaning, expiry (one hour against seven
+days), callers and eligibility rules — and merging them would need a
+discriminator column, which is how a `Grant` table acquires a `switch`. The
+finding is recorded as evidence about the domain, not as a mandate about the
+code: what has actually emerged is a *lifecycle* (issue → usable → consume once
+→ revocable → expires), and a lifecycle is not a class.
 
 Known gaps carried forward:
 
-- **Nothing deletes expired, revoked or consumed tokens** — refresh tokens or
-  invitations. Both tables grow with every sign-in, rotation and invite.
+- **No UI for password reset.** Both endpoints work and are covered at three
+  layers, but nothing in the React app calls them: no "forgot password" link,
+  no `/reset-password` page. The slice is verifiable by API and by test, not in
+  a browser. That is a deliberate exception to the vertical-slice rule and it
+  should be closed before the authentication subsystem is called finished.
+- **Nothing revokes a user's sessions when they are deactivated.** Today the
+  guarantee is weaker than it looks: a deactivated user cannot *refresh*,
+  because `RefreshSessionHandler` re-checks status, but their access token
+  keeps working for up to fifteen minutes. The invariant worth holding is
+  "deactivating a user revokes every session immediately." Backlog, not bug.
+
+- **Nothing deletes expired, revoked or consumed tokens** — refresh tokens,
+  invitations or password resets. All three tables grow with every sign-in,
+  rotation, invite and reset request.
   Harmless at current scale, unbounded at any other. Cleanup strategy pending
   operational requirements; periodic sweep, opportunistic cleanup and a
   database TTL are all defensible and none is obviously right today.
@@ -239,8 +260,10 @@ Known gaps carried forward:
 - `UserCredential`, password hashing.
 - Login, logout.
 - ~~JWT access token; refresh token with rotation.~~ Done in AUTH-003/AUTH-006.
-- Forgot password / reset password. **Deferred to AUTH-008**, reusing the token
-  generator only if it naturally fits.
+- ~~Forgot password / reset password.~~ Done in AUTH-008. It reused
+  `SecretTokenFactory` and nothing else; `PasswordResetTokenIssuer` is the
+  third issuer of the same shape, which is the strongest abstraction candidate
+  the slice produced — left alone deliberately, pending the retrospective.
 - ~~**Replace `HeaderTenantContext` with a claims-based `ITenantContext`.**~~
   Done in AUTH-005. Nothing above it changed, by design (ADR-013) — all
   fourteen `ITenantContext` consumers were untouched.
