@@ -2,10 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
+using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 
 using RefreshTokenAggregate =
     RegOS.Platform.Domain.Aggregates.RefreshToken.RefreshToken;
+using SessionAggregate = RegOS.Platform.Domain.Aggregates.Session.Session;
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
 
 namespace RegOS.Persistence.Configurations.Platform;
@@ -28,6 +30,10 @@ public sealed class RefreshTokenConfiguration
             .HasConversion(
                 id => id.Value,
                 value => new UserId(value))
+            .IsRequired();
+
+        builder.Property(x => x.SessionId)
+            .HasConversion(id => id.Value, value => new SessionId(value))
             .IsRequired();
 
         // SHA-256 as uppercase hex is always 64 characters. Fixed length
@@ -59,6 +65,15 @@ public sealed class RefreshTokenConfiguration
         // precisely the case ADR-023 failed to cover and ADR-026 exists to
         // restate: the key expresses cardinality, the foreign key enforces
         // lifetime, and only the second one is the point.
+        builder.HasIndex(x => x.SessionId);
+
+        // Revoking a session must take its tokens with it, and deleting one
+        // must not leave them behind (ADR-026).
+        builder.HasOne<SessionAggregate>()
+            .WithMany()
+            .HasForeignKey(x => x.SessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasOne<UserAggregate>()
             .WithMany()
             .HasForeignKey(x => x.UserId)

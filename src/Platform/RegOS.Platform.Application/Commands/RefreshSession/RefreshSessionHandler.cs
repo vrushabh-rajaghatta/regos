@@ -2,6 +2,7 @@ using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Application.Commands.Login;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
+using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Exceptions;
 
@@ -22,6 +23,7 @@ public sealed class RefreshSessionHandler
     private readonly SessionRevoker _revoker;
     private readonly IRefreshTokenIssuer _issuer;
     private readonly IRefreshTokenRepository _refreshTokens;
+    private readonly ISessionRepository _sessionStore;
     private readonly IUserRepository _users;
 
     public RefreshSessionHandler(
@@ -29,12 +31,14 @@ public sealed class RefreshSessionHandler
         SessionRevoker revoker,
         IRefreshTokenIssuer issuer,
         IRefreshTokenRepository refreshTokens,
+        ISessionRepository sessionStore,
         IUserRepository users)
     {
         _sessions = sessions;
         _revoker = revoker;
         _issuer = issuer;
         _refreshTokens = refreshTokens;
+        _sessionStore = sessionStore;
         _users = users;
     }
 
@@ -87,7 +91,23 @@ public sealed class RefreshSessionHandler
                 AuthenticationErrors.InvalidCredentials);
         }
 
-        var (session, replacement) = _sessions.Create(user, now);
+        // The session the presented token belongs to. Revoked from the sessions
+        // page means revoked here too, even while the token itself looks fine.
+        var session = await _sessionStore.GetByIdAsync(
+            presented.SessionId, cancellationToken);
+
+        if (session is null || !session.IsActiveAt(now))
+        {
+            throw new AuthenticationFailedException(
+                AuthenticationErrors.InvalidCredentials);
+        }
+
+        var (tokens, replacement) = _sessions.Continue(user, session, now);
+
+        // Continue moved LastUsedOn and the expiry forward on the aggregate;
+        // this is what makes the sessions page show "just now" rather than the
+        // time the user originally signed in.
+        await _sessionStore.UpdateAsync(session, cancellationToken);
 
         presented.RotateTo(replacement.Id, now);
 
@@ -96,6 +116,6 @@ public sealed class RefreshSessionHandler
         // none at all.
         await _refreshTokens.RotateAsync(presented, replacement, cancellationToken);
 
-        return session;
+        return tokens;
     }
 }

@@ -62,6 +62,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
         new(NewSessionFactory(),
             new PasswordHasher(),
             new RefreshTokenRepository(context),
+            new SessionRepository(context),
             new UserCredentialRepository(context),
             new UserRepository(context));
 

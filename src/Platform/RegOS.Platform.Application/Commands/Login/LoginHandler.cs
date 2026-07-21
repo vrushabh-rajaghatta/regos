@@ -1,6 +1,7 @@
 using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
+using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
 using RegOS.Platform.Domain.ValueObjects;
@@ -32,6 +33,7 @@ public sealed class LoginHandler
     private readonly SessionFactory _sessions;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IRefreshTokenRepository _refreshTokens;
+    private readonly ISessionRepository _sessionStore;
     private readonly IUserCredentialRepository _credentials;
     private readonly IUserRepository _users;
 
@@ -39,12 +41,14 @@ public sealed class LoginHandler
         SessionFactory sessions,
         IPasswordHasher passwordHasher,
         IRefreshTokenRepository refreshTokens,
+        ISessionRepository sessionStore,
         IUserCredentialRepository credentials,
         IUserRepository users)
     {
         _sessions = sessions;
         _passwordHasher = passwordHasher;
         _refreshTokens = refreshTokens;
+        _sessionStore = sessionStore;
         _credentials = credentials;
         _users = users;
 
@@ -99,11 +103,17 @@ public sealed class LoginHandler
             await _credentials.UpdateAsync(credential, cancellationToken);
         }
 
-        var (session, record) = _sessions.Create(user, now);
+        var (tokens, session, record) = _sessions.Start(
+            user, command.UserAgent, command.IpAddress, now);
+
+        // Session first: a token pointing at a session that does not exist
+        // would be invisible on the sessions page and impossible to revoke
+        // from it.
+        await _sessionStore.AddAsync(session, cancellationToken);
 
         await _refreshTokens.AddAsync(record, cancellationToken);
 
-        return session;
+        return tokens;
     }
 
     /// <summary>

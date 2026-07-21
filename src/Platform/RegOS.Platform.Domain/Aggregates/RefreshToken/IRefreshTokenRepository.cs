@@ -1,3 +1,4 @@
+using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 
 using RefreshTokenAggregate =
@@ -23,6 +24,15 @@ public interface IRefreshTokenRepository
 
     Task<IReadOnlyList<RefreshTokenAggregate>> GetActiveForUserAsync(
         UserId userId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The live tokens carrying one session. Revoking a session revokes these,
+    /// so that ending a session on the sessions page really ends it rather than
+    /// leaving its current token usable.
+    /// </summary>
+    Task<IReadOnlyList<RefreshTokenAggregate>> GetActiveForSessionAsync(
+        SessionId sessionId,
         CancellationToken cancellationToken);
 
     Task UpdateAsync(

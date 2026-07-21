@@ -1,5 +1,7 @@
 using RegOS.Platform.Application.Services;
+using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
+using RegOS.Platform.Domain.Aggregates.Session;
 
 namespace RegOS.Platform.Application.Commands.Logout;
 
@@ -18,15 +20,21 @@ namespace RegOS.Platform.Application.Commands.Logout;
 /// </remarks>
 public sealed class LogoutHandler
 {
+    private readonly SessionRevoker _revoker;
     private readonly IRefreshTokenIssuer _issuer;
     private readonly IRefreshTokenRepository _refreshTokens;
+    private readonly ISessionRepository _sessions;
 
     public LogoutHandler(
+        SessionRevoker revoker,
         IRefreshTokenIssuer issuer,
-        IRefreshTokenRepository refreshTokens)
+        IRefreshTokenRepository refreshTokens,
+        ISessionRepository sessions)
     {
+        _revoker = revoker;
         _issuer = issuer;
         _refreshTokens = refreshTokens;
+        _sessions = sessions;
     }
 
     public async Task HandleAsync(
@@ -40,7 +48,23 @@ public sealed class LogoutHandler
 
         if (token is null) return;
 
-        token.Revoke(DateTime.UtcNow);
+        var now = DateTime.UtcNow;
+
+        // The whole session, not only the token presented. Signing out ends the
+        // sign-in; leaving the session row alive would keep this browser on the
+        // user's own sessions page, listed as current, after they had left
+        // (AUTH-010).
+        var session = await _sessions.GetByIdAsync(
+            token.SessionId, cancellationToken);
+
+        if (session is not null)
+        {
+            await _revoker.RevokeAsync(session, now, cancellationToken);
+
+            return;
+        }
+
+        token.Revoke(now);
 
         await _refreshTokens.UpdateAsync(token, cancellationToken);
     }

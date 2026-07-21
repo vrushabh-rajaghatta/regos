@@ -1,6 +1,7 @@
 using FluentAssertions;
 
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
+using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Exceptions;
 
@@ -17,6 +18,7 @@ public sealed class RefreshTokenTests
     private static RefreshTokenAggregate Issue(DateTime? expiresAt = null) =>
         RefreshTokenAggregate.Issue(
             UserId.New(),
+            SessionId.New(),
             "A-HASH",
             expiresAt ?? Now.AddDays(14),
             Now);
@@ -111,7 +113,8 @@ public sealed class RefreshTokenTests
     public void Rejects_a_missing_user()
     {
         var act = () => RefreshTokenAggregate.Issue(
-            null!, "A-HASH", Now.AddDays(1), Now);
+            null!,
+            SessionId.New(), "A-HASH", Now.AddDays(1), Now);
 
         act.Should().Throw<DomainException>()
             .WithMessage(RefreshTokenErrors.UserRequired);
@@ -123,7 +126,8 @@ public sealed class RefreshTokenTests
     public void Rejects_a_missing_hash(string hash)
     {
         var act = () => RefreshTokenAggregate.Issue(
-            UserId.New(), hash, Now.AddDays(1), Now);
+            UserId.New(),
+            SessionId.New(), hash, Now.AddDays(1), Now);
 
         act.Should().Throw<DomainException>()
             .WithMessage(RefreshTokenErrors.TokenHashRequired);
@@ -133,7 +137,8 @@ public sealed class RefreshTokenTests
     public void Rejects_an_expiry_in_the_past()
     {
         var act = () => RefreshTokenAggregate.Issue(
-            UserId.New(), "A-HASH", Now.AddSeconds(-1), Now);
+            UserId.New(),
+            SessionId.New(), "A-HASH", Now.AddSeconds(-1), Now);
 
         act.Should().Throw<DomainException>()
             .WithMessage(RefreshTokenErrors.ExpiryMustBeInTheFuture);
@@ -143,7 +148,8 @@ public sealed class RefreshTokenTests
     public void Rejects_a_token_that_expires_the_moment_it_is_created()
     {
         var act = () => RefreshTokenAggregate.Issue(
-            UserId.New(), "A-HASH", Now, Now);
+            UserId.New(),
+            SessionId.New(), "A-HASH", Now, Now);
 
         act.Should().Throw<DomainException>()
             .WithMessage(RefreshTokenErrors.ExpiryMustBeInTheFuture);

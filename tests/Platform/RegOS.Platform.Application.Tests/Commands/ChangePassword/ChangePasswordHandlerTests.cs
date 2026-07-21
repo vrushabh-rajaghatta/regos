@@ -11,6 +11,7 @@ using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Application.Tests.Fakes;
 using RegOS.Platform.Domain.Aggregates.PasswordReset;
+using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 using RegOS.Platform.Infrastructure.Authentication;
@@ -20,6 +21,7 @@ using RegOS.SharedKernel.Exceptions;
 
 using PasswordResetAggregate =
     RegOS.Platform.Domain.Aggregates.PasswordReset.PasswordReset;
+using SessionAggregate = RegOS.Platform.Domain.Aggregates.Session.Session;
 using RefreshTokenAggregate =
     RegOS.Platform.Domain.Aggregates.RefreshToken.RefreshToken;
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
@@ -89,7 +91,9 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
     private ChangePasswordHandler NewHandler(RegOSDbContext context) =>
         new(NewSetPassword(context),
             new CredentialTrustRevoker(
-                new SessionRevoker(new RefreshTokenRepository(context)),
+                new SessionRevoker(
+                    new RefreshTokenRepository(context),
+                    new SessionRepository(context)),
                 new PasswordResetRepository(context)),
             new FakeCurrentUser(
                 _user.Id, _organizationId, Email.Create(_email)),
@@ -111,8 +115,16 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
+        // A session and the token carrying it, as sign-in would have left.
+        var session = SessionAggregate.Start(
+            _user.Id, "spec-agent", "127.0.0.1",
+            DateTime.UtcNow.AddDays(14), DateTime.UtcNow);
+
+        context.Sessions.Add(session);
+        await context.SaveChangesAsync();
+
         var token = RefreshTokenAggregate.Issue(
-            _user.Id, $"HASH-{Guid.NewGuid():N}",
+            _user.Id, session.Id, $"HASH-{Guid.NewGuid():N}",
             DateTime.UtcNow.AddDays(14), DateTime.UtcNow);
 
         context.RefreshTokens.Add(token);

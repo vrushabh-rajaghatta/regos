@@ -1,3 +1,4 @@
+using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
@@ -17,6 +18,12 @@ namespace RegOS.Platform.Domain.Aggregates.RefreshToken;
 /// Like <see cref="UserCredential"/>, this never sees the secret it represents.
 /// It stores a hash produced by infrastructure, so a database disclosure yields
 /// no usable sessions.
+///
+/// Since AUTH-010 it belongs to a <see cref="Session"/>. The token rotates and
+/// the session does not, which is what lets a user be shown one entry per
+/// device rather than one per fifteen-minute refresh. The whole chain of
+/// superseded tokens is kept, because recognising a replayed one is the point
+/// of rotating at all.
 /// </summary>
 public sealed class RefreshToken : AggregateRoot<RefreshTokenId>
 {
@@ -25,6 +32,9 @@ public sealed class RefreshToken : AggregateRoot<RefreshTokenId>
     }
 
     public UserId UserId { get; private set; } = default!;
+
+    /// <summary>The sign-in this token carries. Copied to each replacement.</summary>
+    public SessionId SessionId { get; private set; } = default!;
 
     /// <summary>
     /// A hash of the token value. Never the value itself, for the same reason
@@ -50,12 +60,16 @@ public sealed class RefreshToken : AggregateRoot<RefreshTokenId>
 
     public static RefreshToken Issue(
         UserId userId,
+        SessionId sessionId,
         string tokenHash,
         DateTime expiresAt,
         DateTime now)
     {
         if (userId is null)
             throw new DomainException(RefreshTokenErrors.UserRequired);
+
+        if (sessionId is null)
+            throw new DomainException(RefreshTokenErrors.SessionRequired);
 
         if (string.IsNullOrWhiteSpace(tokenHash))
             throw new DomainException(RefreshTokenErrors.TokenHashRequired);
@@ -68,6 +82,7 @@ public sealed class RefreshToken : AggregateRoot<RefreshTokenId>
         {
             Id = RefreshTokenId.New(),
             UserId = userId,
+            SessionId = sessionId,
             TokenHash = tokenHash,
             ExpiresAt = expiresAt,
             CreatedOn = now

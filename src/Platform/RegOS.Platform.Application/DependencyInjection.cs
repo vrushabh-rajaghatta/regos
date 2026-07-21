@@ -16,6 +16,8 @@ using RegOS.Platform.Application.Commands.ResendInvitation;
 using RegOS.Platform.Application.PasswordResets;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Application.Commands.UpdateUserProfile;
+using RegOS.Platform.Application.Commands.RevokeSession;
+using RegOS.Platform.Application.Queries.GetSessions;
 using RegOS.Platform.Application.Queries.GetUserById;
 using RegOS.Platform.Application.Queries.GetUsers;
 
@@ -57,6 +59,10 @@ public static class DependencyInjection
         services.AddScoped<CredentialTrustRevoker>();
 
         services.AddScoped<ChangePasswordHandler>();
+
+        services.AddScoped<GetSessionsHandler>();
+
+        services.AddScoped<RevokeSessionHandler>();
 
         services.AddScoped<LoginHandler>();
 

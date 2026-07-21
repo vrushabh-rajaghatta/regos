@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
+using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 
 using RefreshTokenAggregate =
@@ -39,6 +40,14 @@ public sealed class RefreshTokenRepository : IRefreshTokenRepository
         // by calling IsActiveAt, which EF cannot translate (ADR-020).
         => await _dbContext.RefreshTokens
             .Where(x => x.UserId == userId && x.RevokedOn == null)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<RefreshTokenAggregate>> GetActiveForSessionAsync(
+        SessionId sessionId, CancellationToken cancellationToken)
+        => await _dbContext.RefreshTokens
+            .Where(x => x.SessionId == sessionId
+                && x.RevokedOn == null
+                && x.ExpiresAt > DateTime.UtcNow)
             .ToListAsync(cancellationToken);
 
     public async Task UpdateAsync(

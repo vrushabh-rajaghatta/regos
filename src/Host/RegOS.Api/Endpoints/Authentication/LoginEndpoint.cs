@@ -25,11 +25,25 @@ public static class LoginEndpoint
     private static async Task<IResult> HandleAsync(
         LoginRequest request,
         LoginHandler handler,
+        HttpContext context,
         HttpResponse response,
         CancellationToken cancellationToken)
     {
+        // Device context comes from the transport, never from the body: a
+        // caller must not get to choose what their own session says about them
+        // on their sessions page (ADR-029).
+        //
+        // Behind a proxy RemoteIpAddress is the proxy's, because there is no
+        // UseForwardedHeaders configured anywhere yet. That is recorded with
+        // SEC-001 rather than papered over here - trusting X-Forwarded-For
+        // without configuring which proxies are trusted would let any caller
+        // write whatever address they liked into this field.
         var session = await handler.HandleAsync(
-            new LoginCommand(request.Email, request.Password),
+            new LoginCommand(
+                request.Email,
+                request.Password,
+                context.Request.Headers.UserAgent.ToString(),
+                context.Connection.RemoteIpAddress?.ToString()),
             cancellationToken);
 
         SessionCookies.Write(response, session);

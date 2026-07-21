@@ -8,6 +8,7 @@ using RegOS.Platform.Infrastructure.Authentication;
 using RegOS.Platform.Domain.Aggregates.Invitation;
 using RegOS.Platform.Domain.Aggregates.PasswordReset;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
+using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
 using RegOS.Platform.Infrastructure.Repositories;
@@ -28,6 +29,8 @@ public static class DependencyInjection
 
         services.AddScoped<
             IRefreshTokenRepository, RefreshTokenRepository>();
+
+        services.AddScoped<ISessionRepository, SessionRepository>();
 
         services.AddScoped<IInvitationRepository, InvitationRepository>();
 
