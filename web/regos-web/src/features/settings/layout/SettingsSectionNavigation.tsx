@@ -1,8 +1,9 @@
 import { NavLink } from "react-router-dom";
 
-// Active sessions joins this list in AUTH-010. The section exists with one item
-// because the item needs somewhere to live, not because one item needs a menu.
-const items = [{ label: "Security", to: "/settings/security" }];
+const items = [
+  { label: "Security", to: "/settings/security" },
+  { label: "Active Sessions", to: "/settings/sessions" },
+];
 
 export function SettingsSectionNavigation() {
   return (

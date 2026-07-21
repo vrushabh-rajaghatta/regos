@@ -37,6 +37,7 @@ import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
 import { SettingsLayout } from "@/features/settings/layout/SettingsLayout";
 import { SecurityPage } from "@/features/settings/pages/SecurityPage";
+import { SessionsPage } from "@/features/settings/pages/SessionsPage";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
 
 export const router = createBrowserRouter([
@@ -84,6 +85,10 @@ export const router = createBrowserRouter([
               {
                 path: "security",
                 element: <SecurityPage />,
+              },
+              {
+                path: "sessions",
+                element: <SessionsPage />,
               },
             ],
           },

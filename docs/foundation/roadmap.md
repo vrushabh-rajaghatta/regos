@@ -259,8 +259,12 @@ Known gaps carried forward:
   and since AUTH-009 built `SessionRevoker`, a one-line fix when it is taken.
 
 - **Nothing deletes expired, revoked or consumed tokens** — refresh tokens,
-  invitations or password resets. All three tables grow with every sign-in,
-  rotation, invite and reset request.
+  invitations, password resets or sessions. All four tables grow with every
+  sign-in, rotation, invite and reset request, and AUTH-010 made the growth
+  visible for the first time: the development account had accumulated **81
+  live sessions** from prior test runs, all of them real and all of them
+  listed. Nothing expires them for fourteen days. Harmless at this scale and
+  genuinely user-visible, which moves this from tidiness to product quality.
   Harmless at current scale, unbounded at any other. Cleanup strategy pending
   operational requirements; periodic sweep, opportunistic cleanup and a
   database TTL are all defensible and none is obviously right today.
