@@ -16,11 +16,16 @@ namespace RegOS.Platform.Application.Tests.Fakes;
 /// </remarks>
 public sealed class FakeCurrentUser : ICurrentUser
 {
-    public FakeCurrentUser(UserId userId, TenantId tenantId, Email email)
+    public FakeCurrentUser(
+        UserId userId,
+        TenantId tenantId,
+        Email email,
+        UserRole role = UserRole.Member)
     {
         UserId = userId;
         TenantId = tenantId;
         Email = email;
+        Role = role;
     }
 
     public bool IsAuthenticated => true;
@@ -30,4 +35,6 @@ public sealed class FakeCurrentUser : ICurrentUser
     public TenantId TenantId { get; }
 
     public Email Email { get; }
+
+    public UserRole Role { get; }
 }

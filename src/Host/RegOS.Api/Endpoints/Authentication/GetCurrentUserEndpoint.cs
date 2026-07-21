@@ -30,5 +30,6 @@ public static class GetCurrentUserEndpoint
         Results.Ok(new CurrentUserResponse(
             currentUser.UserId.Value,
             tenantContext.TenantIdOrNull?.Value,
-            currentUser.Email.Value));
+            currentUser.Email.Value,
+            currentUser.Role.ToString()));
 }

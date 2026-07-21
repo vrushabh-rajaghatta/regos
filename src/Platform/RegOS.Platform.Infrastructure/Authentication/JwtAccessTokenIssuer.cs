@@ -41,10 +41,14 @@ public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
         var claims = new Dictionary<string, object>
         {
             // The user id is the subject; the tenant travels beside it and
-            // is what every scoped query is filtered by.
+            // is what every scoped query is filtered by. The role rides along
+            // for the authorization policies — see RegOSClaims.Role for why
+            // that stopped being forbidden (ADR-033). Still no name or status
+            // claims: those really are snapshots nothing downstream checks.
             [JwtRegisteredClaimNames.Sub] = user.Id.Value.ToString(),
             [JwtRegisteredClaimNames.Email] = user.Email.Value,
-            [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString()
+            [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
+            [RegOSClaims.Role] = user.Role.ToString()
         };
 
         // A platform user has no tenant, so their token carries no tenant
@@ -67,9 +71,6 @@ public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
             Claims = claims
         };
 
-        // Deliberately no name, role or status claims. A token should carry
-        // identity, not a snapshot of authorization that goes stale the moment
-        // someone's access changes.
         return new AccessToken(
             new JsonWebTokenHandler().CreateToken(descriptor),
             expiresAt);

@@ -52,6 +52,13 @@ public sealed class ClaimsCurrentUser : ICurrentUser
     public Email Email =>
         Email.Create(Required(JwtRegisteredClaimNames.Email));
 
+    public UserRole Role =>
+        Enum.TryParse<UserRole>(Required(RegOSClaims.Role), out var role)
+            && Enum.IsDefined(role)
+                ? role
+                : throw new AuthenticationFailedException(
+                    CurrentUserErrors.NotAuthenticated);
+
     private string Required(string claimType)
     {
         // Anonymous first, so an endpoint that forgot RequireAuthorization

@@ -13,4 +13,5 @@ namespace RegOS.Api.Endpoints.Authentication;
 public sealed record CurrentUserResponse(
     Guid UserId,
     Guid? TenantId,
-    string Email);
+    string Email,
+    string Role);

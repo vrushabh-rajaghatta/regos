@@ -9,16 +9,16 @@ namespace RegOS.Platform.Application.Services;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Deliberately four members and no more. The pressure on a type like this is
-/// always to grow — a display name here, a role there, the organization's name
-/// because a page needs it — until every service depends on it and none of them
-/// can say why. Everything absent from this interface can be resolved from
-/// <see cref="UserId"/> by whoever actually needs it.
+/// Deliberately five members and no more. The pressure on a type like this is
+/// always to grow — a display name here, the organization's name there,
+/// because a page needs it — until every service depends on it and none of
+/// them can say why. Everything absent from this interface can be resolved
+/// from <see cref="UserId"/> by whoever actually needs it.
 /// </para>
 /// <para>
-/// Roles and permissions are absent for a second reason: they are not decided
-/// yet (Epic 4). Putting them here now would mean guessing their shape and
-/// having every caller inherit the guess.
+/// <see cref="Role"/> arrived with ADR-033, in the minimal three-value shape
+/// the epic needed — not the permission matrix this doc once warned about
+/// guessing at. Permissions beyond the role stay absent until decided.
 /// </para>
 /// <para>
 /// This is a sibling of <c>ITenantContext</c>, not a replacement. That answers
@@ -53,4 +53,11 @@ public interface ICurrentUser
     /// The caller's email address. Throws when unauthenticated.
     /// </summary>
     Email Email { get; }
+
+    /// <summary>
+    /// The caller's role, as their token states it (ADR-033). Throws when
+    /// unauthenticated. Endpoint gating uses the authorization policies, not
+    /// this — this exists for the rare handler and for /me.
+    /// </summary>
+    UserRole Role { get; }
 }

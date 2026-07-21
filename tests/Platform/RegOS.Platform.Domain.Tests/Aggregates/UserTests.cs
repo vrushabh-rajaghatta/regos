@@ -71,7 +71,7 @@ public class UserTests
     }
 
     [Fact]
-    public void CreatePlatformUser_HasNoTenant()
+    public void CreatePlatformUser_HasNoTenant_AndThePlatformRole()
     {
         var user = User.CreatePlatformUser(
             Email.Create("platform@example.com"),
@@ -79,7 +79,43 @@ public class UserTests
             "Administrator");
 
         user.TenantId.Should().BeNull();
+        user.Role.Should().Be(UserRole.PlatformAdministrator);
         user.Status.Should().Be(UserStatus.Invited);
+    }
+
+    [Fact]
+    public void CreateForTenant_DefaultsToMember()
+    {
+        NewInvitedUser().Role.Should().Be(UserRole.Member);
+    }
+
+    [Fact]
+    public void CreateForTenant_CanCreateATenantAdministrator()
+    {
+        var user = User.CreateForTenant(
+            TenantId.New(),
+            Email.Create("admin@example.com"),
+            "Tenant",
+            "Admin",
+            UserRole.TenantAdministrator);
+
+        user.Role.Should().Be(UserRole.TenantAdministrator);
+    }
+
+    [Fact]
+    public void CreateForTenant_RejectsThePlatformRole()
+    {
+        // Role and tenant agree by construction (ADR-033): a tenant-bound
+        // platform administrator is unexpressible, not merely invalid.
+        var act = () => User.CreateForTenant(
+            TenantId.New(),
+            Email.Create("imposter@example.com"),
+            "Not",
+            "Allowed",
+            UserRole.PlatformAdministrator);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(UserErrors.PlatformRoleCannotBeTenantBound);
     }
 
     [Fact]

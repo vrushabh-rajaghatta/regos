@@ -1,3 +1,4 @@
+using RegOS.Api.Authentication;
 using RegOS.Platform.Application.Queries.GetUsers;
 using RegOS.Platform.Domain.Aggregates.User;
 
@@ -13,7 +14,11 @@ public static class ListUsersEndpoint
             HandleAsync)
         .WithName("ListUsers")
         .WithSummary("List users")
-        .WithTags("Platform");
+        .WithTags("Platform")
+        // User administration belongs to the tenant administrator
+        // (ADR-033): a Member is refused with 403, and a platform
+        // administrator has no tenant to administer users in.
+        .RequireAuthorization(RegOSPolicies.TenantAdministrator);
 
         return app;
     }

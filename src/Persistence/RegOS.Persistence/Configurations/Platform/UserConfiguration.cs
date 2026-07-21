@@ -54,6 +54,10 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<UserAggregate>
             .HasConversion<int>()
             .IsRequired();
 
+        builder.Property(x => x.Role)
+            .HasConversion<int>()
+            .IsRequired();
+
         builder.Property(x => x.CreatedOn)
             .IsRequired();
 

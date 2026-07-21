@@ -54,7 +54,10 @@ public static class DevelopmentCredentialSeeder
                 new TenantId(DemoTenantId),
                 email,
                 "Development",
-                "User");
+                "User",
+                // The account that exercises the whole UI, including user
+                // administration — so it holds the role that may (ADR-033).
+                UserRole.TenantAdministrator);
 
             // Created Invited, like every user. Sign-in requires Active, and
             // there is no invitation acceptance flow yet to do this properly.

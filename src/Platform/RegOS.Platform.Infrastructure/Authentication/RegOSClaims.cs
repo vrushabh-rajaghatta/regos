@@ -16,4 +16,14 @@ public static class RegOSClaims
     /// was accepted while the only account was the development seeder's.
     /// </summary>
     public const string TenantId = "regos:tenant_id";
+
+    /// <summary>
+    /// The user's role, as the enum member's name. The issuer once refused
+    /// role claims on principle ("identity, not an authorization snapshot");
+    /// ADR-033 reverses that deliberately: staleness is capped at the
+    /// fifteen-minute token lifetime, a demotion can end sessions through the
+    /// ADR-028 machinery, and the alternative was a database read on every
+    /// authorization check.
+    /// </summary>
+    public const string Role = "regos:role";
 }

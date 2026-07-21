@@ -17,6 +17,7 @@ public sealed class User : AggregateRoot<UserId>
     private User(
         UserId id,
         TenantId? tenantId,
+        UserRole role,
         Email email,
         string firstName,
         string lastName,
@@ -24,6 +25,7 @@ public sealed class User : AggregateRoot<UserId>
     {
         Id = id;
         TenantId = tenantId;
+        Role = role;
         Email = email;
         FirstName = firstName;
         LastName = lastName;
@@ -40,6 +42,14 @@ public sealed class User : AggregateRoot<UserId>
     /// tenant can never match it.
     /// </summary>
     public TenantId? TenantId { get; private set; }
+
+    /// <summary>
+    /// What this user administers (ADR-033). Role and tenant agree by
+    /// construction: only <see cref="CreatePlatformUser"/> produces
+    /// <see cref="UserRole.PlatformAdministrator"/>, and it never has a
+    /// tenant; <see cref="CreateForTenant"/> rejects the platform role.
+    /// </summary>
+    public UserRole Role { get; private set; }
 
     public Email Email { get; private set; }
 
@@ -62,12 +72,19 @@ public sealed class User : AggregateRoot<UserId>
         TenantId tenantId,
         Email email,
         string firstName,
-        string lastName)
+        string lastName,
+        UserRole role = UserRole.Member)
     {
         if (tenantId is null)
             throw new DomainException(UserErrors.TenantRequired);
 
-        return Create(tenantId, email, firstName, lastName);
+        // The platform role and a tenant are contradictory by definition
+        // (ADR-033); rejecting the combination here keeps it unexpressible
+        // rather than checkable.
+        if (role == UserRole.PlatformAdministrator)
+            throw new DomainException(UserErrors.PlatformRoleCannotBeTenantBound);
+
+        return Create(tenantId, role, email, firstName, lastName);
     }
 
     /// <summary>
@@ -75,16 +92,22 @@ public sealed class User : AggregateRoot<UserId>
     /// tenant. A separate factory rather than a nullable parameter on
     /// <see cref="CreateForTenant"/>, so "tenant user without a tenant" stays
     /// unexpressible: the only way to a null tenant is to ask for a platform
-    /// user by name.
+    /// user by name — and the role comes with it, never as a choice.
     /// </summary>
     public static User CreatePlatformUser(
         Email email,
         string firstName,
         string lastName)
-        => Create(tenantId: null, email, firstName, lastName);
+        => Create(
+            tenantId: null,
+            UserRole.PlatformAdministrator,
+            email,
+            firstName,
+            lastName);
 
     private static User Create(
         TenantId? tenantId,
+        UserRole role,
         Email email,
         string firstName,
         string lastName)
@@ -95,6 +118,7 @@ public sealed class User : AggregateRoot<UserId>
         return new User(
             UserId.New(),
             tenantId,
+            role,
             email,
             RequireName(firstName, UserErrors.FirstNameRequired),
             RequireName(lastName, UserErrors.LastNameRequired),

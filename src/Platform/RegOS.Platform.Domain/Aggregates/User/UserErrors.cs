@@ -17,6 +17,9 @@ public static class UserErrors
     public const string TenantRequired =
         "A user must belong to a tenant.";
 
+    public const string PlatformRoleCannotBeTenantBound =
+        "A platform administrator cannot belong to a tenant.";
+
     public const string EmailRequired =
         "A user email is required.";
 
