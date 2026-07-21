@@ -33,6 +33,8 @@ import { UserDetailsPage } from "@/features/platform/users/pages/UserDetailsPage
 import { Navigate } from "react-router-dom";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { AcceptInvitationPage } from "@/features/auth/pages/AcceptInvitationPage";
+import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
 
 export const router = createBrowserRouter([
@@ -47,6 +49,16 @@ export const router = createBrowserRouter([
     // obtaining the ability to have one is the point.
     path: "/accept-invitation",
     element: <AcceptInvitationPage />,
+  },
+  {
+    // Also outside RequireAuth, and for a stronger reason: someone who has
+    // forgotten their password cannot sign in to ask for a new one.
+    path: "/forgot-password",
+    element: <ForgotPasswordPage />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPasswordPage />,
   },
   {
     path: "/",

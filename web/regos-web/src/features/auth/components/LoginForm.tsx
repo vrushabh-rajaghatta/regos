@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -91,6 +92,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       <Button type="submit" className="w-full" disabled={mutation.isPending}>
         {mutation.isPending ? "Signing in..." : "Sign In"}
       </Button>
+
+      <p className="text-sm text-muted-foreground text-center">
+        <Link to="/forgot-password" className="underline">
+          Forgot password?
+        </Link>
+      </p>
     </form>
   );
 }

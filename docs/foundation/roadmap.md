@@ -230,11 +230,18 @@ code: what has actually emerged is a *lifecycle* (issue → usable → consume o
 
 Known gaps carried forward:
 
-- **No UI for password reset.** Both endpoints work and are covered at three
-  layers, but nothing in the React app calls them: no "forgot password" link,
-  no `/reset-password` page. The slice is verifiable by API and by test, not in
-  a browser. That is a deliberate exception to the vertical-slice rule and it
-  should be closed before the authentication subsystem is called finished.
+- **No browser spec redeems a real reset link.** AUTH-008A added the UI and six
+  specs, but the happy path is not among them: the token exists only in the
+  plaintext the Development notifier writes to the API's stdout, and a browser
+  spec has no channel to it. Covered by `PasswordResetLifecycleTests` instead.
+  Closing this needs a way to expose the last issued link in Development —
+  a decision deferred rather than taken, because it adds a surface that must
+  never exist anywhere else.
+- **The reset parity spec leaves one row per run.** It requests a reset for the
+  development account so it can prove the confirmation screen is identical for
+  a real and an unknown address — which only means something if one side is
+  real. The link is never redeemed and the next run supersedes it, so at most
+  one is live, but it is a knowing exception to browser rule 1.
 - **Nothing revokes a user's sessions when they are deactivated.** Today the
   guarantee is weaker than it looks: a deactivated user cannot *refresh*,
   because `RefreshSessionHandler` re-checks status, but their access token
