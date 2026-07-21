@@ -13,6 +13,7 @@ Separated by how often they change.
 | [`vision.md`](vision.md) | Why the Foundation exists; what belongs in it; where the boundaries are | Almost never |
 | [`principles.md`](principles.md) | The rules — principles (judgement) and invariants (non-negotiable) | Occasionally |
 | [`roadmap.md`](roadmap.md) | What remains to be built, per epic, against the actual codebase | Regularly |
+| [`milestones/`](milestones/) | Engineering record of each closed milestone — decisions, defects, lessons | One per milestone |
 | [`../adr/`](../adr/README.md) | What was decided, why, and when to reconsider | Append-only |
 
 Also here: [`sprint-definition.md`](sprint-definition.md),

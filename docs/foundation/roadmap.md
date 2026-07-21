@@ -137,17 +137,38 @@ slice; it is what makes the retirement slice urgent.
 
 ### Exit criteria — behaviors
 
-- An organization cannot be created without a legal name.
-- A deactivated organization rejects user invitations.
-- Reactivating a deactivated organization restores invitation.
-- Activating an already-active organization is rejected as a **409 state
-  conflict**, not silently accepted. `Activate()` is currently unconditional, so
-  this is a real change, and [ADR-009](../adr/ADR-009-command-validation-model.md)
-  is what decides the status code.
-- Settings can be changed without changing organization identity.
-- The full lifecycle is verified in a browser: create → edit → deactivate →
-  reactivate.
-- All tests pass.
+- ✅ An organization cannot be created without a legal name.
+- ✅ An organization cannot be created with a type outside the defined values.
+- ✅ Deactivating an already-inactive organization is rejected as a **409 state
+  conflict**, not silently accepted — and activating an already-active one is
+  rejected the same way. Both methods were unconditional;
+  [ADR-009](../adr/ADR-009-command-validation-model.md) decided the status code.
+- ✅ A missing organization is a 404 with a distinct not-found page, not a
+  generic error.
+- ✅ Editing is permitted in either state and changes neither. Deactivation
+  retires an organization; it does not freeze the record.
+- ✅ The full lifecycle is verified in a browser: create → view → edit →
+  deactivate → activate.
+
+### Deferred out of this milestone
+
+- **"A deactivated organization rejects user invitations."** This was claimed as
+  a Milestone 1 exit criterion and **was never true here** — nothing in
+  Organization invites anyone. `IUserPolicy.EnsureOrganizationCanAcceptUsersAsync`
+  exists in Platform and is called by `InviteUserHandler`, but no test exercises
+  it against a deactivated organization.
+
+  It is a **dependency, not an Organization behavior**: Milestone 3 (User
+  Management) is the first place it can be verified end to end, and its exit
+  criteria now carry it.
+
+- **Organization `Code`, and settings such as time zone and culture.** Never
+  built; no feature has needed them. See *Decisions deferred* below.
+
+- **A status filter on the directory.** Retired organizations accumulate from
+  every browser run and the list shows all of them. Harmless today — the
+  regulatory applicant dropdown already filters to active — but it grows
+  monotonically.
 
 ### Decisions this milestone will force
 
@@ -265,6 +286,12 @@ real work is what Milestone 2 changes underneath it.
 ### Exit criteria — behaviors
 
 - An invited user appears in the directory in `Invited` status.
+- **A deactivated organization rejects user invitations, and reactivating it
+  restores them.** Inherited from Milestone 1, which claimed this and could not
+  verify it — nothing in Organization invites anyone.
+  `IUserPolicy.EnsureOrganizationCanAcceptUsersAsync` already exists and is
+  called by `InviteUserHandler`; no test has ever exercised it against a
+  deactivated organization. This is the first milestone that can.
 - A second invitation to the same email in the same organization is rejected as
   a conflict.
 - The same email can be invited by a different organization independently.
