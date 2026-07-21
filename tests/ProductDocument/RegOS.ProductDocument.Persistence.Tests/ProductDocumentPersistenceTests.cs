@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,7 +42,7 @@ public class ProductDocumentPersistenceTests
         {
             productId = await ctx.Products.Select(p => p.Id).FirstAsync();
 
-            var document = ProductDocumentAggregate.Create(
+            var document = ProductDocumentAggregate.Create(TenantId.New(), 
                 productId,
                 SeededCer,
                 "Persistence Verify " + Guid.NewGuid());

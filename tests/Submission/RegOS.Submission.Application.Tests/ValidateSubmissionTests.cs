@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -84,7 +85,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
     private async Task<ProductDocumentAggregate> SeedActiveDocumentAsync(
         RegOSDbContext ctx, ProductId productId)
     {
-        var doc = ProductDocumentAggregate.Create(
+        var doc = ProductDocumentAggregate.Create(TenantId.New(), 
             productId, SeededCer, "Validation Doc " + Guid.NewGuid());
 
         doc.AddInitialVersion(
@@ -107,7 +108,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
         RegOSDbContext ctx, RegulatoryApplicationId appId,
         ProductDocumentAggregate? document, bool publish)
     {
-        var sub = SubmissionAggregate.Create(
+        var sub = SubmissionAggregate.Create(TenantId.New(), 
             appId, SeededSubmissionType, "Validation Sub " + Guid.NewGuid());
 
         if (document is not null)

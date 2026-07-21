@@ -3,6 +3,9 @@ namespace RegOS.ProductDocument.Domain.Errors;
 public static class ProductDocumentErrors
 {
     // ProductDocument
+    public const string TenantRequired =
+        "Tenant is required.";
+
     public const string ProductRequired =
         "Product is required.";
 

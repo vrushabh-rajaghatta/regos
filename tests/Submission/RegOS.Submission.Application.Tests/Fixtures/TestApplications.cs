@@ -60,6 +60,7 @@ internal static class TestApplications
             tenantId, FixtureCode, "Submission Test Product", ProductType.Drug);
 
         var application = RegulatoryApplicationAggregate.Create(
+            tenantId,
             product.Id, countryId, authorityId, organizationId,
             "Submission Test Application");
 

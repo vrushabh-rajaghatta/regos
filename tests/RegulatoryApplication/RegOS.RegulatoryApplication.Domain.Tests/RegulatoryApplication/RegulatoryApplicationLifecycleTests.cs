@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 
 using RegOS.ReferenceData.Domain.Geography.Country;
@@ -15,7 +16,7 @@ namespace RegOS.RegulatoryApplication.Domain.Tests.RegulatoryApplication;
 public class RegulatoryApplicationLifecycleTests
 {
     private static RegulatoryApplicationAggregate NewDraft() =>
-        RegulatoryApplicationAggregate.Create(
+        RegulatoryApplicationAggregate.Create(TenantId.New(), 
             new ProductId(Guid.NewGuid()),
             new CountryId(Guid.NewGuid()),
             new AuthorityId(Guid.NewGuid()),

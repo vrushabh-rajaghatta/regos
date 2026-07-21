@@ -3,11 +3,13 @@ using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
 public sealed class RegulatoryApplication
 {
+    public const string TenantRequired = "Tenant is required.";
     public const string ProductRequired = "Product is required.";
     public const string CountryRequired = "Country is required.";
     public const string AuthorityRequired = "Authority is required.";
@@ -16,6 +18,7 @@ public sealed class RegulatoryApplication
 
     private RegulatoryApplication(
         RegulatoryApplicationId id,
+        TenantId tenantId,
         ProductId productId,
         CountryId countryId,
         AuthorityId authorityId,
@@ -24,6 +27,7 @@ public sealed class RegulatoryApplication
         DateTime createdOn)
     {
         Id = id;
+        TenantId = tenantId;
         ProductId = productId;
         CountryId = countryId;
         AuthorityId = authorityId;
@@ -34,6 +38,14 @@ public sealed class RegulatoryApplication
     }
 
     public RegulatoryApplicationId Id { get; }
+
+    /// <summary>
+    /// The owning tenant — who this record belongs to. Not the same concept as
+    /// <see cref="ApplicantOrganizationId"/>, which is who the application is
+    /// filed on behalf of: a tenant can file for a partner, so the two may
+    /// legitimately differ (ADR-030).
+    /// </summary>
+    public TenantId TenantId { get; }
 
     public ProductId ProductId { get; }
 
@@ -52,12 +64,16 @@ public sealed class RegulatoryApplication
     public DateTime CreatedOn { get; }
 
     public static RegulatoryApplication Create(
+        TenantId tenantId,
         ProductId productId,
         CountryId countryId,
         AuthorityId authorityId,
         OrganizationId applicantOrganizationId,
         string name)
     {
+        if (tenantId is null)
+            throw new DomainException(TenantRequired);
+
         if (productId == default)
             throw new DomainException(ProductRequired);
 
@@ -75,6 +91,7 @@ public sealed class RegulatoryApplication
 
         return new RegulatoryApplication(
             RegulatoryApplicationId.New(),
+            tenantId,
             productId,
             countryId,
             authorityId,

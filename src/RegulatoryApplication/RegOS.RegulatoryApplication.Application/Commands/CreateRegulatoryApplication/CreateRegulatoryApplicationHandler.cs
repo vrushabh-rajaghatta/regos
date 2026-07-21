@@ -1,5 +1,6 @@
 using RegOS.RegulatoryApplication.Application.Services;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.SharedKernel.Abstractions;
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 
 namespace RegOS.RegulatoryApplication.Application.Commands.CreateRegulatoryApplication;
@@ -8,13 +9,16 @@ public sealed class CreateRegulatoryApplicationHandler
 {
     private readonly IRegulatoryApplicationCreationPolicy _creationPolicy;
     private readonly IRegulatoryApplicationRepository _repository;
+    private readonly ITenantContext _tenantContext;
 
     public CreateRegulatoryApplicationHandler(
         IRegulatoryApplicationCreationPolicy creationPolicy,
-        IRegulatoryApplicationRepository repository)
+        IRegulatoryApplicationRepository repository,
+        ITenantContext tenantContext)
     {
         _creationPolicy = creationPolicy;
         _repository = repository;
+        _tenantContext = tenantContext;
     }
 
     public async Task<CreateRegulatoryApplicationResult> HandleAsync(
@@ -28,7 +32,12 @@ public sealed class CreateRegulatoryApplicationHandler
             command.ApplicantOrganizationId,
             cancellationToken);
 
+        // The owner is ambient (who is asking); the applicant stays an
+        // explicit command property (who the filing is on behalf of). The
+        // first regulatory record to carry both, and the distinction is the
+        // whole point of ADR-030.
         var regulatoryApplication = RegulatoryApplicationAggregate.Create(
+            _tenantContext.TenantId,
             command.ProductId,
             command.CountryId,
             command.AuthorityId,

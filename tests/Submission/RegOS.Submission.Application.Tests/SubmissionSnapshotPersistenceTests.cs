@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using System.Data.Common;
 
 using FluentAssertions;
@@ -93,12 +94,12 @@ public sealed class SubmissionSnapshotPersistenceTests : IAsyncLifetime
 
         var (applicationId, productId) = await TestApplications.EnsureAsync(ctx);
 
-        var submission = SubmissionAggregate.Create(
+        var submission = SubmissionAggregate.Create(TenantId.New(), 
             applicationId, SeededSubmissionType, "Snapshot Sub " + Guid.NewGuid());
 
         for (var i = 0; i < documentCount; i++)
         {
-            var doc = ProductDocumentAggregate.Create(
+            var doc = ProductDocumentAggregate.Create(TenantId.New(), 
                 productId, SeededCer, "Snapshot Doc " + Guid.NewGuid());
             doc.AddInitialVersion(
                 originalFileName: "cer.pdf",
@@ -127,7 +128,7 @@ public sealed class SubmissionSnapshotPersistenceTests : IAsyncLifetime
         var submission = await new SubmissionRepository(ctx)
             .GetByIdAsync(submissionId, default);
 
-        return SubmissionSnapshot.Create(
+        return SubmissionSnapshot.Create(TenantId.New(), 
             submissionId,
             submission!.Documents
                 .OrderBy(d => d.DisplayOrder)

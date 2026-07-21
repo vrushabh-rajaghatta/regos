@@ -2,6 +2,7 @@ using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Submission.Domain.Submission;
 
@@ -11,12 +12,14 @@ public sealed class Submission
 
     private Submission(
         SubmissionId id,
+        TenantId tenantId,
         RegulatoryApplicationId applicationId,
         SubmissionTypeId submissionTypeId,
         string title,
         DateTime createdOn)
     {
         Id = id;
+        TenantId = tenantId;
         ApplicationId = applicationId;
         SubmissionTypeId = submissionTypeId;
         Title = title;
@@ -25,6 +28,11 @@ public sealed class Submission
     }
 
     public SubmissionId Id { get; }
+
+    // The owning tenant. Handlers derive it from the parent application
+    // rather than from the ambient context, so a submission can never carry
+    // a different tenant than the application it belongs to (ADR-031).
+    public TenantId TenantId { get; }
 
     public RegulatoryApplicationId ApplicationId { get; }
 
@@ -46,10 +54,14 @@ public sealed class Submission
         => _documents.AsReadOnly();
 
     public static Submission Create(
+        TenantId tenantId,
         RegulatoryApplicationId applicationId,
         SubmissionTypeId submissionTypeId,
         string title)
     {
+        if (tenantId is null)
+            throw new DomainException(SubmissionErrors.TenantRequired);
+
         if (applicationId == default)
             throw new DomainException(SubmissionErrors.ApplicationRequired);
 
@@ -61,6 +73,7 @@ public sealed class Submission
 
         return new Submission(
             SubmissionId.New(),
+            tenantId,
             applicationId,
             submissionTypeId,
             title.Trim(),

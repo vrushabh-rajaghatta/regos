@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+using RegOS.SharedKernel.Primitives;
 using RegOS.Submission.Domain.Snapshot;
 using RegOS.Submission.Domain.Submission;
 
@@ -27,6 +28,16 @@ public sealed class SubmissionSnapshotConfiguration
                 id => id.Value,
                 value => new SubmissionId(value))
             .IsRequired();
+
+        // The owning tenant (ADR-031), copied from the submission at publish.
+        // Held by value, no FK to Tenants.
+        builder.Property(x => x.TenantId)
+            .HasConversion(
+                id => id.Value,
+                value => new TenantId(value))
+            .IsRequired();
+
+        builder.HasIndex(x => x.TenantId);
 
         // The snapshot references its submission. A submission that has been
         // published (and so has a snapshot) must never be deleted out from under

@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -84,7 +85,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
     private async Task<ProductDocumentAggregate> SeedDocumentAsync(
         RegOSDbContext ctx, ProductId productId, bool activate)
     {
-        var doc = ProductDocumentAggregate.Create(
+        var doc = ProductDocumentAggregate.Create(TenantId.New(), 
             productId, SeededCer, "19.3 Doc " + Guid.NewGuid());
 
         doc.AddInitialVersion(
@@ -107,7 +108,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
     private async Task<SubmissionAggregate> SeedSubmissionAsync(
         RegOSDbContext ctx, RegulatoryApplicationId appId)
     {
-        var sub = SubmissionAggregate.Create(
+        var sub = SubmissionAggregate.Create(TenantId.New(), 
             appId, SeededSubmissionType, "19.3 Sub " + Guid.NewGuid());
 
         ctx.Submissions.Add(sub);

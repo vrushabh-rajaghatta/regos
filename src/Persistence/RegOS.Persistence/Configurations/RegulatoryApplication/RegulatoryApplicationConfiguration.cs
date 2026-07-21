@@ -6,6 +6,7 @@ using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.SharedKernel.Primitives;
 
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 using ProductAggregate = RegOS.Product.Domain.Product.Product;
@@ -92,6 +93,16 @@ public sealed class RegulatoryApplicationConfiguration
             .OnDelete(DeleteBehavior.Restrict);
 
         // Secondary indexes on the cross-aggregate references.
+        // The owning tenant (ADR-031). Held by value, no FK to Tenants —
+        // cross-context references are held by value, like Products.TenantId.
+        builder.Property(x => x.TenantId)
+            .HasConversion(
+                id => id.Value,
+                value => new TenantId(value))
+            .IsRequired();
+
+        builder.HasIndex(x => x.TenantId);
+
         builder.HasIndex(x => x.CountryId);
         builder.HasIndex(x => x.AuthorityId);
         builder.HasIndex(x => x.ApplicantOrganizationId);

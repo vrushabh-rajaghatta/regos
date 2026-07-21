@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 
 using RegOS.Product.Domain.Product;
@@ -36,7 +37,7 @@ public class ProductDocumentCreationTests
         var productId = new ProductId(Guid.NewGuid());
         var documentTypeId = new DocumentTypeId(Guid.NewGuid());
 
-        var document = ProductDocumentAggregate.Create(
+        var document = ProductDocumentAggregate.Create(TenantId.New(), 
             productId,
             documentTypeId,
             "  Risk Management File  ");

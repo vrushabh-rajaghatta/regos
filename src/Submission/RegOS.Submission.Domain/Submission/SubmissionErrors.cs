@@ -2,6 +2,9 @@ namespace RegOS.Submission.Domain.Submission;
 
 public static class SubmissionErrors
 {
+    public const string TenantRequired =
+        "Tenant is required.";
+
     public const string TitleRequired =
         "Submission title is required.";
 
