@@ -39,13 +39,13 @@ public sealed class UserPolicyTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        _existing = UserAggregate.Create(
+        _existing = UserAggregate.CreateForTenant(
             _tenantId, Email.Create("taken@policy.example"), "Taken", "User");
 
-        _other = UserAggregate.Create(
+        _other = UserAggregate.CreateForTenant(
             _tenantId, Email.Create("other@policy.example"), "Other", "User");
 
-        _elsewhere = UserAggregate.Create(
+        _elsewhere = UserAggregate.CreateForTenant(
             _otherTenantId,
             Email.Create("elsewhere@policy.example"),
             "Else",

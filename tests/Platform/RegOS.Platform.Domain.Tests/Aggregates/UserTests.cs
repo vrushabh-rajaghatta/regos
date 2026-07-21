@@ -10,7 +10,7 @@ namespace RegOS.Platform.Domain.Tests.Aggregates;
 public class UserTests
 {
     private static User NewInvitedUser() =>
-        User.Create(
+        User.CreateForTenant(
             TenantId.New(),
             Email.Create("john.doe@example.com"),
             "John",
@@ -27,7 +27,7 @@ public class UserTests
     {
         var tenantId = TenantId.New();
 
-        var user = User.Create(
+        var user = User.CreateForTenant(
             tenantId,
             Email.Create("john.doe@example.com"),
             "  John  ",
@@ -48,11 +48,47 @@ public class UserTests
     [InlineData("John", "   ")]
     public void Create_WithMissingName_ThrowsDomainException(string first, string last)
     {
-        var act = () => User.Create(
+        var act = () => User.CreateForTenant(
             TenantId.New(),
             Email.Create("john.doe@example.com"),
             first,
             last);
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void CreateForTenant_WithNullTenant_ThrowsDomainException()
+    {
+        var act = () => User.CreateForTenant(
+            null!,
+            Email.Create("john.doe@example.com"),
+            "John",
+            "Doe");
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(UserErrors.TenantRequired);
+    }
+
+    [Fact]
+    public void CreatePlatformUser_HasNoTenant()
+    {
+        var user = User.CreatePlatformUser(
+            Email.Create("platform@example.com"),
+            "Platform",
+            "Administrator");
+
+        user.TenantId.Should().BeNull();
+        user.Status.Should().Be(UserStatus.Invited);
+    }
+
+    [Fact]
+    public void CreatePlatformUser_EnforcesTheSameNameAndEmailInvariants()
+    {
+        var act = () => User.CreatePlatformUser(
+            Email.Create("platform@example.com"),
+            "   ",
+            "Administrator");
 
         act.Should().Throw<DomainException>();
     }

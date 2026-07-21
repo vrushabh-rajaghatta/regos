@@ -16,7 +16,7 @@ public sealed class ActivateUserHandlerTests
     private static readonly TenantId Organization = TenantId.New();
 
     private static UserAggregate InvitedUser() =>
-        UserAggregate.Create(
+        UserAggregate.CreateForTenant(
             Organization,
             Email.Create("john.doe@example.com"),
             "John",

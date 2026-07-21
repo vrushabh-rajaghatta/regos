@@ -46,7 +46,7 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        _user = UserAggregate.Create(
+        _user = UserAggregate.CreateForTenant(
             _tenantId,
             Email.Create($"credential.{Guid.NewGuid():N}@policy.example"),
             "Credential",

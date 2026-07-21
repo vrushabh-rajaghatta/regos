@@ -6,7 +6,8 @@ using RegOS.SharedKernel.Primitives;
 namespace RegOS.Platform.Domain.Aggregates.User;
 
 /// <summary>
-/// A person who can access RegOS on behalf of a <see cref="TenantId"/>.
+/// A person who can access RegOS on behalf of a <see cref="TenantId"/> — or,
+/// when the tenant is null, a person who operates the platform itself.
 /// This is the business concept of a person — not an authentication account;
 /// passwords, roles, permissions and sign-in are separate concerns owned
 /// elsewhere.
@@ -15,7 +16,7 @@ public sealed class User : AggregateRoot<UserId>
 {
     private User(
         UserId id,
-        TenantId tenantId,
+        TenantId? tenantId,
         Email email,
         string firstName,
         string lastName,
@@ -30,7 +31,15 @@ public sealed class User : AggregateRoot<UserId>
         CreatedOn = createdOn;
     }
 
-    public TenantId TenantId { get; private set; }
+    /// <summary>
+    /// Null for a platform user, never for a tenant user. The rule is not "a
+    /// user may lack a tenant" — it is enforced per factory: only
+    /// <see cref="CreatePlatformUser"/> can produce null, and
+    /// <see cref="CreateForTenant"/> still rejects it. Every tenant-scoped
+    /// query treats null as "not yours": a comparison against a caller's
+    /// tenant can never match it.
+    /// </summary>
+    public TenantId? TenantId { get; private set; }
 
     public Email Email { get; private set; }
 
@@ -43,12 +52,13 @@ public sealed class User : AggregateRoot<UserId>
     public DateTime CreatedOn { get; private set; }
 
     /// <summary>
-    /// Invites a new user: creates them in the <see cref="UserStatus.Invited"/>
-    /// state, pending activation. The Email value object already guarantees a
-    /// valid, normalized address; the aggregate enforces the remaining
-    /// invariants (tenant present, names supplied).
+    /// Invites a new tenant user: creates them in the
+    /// <see cref="UserStatus.Invited"/> state, pending acceptance. The Email
+    /// value object already guarantees a valid, normalized address; the
+    /// aggregate enforces the remaining invariants (tenant present, names
+    /// supplied).
     /// </summary>
-    public static User Create(
+    public static User CreateForTenant(
         TenantId tenantId,
         Email email,
         string firstName,
@@ -57,6 +67,28 @@ public sealed class User : AggregateRoot<UserId>
         if (tenantId is null)
             throw new DomainException(UserErrors.TenantRequired);
 
+        return Create(tenantId, email, firstName, lastName);
+    }
+
+    /// <summary>
+    /// Creates a person who operates the platform itself and belongs to no
+    /// tenant. A separate factory rather than a nullable parameter on
+    /// <see cref="CreateForTenant"/>, so "tenant user without a tenant" stays
+    /// unexpressible: the only way to a null tenant is to ask for a platform
+    /// user by name.
+    /// </summary>
+    public static User CreatePlatformUser(
+        Email email,
+        string firstName,
+        string lastName)
+        => Create(tenantId: null, email, firstName, lastName);
+
+    private static User Create(
+        TenantId? tenantId,
+        Email email,
+        string firstName,
+        string lastName)
+    {
         if (email is null)
             throw new DomainException(UserErrors.EmailRequired);
 

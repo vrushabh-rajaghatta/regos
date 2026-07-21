@@ -38,6 +38,24 @@ public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
         var issuedAt = DateTime.UtcNow;
         var expiresAt = issuedAt.AddMinutes(_options.AccessTokenMinutes);
 
+        var claims = new Dictionary<string, object>
+        {
+            // The user id is the subject; the tenant travels beside it and
+            // is what every scoped query is filtered by.
+            [JwtRegisteredClaimNames.Sub] = user.Id.Value.ToString(),
+            [JwtRegisteredClaimNames.Email] = user.Email.Value,
+            [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString()
+        };
+
+        // A platform user has no tenant, so their token carries no tenant
+        // claim — absent, not empty. ITenantContext.TenantId throws for them
+        // and the query filters resolve to no rows: platform identity never
+        // silently widens into tenant access (ADR-030).
+        if (user.TenantId is not null)
+        {
+            claims[RegOSClaims.TenantId] = user.TenantId.Value.ToString();
+        }
+
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = _options.Issuer,
@@ -46,16 +64,7 @@ public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
             NotBefore = issuedAt,
             Expires = expiresAt,
             SigningCredentials = _credentials,
-            Claims = new Dictionary<string, object>
-            {
-                // The user id is the subject; the tenant travels beside it and
-                // is what every scoped query is filtered by.
-                [JwtRegisteredClaimNames.Sub] = user.Id.Value.ToString(),
-                [JwtRegisteredClaimNames.Email] = user.Email.Value,
-                [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
-                [RegOSClaims.TenantId] =
-                    user.TenantId.Value.ToString()
-            }
+            Claims = claims
         };
 
         // Deliberately no name, role or status claims. A token should carry

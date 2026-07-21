@@ -16,7 +16,7 @@ public sealed class UpdateUserProfileHandlerTests
     private static readonly TenantId Organization = TenantId.New();
 
     private static UserAggregate ExistingUser() =>
-        UserAggregate.Create(
+        UserAggregate.CreateForTenant(
             Organization,
             Email.Create("john.doe@example.com"),
             "John",

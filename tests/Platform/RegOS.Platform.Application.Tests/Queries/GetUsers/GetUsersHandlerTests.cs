@@ -35,13 +35,13 @@ public sealed class GetUsersHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        var ada = UserAggregate.Create(
+        var ada = UserAggregate.CreateForTenant(
             _tenantId, Email.Create("ada.lovelace@test.example"), "Ada", "Lovelace");
 
-        var grace = UserAggregate.Create(
+        var grace = UserAggregate.CreateForTenant(
             _tenantId, Email.Create("grace.hopper@test.example"), "Grace", "Hopper");
 
-        var alan = UserAggregate.Create(
+        var alan = UserAggregate.CreateForTenant(
             _tenantId, Email.Create("alan.turing@test.example"), "Alan", "Turing");
 
         alan.Activate();

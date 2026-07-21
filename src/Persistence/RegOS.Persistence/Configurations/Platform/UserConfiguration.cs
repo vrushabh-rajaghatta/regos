@@ -22,11 +22,15 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<UserAggregate>
                 id => id.Value,
                 value => new UserId(value));
 
+        // Nullable strongly-typed reference, like DocumentType.TenantId:
+        // null => platform user (ADR-030). Nullability is enforced by the
+        // factories, not here — CreateForTenant cannot produce null.
         builder.Property(x => x.TenantId)
             .HasConversion(
-                id => id.Value,
-                value => new TenantId(value))
-            .IsRequired();
+                id => id != null ? id.Value : (Guid?)null,
+                value => value != null
+                    ? new TenantId(value.Value)
+                    : (TenantId?)null);
 
         // The Email value object is stored as its normalized string. Email.Create
         // re-runs (idempotent) normalization/validation on read; stored values are

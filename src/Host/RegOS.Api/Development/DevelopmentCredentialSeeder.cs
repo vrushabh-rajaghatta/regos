@@ -50,7 +50,7 @@ public static class DevelopmentCredentialSeeder
 
         if (user is null)
         {
-            user = UserAggregate.Create(
+            user = UserAggregate.CreateForTenant(
                 new TenantId(DemoTenantId),
                 email,
                 "Development",

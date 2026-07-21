@@ -23,7 +23,7 @@ public sealed class RequestPasswordResetHandlerTests
     private const string Address = "john.doe@example.com";
 
     private static UserAggregate NewUser() =>
-        UserAggregate.Create(
+        UserAggregate.CreateForTenant(
             TenantId.New(), Email.Create(Address), "John", "Doe");
 
     private static UserAggregate ActiveUser()

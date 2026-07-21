@@ -39,7 +39,7 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        var user = UserAggregate.Create(
+        var user = UserAggregate.CreateForTenant(
             _tenantId,
             Email.Create("grace.hopper@details.example"),
             "Grace",

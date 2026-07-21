@@ -60,7 +60,7 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        _user = UserAggregate.Create(
+        _user = UserAggregate.CreateForTenant(
             _tenantId, Email.Create(_email), "Change", "Password");
 
         _user.Activate();

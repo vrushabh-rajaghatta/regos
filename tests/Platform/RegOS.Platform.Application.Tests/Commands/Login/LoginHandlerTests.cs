@@ -70,7 +70,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        _user = UserAggregate.Create(
+        _user = UserAggregate.CreateForTenant(
             _tenantId, Email.Create(_email), "Login", "User");
 
         _user.Activate();
@@ -166,7 +166,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        var withoutCredential = UserAggregate.Create(
+        var withoutCredential = UserAggregate.CreateForTenant(
             _tenantId,
             Email.Create($"nocred.{Guid.NewGuid():N}@policy.example"),
             "No",
@@ -200,7 +200,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        var invited = UserAggregate.Create(
+        var invited = UserAggregate.CreateForTenant(
             _tenantId,
             Email.Create($"invited.{Guid.NewGuid():N}@policy.example"),
             "Invited",

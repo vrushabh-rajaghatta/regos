@@ -1,4 +1,5 @@
 using RegOS.Platform.Application.Services;
+using RegOS.SharedKernel.Abstractions;
 
 namespace RegOS.Api.Endpoints.Authentication;
 
@@ -20,10 +21,14 @@ public static class GetCurrentUserEndpoint
 
     // The first endpoint in RegOS that requires authentication. No tenant
     // header: identity and tenant both come from the token, which is the whole
-    // point of the slice.
-    private static IResult Handle(ICurrentUser currentUser) =>
+    // point of the slice. The tenant is read through the lenient
+    // ITenantContext accessor rather than ICurrentUser.TenantId, which throws
+    // for a platform user — whose /me legitimately has no tenant to report.
+    private static IResult Handle(
+        ICurrentUser currentUser,
+        ITenantContext tenantContext) =>
         Results.Ok(new CurrentUserResponse(
             currentUser.UserId.Value,
-            currentUser.TenantId.Value,
+            tenantContext.TenantIdOrNull?.Value,
             currentUser.Email.Value));
 }

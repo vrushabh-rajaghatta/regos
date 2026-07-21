@@ -1,5 +1,6 @@
 export interface CurrentUser {
   userId: string;
-  tenantId: string;
+  /** Null for a platform user, whose token carries no tenant claim. */
+  tenantId: string | null;
   email: string;
 }

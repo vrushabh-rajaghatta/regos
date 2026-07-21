@@ -49,7 +49,7 @@ public sealed class InviteUserHandler
             email,
             cancellationToken);
 
-        var user = UserAggregate.Create(
+        var user = UserAggregate.CreateForTenant(
             tenantId,
             email,
             command.FirstName,
