@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 
@@ -37,7 +38,12 @@ export function OrganizationsTable({
                 className="border-b last:border-0 hover:bg-muted/40"
               >
                 <td className="px-4 py-2.5 font-medium">
-                  {organization.legalName}
+                  <Link
+                    to={`/platform/organizations/${organization.id}`}
+                    className="hover:underline"
+                  >
+                    {organization.legalName}
+                  </Link>
                 </td>
 
                 <td className="px-4 py-2.5 text-muted-foreground">

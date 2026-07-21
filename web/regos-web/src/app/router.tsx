@@ -26,6 +26,7 @@ import { DocumentUsagePage } from "@/features/regulatory/documents/pages/Documen
 import { DocumentHistoryPage } from "@/features/regulatory/documents/pages/DocumentHistoryPage";
 import { DocumentAiInsightsPage } from "@/features/regulatory/documents/pages/DocumentAiInsightsPage";
 import { PlatformLayout } from "@/features/platform/layout/PlatformLayout";
+import { OrganizationDetailsPage } from "@/features/platform/organizations/pages/OrganizationDetailsPage";
 import { OrganizationsPage } from "@/features/platform/organizations/pages/OrganizationsPage";
 import { UsersPage } from "@/features/platform/users/pages/UsersPage";
 import { UserDetailsPage } from "@/features/platform/users/pages/UserDetailsPage";
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
           {
             path: "organizations",
             element: <OrganizationsPage />,
+          },
+          {
+            path: "organizations/:organizationId",
+            element: <OrganizationDetailsPage />,
           },
           {
             path: "users",

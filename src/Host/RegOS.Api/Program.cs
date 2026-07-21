@@ -102,6 +102,7 @@ app.MapListCountries();
 app.MapListAuthorities();
 app.MapCreateOrganization();
 app.MapDeactivateOrganization();
+app.MapGetOrganization();
 app.MapListOrganizations();
 
 app.MapInviteUser();

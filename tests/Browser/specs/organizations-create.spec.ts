@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { api, collectErrors } from "./support";
+import { api, collectErrors, EXPECTED_404 } from "./support";
 
 const LIST = "/platform/organizations";
 
@@ -100,6 +100,49 @@ test.describe("Organization directory", () => {
     await expect(page.locator("tr", { hasText: legalName })).toContainText(
       "Inactive",
     );
+
+    expect(errors()).toEqual([]);
+  });
+
+  test("navigates from the list to the details page", async ({ page }) => {
+    const errors = collectErrors(page);
+
+    await page.goto(LIST);
+
+    const organizations = await (await api("/organizations")).json();
+    const target = organizations.find(
+      (organization: { status: string }) => organization.status === "Active",
+    );
+
+    await page.getByRole("link", { name: target.legalName }).click();
+
+    await expect(page).toHaveURL(new RegExp(`${target.id}$`));
+
+    // Every field the API returns reaches the page.
+    const details = page.getByTestId("organization-details");
+    await expect(details).toContainText(target.legalName);
+    await expect(details).toContainText("Active");
+
+    // Deep-linking works: the page does not depend on list state.
+    await page.reload();
+    await expect(page.getByTestId("organization-details")).toContainText(
+      target.legalName,
+    );
+
+    expect(errors()).toEqual([]);
+  });
+
+  test("shows a distinct not-found state, not a generic error", async ({
+    page,
+  }) => {
+    const errors = collectErrors(page, [EXPECTED_404]);
+
+    await page.goto(
+      "/platform/organizations/11111111-1111-1111-1111-111111111111",
+    );
+
+    await expect(page.getByTestId("organization-not-found")).toBeVisible();
+    await expect(page.getByTestId("organization-error")).toHaveCount(0);
 
     expect(errors()).toEqual([]);
   });
