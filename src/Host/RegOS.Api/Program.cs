@@ -14,6 +14,7 @@ using RegOS.Organization.Application;
 using RegOS.Organization.Infrastructure;
 using RegOS.Platform.Application;
 using RegOS.Platform.Infrastructure;
+using RegOS.Api.Authentication;
 using RegOS.Api.Middleware;
 using RegOS.Api.Tenancy;
 using RegOS.SharedKernel.Abstractions;
@@ -56,6 +57,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // Registered before the modules so every handler can depend on it.
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HeaderTenantContext>();
+
+builder.Services.AddRegOSAuthentication();
 
 builder.Services.AddPersistence(builder.Configuration);
 
@@ -108,9 +111,15 @@ if (app.Environment.IsDevelopment())
     app.UseCors(DevCorsPolicy);
 }
 
+// After CORS so a rejected preflight never reaches the token handler, and
+// before the endpoints so RequireAuthorization has an identity to inspect.
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapListCountries();
 app.MapListAuthorities();
 app.MapLogin();
+app.MapGetCurrentUser();
 
 app.MapActivateOrganization();
 app.MapCreateOrganization();

@@ -1,6 +1,40 @@
-@RegOS.Api_HostAddress = http://localhost:5225
+@host = http://localhost:5225
 
-GET {{RegOS.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Sign in. Development credentials, seeded by DevelopmentCredentialSeeder.
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
 
-###
+{
+  "email": "dev@regos.local",
+  "password": "development-password"
+}
+
+### Who am I? The first endpoint in RegOS that requires authentication.
+GET {{host}}/api/auth/me
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### No token at all -> 401, WWW-Authenticate: Bearer
+GET {{host}}/api/auth/me
+
+### An unsigned token -> 401. Nothing about it is trusted.
+GET {{host}}/api/auth/me
+Authorization: Bearer not.a.token
+
+### Every failed sign-in returns one status and one message (ADR-022).
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "dev@regos.local",
+  "password": "wrong"
+}
+
+### ...including for an address that does not exist.
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nobody@regos.local",
+  "password": "development-password"
+}
