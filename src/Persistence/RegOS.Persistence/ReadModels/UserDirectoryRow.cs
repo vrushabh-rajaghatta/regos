@@ -30,5 +30,7 @@ public sealed class UserDirectoryRow
 
     public UserStatus Status { get; init; }
 
+    public UserRole Role { get; init; }
+
     public DateTime CreatedOn { get; init; }
 }

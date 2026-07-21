@@ -66,7 +66,9 @@ satellites (`UserCredentials`, `RefreshTokens`, `Invitations`,
 (ADR-029), are reachable only by user id or unguessable token hash, and
 filtering them breaks authentication itself.
 
-**4. The bypass surface is two places, both named.**
+**4. The bypass surface is three places, all named.**
+`GetTenantUsersHandler` is the platform-administrator grant (ADR-033 rule 6):
+policy-guarded, one named tenant per request, never "all tenants".
 `IUserRepository` is *identity-scoped*: its implementation applies
 `IgnoreQueryFilters()` because every caller passes an identity it already owns
 — an id from a signed token or consumable grant, or an email at the two doors

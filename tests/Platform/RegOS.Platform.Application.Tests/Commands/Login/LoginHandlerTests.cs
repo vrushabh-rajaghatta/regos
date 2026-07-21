@@ -9,6 +9,8 @@ using RegOS.Platform.Application.Commands.Login;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
+
+using TenantAggregate = RegOS.Platform.Domain.Aggregates.Tenant.Tenant;
 using RegOS.Platform.Infrastructure.Authentication;
 using RegOS.Platform.Infrastructure.Repositories;
 using RegOS.Platform.Infrastructure.Services;
@@ -64,11 +66,17 @@ public sealed class LoginHandlerTests : IAsyncLifetime
             new RefreshTokenRepository(context),
             new SessionRepository(context),
             new UserCredentialRepository(context),
-            new UserRepository(context));
+            new UserRepository(context),
+            new TenantRepository(context));
 
     public async Task InitializeAsync()
     {
         await using var context = NewContext();
+
+        // The tenant must genuinely exist: sign-in now checks its status, and
+        // a user pointing at no tenant is rejected as misprovisioned.
+        context.Tenants.Add(
+            TenantAggregate.Create(_tenantId, "Login Test Tenant"));
 
         _user = UserAggregate.CreateForTenant(
             _tenantId, Email.Create(_email), "Login", "User");
@@ -97,6 +105,38 @@ public sealed class LoginHandlerTests : IAsyncLifetime
         await context.Database.ExecuteSqlRawAsync(
             "DELETE FROM \"Users\" WHERE \"TenantId\" = {0}",
             _tenantId.Value);
+
+        await context.Database.ExecuteSqlRawAsync(
+            "DELETE FROM \"Tenants\" WHERE \"Id\" = {0}",
+            _tenantId.Value);
+    }
+
+    [Fact]
+    public async Task Rejects_a_user_whose_tenant_is_retired()
+    {
+        // "No one signs in" is the deactivated tenant's contract
+        // (Tenant.Deactivate); sign-in is where it is enforced, with the same
+        // message as every other rejection (ADR-022).
+        await using (var context = NewContext())
+        {
+            var tenant = await context.Tenants.SingleAsync(
+                x => x.Id == _tenantId);
+            tenant.Deactivate();
+            await context.SaveChangesAsync();
+        }
+
+        try
+        {
+            await ShouldFailAsync(_email, CorrectPassword);
+        }
+        finally
+        {
+            await using var context = NewContext();
+            var tenant = await context.Tenants.SingleAsync(
+                x => x.Id == _tenantId);
+            tenant.Activate();
+            await context.SaveChangesAsync();
+        }
     }
 
     private async Task<AuthenticatedSession> LoginAsync(string email, string password)

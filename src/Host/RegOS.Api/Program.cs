@@ -4,6 +4,7 @@ using RegOS.Api.Development;
 using RegOS.Api.Endpoints.Authentication;
 using RegOS.Api.Endpoints.Organization;
 using RegOS.Api.Endpoints.Platform;
+using RegOS.Api.Endpoints.PlatformAdministration;
 using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
@@ -152,6 +153,8 @@ app.MapDeactivateOrganization();
 app.MapGetOrganization();
 app.MapListOrganizations();
 app.MapUpdateOrganization();
+
+app.MapTenantAdministration();
 
 app.MapInviteUser();
 app.MapResendInvitation();

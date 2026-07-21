@@ -2,6 +2,7 @@ using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
 using RegOS.Platform.Domain.Aggregates.Session;
+using RegOS.Platform.Domain.Aggregates.Tenant;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
 using RegOS.Platform.Domain.ValueObjects;
@@ -36,6 +37,7 @@ public sealed class LoginHandler
     private readonly ISessionRepository _sessionStore;
     private readonly IUserCredentialRepository _credentials;
     private readonly IUserRepository _users;
+    private readonly ITenantRepository _tenants;
 
     public LoginHandler(
         SessionFactory sessions,
@@ -43,7 +45,8 @@ public sealed class LoginHandler
         IRefreshTokenRepository refreshTokens,
         ISessionRepository sessionStore,
         IUserCredentialRepository credentials,
-        IUserRepository users)
+        IUserRepository users,
+        ITenantRepository tenants)
     {
         _sessions = sessions;
         _passwordHasher = passwordHasher;
@@ -51,6 +54,7 @@ public sealed class LoginHandler
         _sessionStore = sessionStore;
         _credentials = credentials;
         _users = users;
+        _tenants = tenants;
 
         _decoyHash = new Lazy<string>(() => _passwordHasher.Hash(
             Password.Create(Guid.NewGuid().ToString())));
@@ -87,6 +91,21 @@ public sealed class LoginHandler
         {
             throw new AuthenticationFailedException(
                 AuthenticationErrors.InvalidCredentials);
+        }
+
+        // A retired tenant means "no one signs in" (Tenant.Deactivate), and
+        // sign-in is where that is enforced. Platform users have no tenant
+        // and skip this. Same message as every other rejection (ADR-022).
+        if (user.TenantId is not null)
+        {
+            var tenant = await _tenants.GetByIdAsync(
+                user.TenantId, cancellationToken);
+
+            if (tenant is null || tenant.Status != TenantStatus.Active)
+            {
+                throw new AuthenticationFailedException(
+                    AuthenticationErrors.InvalidCredentials);
+            }
         }
 
         // The user has just proven they know the password, which is the only

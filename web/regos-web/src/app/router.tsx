@@ -28,6 +28,8 @@ import { DocumentAiInsightsPage } from "@/features/regulatory/documents/pages/Do
 import { PlatformLayout } from "@/features/platform/layout/PlatformLayout";
 import { OrganizationDetailsPage } from "@/features/platform/organizations/pages/OrganizationDetailsPage";
 import { OrganizationsPage } from "@/features/platform/organizations/pages/OrganizationsPage";
+import { TenantsPage } from "@/features/platform/tenants/pages/TenantsPage";
+import { PlatformIndexRedirect } from "@/features/platform/layout/PlatformIndexRedirect";
 import { UsersPage } from "@/features/platform/users/pages/UsersPage";
 import { UserDetailsPage } from "@/features/platform/users/pages/UserDetailsPage";
 import { Navigate } from "react-router-dom";
@@ -98,7 +100,11 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                element: <Navigate to="organizations" replace />,
+                element: <PlatformIndexRedirect />,
+              },
+              {
+                path: "tenants",
+                element: <TenantsPage />,
               },
               {
                 path: "organizations",

@@ -57,8 +57,12 @@ small: `IUserRepository` (identity-scoped), `UserPolicy` email uniqueness
 
 ## Still open
 
-- Platform-admin cross-tenant access (authorization slice; will decide how
-  `IgnoreQueryFilters` is granted and audited).
-- Postgres RLS as defence in depth, after the authorization slice.
+- Postgres RLS as defence in depth, now unblocked: every table carries its
+  tenant column and every path respects it.
 - Tenant-scoped uniqueness for `DocumentTypes.Code`, with the extensions
   feature.
+- Role management (promote/demote) — ADR-033 defers it; roles are assigned
+  only at creation today.
+
+Platform-admin cross-tenant access is settled (ADR-033): policy-guarded
+`IgnoreQueryFilters` in `GetTenantUsersHandler`, one named tenant per request.
