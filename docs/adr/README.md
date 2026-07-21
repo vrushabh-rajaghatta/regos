@@ -12,7 +12,7 @@ never changes meaning once assigned.
 2. **One decision per file.** No aggregate documents.
 3. **Append-only.** Edit an ADR to correct a broken reference or change its
    status — never to change what was decided.
-4. **New ADRs take the next free number.** Today that is **ADR-027**.
+4. **New ADRs take the next free number.** Today that is **ADR-028**.
 5. **Cite by number in code and commits.** `// ADR-009` in a source file is the
    reason the ADR must never be renumbered.
 
@@ -44,7 +44,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [011](ADR-011-development-lifecycle.md) | Development lifecycle | Accepted | Direction |
 | [012](ADR-012-shared-semantic-exception-model.md) | Shared semantic exception model | Accepted | Current |
 | [013](ADR-013-ambient-tenant-context.md) | Tenant context is ambient | Accepted | Current (partial) |
-| [014](ADR-014-invitation-is-a-user-status.md) | Invitation is a user status | Accepted | Current |
+| [014](ADR-014-invitation-is-a-user-status.md) | Invitation is a user status | **Superseded** by 027 | — |
 | [015](ADR-015-organization-is-the-tenant.md) | Organization is the tenant | Accepted | Current |
 | [016](ADR-016-persistence-access-model.md) | Repositories for writes, DbContext for reads | Accepted | Current |
 | [017](ADR-017-shared-kernel-scope.md) | Shared kernel scope | Accepted | Current |
@@ -57,6 +57,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [024](ADR-024-tenancy-is-derived-from-identity.md) | Tenancy is derived from identity, not asserted by the caller | Accepted | Current |
 | [025](ADR-025-sessions-are-server-owned-cookies.md) | A session is server-owned, and travels in cookies | Accepted | Current |
 | [026](ADR-026-lifecycle-owned-satellites.md) | A satellite is defined by lifecycle ownership, not by its key | Accepted | Current |
+| [027](ADR-027-invitation-is-a-consumable-grant.md) | An invitation is a consumable grant against an existing user | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

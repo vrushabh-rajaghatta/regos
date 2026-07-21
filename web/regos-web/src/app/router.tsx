@@ -32,6 +32,7 @@ import { UsersPage } from "@/features/platform/users/pages/UsersPage";
 import { UserDetailsPage } from "@/features/platform/users/pages/UserDetailsPage";
 import { Navigate } from "react-router-dom";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { AcceptInvitationPage } from "@/features/auth/pages/AcceptInvitationPage";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
 
 export const router = createBrowserRouter([
@@ -40,6 +41,12 @@ export const router = createBrowserRouter([
     // signed in, and the header links to pages they cannot load.
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    // Outside RequireAuth: whoever follows this link has no session, and
+    // obtaining the ability to have one is the point.
+    path: "/accept-invitation",
+    element: <AcceptInvitationPage />,
   },
   {
     path: "/",

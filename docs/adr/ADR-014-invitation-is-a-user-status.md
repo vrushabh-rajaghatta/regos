@@ -1,7 +1,20 @@
 # ADR-014 — Invitation Is a User Status, Not an Aggregate
 
-**Status:** Accepted · **Date:** 2026-07-20 (retro-documented) ·
+**Status:** Superseded by
+[ADR-027](ADR-027-invitation-is-a-consumable-grant.md) ·
+**Date:** 2026-07-20 (retro-documented) · **Superseded:** 2026-07-21 ·
 **Implemented by:** commits `9dbeb04`, `9ebfa5a`
+
+> **Partly superseded, and it named its own successor.** Its central choice —
+> that an invited person is a real `User` row in `Invited` status, not a
+> pre-user record — is unchanged and still describes the code.
+>
+> What changed is the sentence *"there is no `Invitation` aggregate"*. There now
+> is one, holding the acceptance token, its expiry and its consumption. It is
+> addressed to a `UserId` that already exists, so it creates no second identity
+> and no accept-time reconciliation. The negatives this ADR accepted — no
+> expiry, no revocation, no resend — are all closed by
+> [ADR-027](ADR-027-invitation-is-a-consumable-grant.md). Cite that for guidance.
 
 > **Retro-documented.** This decision exists in code and has never been written
 > down. It is recorded here as the *current* architecture, not as a preference.

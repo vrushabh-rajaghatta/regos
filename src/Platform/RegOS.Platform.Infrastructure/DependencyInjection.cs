@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Infrastructure.Authentication;
+using RegOS.Platform.Domain.Aggregates.Invitation;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
@@ -26,6 +27,8 @@ public static class DependencyInjection
 
         services.AddScoped<
             IRefreshTokenRepository, RefreshTokenRepository>();
+
+        services.AddScoped<IInvitationRepository, InvitationRepository>();
 
         services.AddScoped<IUserPolicy, UserPolicy>();
 
@@ -63,7 +66,29 @@ public static class DependencyInjection
                 $"{RefreshTokenOptions.SectionName}:Days must be positive.")
             .ValidateOnStart();
 
+        // Shared by both token issuers: generation and hashing are the same
+        // problem for a refresh token and an invitation; only the lifetime
+        // differs, and that is what each issuer owns (ADR-027).
+        services.AddSingleton<SecretTokenFactory>();
+
         services.AddSingleton<IRefreshTokenIssuer, RefreshTokenIssuer>();
+
+        services.AddOptions<InvitationOptions>()
+            .Bind(configuration.GetSection(InvitationOptions.SectionName))
+            .Validate(
+                options => options.Days > 0,
+                $"{InvitationOptions.SectionName}:Days must be positive.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.AcceptUrl),
+                $"{InvitationOptions.SectionName}:AcceptUrl is required.")
+            .ValidateOnStart();
+
+        services.AddSingleton<IInvitationTokenIssuer, InvitationTokenIssuer>();
+
+        // The default, and the only one outside Development. It records that
+        // delivery did not happen and deliberately never logs the token.
+        services.AddScoped<
+            IInvitationNotifier, UnconfiguredInvitationNotifier>();
 
         return services;
     }

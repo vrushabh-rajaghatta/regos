@@ -55,7 +55,8 @@ public sealed class LoginHandlerTests : IAsyncLifetime
         new(NewIssuer(), NewRefreshTokenIssuer());
 
     private static RefreshTokenIssuer NewRefreshTokenIssuer() =>
-        new(Options.Create(new RefreshTokenOptions { Days = 14 }));
+        new(new SecretTokenFactory(),
+            Options.Create(new RefreshTokenOptions { Days = 14 }));
 
     private static LoginHandler NewHandler(RegOSDbContext context) =>
         new(NewSessionFactory(),

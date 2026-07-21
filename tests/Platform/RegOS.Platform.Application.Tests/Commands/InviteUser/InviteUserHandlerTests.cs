@@ -1,6 +1,9 @@
 using FluentAssertions;
+using Microsoft.Extensions.Options;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.Platform.Application.Invitations;
+using RegOS.Platform.Infrastructure.Authentication;
 using RegOS.Platform.Application.Commands.InviteUser;
 using RegOS.Platform.Application.Tests.Fakes;
 using RegOS.Platform.Domain.Aggregates.User;
@@ -18,11 +21,24 @@ public sealed class InviteUserHandlerTests
     private static InviteUserCommand ValidCommand() =>
         new("John", "Doe", "john.doe@example.com");
 
+    /// <summary>
+    /// The real token issuer, not a fake: it does no I/O, and a fake would only
+    /// prove that the fake was called.
+    /// </summary>
+    private static InvitationIssuer NewInvitationIssuer(
+        FakeInvitationNotifier? notifier = null,
+        FakeInvitationRepository? invitations = null) =>
+        new(notifier ?? new FakeInvitationNotifier(),
+            new InvitationTokenIssuer(
+                new SecretTokenFactory(),
+                Options.Create(new InvitationOptions { Days = 7 })),
+            invitations ?? new FakeInvitationRepository());
+
     [Fact]
     public async Task Invite_Succeeds_ReturnsInvitedStatus()
     {
         var handler = new InviteUserHandler(
-            new FakeUserPolicy(), new FakeUserRepository(), new FakeTenantContext(Tenant));
+            NewInvitationIssuer(), new FakeUserPolicy(), new FakeUserRepository(), new FakeTenantContext(Tenant));
 
         var result = await handler.HandleAsync(ValidCommand(), CancellationToken.None);
 
@@ -36,7 +52,7 @@ public sealed class InviteUserHandlerTests
         var repository = new FakeUserRepository();
         var command = ValidCommand();
         var handler = new InviteUserHandler(
-            new FakeUserPolicy(), repository, new FakeTenantContext(Tenant));
+            NewInvitationIssuer(), new FakeUserPolicy(), repository, new FakeTenantContext(Tenant));
 
         await handler.HandleAsync(command, CancellationToken.None);
 
@@ -54,7 +70,7 @@ public sealed class InviteUserHandlerTests
         var policy = new FakeUserPolicy(
             organizationError: new BusinessRuleViolationException(PlatformErrors.OrganizationInactive));
         var handler = new InviteUserHandler(
-            policy, repository, new FakeTenantContext(Tenant));
+            NewInvitationIssuer(), policy, repository, new FakeTenantContext(Tenant));
 
         var act = () => handler.HandleAsync(ValidCommand(), CancellationToken.None);
 
@@ -69,7 +85,7 @@ public sealed class InviteUserHandlerTests
         var policy = new FakeUserPolicy(
             emailError: new BusinessRuleViolationException(PlatformErrors.EmailAlreadyInUse));
         var handler = new InviteUserHandler(
-            policy, repository, new FakeTenantContext(Tenant));
+            NewInvitationIssuer(), policy, repository, new FakeTenantContext(Tenant));
 
         var act = () => handler.HandleAsync(ValidCommand(), CancellationToken.None);
 
@@ -81,7 +97,7 @@ public sealed class InviteUserHandlerTests
     public async Task Invite_WhenEmailMalformed_ThrowsDomainException()
     {
         var handler = new InviteUserHandler(
-            new FakeUserPolicy(), new FakeUserRepository(), new FakeTenantContext(Tenant));
+            NewInvitationIssuer(), new FakeUserPolicy(), new FakeUserRepository(), new FakeTenantContext(Tenant));
         var command = new InviteUserCommand("John", "Doe", "not-an-email");
 
         var act = () => handler.HandleAsync(command, CancellationToken.None);

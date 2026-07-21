@@ -14,8 +14,8 @@ namespace RegOS.Api.Tests;
 /// specs see the outcome but cannot present a deliberately stale token. Every
 /// test here is about something that lives between the two.
 /// </summary>
-public sealed class SessionLifecycleTests
-    : IClassFixture<RegOSApiFactory>, IAsyncLifetime
+[Collection(ApiCollection.Name)]
+public sealed class SessionLifecycleTests : IAsyncLifetime
 {
     private readonly RegOSApiFactory _factory;
     private readonly HttpClient _client;

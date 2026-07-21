@@ -198,26 +198,49 @@ against `X-Tenant-Id`, once against a real identity.
 | — | A credential cannot outlive its user (ADR-023, restated by ADR-026) | `e6c6041` |
 | AUTH-004 | Validate access tokens; `ICurrentUser` | `b7fbe13` |
 | AUTH-005 | Tenancy from identity; `X-Tenant-Id` removed (ADR-024) | `b5a9e85` |
-| AUTH-006 | Refresh tokens, rotation, cookie sessions (ADR-025) | this slice |
+| AUTH-006 | Refresh tokens, rotation, cookie sessions (ADR-025) | `6d99045` |
+| — | Satellites are defined by lifecycle ownership (ADR-026) | `b9e8441` |
+| AUTH-007 | Invitation acceptance; first credential (ADR-027) | this slice |
 
 `HeaderTenantContext` is **deleted**. The tenant is the authenticated caller's
 organization claim, so it is proven rather than asserted.
 
-Remaining in Milestone 2: invitation acceptance / first password (AUTH-007),
-which is where ADR-014 comes back into focus. Forgot-password shares the token
-mechanism with invitation acceptance and is deliberately undecided until that
-code exists.
+**Milestone 2 Phase 1 and Phase 2 are complete.** The lifecycle closes:
 
-Known gap carried forward: **nothing deletes expired or revoked refresh
-tokens.** The table grows with every sign-in and every rotation. Harmless at
-current scale, unbounded at any other.
+```
+Invited ──accept──▶ Active ──deactivate──▶ Inactive ──activate──▶ Active
+```
+
+Exactly one edge into `Active` from `Invited`, and it establishes a password on
+the way through — so **every Active user has exactly one credential**, and the
+admin shortcut that used to violate it is gone (ADR-027).
+
+Remaining: password reset (AUTH-008). It is the second consumable grant, and
+the first honest test of whether `Invitation` generalizes or whether the two
+merely share a token generator. Deliberately undecided until that code exists.
+
+Known gaps carried forward:
+
+- **Nothing deletes expired, revoked or consumed tokens** — refresh tokens or
+  invitations. Both tables grow with every sign-in, rotation and invite.
+  Harmless at current scale, unbounded at any other. Cleanup strategy pending
+  operational requirements; periodic sweep, opportunistic cleanup and a
+  database TTL are all defensible and none is obviously right today.
+- **No invitation is ever delivered.** `IInvitationNotifier` has one
+  implementation that logs the link in Development and one that records the
+  failure everywhere else. Real delivery is its own slice.
+- **No browser spec covers inviting, activating or deactivating a user.** A
+  user cannot be deleted, so any such spec leaks a row per run — the retirement
+  path rule from Milestone 1. Covered by host integration tests instead, which
+  can clean up after themselves.
 
 ### Scope
 
 - `UserCredential`, password hashing.
 - Login, logout.
 - ~~JWT access token; refresh token with rotation.~~ Done in AUTH-003/AUTH-006.
-- Forgot password / reset password.
+- Forgot password / reset password. **Deferred to AUTH-008**, reusing the token
+  generator only if it naturally fits.
 - ~~**Replace `HeaderTenantContext` with a claims-based `ITenantContext`.**~~
   Done in AUTH-005. Nothing above it changed, by design (ADR-013) — all
   fourteen `ITenantContext` consumers were untouched.

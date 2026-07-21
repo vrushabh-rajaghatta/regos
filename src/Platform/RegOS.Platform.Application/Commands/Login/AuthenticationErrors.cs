@@ -10,4 +10,15 @@ public static class AuthenticationErrors
     /// </summary>
     public const string InvalidCredentials =
         "Invalid email address or password.";
+
+    /// <summary>
+    /// Every way an invitation can fail to be acceptable — unknown, expired,
+    /// already used, withdrawn, or the account deactivated since. It names the
+    /// two likely causes without saying which applies, because a 256-bit token
+    /// cannot be enumerated and a user holding a dead link needs to know to ask
+    /// for another one (ADR-027).
+    /// </summary>
+    public const string InvalidInvitation =
+        "This invitation link is no longer valid. "
+            + "It may have expired or already been used.";
 }

@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+
+using RegOS.Platform.Application.Services;
 
 namespace RegOS.Api.Tests;
 
@@ -21,9 +25,24 @@ namespace RegOS.Api.Tests;
 /// </remarks>
 public sealed class RegOSApiFactory : WebApplicationFactory<Program>
 {
+    /// <summary>
+    /// Captures the invitation tokens the API would have emailed. Shared across
+    /// the fixture, because the factory is shared.
+    /// </summary>
+    public CapturingInvitationNotifier Invitations { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+
+        // The only substitution these tests make. Everything else - the real
+        // authentication handler, the real middleware order, the real database
+        // - is exercised as it ships. An acceptance token exists only in transit,
+        // so without this there is no way to test accepting one.
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddScoped<IInvitationNotifier>(_ => Invitations);
+        });
     }
 
     /// <summary>

@@ -2,6 +2,18 @@ namespace RegOS.Platform.Domain.Aggregates.User;
 
 public static class UserErrors
 {
+    /// <summary>
+    /// An invited user becomes active by accepting their invitation, never by
+    /// an administrator activating them — that path was the only way to reach
+    /// Active without a credential, and ADR-027 closed it.
+    /// </summary>
+    public const string OnlyInactiveUsersCanBeActivated =
+        "Only a deactivated user can be activated. An invited user becomes "
+            + "active by accepting their invitation.";
+
+    public const string OnlyInvitedUsersCanBeReinvited =
+        "Only a user who has not yet accepted can be re-invited.";
+
     public const string OrganizationRequired =
         "A user must belong to an organization.";
 

@@ -9,6 +9,7 @@ import { DeactivateUserDialog } from "../components/DeactivateUserDialog";
 import { EditUserProfileDialog } from "../components/EditUserProfileDialog";
 import { UserStatusBadge } from "../components/UserStatusBadge";
 import { useActivateUser } from "../hooks/useActivateUser";
+import { useResendInvitation } from "../hooks/useResendInvitation";
 import { useUser } from "../hooks/useUser";
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -25,6 +26,7 @@ export function UserDetailsPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
   const activate = useActivateUser(userId ?? "");
+  const resend = useResendInvitation(userId ?? "");
 
   const { data, isPending, isError, error, refetch } = useUser(userId ?? "");
 
@@ -61,13 +63,28 @@ export function UserDetailsPage() {
               </Button>
             )}
 
-            {/* Activation applies to Invited and Inactive users only. */}
-            {data && data.status !== "Active" && (
+            {/* Resending applies only to someone still waiting to accept. It
+                issues a new link and invalidates the previous one. */}
+            {data && data.status === "Invited" && (
+              <Button
+                variant="outline"
+                onClick={() => resend.mutate()}
+                disabled={resend.isPending}
+              >
+                {resend.isPending ? "Sending..." : "Resend Invitation"}
+              </Button>
+            )}
+
+            {/* Activation now means reinstatement, and nothing else. An invited
+                user becomes active by accepting their invitation - activating
+                them here was the only way to reach Active with no password, and
+                ADR-027 closed it. */}
+            {data && data.status === "Inactive" && (
               <Button
                 onClick={() => activate.mutate()}
                 disabled={activate.isPending}
               >
-                {activate.isPending ? "Activating..." : "Activate User"}
+                {activate.isPending ? "Activating..." : "Reactivate User"}
               </Button>
             )}
           </div>

@@ -4,9 +4,12 @@ using RegOS.Platform.Application.Commands.ActivateUser;
 using RegOS.Platform.Application.Commands.DeactivateUser;
 using RegOS.Platform.Application.Commands.InviteUser;
 using RegOS.Platform.Application.Authentication;
+using RegOS.Platform.Application.Invitations;
+using RegOS.Platform.Application.Commands.AcceptInvitation;
 using RegOS.Platform.Application.Commands.Login;
 using RegOS.Platform.Application.Commands.Logout;
 using RegOS.Platform.Application.Commands.RefreshSession;
+using RegOS.Platform.Application.Commands.ResendInvitation;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Application.Commands.UpdateUserProfile;
 using RegOS.Platform.Application.Queries.GetUserById;
@@ -19,7 +22,13 @@ public static class DependencyInjection
     public static IServiceCollection AddPlatformApplication(
         this IServiceCollection services)
     {
+        services.AddScoped<InvitationIssuer>();
+
         services.AddScoped<InviteUserHandler>();
+
+        services.AddScoped<ResendInvitationHandler>();
+
+        services.AddScoped<AcceptInvitationHandler>();
 
         services.AddScoped<ActivateUserHandler>();
 

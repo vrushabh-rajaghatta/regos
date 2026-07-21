@@ -72,17 +72,28 @@ public sealed class Session
     {
         var request = new HttpRequestMessage(method, path);
 
-        var names = cookieNames.Length > 0
-            ? cookieNames
-            : _cookies.Keys.ToArray();
+        AddCookies(request, cookieNames);
 
-        var header = string.Join(
-            "; ",
-            names.Where(_cookies.ContainsKey)
-                .Select(name => $"{name}={_cookies[name]}"));
+        var response = await client.SendAsync(request);
 
-        if (header.Length > 0)
-            request.Headers.Add("Cookie", header);
+        Absorb(response);
+
+        return response;
+    }
+
+    /// <summary>Sends a request with a JSON body, carrying this session's cookies.</summary>
+    public async Task<HttpResponseMessage> SendJsonAsync(
+        HttpClient client,
+        HttpMethod method,
+        string path,
+        object body)
+    {
+        var request = new HttpRequestMessage(method, path)
+        {
+            Content = JsonContent.Create(body)
+        };
+
+        AddCookies(request);
 
         var response = await client.SendAsync(request);
 
@@ -104,6 +115,21 @@ public sealed class Session
         request.Headers.Add("Cookie", $"{cookieName}={cookieValue}");
 
         return await client.SendAsync(request);
+    }
+
+    private void AddCookies(
+        HttpRequestMessage request, params string[] cookieNames)
+    {
+        var names = cookieNames.Length > 0
+            ? cookieNames
+            : _cookies.Keys.ToArray();
+
+        var header = string.Join(
+            "; ",
+            names.Where(_cookies.ContainsKey)
+                .Select(name => $"{name}={_cookies[name]}"));
+
+        if (header.Length > 0) request.Headers.Add("Cookie", header);
     }
 
     /// <summary>Sends a request authenticated by bearer header instead.</summary>

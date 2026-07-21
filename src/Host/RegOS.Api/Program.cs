@@ -13,6 +13,7 @@ using RegOS.Api.Endpoints.SubmissionTypes;
 using RegOS.Organization.Application;
 using RegOS.Organization.Infrastructure;
 using RegOS.Platform.Application;
+using RegOS.Platform.Application.Services;
 using RegOS.Platform.Infrastructure;
 using RegOS.Api.Authentication;
 using RegOS.Api.Middleware;
@@ -75,6 +76,15 @@ builder.Services.AddOrganizationInfrastructure();
 builder.Services.AddPlatformApplication();
 builder.Services.AddPlatformInfrastructure(builder.Configuration);
 
+// Development only, and guarded here rather than inside the notifier: it writes
+// a live acceptance token to the log, and that guarantee should be readable
+// where it is wired up. Registered after the default so it replaces it.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<
+        IInvitationNotifier, DevelopmentInvitationNotifier>();
+}
+
 builder.Services.AddReferenceDataApplication();
 
 builder.Services.AddRegulatoryApplicationServices();
@@ -125,6 +135,7 @@ app.MapListAuthorities();
 app.MapLogin();
 app.MapRefreshSession();
 app.MapLogout();
+app.MapAcceptInvitation();
 app.MapGetCurrentUser();
 
 app.MapActivateOrganization();
@@ -135,6 +146,7 @@ app.MapListOrganizations();
 app.MapUpdateOrganization();
 
 app.MapInviteUser();
+app.MapResendInvitation();
 app.MapListUsers();
 app.MapGetUser();
 app.MapUpdateUserProfile();

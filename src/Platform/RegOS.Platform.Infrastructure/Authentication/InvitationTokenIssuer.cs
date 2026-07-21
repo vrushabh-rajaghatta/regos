@@ -4,29 +4,24 @@ using RegOS.Platform.Application.Services;
 
 namespace RegOS.Platform.Infrastructure.Authentication;
 
-/// <summary>
-/// Issues refresh tokens. Generation and hashing come from
-/// <see cref="SecretTokenFactory"/>, shared with invitations; what belongs here
-/// is the lifetime, which is the only part that differs.
-/// </summary>
-public sealed class RefreshTokenIssuer : IRefreshTokenIssuer
+public sealed class InvitationTokenIssuer : IInvitationTokenIssuer
 {
     private readonly SecretTokenFactory _tokens;
-    private readonly RefreshTokenOptions _options;
+    private readonly InvitationOptions _options;
 
-    public RefreshTokenIssuer(
+    public InvitationTokenIssuer(
         SecretTokenFactory tokens,
-        IOptions<RefreshTokenOptions> options)
+        IOptions<InvitationOptions> options)
     {
         _tokens = tokens;
         _options = options.Value;
     }
 
-    public IssuedRefreshToken Issue(DateTime now)
+    public IssuedInvitationToken Issue(DateTime now)
     {
         var value = _tokens.CreateValue();
 
-        return new IssuedRefreshToken(
+        return new IssuedInvitationToken(
             value,
             Hash(value),
             now.AddDays(_options.Days));
