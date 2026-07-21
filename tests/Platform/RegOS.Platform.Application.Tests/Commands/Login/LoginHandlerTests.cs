@@ -2,13 +2,15 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Persistence;
 using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Application.Commands.Login;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
+
+using TenantAggregate = RegOS.Platform.Domain.Aggregates.Tenant.Tenant;
 using RegOS.Platform.Infrastructure.Authentication;
 using RegOS.Platform.Infrastructure.Repositories;
 using RegOS.Platform.Infrastructure.Services;
@@ -29,8 +31,8 @@ public sealed class LoginHandlerTests : IAsyncLifetime
 
     private const string CorrectPassword = "correct horse battery";
 
-    private readonly OrganizationId _organizationId =
-        OrganizationId.From(Guid.NewGuid());
+    private readonly TenantId _tenantId =
+        TenantId.From(Guid.NewGuid());
 
     private readonly string _email =
         $"login.{Guid.NewGuid():N}@policy.example";
@@ -64,14 +66,20 @@ public sealed class LoginHandlerTests : IAsyncLifetime
             new RefreshTokenRepository(context),
             new SessionRepository(context),
             new UserCredentialRepository(context),
-            new UserRepository(context));
+            new UserRepository(context),
+            new TenantRepository(context));
 
     public async Task InitializeAsync()
     {
         await using var context = NewContext();
 
-        _user = UserAggregate.Create(
-            _organizationId, Email.Create(_email), "Login", "User");
+        // The tenant must genuinely exist: sign-in now checks its status, and
+        // a user pointing at no tenant is rejected as misprovisioned.
+        context.Tenants.Add(
+            TenantAggregate.Create(_tenantId, "Login Test Tenant"));
+
+        _user = UserAggregate.CreateForTenant(
+            _tenantId, Email.Create(_email), "Login", "User");
 
         _user.Activate();
 
@@ -95,8 +103,40 @@ public sealed class LoginHandlerTests : IAsyncLifetime
         // four orphaned credentials because it deleted users by organization
         // and credentials one at a time; that is now impossible to get wrong.
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
-            _organizationId.Value);
+            "DELETE FROM \"Users\" WHERE \"TenantId\" = {0}",
+            _tenantId.Value);
+
+        await context.Database.ExecuteSqlRawAsync(
+            "DELETE FROM \"Tenants\" WHERE \"Id\" = {0}",
+            _tenantId.Value);
+    }
+
+    [Fact]
+    public async Task Rejects_a_user_whose_tenant_is_retired()
+    {
+        // "No one signs in" is the deactivated tenant's contract
+        // (Tenant.Deactivate); sign-in is where it is enforced, with the same
+        // message as every other rejection (ADR-022).
+        await using (var context = NewContext())
+        {
+            var tenant = await context.Tenants.SingleAsync(
+                x => x.Id == _tenantId);
+            tenant.Deactivate();
+            await context.SaveChangesAsync();
+        }
+
+        try
+        {
+            await ShouldFailAsync(_email, CorrectPassword);
+        }
+        finally
+        {
+            await using var context = NewContext();
+            var tenant = await context.Tenants.SingleAsync(
+                x => x.Id == _tenantId);
+            tenant.Activate();
+            await context.SaveChangesAsync();
+        }
     }
 
     private async Task<AuthenticatedSession> LoginAsync(string email, string password)
@@ -166,8 +206,8 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        var withoutCredential = UserAggregate.Create(
-            _organizationId,
+        var withoutCredential = UserAggregate.CreateForTenant(
+            _tenantId,
             Email.Create($"nocred.{Guid.NewGuid():N}@policy.example"),
             "No",
             "Credential");
@@ -185,7 +225,11 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         await using (var context = NewContext())
         {
-            var user = await context.Users.SingleAsync(x => x.Id == _user.Id);
+            // IgnoreQueryFilters: this bare test context carries no tenant,
+            // and the row is being reloaded by an id the test owns.
+            var user = await context.Users
+                .IgnoreQueryFilters()
+                .SingleAsync(x => x.Id == _user.Id);
             user.Deactivate();
             await context.SaveChangesAsync();
         }
@@ -200,8 +244,8 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        var invited = UserAggregate.Create(
-            _organizationId,
+        var invited = UserAggregate.CreateForTenant(
+            _tenantId,
             Email.Create($"invited.{Guid.NewGuid():N}@policy.example"),
             "Invited",
             "User");

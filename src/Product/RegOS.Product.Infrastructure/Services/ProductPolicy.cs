@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
-using RegOS.Product.Application.Services;
 using RegOS.Product.Application.Services;
 using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Product.Infrastructure.Services;
 
@@ -19,7 +18,7 @@ public sealed class ProductPolicy : IProductPolicy
     }
 
     public async Task EnsureCodeIsUniqueAsync(
-        OrganizationId organizationId,
+        TenantId tenantId,
         ProductCode code,
         CancellationToken cancellationToken)
     {
@@ -27,7 +26,7 @@ public sealed class ProductPolicy : IProductPolicy
         // access on a value-converted property does not translate to SQL.
         var exists = await _dbContext.Products
             .AnyAsync(
-                x => x.OrganizationId == organizationId && x.Code == code,
+                x => x.TenantId == tenantId && x.Code == code,
                 cancellationToken);
 
         // A duplicate is a state conflict, not a malformed request: the same

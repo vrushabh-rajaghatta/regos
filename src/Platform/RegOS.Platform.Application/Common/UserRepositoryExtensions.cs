@@ -1,6 +1,6 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
 
@@ -14,7 +14,7 @@ internal static class UserRepositoryExtensions
     /// profile, activate, deactivate).
     /// </summary>
     /// <remarks>
-    /// The organization is non-nullable by design. It was optional while the
+    /// The tenant is non-nullable by design. It was optional while the
     /// tenant travelled as a query-string parameter, which meant omitting it
     /// silently disabled isolation; now the tenant is always known, so there is
     /// no "unscoped" call to express. A user belonging to another tenant is
@@ -24,12 +24,12 @@ internal static class UserRepositoryExtensions
     public static async Task<UserAggregate> GetRequiredAsync(
         this IUserRepository repository,
         UserId userId,
-        OrganizationId organizationId,
+        TenantId tenantId,
         CancellationToken cancellationToken)
     {
         var user = await repository.GetByIdAsync(userId, cancellationToken);
 
-        if (user is null || user.OrganizationId != organizationId)
+        if (user is null || user.TenantId != tenantId)
             throw new NotFoundException(PlatformErrors.UserNotFound);
 
         return user;

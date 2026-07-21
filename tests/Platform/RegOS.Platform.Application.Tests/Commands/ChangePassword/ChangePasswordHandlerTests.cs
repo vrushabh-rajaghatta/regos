@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Persistence;
 using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Application.Commands.ChangePassword;
@@ -43,8 +43,8 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
     private const string OriginalPassword = "the original password";
     private const string NewPassword = "a brand new password";
 
-    private readonly OrganizationId _organizationId =
-        OrganizationId.From(Guid.NewGuid());
+    private readonly TenantId _tenantId =
+        TenantId.From(Guid.NewGuid());
 
     private readonly string _email =
         $"changepassword.{Guid.NewGuid():N}@policy.example";
@@ -60,8 +60,8 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        _user = UserAggregate.Create(
-            _organizationId, Email.Create(_email), "Change", "Password");
+        _user = UserAggregate.CreateForTenant(
+            _tenantId, Email.Create(_email), "Change", "Password");
 
         _user.Activate();
 
@@ -79,8 +79,8 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
         await using var context = NewContext();
 
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
-            _organizationId.Value);
+            "DELETE FROM \"Users\" WHERE \"TenantId\" = {0}",
+            _tenantId.Value);
     }
 
     private static SetUserPasswordHandler NewSetPassword(RegOSDbContext context) =>
@@ -96,7 +96,7 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
                     new SessionRepository(context)),
                 new PasswordResetRepository(context)),
             new FakeCurrentUser(
-                _user.Id, _organizationId, Email.Create(_email)),
+                _user.Id, _tenantId, Email.Create(_email)),
             new PasswordHasher(),
             new UserCredentialRepository(context),
             new UserRepository(context));

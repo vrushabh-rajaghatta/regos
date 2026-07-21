@@ -14,8 +14,11 @@ public static class UserErrors
     public const string OnlyInvitedUsersCanBeReinvited =
         "Only a user who has not yet accepted can be re-invited.";
 
-    public const string OrganizationRequired =
-        "A user must belong to an organization.";
+    public const string TenantRequired =
+        "A user must belong to a tenant.";
+
+    public const string PlatformRoleCannotBeTenantBound =
+        "A platform administrator cannot belong to a tenant.";
 
     public const string EmailRequired =
         "A user email is required.";

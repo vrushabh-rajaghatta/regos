@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 
 using RegOS.Product.Domain.Product;
@@ -16,7 +17,7 @@ public class ProductDocumentValidationTests
         ProductId productId,
         DocumentTypeId documentTypeId,
         string name)
-        => ProductDocumentAggregate.Create(productId, documentTypeId, name);
+        => ProductDocumentAggregate.Create(TenantId.New(), productId, documentTypeId, name);
 
     [Fact]
     public void Create_WithDefaultProductId_Throws()

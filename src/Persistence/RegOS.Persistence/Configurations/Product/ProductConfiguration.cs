@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
+using RegOS.SharedKernel.Primitives;
 
 using ProductAggregate = RegOS.Product.Domain.Product.Product;
 
@@ -20,8 +20,8 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<ProductAggre
             .HasConversion(id => id.Value, value => new ProductId(value))
             .ValueGeneratedNever();
 
-        builder.Property(x => x.OrganizationId)
-            .HasConversion(id => id.Value, value => new OrganizationId(value))
+        builder.Property(x => x.TenantId)
+            .HasConversion(id => id.Value, value => new TenantId(value))
             .IsRequired();
 
         builder.Property(x => x.Code)
@@ -42,12 +42,12 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<ProductAggre
             .HasConversion<string>()
             .HasMaxLength(50);
 
-        builder.HasIndex(x => x.OrganizationId);
+        builder.HasIndex(x => x.TenantId);
 
-        // A product code identifies a product within its owning organization,
+        // A product code identifies a product within its owning tenant,
         // never globally. The database enforces what IProductPolicy checks, so
         // a race between two concurrent registrations still cannot duplicate.
-        // No FK to Organizations: cross-context references are held by value.
-        builder.HasIndex(x => new { x.OrganizationId, x.Code }).IsUnique();
+        // No FK to Tenants: cross-context references are held by value.
+        builder.HasIndex(x => new { x.TenantId, x.Code }).IsUnique();
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Submission.Domain.Submission;
 
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
@@ -71,6 +72,16 @@ public sealed class SubmissionConfiguration
             .OnDelete(DeleteBehavior.Restrict);
 
         // Secondary indexes on the cross-aggregate references.
+        // The owning tenant (ADR-031), copied from the parent application at
+        // creation. Held by value, no FK to Tenants.
+        builder.Property(x => x.TenantId)
+            .HasConversion(
+                id => id.Value,
+                value => new TenantId(value))
+            .IsRequired();
+
+        builder.HasIndex(x => x.TenantId);
+
         builder.HasIndex(x => x.ApplicationId);
         builder.HasIndex(x => x.SubmissionTypeId);
 

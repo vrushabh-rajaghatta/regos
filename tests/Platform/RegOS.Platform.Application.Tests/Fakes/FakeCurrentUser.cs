@@ -1,7 +1,7 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Platform.Application.Tests.Fakes;
 
@@ -16,18 +16,25 @@ namespace RegOS.Platform.Application.Tests.Fakes;
 /// </remarks>
 public sealed class FakeCurrentUser : ICurrentUser
 {
-    public FakeCurrentUser(UserId userId, OrganizationId organizationId, Email email)
+    public FakeCurrentUser(
+        UserId userId,
+        TenantId tenantId,
+        Email email,
+        UserRole role = UserRole.Member)
     {
         UserId = userId;
-        OrganizationId = organizationId;
+        TenantId = tenantId;
         Email = email;
+        Role = role;
     }
 
     public bool IsAuthenticated => true;
 
     public UserId UserId { get; }
 
-    public OrganizationId OrganizationId { get; }
+    public TenantId TenantId { get; }
 
     public Email Email { get; }
+
+    public UserRole Role { get; }
 }

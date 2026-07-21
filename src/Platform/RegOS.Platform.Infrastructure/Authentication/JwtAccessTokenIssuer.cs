@@ -38,6 +38,28 @@ public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
         var issuedAt = DateTime.UtcNow;
         var expiresAt = issuedAt.AddMinutes(_options.AccessTokenMinutes);
 
+        var claims = new Dictionary<string, object>
+        {
+            // The user id is the subject; the tenant travels beside it and
+            // is what every scoped query is filtered by. The role rides along
+            // for the authorization policies — see RegOSClaims.Role for why
+            // that stopped being forbidden (ADR-033). Still no name or status
+            // claims: those really are snapshots nothing downstream checks.
+            [JwtRegisteredClaimNames.Sub] = user.Id.Value.ToString(),
+            [JwtRegisteredClaimNames.Email] = user.Email.Value,
+            [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
+            [RegOSClaims.Role] = user.Role.ToString()
+        };
+
+        // A platform user has no tenant, so their token carries no tenant
+        // claim — absent, not empty. ITenantContext.TenantId throws for them
+        // and the query filters resolve to no rows: platform identity never
+        // silently widens into tenant access (ADR-030).
+        if (user.TenantId is not null)
+        {
+            claims[RegOSClaims.TenantId] = user.TenantId.Value.ToString();
+        }
+
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = _options.Issuer,
@@ -46,21 +68,9 @@ public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
             NotBefore = issuedAt,
             Expires = expiresAt,
             SigningCredentials = _credentials,
-            Claims = new Dictionary<string, object>
-            {
-                // The user id is the subject; the organization travels beside it
-                // and becomes the tenant once validation exists.
-                [JwtRegisteredClaimNames.Sub] = user.Id.Value.ToString(),
-                [JwtRegisteredClaimNames.Email] = user.Email.Value,
-                [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
-                [RegOSClaims.OrganizationId] =
-                    user.OrganizationId.Value.ToString()
-            }
+            Claims = claims
         };
 
-        // Deliberately no name, role or status claims. A token should carry
-        // identity, not a snapshot of authorization that goes stale the moment
-        // someone's access changes.
         return new AccessToken(
             new JsonWebTokenHandler().CreateToken(descriptor),
             expiresAt);

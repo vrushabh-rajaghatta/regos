@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Platform.Application.Commands.UpdateUserProfile;
 using RegOS.Platform.Application.Tests.Fakes;
 using RegOS.Platform.Domain.Aggregates.User;
@@ -13,10 +13,10 @@ namespace RegOS.Platform.Application.Tests.Commands.UpdateUserProfile;
 
 public sealed class UpdateUserProfileHandlerTests
 {
-    private static readonly OrganizationId Organization = OrganizationId.New();
+    private static readonly TenantId Organization = TenantId.New();
 
     private static UserAggregate ExistingUser() =>
-        UserAggregate.Create(
+        UserAggregate.CreateForTenant(
             Organization,
             Email.Create("john.doe@example.com"),
             "John",
@@ -52,7 +52,7 @@ public sealed class UpdateUserProfileHandlerTests
         await handler.HandleAsync(Command(user.Id), CancellationToken.None);
 
         repository.Updated!.Status.Should().Be(UserStatus.Invited);
-        repository.Updated.OrganizationId.Should().Be(Organization);
+        repository.Updated.TenantId.Should().Be(Organization);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public sealed class UpdateUserProfileHandlerTests
         // invisible. The command can no longer carry a tenant at all.
         var handler = new UpdateUserProfileHandler(
             new FakeUserPolicy(), repository,
-            new FakeTenantContext(OrganizationId.New()));
+            new FakeTenantContext(TenantId.New()));
 
         var act = () => handler.HandleAsync(
             Command(user.Id), CancellationToken.None);

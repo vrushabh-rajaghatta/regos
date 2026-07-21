@@ -5,6 +5,7 @@ using RegOS.ProductDocument.Domain.Errors;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.DocumentType;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.ProductDocument.Domain.Aggregates;
 
@@ -16,12 +17,14 @@ public sealed class ProductDocument
 
     private ProductDocument(
         ProductDocumentId id,
+        TenantId tenantId,
         ProductId productId,
         DocumentTypeId documentTypeId,
         string name,
         DateTime createdOnUtc)
     {
         Id = id;
+        TenantId = tenantId;
         ProductId = productId;
         DocumentTypeId = documentTypeId;
         Name = name;
@@ -31,6 +34,10 @@ public sealed class ProductDocument
     }
 
     public ProductDocumentId Id { get; }
+
+    // The owning tenant, derived from the owning product at upload so the
+    // document can never carry a different tenant than its product (ADR-031).
+    public TenantId TenantId { get; }
 
     public ProductId ProductId { get; }
 
@@ -50,10 +57,14 @@ public sealed class ProductDocument
         => _versions.AsReadOnly();
 
     public static ProductDocument Create(
+        TenantId tenantId,
         ProductId productId,
         DocumentTypeId documentTypeId,
         string name)
     {
+        if (tenantId is null)
+            throw new DomainException(ProductDocumentErrors.TenantRequired);
+
         if (productId == default)
             throw new DomainException(ProductDocumentErrors.ProductRequired);
 
@@ -70,6 +81,7 @@ public sealed class ProductDocument
 
         return new ProductDocument(
             ProductDocumentId.New(),
+            tenantId,
             productId,
             documentTypeId,
             trimmedName,

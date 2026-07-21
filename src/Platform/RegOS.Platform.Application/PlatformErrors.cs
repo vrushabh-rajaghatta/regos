@@ -5,14 +5,17 @@ namespace RegOS.Platform.Application;
 /// </summary>
 public static class PlatformErrors
 {
-    public const string OrganizationDoesNotExist =
-        "Organization does not exist.";
+    public const string TenantDoesNotExist =
+        "Tenant does not exist.";
 
-    public const string OrganizationInactive =
-        "Organization is inactive and cannot accept users.";
+    public const string TenantInactive =
+        "Tenant is inactive and cannot accept users.";
 
     public const string UserNotFound =
         "User not found.";
+
+    public const string TenantNotFound =
+        "Tenant not found.";
 
     // Deliberately does not say "in this organization": an email identifies
     // exactly one user across RegOS (ADR-021), and the colliding user may

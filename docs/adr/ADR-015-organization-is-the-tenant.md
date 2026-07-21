@@ -1,7 +1,16 @@
 # ADR-015 — Organization Is the Tenant
 
-**Status:** Accepted · **Date:** 2026-07-20 (retro-documented) ·
+**Status:** Superseded by
+[ADR-030](ADR-030-tenant-is-its-own-aggregate.md) · **Date:** 2026-07-20
+(retro-documented; superseded 2026-07-21) ·
 **Related:** ADR-013 (ambient tenant context)
+
+> **Superseded.** The trigger this ADR's own Revisit-When section named —
+> separating a generic tenant from a regulatory party becoming cheaper than
+> keeping them fused — arrived with the multi-tenancy work. ADR-030 introduces
+> a `Tenant` aggregate *beside* `Organization` rather than renaming it, so the
+> regulatory meaning of "organization" is preserved for the party registry.
+> Read the rest as history.
 
 > **Retro-documented.** Implicit in the codebase since tenancy was introduced;
 > recorded here so it can be cited and, eventually, challenged.

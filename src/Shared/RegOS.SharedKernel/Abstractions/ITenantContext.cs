@@ -1,3 +1,5 @@
+using RegOS.SharedKernel.Primitives;
+
 namespace RegOS.SharedKernel.Abstractions;
 
 /// <summary>
@@ -16,21 +18,28 @@ namespace RegOS.SharedKernel.Abstractions;
 ///   It says something about the record.</item>
 /// </list>
 /// <para>
-/// The identifier is a bare <see cref="Guid"/> rather than a strongly typed id
-/// on purpose. <c>OrganizationId</c> belongs to a bounded context, and the
-/// shared kernel must not depend on one; and while a tenant happens to be an
-/// organization today, nothing guarantees that stays true. Each bounded context
-/// converts at its own boundary — <c>new OrganizationId(tenantContext.TenantId)</c>
-/// — which is a small seam in exchange for keeping the dependency direction
-/// clean and avoiding a speculative <c>TenantId</c> type.
+/// The identifier is a <see cref="Primitives.TenantId"/> owned by the kernel
+/// itself. It used to be a bare <see cref="Guid"/> so the kernel would not
+/// depend on the Organization context's <c>OrganizationId</c>; now that the
+/// tenant has its own id type here, each bounded context uses it directly and
+/// the per-boundary conversion seam is gone (ADR-030).
 /// </para>
 /// </remarks>
 public interface ITenantContext
 {
     /// <summary>
     /// The tenant the current request is acting on behalf of. Implementations
-    /// must never return an empty guid: if the tenant cannot be determined they
+    /// must never return an empty id: if the tenant cannot be determined they
     /// throw, so that a missing tenant can never silently widen a query.
     /// </summary>
-    Guid TenantId { get; }
+    TenantId TenantId { get; }
+
+    /// <summary>
+    /// The tenant if one can be determined, otherwise <c>null</c>. This exists
+    /// for exactly one consumer: the global query filters, which must evaluate
+    /// on requests that have no identity yet (login, refresh, password reset)
+    /// and must resolve to <em>no rows</em> there rather than throw. Handlers
+    /// use <see cref="TenantId"/>, which fails loudly instead.
+    /// </summary>
+    TenantId? TenantIdOrNull { get; }
 }

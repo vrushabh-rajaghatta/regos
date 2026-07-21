@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
@@ -12,6 +13,7 @@ public sealed class OrganizationTests
 {
     private static OrganizationAggregate Active() =>
         OrganizationAggregate.Create(
+            TenantId.New(),
             "Acme Pharma Ltd.",
             OrganizationType.Manufacturer);
 
@@ -19,6 +21,7 @@ public sealed class OrganizationTests
     public void Creates_an_organization_with_the_supplied_details()
     {
         var organization = OrganizationAggregate.Create(
+            TenantId.New(),
             "Acme Pharma Ltd.",
             OrganizationType.Manufacturer);
 
@@ -31,6 +34,7 @@ public sealed class OrganizationTests
     {
         // Status is the domain's to set, which is why it is not a create field.
         var organization = OrganizationAggregate.Create(
+            TenantId.New(),
             "Acme Pharma Ltd.",
             OrganizationType.Sponsor);
 
@@ -41,6 +45,7 @@ public sealed class OrganizationTests
     public void Assigns_an_identity()
     {
         var organization = OrganizationAggregate.Create(
+            TenantId.New(),
             "Acme Pharma Ltd.",
             OrganizationType.Sponsor);
 
@@ -51,6 +56,7 @@ public sealed class OrganizationTests
     public void Trims_the_legal_name()
     {
         var organization = OrganizationAggregate.Create(
+            TenantId.New(),
             "   Acme Pharma Ltd.   ",
             OrganizationType.Manufacturer);
 
@@ -64,6 +70,7 @@ public sealed class OrganizationTests
     public void Rejects_a_missing_legal_name(string? legalName)
     {
         var act = () => OrganizationAggregate.Create(
+            TenantId.New(),
             legalName!,
             OrganizationType.Manufacturer);
 
@@ -77,6 +84,7 @@ public sealed class OrganizationTests
         // Model binding turns {"type": 99} into an OrganizationType without
         // complaint, so the aggregate is the only place this can be stopped.
         var act = () => OrganizationAggregate.Create(
+            TenantId.New(),
             "Acme Pharma Ltd.",
             (OrganizationType)99);
 
@@ -88,6 +96,7 @@ public sealed class OrganizationTests
     public void Deactivates_an_active_organization()
     {
         var organization = OrganizationAggregate.Create(
+            TenantId.New(),
             "Acme Pharma Ltd.",
             OrganizationType.Manufacturer);
 
@@ -102,6 +111,7 @@ public sealed class OrganizationTests
         // A silent no-op would tell a caller with a stale view that the
         // operation succeeded. Valid request, forbidden state: 409.
         var organization = OrganizationAggregate.Create(
+            TenantId.New(),
             "Acme Pharma Ltd.",
             OrganizationType.Manufacturer);
 
@@ -154,6 +164,7 @@ public sealed class OrganizationTests
     {
         // Deactivation retires the organization; it does not erase it.
         var organization = OrganizationAggregate.Create(
+            TenantId.New(),
             "Acme Pharma Ltd.",
             OrganizationType.Sponsor);
 
@@ -260,9 +271,24 @@ public sealed class OrganizationTests
 
         var organization = OrganizationAggregate.Create(
             id,
+            TenantId.New(),
             "Acme Pharma Ltd.",
             OrganizationType.ContractResearchOrganization);
 
         organization.Id.Should().Be(id);
+    }
+
+    [Fact]
+    public void Requires_a_tenant()
+    {
+        // The registry is tenant-owned (ADR-032): an organization outside any
+        // tenant's registry would be visible to nobody and mutable by nobody.
+        var act = () => OrganizationAggregate.Create(
+            null!,
+            "Acme Pharma Ltd.",
+            OrganizationType.Manufacturer);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(OrganizationAggregate.TenantRequired);
     }
 }

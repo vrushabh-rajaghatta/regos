@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Persistence;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Application.Services;
@@ -27,8 +27,8 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
 
     private const string CorrectPassword = "correct horse battery";
 
-    private readonly OrganizationId _organizationId =
-        OrganizationId.From(Guid.NewGuid());
+    private readonly TenantId _tenantId =
+        TenantId.From(Guid.NewGuid());
 
     private UserAggregate _user = default!;
 
@@ -46,8 +46,8 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        _user = UserAggregate.Create(
-            _organizationId,
+        _user = UserAggregate.CreateForTenant(
+            _tenantId,
             Email.Create($"credential.{Guid.NewGuid():N}@policy.example"),
             "Credential",
             "User");
@@ -65,8 +65,8 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
         // would still work, but it would hide whether the constraint is doing
         // its job — Cascades_the_credential_when_the_user_is_deleted asserts it.
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
-            _organizationId.Value);
+            "DELETE FROM \"Users\" WHERE \"TenantId\" = {0}",
+            _tenantId.Value);
     }
 
     private async Task SetPasswordAsync(string password)

@@ -1,7 +1,7 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Platform.Application.Tests.Fakes;
 
@@ -11,26 +11,26 @@ namespace RegOS.Platform.Application.Tests.Fakes;
 /// </summary>
 public sealed class FakeUserPolicy : IUserPolicy
 {
-    private readonly Exception? _organizationError;
+    private readonly Exception? _tenantError;
     private readonly Exception? _emailError;
     private readonly Exception? _updateEmailError;
 
     public FakeUserPolicy(
-        Exception? organizationError = null,
+        Exception? tenantError = null,
         Exception? emailError = null,
         Exception? updateEmailError = null)
     {
-        _organizationError = organizationError;
+        _tenantError = tenantError;
         _emailError = emailError;
         _updateEmailError = updateEmailError;
     }
 
-    public Task EnsureOrganizationCanAcceptUsersAsync(
-        OrganizationId organizationId,
+    public Task EnsureTenantCanAcceptUsersAsync(
+        TenantId tenantId,
         CancellationToken cancellationToken)
-        => _organizationError is null
+        => _tenantError is null
             ? Task.CompletedTask
-            : Task.FromException(_organizationError);
+            : Task.FromException(_tenantError);
 
     public Task EnsureEmailIsUniqueAsync(
         Email email,

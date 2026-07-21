@@ -1,3 +1,4 @@
+using RegOS.Api.Authentication;
 using RegOS.Platform.Application.Commands.ResendInvitation;
 using RegOS.Platform.Domain.Aggregates.User;
 
@@ -10,7 +11,11 @@ public static class ResendInvitationEndpoint
     {
         app.MapPost(
             "/api/platform/users/{userId:guid}/invitations",
-            HandleAsync);
+            HandleAsync)
+        // User administration belongs to the tenant administrator
+        // (ADR-033): a Member is refused with 403, and a platform
+        // administrator has no tenant to administer users in.
+        .RequireAuthorization(RegOSPolicies.TenantAdministrator);
 
         return app;
     }

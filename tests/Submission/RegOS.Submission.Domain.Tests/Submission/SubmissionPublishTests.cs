@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 
 using RegOS.ReferenceData.Domain.SubmissionType;
@@ -15,7 +16,7 @@ public class SubmissionPublishTests
         new(2026, 7, 19, 10, 15, 0, TimeSpan.Zero);
 
     private static SubmissionAggregate NewDraft() =>
-        SubmissionAggregate.Create(
+        SubmissionAggregate.Create(TenantId.New(), 
             new RegulatoryApplicationId(Guid.NewGuid()),
             new SubmissionTypeId(Guid.NewGuid()),
             "Initial 510(k)");

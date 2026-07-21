@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 using RegOS.SharedKernel.Exceptions;
@@ -10,8 +10,8 @@ namespace RegOS.Platform.Domain.Tests.Aggregates;
 public class UserTests
 {
     private static User NewInvitedUser() =>
-        User.Create(
-            OrganizationId.New(),
+        User.CreateForTenant(
+            TenantId.New(),
             Email.Create("john.doe@example.com"),
             "John",
             "Doe");
@@ -25,16 +25,16 @@ public class UserTests
     [Fact]
     public void Create_PopulatesAllFields()
     {
-        var organizationId = OrganizationId.New();
+        var tenantId = TenantId.New();
 
-        var user = User.Create(
-            organizationId,
+        var user = User.CreateForTenant(
+            tenantId,
             Email.Create("john.doe@example.com"),
             "  John  ",
             "  Doe  ");
 
         user.Id.Should().NotBeNull();
-        user.OrganizationId.Should().Be(organizationId);
+        user.TenantId.Should().Be(tenantId);
         user.Email.Value.Should().Be("john.doe@example.com");
         user.FirstName.Should().Be("John");   // trimmed
         user.LastName.Should().Be("Doe");     // trimmed
@@ -48,11 +48,83 @@ public class UserTests
     [InlineData("John", "   ")]
     public void Create_WithMissingName_ThrowsDomainException(string first, string last)
     {
-        var act = () => User.Create(
-            OrganizationId.New(),
+        var act = () => User.CreateForTenant(
+            TenantId.New(),
             Email.Create("john.doe@example.com"),
             first,
             last);
+
+        act.Should().Throw<DomainException>();
+    }
+
+    [Fact]
+    public void CreateForTenant_WithNullTenant_ThrowsDomainException()
+    {
+        var act = () => User.CreateForTenant(
+            null!,
+            Email.Create("john.doe@example.com"),
+            "John",
+            "Doe");
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(UserErrors.TenantRequired);
+    }
+
+    [Fact]
+    public void CreatePlatformUser_HasNoTenant_AndThePlatformRole()
+    {
+        var user = User.CreatePlatformUser(
+            Email.Create("platform@example.com"),
+            "Platform",
+            "Administrator");
+
+        user.TenantId.Should().BeNull();
+        user.Role.Should().Be(UserRole.PlatformAdministrator);
+        user.Status.Should().Be(UserStatus.Invited);
+    }
+
+    [Fact]
+    public void CreateForTenant_DefaultsToMember()
+    {
+        NewInvitedUser().Role.Should().Be(UserRole.Member);
+    }
+
+    [Fact]
+    public void CreateForTenant_CanCreateATenantAdministrator()
+    {
+        var user = User.CreateForTenant(
+            TenantId.New(),
+            Email.Create("admin@example.com"),
+            "Tenant",
+            "Admin",
+            UserRole.TenantAdministrator);
+
+        user.Role.Should().Be(UserRole.TenantAdministrator);
+    }
+
+    [Fact]
+    public void CreateForTenant_RejectsThePlatformRole()
+    {
+        // Role and tenant agree by construction (ADR-033): a tenant-bound
+        // platform administrator is unexpressible, not merely invalid.
+        var act = () => User.CreateForTenant(
+            TenantId.New(),
+            Email.Create("imposter@example.com"),
+            "Not",
+            "Allowed",
+            UserRole.PlatformAdministrator);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(UserErrors.PlatformRoleCannotBeTenantBound);
+    }
+
+    [Fact]
+    public void CreatePlatformUser_EnforcesTheSameNameAndEmailInvariants()
+    {
+        var act = () => User.CreatePlatformUser(
+            Email.Create("platform@example.com"),
+            "   ",
+            "Administrator");
 
         act.Should().Throw<DomainException>();
     }

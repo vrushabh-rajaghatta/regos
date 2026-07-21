@@ -2,12 +2,12 @@ using System.Security.Claims;
 
 using Microsoft.IdentityModel.JsonWebTokens;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 using RegOS.Platform.Infrastructure.Authentication;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Api.Authentication;
 
@@ -46,11 +46,18 @@ public sealed class ClaimsCurrentUser : ICurrentUser
     public UserId UserId =>
         new(RequiredGuid(JwtRegisteredClaimNames.Sub));
 
-    public OrganizationId OrganizationId =>
-        new(RequiredGuid(RegOSClaims.OrganizationId));
+    public TenantId TenantId =>
+        new(RequiredGuid(RegOSClaims.TenantId));
 
     public Email Email =>
         Email.Create(Required(JwtRegisteredClaimNames.Email));
+
+    public UserRole Role =>
+        Enum.TryParse<UserRole>(Required(RegOSClaims.Role), out var role)
+            && Enum.IsDefined(role)
+                ? role
+                : throw new AuthenticationFailedException(
+                    CurrentUserErrors.NotAuthenticated);
 
     private string Required(string claimType)
     {

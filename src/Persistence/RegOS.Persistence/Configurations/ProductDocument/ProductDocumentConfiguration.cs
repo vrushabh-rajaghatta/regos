@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.Product.Domain.Product;
 using RegOS.ProductDocument.Domain.Entities;
+using RegOS.SharedKernel.Primitives;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.DocumentType;
 
@@ -25,6 +26,16 @@ public sealed class ProductDocumentConfiguration
             .HasConversion(
                 id => id.Value,
                 value => new ProductDocumentId(value));
+
+        // The owning tenant (ADR-031), derived from the owning product at
+        // upload. Held by value, no FK to Tenants.
+        builder.Property(x => x.TenantId)
+            .HasConversion(
+                id => id.Value,
+                value => new TenantId(value))
+            .IsRequired();
+
+        builder.HasIndex(x => x.TenantId);
 
         builder.Property(x => x.ProductId)
             .HasConversion(

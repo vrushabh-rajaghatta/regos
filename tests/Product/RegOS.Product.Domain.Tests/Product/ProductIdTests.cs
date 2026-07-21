@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-using RegOS.Organization.Domain.Aggregates.Organization;
+using RegOS.SharedKernel.Primitives;
 using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Exceptions;
 
@@ -31,7 +31,7 @@ public sealed class ProductIdTests
     {
         var value = Guid.NewGuid();
 
-        ProductId.From(value).Equals(OrganizationId.From(value))
+        ProductId.From(value).Equals(TenantId.From(value))
             .Should().BeFalse();
     }
 

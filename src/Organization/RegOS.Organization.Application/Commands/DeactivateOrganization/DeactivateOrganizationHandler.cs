@@ -21,7 +21,8 @@ public sealed class DeactivateOrganizationHandler
             command.Id,
             cancellationToken);
 
-        // Addressed by the route and absent: 404, not 400 (ADR-009).
+        // Absent or another tenant's — the query filter (ADR-032) makes both
+        // a 404. See UpdateOrganizationHandler.
         if (organization is null)
             throw new NotFoundException(OrganizationErrors.NotFound);
 

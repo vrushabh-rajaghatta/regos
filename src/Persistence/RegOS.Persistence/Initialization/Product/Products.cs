@@ -1,24 +1,24 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
-using RegOS.Persistence.Initialization.Organization;
+using RegOS.Persistence.Initialization.Platform;
 using RegOS.Product.Domain.Product;
+using RegOS.SharedKernel.Primitives;
 
 using ProductAggregate = RegOS.Product.Domain.Product.Product;
 
 namespace RegOS.Persistence.Initialization.Product;
 
 /// <summary>
-/// Development fixtures. Every product is owned by a seeded organization, so
+/// Development fixtures. Every product is owned by a seeded tenant, so
 /// the environment exercises tenant isolation rather than assuming a single
-/// tenant: the manufacturer and the marketing authorization holder each hold
-/// products, and a tenant with none is equally useful for testing empty states.
+/// tenant: two different tenants each hold products, and a tenant with none is
+/// equally useful for testing empty states.
 /// </summary>
 internal static class Products
 {
-    private static readonly OrganizationId Manufacturer =
-        new(OrganizationIds.DemoManufacturer);
+    private static readonly TenantId Manufacturer =
+        new(TenantIds.DemoManufacturer);
 
-    private static readonly OrganizationId MarketingAuthorizationHolder =
-        new(OrganizationIds.DemoMarketingAuthorizationHolder);
+    private static readonly TenantId MarketingAuthorizationHolder =
+        new(TenantIds.DemoMarketingAuthorizationHolder);
 
     public static IReadOnlyList<ProductAggregate> Data { get; } =
     [

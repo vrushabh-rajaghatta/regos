@@ -45,9 +45,14 @@ Where an organization id is genuinely *business data* — such as
 applying rather than the caller — it remains an explicit property. The two are
 not the same concept and are not interchangeable.
 
-`ITenantContext.TenantId` is a bare `Guid`; each bounded context converts it to
-its own strongly-typed id at its boundary, so the abstraction does not assume a
-tenant will always be an organization.
+`ITenantContext.TenantId` was a bare `Guid`; each bounded context converted it
+to its own strongly-typed id at its boundary, so the abstraction did not assume
+a tenant would always be an organization. **Since
+[ADR-030](ADR-030-tenant-is-its-own-aggregate.md)** the tenant has its own
+kernel-owned `TenantId` type, the property is strongly typed, and the
+per-boundary conversion is gone — the speculation the bare `Guid` hedged
+against resolved. The *decision* here (ambient, never a command property) is
+unchanged.
 
 ## Consequences
 

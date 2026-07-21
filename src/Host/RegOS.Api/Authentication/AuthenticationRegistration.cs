@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 using RegOS.Platform.Application.Services;
+using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Infrastructure.Authentication;
 
 namespace RegOS.Api.Authentication;
@@ -96,13 +97,28 @@ public static class AuthenticationRegistration
         // Authenticated by default. With tenancy now derived from a claim, an
         // endpoint that forgets RequireAuthorization would not merely be open —
         // it would reach ITenantContext with no identity behind it. Opting out
-        // is explicit and visible: exactly one endpoint calls AllowAnonymous,
-        // and it is the one that issues tokens.
+        // is explicit and visible through AllowAnonymous.
         services.AddAuthorization(options =>
         {
             options.FallbackPolicy = new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .Build();
+
+            // Role policies (ADR-033): a failed policy is the framework's
+            // 403, finally claiming the status ADR-022 left open. The claim
+            // value is the enum member's name, written by JwtAccessTokenIssuer
+            // and matched here — RegOSClaims exists so the two cannot drift.
+            options.AddPolicy(
+                RegOSPolicies.PlatformAdministrator,
+                policy => policy.RequireClaim(
+                    RegOSClaims.Role,
+                    nameof(UserRole.PlatformAdministrator)));
+
+            options.AddPolicy(
+                RegOSPolicies.TenantAdministrator,
+                policy => policy.RequireClaim(
+                    RegOSClaims.Role,
+                    nameof(UserRole.TenantAdministrator)));
         });
 
         return services;

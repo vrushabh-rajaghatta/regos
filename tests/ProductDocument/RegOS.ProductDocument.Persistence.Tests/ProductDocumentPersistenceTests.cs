@@ -1,3 +1,5 @@
+using RegOS.SharedKernel.Abstractions;
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,10 +27,26 @@ public class ProductDocumentPersistenceTests
     private static readonly DocumentTypeId SeededCer =
         new(Guid.Parse("50000000-0000-0000-0000-000000000001"));
 
+    // Demo Manufacturer Ltd. — the seeded tenant whose products this test
+    // borrows. Every context is scoped to it so the global query filter
+    // (ADR-031) shows the seeded product and the document created here.
+    private static readonly TenantId TestTenant =
+        new(Guid.Parse("30000000-0000-0000-0000-000000000001"));
+
+    private sealed class FixedTenantContext : ITenantContext
+    {
+        public TenantId TenantId => TestTenant;
+
+        public TenantId? TenantIdOrNull => TestTenant;
+    }
+
     private static DbContextOptions<RegOSDbContext> Options() =>
         new DbContextOptionsBuilder<RegOSDbContext>()
             .UseNpgsql(ConnectionString)
             .Options;
+
+    private static RegOSDbContext NewContext() =>
+        new(Options(), new FixedTenantContext());
 
     [Fact]
     public async Task Saves_reloads_and_cascade_deletes_a_document_with_its_version()
@@ -37,11 +55,11 @@ public class ProductDocumentPersistenceTests
         ProductDocumentId documentId;
 
         // --- Save: new document + initial version, via the repository. ---
-        await using (var ctx = new RegOSDbContext(Options()))
+        await using (var ctx = NewContext())
         {
             productId = await ctx.Products.Select(p => p.Id).FirstAsync();
 
-            var document = ProductDocumentAggregate.Create(
+            var document = ProductDocumentAggregate.Create(TestTenant, 
                 productId,
                 SeededCer,
                 "Persistence Verify " + Guid.NewGuid());
@@ -61,7 +79,7 @@ public class ProductDocumentPersistenceTests
         }
 
         // --- Reload from a fresh context and verify the aggregate. ---
-        await using (var ctx = new RegOSDbContext(Options()))
+        await using (var ctx = NewContext())
         {
             var repository = new ProductDocumentRepository(ctx);
             var reloaded = await repository.GetByIdAsync(documentId, default);
@@ -82,7 +100,7 @@ public class ProductDocumentPersistenceTests
         }
 
         // --- Cascade: deleting the document removes its versions. ---
-        await using (var ctx = new RegOSDbContext(Options()))
+        await using (var ctx = NewContext())
         {
             var document = await ctx.ProductDocuments
                 .Include(x => x.Versions)
@@ -92,7 +110,7 @@ public class ProductDocumentPersistenceTests
             await ctx.SaveChangesAsync();
         }
 
-        await using (var ctx = new RegOSDbContext(Options()))
+        await using (var ctx = NewContext())
         {
             var documentExists = await ctx.ProductDocuments
                 .AnyAsync(x => x.Id == documentId);

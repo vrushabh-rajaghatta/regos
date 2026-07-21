@@ -26,7 +26,11 @@ public sealed class UpdateOrganizationHandler
             command.Id,
             cancellationToken);
 
-        // Addressed by the route and absent: 404, not 400 (ADR-009).
+        // Absent OR in another tenant's registry — the global query filter
+        // (ADR-032) makes the two indistinguishable here, which is the point:
+        // 404 either way, and no interim ownership guard to maintain. This
+        // handler briefly carried one, between the tenant split and the
+        // registry becoming tenant-owned.
         if (organization is null)
             throw new NotFoundException(OrganizationErrors.NotFound);
 

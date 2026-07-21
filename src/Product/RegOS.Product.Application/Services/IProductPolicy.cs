@@ -1,5 +1,5 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Product.Application.Services;
 
@@ -10,12 +10,12 @@ namespace RegOS.Product.Application.Services;
 public interface IProductPolicy
 {
     /// <summary>
-    /// A product code identifies a product within its owning organization.
-    /// Scoped to the tenant, not global: two organizations may legitimately use
+    /// A product code identifies a product within its owning tenant.
+    /// Scoped to the tenant, not global: two tenants may legitimately use
     /// the same code for different products.
     /// </summary>
     Task EnsureCodeIsUniqueAsync(
-        OrganizationId organizationId,
+        TenantId tenantId,
         ProductCode code,
         CancellationToken cancellationToken);
 }

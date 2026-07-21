@@ -1,6 +1,7 @@
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.Submission.Domain.Submission;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Submission.Domain.Snapshot;
 
@@ -27,13 +28,19 @@ public sealed class SubmissionSnapshot
 
     private SubmissionSnapshot(
         SubmissionSnapshotId id,
+        TenantId tenantId,
         SubmissionId submissionId)
     {
         Id = id;
+        TenantId = tenantId;
         SubmissionId = submissionId;
     }
 
     public SubmissionSnapshotId Id { get; }
+
+    // The owning tenant, copied from the submission being snapshotted so the
+    // two can never disagree (ADR-031).
+    public TenantId TenantId { get; }
 
     // A snapshot always belongs to exactly one submission (Invariant 1).
     public SubmissionId SubmissionId { get; }
@@ -58,9 +65,13 @@ public sealed class SubmissionSnapshot
     /// document's own invariants are enforced by <see cref="SnapshotDocument"/>.
     /// </param>
     public static SubmissionSnapshot Create(
+        TenantId tenantId,
         SubmissionId submissionId,
         IEnumerable<(DocumentVersionId VersionId, int DisplayOrder)> documents)
     {
+        if (tenantId is null)
+            throw new DomainException("A snapshot must belong to a tenant.");
+
         if (submissionId == default)
             throw new DomainException("A snapshot must belong to a submission.");
 
@@ -68,6 +79,7 @@ public sealed class SubmissionSnapshot
 
         var snapshot = new SubmissionSnapshot(
             SubmissionSnapshotId.New(),
+            tenantId,
             submissionId);
 
         var seenDisplayOrders = new HashSet<int>();

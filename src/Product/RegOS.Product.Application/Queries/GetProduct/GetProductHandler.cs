@@ -30,13 +30,13 @@ public sealed class GetProductHandler
         CancellationToken cancellationToken)
     {
         var productId = query.Id.Value;
-        var tenantId = _tenantContext.TenantId;
+        var tenantId = _tenantContext.TenantId.Value;
 
-        // Tenant isolation: a product in another organization is
+        // Tenant isolation: a product in another tenant is
         // indistinguishable from one that does not exist.
         var product = await _dbContext.ProductDirectory
             .AsNoTracking()
-            .Where(x => x.Id == productId && x.OrganizationId == tenantId)
+            .Where(x => x.Id == productId && x.TenantId == tenantId)
             .Select(x => new ProductDetails(
                 x.Id,
                 x.Code,

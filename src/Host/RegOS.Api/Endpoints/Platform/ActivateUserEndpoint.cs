@@ -1,3 +1,4 @@
+using RegOS.Api.Authentication;
 using RegOS.Platform.Application.Commands.ActivateUser;
 using RegOS.Platform.Domain.Aggregates.User;
 
@@ -15,7 +16,11 @@ public static class ActivateUserEndpoint
             HandleAsync)
         .WithName("ActivateUser")
         .WithSummary("Activate a user")
-        .WithTags("Platform");
+        .WithTags("Platform")
+        // User administration belongs to the tenant administrator
+        // (ADR-033): a Member is refused with 403, and a platform
+        // administrator has no tenant to administer users in.
+        .RequireAuthorization(RegOSPolicies.TenantAdministrator);
 
         return app;
     }

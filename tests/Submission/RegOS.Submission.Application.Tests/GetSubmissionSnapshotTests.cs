@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,7 +39,8 @@ public sealed class GetSubmissionSnapshotTests : IAsyncLifetime
             .UseNpgsql(ConnectionString)
             .Options;
 
-    private static RegOSDbContext New() => new(Options());
+    private static RegOSDbContext New() =>
+        new(Options(), TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;
 
@@ -86,13 +88,13 @@ public sealed class GetSubmissionSnapshotTests : IAsyncLifetime
         await using var ctx = New();
         var (applicationId, productId) = await TestApplications.EnsureAsync(ctx);
 
-        var submission = SubmissionAggregate.Create(
+        var submission = SubmissionAggregate.Create(TestTenant.Id, 
             applicationId, SeededSubmissionType, "Snapshot Query Sub " + Guid.NewGuid());
 
         var versions = new List<Guid>();
         for (var i = 0; i < count; i++)
         {
-            var doc = ProductDocumentAggregate.Create(
+            var doc = ProductDocumentAggregate.Create(TestTenant.Id, 
                 productId, SeededCer, "Snapshot Query Doc " + Guid.NewGuid());
             doc.AddInitialVersion(
                 originalFileName: "cer.pdf",

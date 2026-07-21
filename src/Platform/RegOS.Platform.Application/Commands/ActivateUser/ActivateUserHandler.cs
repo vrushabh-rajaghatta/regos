@@ -1,4 +1,3 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Common;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Abstractions;
@@ -37,12 +36,8 @@ public sealed class ActivateUserHandler
         ActivateUserCommand command,
         CancellationToken cancellationToken)
     {
-        // The tenant becomes a domain identifier here, at the application
-        // boundary - the shared kernel deals only in guids.
-        var organizationId = new OrganizationId(_tenantContext.TenantId);
-
         var user = await _repository.GetRequiredAsync(
-            command.UserId, organizationId, cancellationToken);
+            command.UserId, _tenantContext.TenantId, cancellationToken);
 
         if (user.Status != UserStatus.Inactive)
         {

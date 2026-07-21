@@ -1,6 +1,6 @@
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
+using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Platform.Application.Services;
 
@@ -12,8 +12,8 @@ namespace RegOS.Platform.Application.Services;
 /// </summary>
 public interface IUserPolicy
 {
-    Task EnsureOrganizationCanAcceptUsersAsync(
-        OrganizationId organizationId,
+    Task EnsureTenantCanAcceptUsersAsync(
+        TenantId tenantId,
         CancellationToken cancellationToken);
 
     /// <summary>

@@ -29,14 +29,14 @@ public sealed class GetUserByIdHandler
         CancellationToken cancellationToken)
     {
         var userId = query.UserId.Value;
-        var tenantId = _tenantContext.TenantId;
+        var tenantId = _tenantContext.TenantId.Value;
 
-        // Tenant isolation: a user in another organization is indistinguishable
+        // Tenant isolation: a user in another tenant is indistinguishable
         // from one that does not exist. Applied unconditionally - there is no
         // longer a code path that reads across tenants.
         var user = await _dbContext.UserDirectory
             .AsNoTracking()
-            .Where(x => x.Id == userId && x.OrganizationId == tenantId)
+            .Where(x => x.Id == userId && x.TenantId == tenantId)
             .Select(x => new UserDetails(
                 x.Id,
                 x.FirstName,

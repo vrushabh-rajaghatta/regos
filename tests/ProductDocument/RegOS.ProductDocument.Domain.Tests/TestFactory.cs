@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.DocumentType;
 
@@ -9,7 +10,7 @@ namespace RegOS.ProductDocument.Domain.Tests;
 internal static class TestFactory
 {
     public static ProductDocumentAggregate NewDocument() =>
-        ProductDocumentAggregate.Create(
+        ProductDocumentAggregate.Create(TenantId.New(), 
             new ProductId(Guid.NewGuid()),
             new DocumentTypeId(Guid.NewGuid()),
             "Clinical Evaluation Report");

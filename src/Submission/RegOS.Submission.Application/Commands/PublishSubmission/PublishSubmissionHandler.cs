@@ -80,6 +80,7 @@ public sealed class PublishSubmissionHandler
         // into the snapshot's input — the aggregate never sees a SubmissionSnapshot,
         // and the snapshot never sees a Submission.
         var snapshot = SubmissionSnapshot.Create(
+            submission.TenantId,
             submission.Id,
             submission.Documents
                 .OrderBy(d => d.DisplayOrder)

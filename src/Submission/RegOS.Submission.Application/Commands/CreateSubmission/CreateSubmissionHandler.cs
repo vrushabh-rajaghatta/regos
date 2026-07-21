@@ -61,7 +61,11 @@ public sealed class CreateSubmissionHandler
             throw new BusinessRuleViolationException(
                 SubmissionRuleErrors.ApplicationClosed);
 
+        // The tenant comes from the parent application, not from the ambient
+        // context: a submission structurally cannot carry a different tenant
+        // than the application it belongs to (ADR-031).
         var submission = SubmissionAggregate.Create(
+            application.TenantId,
             command.ApplicationId,
             command.SubmissionTypeId,
             command.Title);

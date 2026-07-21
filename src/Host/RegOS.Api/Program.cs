@@ -4,6 +4,7 @@ using RegOS.Api.Development;
 using RegOS.Api.Endpoints.Authentication;
 using RegOS.Api.Endpoints.Organization;
 using RegOS.Api.Endpoints.Platform;
+using RegOS.Api.Endpoints.PlatformAdministration;
 using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
@@ -111,11 +112,12 @@ using (var scope = app.Services.CreateScope())
     }
 
     // Development only, and deliberately guarded here rather than inside the
-    // seeder: an account with a known password must never be created anywhere
+    // seeders: accounts with known passwords must never be created anywhere
     // else, and that guarantee should be readable at the call site.
     if (app.Environment.IsDevelopment())
     {
         await DevelopmentCredentialSeeder.SeedAsync(scope.ServiceProvider);
+        await PlatformAdministratorSeeder.SeedAsync(scope.ServiceProvider);
     }
 }
 
@@ -151,6 +153,8 @@ app.MapDeactivateOrganization();
 app.MapGetOrganization();
 app.MapListOrganizations();
 app.MapUpdateOrganization();
+
+app.MapTenantAdministration();
 
 app.MapInviteUser();
 app.MapResendInvitation();

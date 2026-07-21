@@ -41,11 +41,16 @@ public sealed class UploadProductDocumentHandler
             throw new DomainException(
                 ProductDocumentUploadErrors.EmptyFile);
 
-        // Rule 1 — Product exists (the addressed resource).
-        var productExists = await _dbContext.Products
-            .AnyAsync(p => p.Id == command.ProductId, cancellationToken);
+        // Rule 1 — Product exists (the addressed resource). Its tenant is
+        // read in the same query: the document inherits the product's owner,
+        // so the two can never disagree (ADR-031).
+        var productTenantId = await _dbContext.Products
+            .AsNoTracking()
+            .Where(p => p.Id == command.ProductId)
+            .Select(p => p.TenantId)
+            .SingleOrDefaultAsync(cancellationToken);
 
-        if (!productExists)
+        if (productTenantId is null)
             throw new NotFoundException(
                 ProductDocumentUploadErrors.ProductDoesNotExist);
 
@@ -66,6 +71,7 @@ public sealed class UploadProductDocumentHandler
 
         // Create the aggregate first so we have its id for the storage path.
         var document = ProductDocumentAggregate.Create(
+            productTenantId,
             command.ProductId,
             command.DocumentTypeId,
             command.Name);

@@ -16,7 +16,7 @@ public sealed class ProductDirectoryRow
 {
     public Guid Id { get; init; }
 
-    public Guid OrganizationId { get; init; }
+    public Guid TenantId { get; init; }
 
     public string Code { get; init; } = default!;
 

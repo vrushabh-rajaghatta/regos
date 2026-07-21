@@ -1,3 +1,4 @@
+using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 
 using RegOS.ProductDocument.Domain.IDs;
@@ -17,7 +18,7 @@ public class SubmissionSnapshotTests
     {
         var submissionId = SubmissionId.New();
 
-        var snapshot = SubmissionSnapshot.Create(submissionId, new[] { Doc(1) });
+        var snapshot = SubmissionSnapshot.Create(TenantId.New(), submissionId, new[] { Doc(1) });
 
         snapshot.SubmissionId.Should().Be(submissionId);
         snapshot.Id.Value.Should().NotBe(Guid.Empty);
@@ -32,7 +33,7 @@ public class SubmissionSnapshotTests
 
         // Non-contiguous display order (as a submission with a removed document
         // could have) is copied verbatim, not re-sequenced.
-        var snapshot = SubmissionSnapshot.Create(
+        var snapshot = SubmissionSnapshot.Create(TenantId.New(), 
             SubmissionId.New(),
             new[] { (v1, 1), (v2, 3), (v3, 4) });
 
@@ -45,7 +46,7 @@ public class SubmissionSnapshotTests
     [Fact]
     public void Create_WithNoDocuments_HasEmptyManifest()
     {
-        var snapshot = SubmissionSnapshot.Create(
+        var snapshot = SubmissionSnapshot.Create(TenantId.New(), 
             SubmissionId.New(),
             Array.Empty<(DocumentVersionId, int)>());
 
@@ -55,7 +56,7 @@ public class SubmissionSnapshotTests
     [Fact]
     public void Create_WithoutSubmission_Throws()
     {
-        var act = () => SubmissionSnapshot.Create(default, new[] { Doc(1) });
+        var act = () => SubmissionSnapshot.Create(TenantId.New(), default, new[] { Doc(1) });
 
         act.Should().Throw<DomainException>();
     }
@@ -63,7 +64,7 @@ public class SubmissionSnapshotTests
     [Fact]
     public void Create_WithEmptyVersion_Throws()
     {
-        var act = () => SubmissionSnapshot.Create(
+        var act = () => SubmissionSnapshot.Create(TenantId.New(), 
             SubmissionId.New(),
             new[] { (default(DocumentVersionId), 1) });
 
@@ -73,7 +74,7 @@ public class SubmissionSnapshotTests
     [Fact]
     public void Create_WithDuplicateDisplayOrder_Throws()
     {
-        var act = () => SubmissionSnapshot.Create(
+        var act = () => SubmissionSnapshot.Create(TenantId.New(), 
             SubmissionId.New(),
             new[] { (DocumentVersionId.New(), 1), (DocumentVersionId.New(), 1) });
 
@@ -85,7 +86,7 @@ public class SubmissionSnapshotTests
     [InlineData(-1)]
     public void Create_WithNonPositiveDisplayOrder_Throws(int order)
     {
-        var act = () => SubmissionSnapshot.Create(
+        var act = () => SubmissionSnapshot.Create(TenantId.New(), 
             SubmissionId.New(),
             new[] { (DocumentVersionId.New(), order) });
 
@@ -95,7 +96,7 @@ public class SubmissionSnapshotTests
     [Fact]
     public void Documents_IsReadOnly()
     {
-        var snapshot = SubmissionSnapshot.Create(
+        var snapshot = SubmissionSnapshot.Create(TenantId.New(), 
             SubmissionId.New(), new[] { Doc(1) });
 
         snapshot.Documents.Should().BeAssignableTo<IReadOnlyCollection<SnapshotDocument>>();

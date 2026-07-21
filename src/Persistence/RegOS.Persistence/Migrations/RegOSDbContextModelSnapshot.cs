@@ -35,12 +35,17 @@ namespace RegOS.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("LegalName");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Organizations", (string)null);
                 });
@@ -58,12 +63,12 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -94,11 +99,11 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.ToTable((string)null);
 
@@ -250,6 +255,26 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Sessions", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.Platform.Domain.Aggregates.Tenant.Tenant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Tenants", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Platform.Domain.Aggregates.User.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -273,18 +298,21 @@ namespace RegOS.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("OrganizationId");
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Users", (string)null);
                 });
@@ -326,13 +354,13 @@ namespace RegOS.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -341,9 +369,9 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrganizationId");
+                    b.HasIndex("TenantId");
 
-                    b.HasIndex("OrganizationId", "Code")
+                    b.HasIndex("TenantId", "Code")
                         .IsUnique();
 
                     b.ToTable("Products", (string)null);
@@ -374,6 +402,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DocumentTypeId");
@@ -381,6 +412,8 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("ProductId");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("TenantId");
 
                     b.HasIndex("ProductId", "Name")
                         .IsUnique();
@@ -465,16 +498,16 @@ namespace RegOS.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<Guid?>("OrganizationId")
+                    b.Property<Guid?>("TenantId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
                         .IsUnique()
-                        .HasFilter("\"OrganizationId\" IS NULL");
+                        .HasFilter("\"TenantId\" IS NULL");
 
-                    b.HasIndex("OrganizationId");
+                    b.HasIndex("TenantId");
 
                     b.ToTable("DocumentTypes", (string)null);
                 });
@@ -597,6 +630,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicantOrganizationId");
@@ -604,6 +640,8 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("AuthorityId");
 
                     b.HasIndex("CountryId");
+
+                    b.HasIndex("TenantId");
 
                     b.HasIndex("ProductId", "CountryId", "AuthorityId")
                         .IsUnique();
@@ -645,10 +683,15 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("SubmissionId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SubmissionId")
                         .IsUnique();
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("SubmissionSnapshots", (string)null);
                 });
@@ -673,6 +716,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("SubmissionTypeId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -683,6 +729,8 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("ApplicationId");
 
                     b.HasIndex("SubmissionTypeId");
+
+                    b.HasIndex("TenantId");
 
                     b.ToTable("Submissions", (string)null);
                 });
@@ -799,9 +847,9 @@ namespace RegOS.Persistence.Migrations
 
             modelBuilder.Entity("RegOS.ReferenceData.Domain.DocumentType.DocumentType", b =>
                 {
-                    b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
+                    b.HasOne("RegOS.Platform.Domain.Aggregates.Tenant.Tenant", null)
                         .WithMany()
-                        .HasForeignKey("OrganizationId")
+                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
