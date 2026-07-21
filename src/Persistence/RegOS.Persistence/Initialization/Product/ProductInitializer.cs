@@ -14,7 +14,12 @@ public sealed class ProductInitializer : IDataInitializer
     public async Task InitializeAsync(
         CancellationToken cancellationToken = default)
     {
-        if (await _dbContext.Products.AnyAsync(cancellationToken))
+        // IgnoreQueryFilters: startup has no tenant, so the filter would
+        // report an empty table every boot and this would insert duplicates
+        // until the unique (TenantId, Code) index refused (ADR-031).
+        if (await _dbContext.Products
+                .IgnoreQueryFilters()
+                .AnyAsync(cancellationToken))
             return;
 
         _dbContext.Products.AddRange(Products.Data);

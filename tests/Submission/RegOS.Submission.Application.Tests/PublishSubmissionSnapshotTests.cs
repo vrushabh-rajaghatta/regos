@@ -42,7 +42,8 @@ public sealed class PublishSubmissionSnapshotTests : IAsyncLifetime
             .UseNpgsql(ConnectionString)
             .Options;
 
-    private static RegOSDbContext New() => new(Options());
+    private static RegOSDbContext New() =>
+        new(Options(), TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;
 
@@ -93,13 +94,13 @@ public sealed class PublishSubmissionSnapshotTests : IAsyncLifetime
         await using var ctx = New();
         var (applicationId, productId) = await TestApplications.EnsureAsync(ctx);
 
-        var submission = SubmissionAggregate.Create(TenantId.New(), 
+        var submission = SubmissionAggregate.Create(TestTenant.Id, 
             applicationId, SeededSubmissionType, "Publish-Snapshot Sub " + Guid.NewGuid());
 
         var versions = new List<DocumentVersionId>();
         for (var i = 0; i < count; i++)
         {
-            var doc = ProductDocumentAggregate.Create(TenantId.New(), 
+            var doc = ProductDocumentAggregate.Create(TestTenant.Id, 
                 productId, SeededCer, "Publish-Snapshot Doc " + Guid.NewGuid());
             doc.AddInitialVersion(
                 originalFileName: "cer.pdf",
@@ -255,7 +256,7 @@ public sealed class PublishSubmissionSnapshotTests : IAsyncLifetime
         // insert violates the unique SubmissionId index and SaveChanges fails.
         await using (var ctx = New())
         {
-            var blocker = SubmissionSnapshot.Create(TenantId.New(), 
+            var blocker = SubmissionSnapshot.Create(TestTenant.Id, 
                 submissionId, versions.Select((v, i) => (v, i + 1)));
             await new SubmissionSnapshotRepository(ctx).AddAsync(blocker, default);
             await ctx.SaveChangesAsync();

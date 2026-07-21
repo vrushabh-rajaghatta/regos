@@ -43,7 +43,8 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
             .UseNpgsql(ConnectionString)
             .Options;
 
-    private static RegOSDbContext New() => new(Options());
+    private static RegOSDbContext New() =>
+        new(Options(), TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;
 
@@ -97,7 +98,7 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
     private async Task<ProductDocumentAggregate> SeedActiveDocumentAsync(
         RegOSDbContext ctx, ProductId productId)
     {
-        var doc = ProductDocumentAggregate.Create(TenantId.New(), 
+        var doc = ProductDocumentAggregate.Create(TestTenant.Id, 
             productId, SeededCer, "Publish Doc " + Guid.NewGuid());
 
         doc.AddInitialVersion(
@@ -119,7 +120,7 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
         RegOSDbContext ctx, RegulatoryApplicationId appId,
         ProductDocumentAggregate? document)
     {
-        var sub = SubmissionAggregate.Create(TenantId.New(), 
+        var sub = SubmissionAggregate.Create(TestTenant.Id, 
             appId, SeededSubmissionType, "Publish Sub " + Guid.NewGuid());
 
         if (document is not null)

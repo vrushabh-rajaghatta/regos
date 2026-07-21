@@ -33,7 +33,10 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
             .UseNpgsql(ConnectionString)
             .Options;
 
-    private static RegOSDbContext NewContext() => new(Options());
+    // The context carries the same tenant the handler is scoped to, so the
+    // global query filter (ADR-031) resolves to this test's rows.
+    private RegOSDbContext NewContext() =>
+        new(Options(), new FakeTenantContext(_tenantId));
 
     public async Task InitializeAsync()
     {

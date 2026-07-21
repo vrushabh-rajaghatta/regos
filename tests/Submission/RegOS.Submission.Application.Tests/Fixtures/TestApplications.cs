@@ -51,10 +51,11 @@ internal static class TestApplications
             .AsNoTracking().Select(x => x.Id).FirstAsync();
 
         // The product's owner is a tenant; the application's applicant is an
-        // organization (ADR-030 split them). The seeded tenants share their
-        // guids with the seeded organizations, so aligning the two keeps the
-        // fixture equivalent to a customer filing for itself.
-        var tenantId = new TenantId(organizationId.Value);
+        // organization (ADR-030 split them). The tenant is pinned to the one
+        // every Submission test's DbContext is scoped to — under the global
+        // query filter (ADR-031) a fixture created for any other tenant would
+        // be invisible to the tests that need it.
+        var tenantId = TestTenant.Id;
 
         var product = ProductAggregate.Register(
             tenantId, FixtureCode, "Submission Test Product", ProductType.Drug);

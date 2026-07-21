@@ -41,13 +41,17 @@ public sealed class UserPolicy : IUserPolicy
     }
 
     // Both rules are deliberately unscoped by tenant: an email address
-    // identifies exactly one user across RegOS (ADR-021).
+    // identifies exactly one user across RegOS (ADR-021). IgnoreQueryFilters
+    // is that decision carried past the tenant filter — scoped to the caller's
+    // tenant, the check would miss a collision in another tenant and the
+    // unique index would answer with a 500 instead of this rule's 409.
 
     public async Task EnsureEmailIsUniqueAsync(
         Email email,
         CancellationToken cancellationToken)
     {
         var alreadyInUse = await _dbContext.Users
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .AnyAsync(x => x.Email == email, cancellationToken);
 
@@ -64,6 +68,7 @@ public sealed class UserPolicy : IUserPolicy
         // Identical to the invite rule, except the user being updated is not
         // allowed to collide with itself.
         var alreadyInUse = await _dbContext.Users
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .AnyAsync(
                 x => x.Email == email && x.Id != userId,

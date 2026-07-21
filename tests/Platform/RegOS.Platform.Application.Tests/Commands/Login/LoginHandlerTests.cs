@@ -185,7 +185,11 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         await using (var context = NewContext())
         {
-            var user = await context.Users.SingleAsync(x => x.Id == _user.Id);
+            // IgnoreQueryFilters: this bare test context carries no tenant,
+            // and the row is being reloaded by an id the test owns.
+            var user = await context.Users
+                .IgnoreQueryFilters()
+                .SingleAsync(x => x.Id == _user.Id);
             user.Deactivate();
             await context.SaveChangesAsync();
         }
