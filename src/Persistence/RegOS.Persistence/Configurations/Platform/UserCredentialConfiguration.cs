@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.Platform.Domain.Aggregates.User;
 
+using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
 using UserCredentialAggregate =
     RegOS.Platform.Domain.Aggregates.UserCredential.UserCredential;
 
@@ -36,5 +37,15 @@ public sealed class UserCredentialConfiguration
 
         builder.Property(x => x.UpdatedOn)
             .IsRequired();
+
+        // A credential has no identity outside its user, so the database
+        // enforces that lifetime rather than trusting every caller to remember
+        // it (ADR-023). Declared without navigation properties on either side:
+        // the two remain separate aggregates, loaded and saved independently,
+        // and neither can reach the other in code.
+        builder.HasOne<UserAggregate>()
+            .WithOne()
+            .HasForeignKey<UserCredentialAggregate>(x => x.Id)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

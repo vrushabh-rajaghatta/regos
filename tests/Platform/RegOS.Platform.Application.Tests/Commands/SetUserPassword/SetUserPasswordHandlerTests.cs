@@ -61,17 +61,9 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        // Credentials for every user in the fixture's organization, not just
-        // the one field this class happens to hold, so a future test that adds
-        // a second user cannot leave an orphaned credential behind.
-        await context.Database.ExecuteSqlRawAsync(
-            """
-            DELETE FROM "UserCredentials"
-            WHERE "UserId" IN (
-                SELECT "Id" FROM "Users" WHERE "OrganizationId" = {0})
-            """,
-            _organizationId.Value);
-
+        // Users only: credentials cascade (ADR-023). Deleting them explicitly
+        // would still work, but it would hide whether the constraint is doing
+        // its job — Cascades_the_credential_when_the_user_is_deleted asserts it.
         await context.Database.ExecuteSqlRawAsync(
             "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
             _organizationId.Value);
@@ -177,6 +169,26 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
             .CountAsync(x => x.Id == _user.Id);
 
         count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Cascades_the_credential_when_the_user_is_deleted()
+    {
+        // ADR-023: a credential has no meaning without its user, so the schema
+        // refuses to keep one. Asserted against the real database because this
+        // is a constraint, not a code path.
+        await SetPasswordAsync(CorrectPassword);
+
+        await using var context = NewContext();
+
+        await context.Database.ExecuteSqlRawAsync(
+            "DELETE FROM \"Users\" WHERE \"Id\" = {0}",
+            _user.Id.Value);
+
+        var remaining = await context.UserCredentials
+            .CountAsync(x => x.Id == _user.Id);
+
+        remaining.Should().Be(0);
     }
 
     [Fact]

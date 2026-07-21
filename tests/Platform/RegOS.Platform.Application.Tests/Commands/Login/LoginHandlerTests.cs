@@ -81,18 +81,9 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        // Credentials first, and for every user this fixture created — not just
-        // the main one. Deleting users by organization while removing a single
-        // credential leaves orphans behind, which is exactly what happened the
-        // first time this ran.
-        await context.Database.ExecuteSqlRawAsync(
-            """
-            DELETE FROM "UserCredentials"
-            WHERE "UserId" IN (
-                SELECT "Id" FROM "Users" WHERE "OrganizationId" = {0})
-            """,
-            _organizationId.Value);
-
+        // Users only: credentials cascade (ADR-023). This fixture once leaked
+        // four orphaned credentials because it deleted users by organization
+        // and credentials one at a time; that is now impossible to get wrong.
         await context.Database.ExecuteSqlRawAsync(
             "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
             _organizationId.Value);
