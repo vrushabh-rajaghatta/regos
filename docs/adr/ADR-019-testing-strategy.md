@@ -79,6 +79,23 @@ They run against a **running stack** — real app, real API, real Postgres —
 because the defects this gate exists to catch only appear when the whole thing
 runs together.
 
+**Refined 2026-07-21, by AUTH-008A.** The rule is about *capabilities*, not
+*channels*. Where the last step of a flow crosses a boundary deliberately
+outside the product — email, SMS, an external identity provider — the browser
+verifies everything up to that boundary and host integration tests own the rest.
+
+Password reset is the first case. A spec can drive the request, the identical
+confirmation, the navigation, the validation and the completion page; it cannot
+read the link, because the link arrives by a channel RegOS does not implement.
+The tempting fix is a development-only endpoint that hands the last token to
+whoever asks. It was rejected: its only consumer would be Playwright, and it
+would create a second way to obtain a grant that the product itself does not
+have. **A test must not be the reason an application gains behaviour.**
+
+This is a narrow exception and should stay narrow. It does not license skipping
+browser coverage because a flow is awkward — only because its final step is not
+ours to perform.
+
 ### 6. Verify invariants by attacking the contract, not the UI
 
 A disabled input proves nothing about the model. `ProductCode` immutability is
