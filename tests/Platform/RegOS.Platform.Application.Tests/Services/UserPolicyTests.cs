@@ -21,8 +21,14 @@ public sealed class UserPolicyTests : IAsyncLifetime
     private readonly OrganizationId _organizationId =
         OrganizationId.From(Guid.NewGuid());
 
+    // A second, unrelated organization. Uniqueness is global (ADR-021), so a
+    // collision across these two must be rejected exactly like one within.
+    private readonly OrganizationId _otherOrganizationId =
+        OrganizationId.From(Guid.NewGuid());
+
     private UserAggregate _existing = default!;
     private UserAggregate _other = default!;
+    private UserAggregate _elsewhere = default!;
 
     private static RegOSDbContext NewContext() =>
         new(new DbContextOptionsBuilder<RegOSDbContext>()
@@ -39,7 +45,13 @@ public sealed class UserPolicyTests : IAsyncLifetime
         _other = UserAggregate.Create(
             _organizationId, Email.Create("other@policy.example"), "Other", "User");
 
-        context.Users.AddRange(_existing, _other);
+        _elsewhere = UserAggregate.Create(
+            _otherOrganizationId,
+            Email.Create("elsewhere@policy.example"),
+            "Else",
+            "Where");
+
+        context.Users.AddRange(_existing, _other, _elsewhere);
 
         await context.SaveChangesAsync();
     }
@@ -49,8 +61,9 @@ public sealed class UserPolicyTests : IAsyncLifetime
         await using var context = NewContext();
 
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
-            _organizationId.Value);
+            "DELETE FROM \"Users\" WHERE \"OrganizationId\" IN ({0}, {1})",
+            _organizationId.Value,
+            _otherOrganizationId.Value);
     }
 
     [Fact]
@@ -60,7 +73,6 @@ public sealed class UserPolicyTests : IAsyncLifetime
         var policy = new UserPolicy(context);
 
         var act = () => policy.EnsureEmailIsUniqueForUpdateAsync(
-            _organizationId,
             _existing.Id,
             Email.Create("taken@policy.example"),
             CancellationToken.None);
@@ -75,8 +87,37 @@ public sealed class UserPolicyTests : IAsyncLifetime
         var policy = new UserPolicy(context);
 
         var act = () => policy.EnsureEmailIsUniqueForUpdateAsync(
-            _organizationId,
             _other.Id,
+            Email.Create("taken@policy.example"),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<BusinessRuleViolationException>();
+    }
+
+    [Fact]
+    public async Task Invite_rejects_an_email_already_used_in_another_organization()
+    {
+        // The rule this ADR-021 slice exists for. Before the change this
+        // passed - uniqueness was scoped to the organization, so the same
+        // address could be invited twice and login could not resolve a user.
+        await using var context = NewContext();
+        var policy = new UserPolicy(context);
+
+        var act = () => policy.EnsureEmailIsUniqueAsync(
+            Email.Create("taken@policy.example"),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<BusinessRuleViolationException>();
+    }
+
+    [Fact]
+    public async Task Update_rejects_an_email_owned_by_a_user_in_another_organization()
+    {
+        await using var context = NewContext();
+        var policy = new UserPolicy(context);
+
+        var act = () => policy.EnsureEmailIsUniqueForUpdateAsync(
+            _elsewhere.Id,
             Email.Create("taken@policy.example"),
             CancellationToken.None);
 
@@ -90,7 +131,6 @@ public sealed class UserPolicyTests : IAsyncLifetime
         var policy = new UserPolicy(context);
 
         var act = () => policy.EnsureEmailIsUniqueForUpdateAsync(
-            _organizationId,
             _existing.Id,
             Email.Create("brand.new@policy.example"),
             CancellationToken.None);

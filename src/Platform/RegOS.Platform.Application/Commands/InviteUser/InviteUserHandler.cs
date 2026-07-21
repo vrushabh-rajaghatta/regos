@@ -39,8 +39,10 @@ public sealed class InviteUserHandler
 
         var email = Email.Create(command.Email);
 
+        // Unscoped by organization: an email identifies exactly one user across
+        // RegOS, so an address already invited elsewhere is a conflict here too
+        // (ADR-021).
         await _userPolicy.EnsureEmailIsUniqueAsync(
-            organizationId,
             email,
             cancellationToken);
 

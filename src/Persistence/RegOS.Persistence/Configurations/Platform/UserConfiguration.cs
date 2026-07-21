@@ -53,9 +53,11 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<UserAggregate>
         builder.Property(x => x.CreatedOn)
             .IsRequired();
 
-        // Defense in depth for the uniqueness policy: an email is unique within
-        // an organization.
-        builder.HasIndex(x => new { x.OrganizationId, x.Email })
+        // Defense in depth for the uniqueness policy: an email address
+        // identifies exactly one user across RegOS, not one per organization
+        // (ADR-021). Authentication resolves a user before a tenant exists, so
+        // the index cannot be tenant-scoped.
+        builder.HasIndex(x => x.Email)
             .IsUnique();
 
         builder.HasIndex(x => x.OrganizationId);

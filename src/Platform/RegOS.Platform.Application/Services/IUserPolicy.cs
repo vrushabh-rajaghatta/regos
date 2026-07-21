@@ -16,8 +16,13 @@ public interface IUserPolicy
         OrganizationId organizationId,
         CancellationToken cancellationToken);
 
+    /// <summary>
+    /// An email address identifies exactly one user across RegOS, so this rule
+    /// takes no organization (ADR-021). The parameter was removed rather than
+    /// ignored: authentication resolves a user before any tenant exists, and a
+    /// per-organization check could not answer it.
+    /// </summary>
     Task EnsureEmailIsUniqueAsync(
-        OrganizationId organizationId,
         Email email,
         CancellationToken cancellationToken);
 
@@ -27,7 +32,6 @@ public interface IUserPolicy
     /// would collide with itself.
     /// </summary>
     Task EnsureEmailIsUniqueForUpdateAsync(
-        OrganizationId organizationId,
         UserId userId,
         Email email,
         CancellationToken cancellationToken);

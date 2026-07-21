@@ -39,16 +39,16 @@ public sealed class UserPolicy : IUserPolicy
                 PlatformErrors.OrganizationInactive);
     }
 
+    // Both rules are deliberately unscoped by organization: an email address
+    // identifies exactly one user across RegOS (ADR-021).
+
     public async Task EnsureEmailIsUniqueAsync(
-        OrganizationId organizationId,
         Email email,
         CancellationToken cancellationToken)
     {
         var alreadyInUse = await _dbContext.Users
             .AsNoTracking()
-            .AnyAsync(
-                x => x.OrganizationId == organizationId && x.Email == email,
-                cancellationToken);
+            .AnyAsync(x => x.Email == email, cancellationToken);
 
         if (alreadyInUse)
             throw new BusinessRuleViolationException(
@@ -56,7 +56,6 @@ public sealed class UserPolicy : IUserPolicy
     }
 
     public async Task EnsureEmailIsUniqueForUpdateAsync(
-        OrganizationId organizationId,
         UserId userId,
         Email email,
         CancellationToken cancellationToken)
@@ -66,9 +65,7 @@ public sealed class UserPolicy : IUserPolicy
         var alreadyInUse = await _dbContext.Users
             .AsNoTracking()
             .AnyAsync(
-                x => x.OrganizationId == organizationId
-                    && x.Email == email
-                    && x.Id != userId,
+                x => x.Email == email && x.Id != userId,
                 cancellationToken);
 
         if (alreadyInUse)

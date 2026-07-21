@@ -33,7 +33,6 @@ public sealed class FakeUserPolicy : IUserPolicy
             : Task.FromException(_organizationError);
 
     public Task EnsureEmailIsUniqueAsync(
-        OrganizationId organizationId,
         Email email,
         CancellationToken cancellationToken)
         => _emailError is null
@@ -41,7 +40,6 @@ public sealed class FakeUserPolicy : IUserPolicy
             : Task.FromException(_emailError);
 
     public Task EnsureEmailIsUniqueForUpdateAsync(
-        OrganizationId organizationId,
         UserId userId,
         Email email,
         CancellationToken cancellationToken)

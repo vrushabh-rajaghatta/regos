@@ -34,10 +34,9 @@ public sealed class UpdateUserProfileHandler
 
         var email = Email.Create(command.Email);
 
-        // Scoped to the tenant, and excluding the user itself so an unchanged
-        // email never collides with its own row.
+        // Unscoped by organization (ADR-021), and excluding the user itself so
+        // an unchanged email never collides with its own row.
         await _userPolicy.EnsureEmailIsUniqueForUpdateAsync(
-            organizationId,
             user.Id,
             email,
             cancellationToken);

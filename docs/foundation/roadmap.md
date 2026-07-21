@@ -292,9 +292,14 @@ real work is what Milestone 2 changes underneath it.
   `IUserPolicy.EnsureOrganizationCanAcceptUsersAsync` already exists and is
   called by `InviteUserHandler`; no test has ever exercised it against a
   deactivated organization. This is the first milestone that can.
-- A second invitation to the same email in the same organization is rejected as
-  a conflict.
-- The same email can be invited by a different organization independently.
+- A second invitation to the same email is rejected as a conflict — **including
+  from a different organization**. An email address identifies exactly one user
+  across RegOS ([ADR-021](../adr/ADR-021-email-is-globally-unique.md)).
+
+  This replaces the earlier criterion *"the same email can be invited by a
+  different organization independently"*, which was derived from the old
+  `(OrganizationId, Email)` index rather than from a business rule, and which
+  made login unable to resolve a user from an email.
 - An invited user cannot act until activated.
 - **No user query returns a user from another organization, whatever parameters
   are supplied**, now enforced by claims rather than by a header.
