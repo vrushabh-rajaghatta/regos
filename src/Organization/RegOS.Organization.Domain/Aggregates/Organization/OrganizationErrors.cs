@@ -11,6 +11,9 @@ public static class OrganizationErrors
     public const string AlreadyInactive =
         "Organization is already inactive.";
 
+    public const string AlreadyActive =
+        "Organization is already active.";
+
     public const string NotFound =
         "Organization not found.";
 }

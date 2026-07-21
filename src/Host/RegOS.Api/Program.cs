@@ -100,6 +100,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapListCountries();
 app.MapListAuthorities();
+app.MapActivateOrganization();
 app.MapCreateOrganization();
 app.MapDeactivateOrganization();
 app.MapGetOrganization();

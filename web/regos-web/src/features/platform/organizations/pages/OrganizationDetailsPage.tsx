@@ -6,6 +6,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { PageSection } from "@/shared/components/PageSection";
 
 import { OrganizationNotFoundError } from "../api/getOrganization";
+import { ActivateOrganizationDialog } from "../components/ActivateOrganizationDialog";
 import { DeactivateOrganizationDialog } from "../components/DeactivateOrganizationDialog";
 import { EditOrganizationDialog } from "../components/EditOrganizationDialog";
 import { OrganizationStatusBadge } from "../components/OrganizationStatusBadge";
@@ -16,6 +17,7 @@ export function OrganizationDetailsPage() {
   const { organizationId } = useParams();
   const [editOpen, setEditOpen] = useState(false);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [activateOpen, setActivateOpen] = useState(false);
 
   const { data: organization, isPending, error } = useOrganization(
     organizationId!,
@@ -70,13 +72,14 @@ export function OrganizationDetailsPage() {
               Edit
             </Button>
 
-            {/* An inactive organization has nowhere further to go, so the
-                action disappears rather than failing with a 409 when
-                pressed. */}
-            {organization.status === "Active" && (
+            {/* Exactly one lifecycle action is offered, because exactly one
+                transition is legal. The other would answer 409. */}
+            {organization.status === "Active" ? (
               <Button onClick={() => setDeactivateOpen(true)}>
                 Deactivate
               </Button>
+            ) : (
+              <Button onClick={() => setActivateOpen(true)}>Activate</Button>
             )}
           </div>
         }
@@ -93,6 +96,13 @@ export function OrganizationDetailsPage() {
         legalName={organization.legalName}
         open={deactivateOpen}
         onOpenChange={setDeactivateOpen}
+      />
+
+      <ActivateOrganizationDialog
+        organizationId={organization.id}
+        legalName={organization.legalName}
+        open={activateOpen}
+        onOpenChange={setActivateOpen}
       />
 
       <div className="mt-6">

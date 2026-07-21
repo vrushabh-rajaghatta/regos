@@ -78,11 +78,19 @@ see *The retirement-path rule* below.
 
 | # | Slice | Status |
 |---|---|---|
-| 1 | Create Organization | ✅ Done — `28a3893` (ORG-001) |
-| 2 | **Deactivate Organization** | Next |
-| 3 | Get Organization | |
-| 4 | Update Organization | |
-| 5 | Activate Organization | |
+| 1 | Create Organization | ✅ `28a3893` (ORG-001) |
+| 2 | Deactivate Organization | ✅ `edf16e0` (ORG-002) |
+| 3 | Get Organization | ✅ `3e1d0af` (ORG-003) |
+| 4 | Update Organization | ✅ `eb4efd2` (ORG-004) |
+| 5 | Activate Organization | ✅ (ORG-005) |
+
+**Milestone 1 is complete.** The lifecycle closes:
+
+```
+Create ──▶ Active ──Deactivate──▶ Inactive ──Activate──▶ Active
+```
+
+Editing is available in both states and changes neither.
 
 Deactivate moved from last to second because until it exists, nothing can
 return the database to a known state: an organization cannot be deleted, so

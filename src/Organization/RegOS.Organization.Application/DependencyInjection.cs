@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using RegOS.Organization.Application.Commands.ActivateOrganization;
 using RegOS.Organization.Application.Commands.CreateOrganization;
 using RegOS.Organization.Application.Commands.DeactivateOrganization;
 using RegOS.Organization.Application.Commands.UpdateOrganization;
@@ -13,6 +14,7 @@ public static class DependencyInjection
     public static IServiceCollection AddOrganizationApplication(
         this IServiceCollection services)
     {
+        services.AddScoped<ActivateOrganizationHandler>();
         services.AddScoped<CreateOrganizationHandler>();
         services.AddScoped<DeactivateOrganizationHandler>();
         services.AddScoped<GetOrganizationHandler>();

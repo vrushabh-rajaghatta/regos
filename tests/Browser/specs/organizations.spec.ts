@@ -181,6 +181,48 @@ test.describe("Organization directory", () => {
     expect(errors()).toEqual([]);
   });
 
+  test("activates an inactive organization, and back again", async ({
+    page,
+  }) => {
+    const errors = collectErrors(page);
+
+    const legalName = unique("Browser Revived Org");
+    const id = await seedOrganization(legalName);
+    await retire(id);
+
+    await page.goto(`${LIST}/${id}`);
+
+    const details = page.getByTestId("organization-details");
+    await expect(details).toContainText("Inactive");
+
+    // `name` matches as a case-insensitive SUBSTRING, so "Activate" also
+    // matches "Deactivate". Every lifecycle assertion here must be exact.
+    const activate = page.getByRole("button", { name: "Activate", exact: true });
+    const deactivate = page.getByRole("button", {
+      name: "Deactivate",
+      exact: true,
+    });
+
+    // Exactly one lifecycle action is offered, because one transition is legal.
+    await expect(deactivate).toHaveCount(0);
+
+    await activate.first().click();
+    await activate.last().click();
+
+    await expect(details).toContainText("Active");
+    await expect(activate).toHaveCount(0);
+    await expect(deactivate).toBeVisible();
+
+    // The list reflects it too, so the cache was genuinely invalidated.
+    await page.goto(LIST);
+    const row = page.locator("tr", { hasText: legalName });
+    await expect(row).toContainText("Active");
+
+    expect(errors()).toEqual([]);
+
+    await retire(id);
+  });
+
   test("shows a distinct not-found state, not a generic error", async ({
     page,
   }) => {

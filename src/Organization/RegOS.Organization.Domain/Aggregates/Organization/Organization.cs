@@ -80,8 +80,17 @@ public sealed class Organization : AggregateRoot<OrganizationId>
         Status = OrganizationStatus.Inactive;
     }
 
+    /// <summary>
+    /// Returns the organization to service. The mirror of
+    /// <see cref="Deactivate"/>, and rejected the same way when there is no
+    /// transition to make.
+    /// </summary>
     public void Activate()
     {
+        if (Status == OrganizationStatus.Active)
+            throw new BusinessRuleViolationException(
+                OrganizationErrors.AlreadyActive);
+
         Status = OrganizationStatus.Active;
     }
 }

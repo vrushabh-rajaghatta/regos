@@ -88,6 +88,46 @@ Dependency rules, project boundaries, and implementation standards should be ver
 
 ---
 
+## Principle 7 — A Test Owns Every Entity It Mutates
+
+A browser spec must create the business entities it acts on, capture their
+identifiers, and operate on those identifiers only.
+
+```
+seed via the API  →  capture the id  →  operate on that id  →  retire it
+```
+
+Never select a subject from ambient data:
+
+```ts
+// Wrong — acts on whatever the database happens to contain
+const target = organizations.find((o) => o.status === "Active");
+
+// Right — the spec owns what it touches
+const id = await seedOrganization(unique("Browser Edit Org"));
+```
+
+This is stricter than "clean up after yourself", and it exists because a
+violation is silent. A spec that reads ambient data passes for months and then
+mutates seeded data that another spec depends on. RegOS lost a seeded
+organization to exactly this — it was found by inspection, not by a failing
+test.
+
+Two safeguards back the rule, and they do different jobs:
+
+- **`OrganizationInitializer` reconciles demo data on startup.** Developer
+  convenience: experiment locally, restart, get a known state back. It updates
+  only rows that already exist, so it never pushes demo data into a database
+  holding real records.
+- **`seed-integrity.spec.ts` is a canary.** It asserts the seeded organizations
+  are present, unmodified and Active. If it fails, a spec mutated something it
+  did not create. Fix the spec — never relax the assertion.
+
+Related: [ADR-019](../adr/ADR-019-testing-strategy.md) rule 1, which this
+principle strengthens.
+
+---
+
 # Confidence Levels
 
 RegOS organizes testing by confidence rather than by framework.
@@ -236,6 +276,7 @@ Before considering a capability complete, verify:
 - [ ] Failure scenarios are covered.
 - [ ] Historical behavior remains preserved.
 - [ ] Architectural boundaries remain valid.
+- [ ] Every browser spec owns the entities it mutates (Principle 7).
 
 ---
 

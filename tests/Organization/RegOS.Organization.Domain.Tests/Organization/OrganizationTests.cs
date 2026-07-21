@@ -114,6 +114,42 @@ public sealed class OrganizationTests
     }
 
     [Fact]
+    public void Activates_an_inactive_organization()
+    {
+        var organization = Active();
+        organization.Deactivate();
+
+        organization.Activate();
+
+        organization.Status.Should().Be(OrganizationStatus.Active);
+    }
+
+    [Fact]
+    public void Rejects_activating_an_already_active_organization()
+    {
+        // The mirror of Deactivate, rejected the same way: there is no
+        // transition to make, so this is a conflict rather than a no-op.
+        var organization = Active();
+
+        var act = organization.Activate;
+
+        act.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(OrganizationErrors.AlreadyActive);
+    }
+
+    [Fact]
+    public void Round_trips_through_the_full_lifecycle()
+    {
+        var organization = Active();
+
+        organization.Deactivate();
+        organization.Activate();
+        organization.Deactivate();
+
+        organization.Status.Should().Be(OrganizationStatus.Inactive);
+    }
+
+    [Fact]
     public void Keeps_its_details_when_deactivated()
     {
         // Deactivation retires the organization; it does not erase it.
