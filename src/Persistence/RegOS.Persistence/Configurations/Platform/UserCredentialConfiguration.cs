@@ -40,7 +40,7 @@ public sealed class UserCredentialConfiguration
 
         // A credential has no identity outside its user, so the database
         // enforces that lifetime rather than trusting every caller to remember
-        // it (ADR-023). Declared without navigation properties on either side:
+        // it (ADR-026). Declared without navigation properties on either side:
         // the two remain separate aggregates, loaded and saved independently,
         // and neither can reach the other in code.
         builder.HasOne<UserAggregate>()

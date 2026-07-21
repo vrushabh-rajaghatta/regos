@@ -195,7 +195,7 @@ against `X-Tenant-Id`, once against a real identity.
 | AUTH-001 | An email address identifies exactly one user (ADR-021) | `60edabd` |
 | AUTH-002 | Store and verify a user password | `5e1b7c7` |
 | AUTH-003 | Sign in and receive an access token (ADR-022) | `592494a` |
-| — | A credential cannot outlive its user (ADR-023) | `e6c6041` |
+| — | A credential cannot outlive its user (ADR-023, restated by ADR-026) | `e6c6041` |
 | AUTH-004 | Validate access tokens; `ICurrentUser` | `b7fbe13` |
 | AUTH-005 | Tenancy from identity; `X-Tenant-Id` removed (ADR-024) | `b5a9e85` |
 | AUTH-006 | Refresh tokens, rotation, cookie sessions (ADR-025) | this slice |

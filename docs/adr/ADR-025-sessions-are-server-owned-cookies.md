@@ -4,7 +4,7 @@
 **Supersedes:** the `localStorage` transport accepted by
 [ADR-024](ADR-024-tenancy-is-derived-from-identity.md) ·
 **Related:** [ADR-022](ADR-022-authentication-failure-is-a-fourth-exception.md)
-(401), [ADR-023](ADR-023-satellite-aggregate-lifetime.md) (satellite lifetime)
+(401), [ADR-026](ADR-026-lifecycle-owned-satellites.md) (satellite lifetime)
 
 ## Context
 

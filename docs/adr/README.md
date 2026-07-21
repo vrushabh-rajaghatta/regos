@@ -12,7 +12,7 @@ never changes meaning once assigned.
 2. **One decision per file.** No aggregate documents.
 3. **Append-only.** Edit an ADR to correct a broken reference or change its
    status — never to change what was decided.
-4. **New ADRs take the next free number.** Today that is **ADR-026**.
+4. **New ADRs take the next free number.** Today that is **ADR-027**.
 5. **Cite by number in code and commits.** `// ADR-009` in a source file is the
    reason the ADR must never be renumbered.
 
@@ -53,9 +53,10 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [020](ADR-020-ef-read-model-strategy.md) | EF Core read model strategy | Accepted | Current |
 | [021](ADR-021-email-is-globally-unique.md) | An email address identifies exactly one user | Accepted | Current |
 | [022](ADR-022-authentication-failure-is-a-fourth-exception.md) | Authentication failure is a fourth exception | Accepted | Current |
-| [023](ADR-023-satellite-aggregate-lifetime.md) | A satellite aggregate's lifetime is enforced by the database | Accepted | Current |
+| [023](ADR-023-satellite-aggregate-lifetime.md) | Satellite lifetime, keyed on the principal's identity | **Superseded** by 026 | — |
 | [024](ADR-024-tenancy-is-derived-from-identity.md) | Tenancy is derived from identity, not asserted by the caller | Accepted | Current |
 | [025](ADR-025-sessions-are-server-owned-cookies.md) | A session is server-owned, and travels in cookies | Accepted | Current |
+| [026](ADR-026-lifecycle-owned-satellites.md) | A satellite is defined by lifecycle ownership, not by its key | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

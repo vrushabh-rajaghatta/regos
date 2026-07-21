@@ -61,7 +61,7 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        // Users only: credentials cascade (ADR-023). Deleting them explicitly
+        // Users only: credentials cascade (ADR-026). Deleting them explicitly
         // would still work, but it would hide whether the constraint is doing
         // its job — Cascades_the_credential_when_the_user_is_deleted asserts it.
         await context.Database.ExecuteSqlRawAsync(
@@ -174,7 +174,7 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
     [Fact]
     public async Task Cascades_the_credential_when_the_user_is_deleted()
     {
-        // ADR-023: a credential has no meaning without its user, so the schema
+        // ADR-026: a credential has no meaning without its user, so the schema
         // refuses to keep one. Asserted against the real database because this
         // is a constraint, not a code path.
         await SetPasswordAsync(CorrectPassword);

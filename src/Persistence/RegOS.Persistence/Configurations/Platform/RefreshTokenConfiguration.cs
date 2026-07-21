@@ -53,16 +53,12 @@ public sealed class RefreshTokenConfiguration
         // Sign-out and replay handling both sweep a user's tokens.
         builder.HasIndex(x => x.UserId);
 
-        // A refresh token is meaningless without its user, so the schema
-        // enforces that lifetime.
-        //
-        // Note this does NOT satisfy ADR-023 as written: that ADR requires the
-        // satellite's primary key to BE the principal's identity, and this key
-        // is its own. It meets the other two conditions and the reason behind
-        // all three — the lifecycle dependency is absolute — but the rule as
-        // stated does not cover it. ADR-023's own "Revisit When" anticipated
-        // this: a second candidate is where the pattern gets named properly.
-        // Flagged for a decision rather than settled by widening the rule here.
+        // A refresh token whose user is gone cannot refresh anything, so the
+        // schema enforces that lifetime rather than trusting every caller to
+        // remember it (ADR-026). One-to-many, unlike UserCredential — which is
+        // precisely the case ADR-023 failed to cover and ADR-026 exists to
+        // restate: the key expresses cardinality, the foreign key enforces
+        // lifetime, and only the second one is the point.
         builder.HasOne<UserAggregate>()
             .WithMany()
             .HasForeignKey(x => x.UserId)

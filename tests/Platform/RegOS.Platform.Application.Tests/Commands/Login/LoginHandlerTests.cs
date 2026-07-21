@@ -89,7 +89,7 @@ public sealed class LoginHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
-        // Users only: credentials cascade (ADR-023). This fixture once leaked
+        // Users only: credentials cascade (ADR-026). This fixture once leaked
         // four orphaned credentials because it deleted users by organization
         // and credentials one at a time; that is now impossible to get wrong.
         await context.Database.ExecuteSqlRawAsync(

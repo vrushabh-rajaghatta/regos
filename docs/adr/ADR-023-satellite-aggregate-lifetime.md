@@ -1,9 +1,22 @@
 # ADR-023 — A Satellite Aggregate's Lifetime Is Enforced by the Database
 
-**Status:** Accepted · **Date:** 2026-07-21 · **Supersedes:** nothing ·
+**Status:** Superseded by
+[ADR-026](ADR-026-lifecycle-owned-satellites.md) ·
+**Date:** 2026-07-21 · **Superseded:** 2026-07-21 ·
 **Related:** [ADR-016](ADR-016-persistence-access-model.md) (persistence access
 model), [ADR-001](ADR-001-modular-architecture.md) (modular architecture),
 [ADR-019](ADR-019-testing-strategy.md) (testing strategy)
+
+> **The rule below is narrower than the one in force.** It required a
+> satellite's primary key to *be* the principal's identity. That condition
+> described this ADR's single example rather than the principle behind it — the
+> key expresses cardinality, while the foreign key enforces lifetime.
+> [ADR-026](ADR-026-lifecycle-owned-satellites.md) restates the rule around
+> lifecycle ownership and covers one-to-many satellites such as `RefreshToken`.
+>
+> The decision recorded here — that `UserCredentials.UserId` has a foreign key
+> with cascade delete — still holds and is unchanged. Retained as history; cite
+> ADR-026 for guidance.
 
 ## Context
 
