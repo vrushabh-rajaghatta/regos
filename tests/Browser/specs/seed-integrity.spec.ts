@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
 
-import { api } from "./support";
+import { test, api } from "./support";
 
 /**
  * A canary, not a feature test.

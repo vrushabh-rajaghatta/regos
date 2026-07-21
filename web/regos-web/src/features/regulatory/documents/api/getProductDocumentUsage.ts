@@ -1,11 +1,11 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { DocumentUsageItem } from "../types/DocumentUsageItem";
 
 export async function getProductDocumentUsage(
   productId: string,
   documentId: string
 ): Promise<DocumentUsageItem[]> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/api/products/${productId}/documents/${documentId}/usage`)
   );
 

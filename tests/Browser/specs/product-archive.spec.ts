@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
 
-import { api, collectErrors } from "./support";
+import { test, api, collectErrors } from "./support";
 
 test.describe("Archive product", () => {
   test("retires a product from the directory without deleting it", async ({ page }) => {

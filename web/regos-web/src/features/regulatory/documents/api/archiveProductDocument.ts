@@ -1,10 +1,10 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export async function archiveProductDocument(
   productId: string,
   documentId: string
 ): Promise<void> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(
       `/api/products/${productId}/documents/${documentId}/archive`
     ),

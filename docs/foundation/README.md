@@ -43,6 +43,9 @@ document is stale (principle P5). Documents describe; ADRs decide.
    [ADR-015](../adr/ADR-015-organization-is-the-tenant.md).
 
 2. **RegOS is not yet tenant-isolated.** Platform enforces it; the regulatory
-   domain has no tenant concept at all, and `X-Tenant-Id` is not authentication.
-   Closing this is the real content of Epic 1.
+   domain has no tenant concept at all. The tenant is at least now *proven*
+   rather than asserted — it comes from the caller's token
+   ([ADR-024](../adr/ADR-024-tenancy-is-derived-from-identity.md)) — but a
+   proven tenant that no regulatory handler consults isolates nothing.
+   Closing that is the real content of Epic 1.
    [vision.md §4](vision.md#4-the-foundations-central-promise).

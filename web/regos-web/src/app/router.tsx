@@ -31,165 +31,178 @@ import { OrganizationsPage } from "@/features/platform/organizations/pages/Organ
 import { UsersPage } from "@/features/platform/users/pages/UsersPage";
 import { UserDetailsPage } from "@/features/platform/users/pages/UserDetailsPage";
 import { Navigate } from "react-router-dom";
+import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { RequireAuth } from "@/features/auth/components/RequireAuth";
 
 export const router = createBrowserRouter([
   {
+    // Outside the shell: there is no navigation to show someone who has not
+    // signed in, and the header links to pages they cannot load.
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
     path: "/",
-    element: <AppLayout />,
+    element: <RequireAuth />,
     children: [
       {
-        index: true,
-        element: <HomePage />,
-      },
-      {
-        path: "platform",
-        element: <PlatformLayout />,
+        element: <AppLayout />,
         children: [
           {
             index: true,
-            element: <Navigate to="organizations" replace />,
+            element: <HomePage />,
           },
           {
-            path: "organizations",
-            element: <OrganizationsPage />,
-          },
-          {
-            path: "organizations/:organizationId",
-            element: <OrganizationDetailsPage />,
-          },
-          {
-            path: "users",
-            element: <UsersPage />,
-          },
-          {
-            path: "users/:userId",
-            element: <UserDetailsPage />,
-          },
-        ],
-      },
-      {
-        path: "regulatory",
-        element: <RegulatoryLayout />,
-        children: [
-          {
-            path: "products",
+            path: "platform",
+            element: <PlatformLayout />,
             children: [
               {
                 index: true,
-                element: <ProductListPage />,
+                element: <Navigate to="organizations" replace />,
               },
-              // Product Workspace — portfolio-level view.
               {
-                path: ":productId",
-                element: <ProductWorkspaceLayout />,
+                path: "organizations",
+                element: <OrganizationsPage />,
+              },
+              {
+                path: "organizations/:organizationId",
+                element: <OrganizationDetailsPage />,
+              },
+              {
+                path: "users",
+                element: <UsersPage />,
+              },
+              {
+                path: "users/:userId",
+                element: <UserDetailsPage />,
+              },
+            ],
+          },
+          {
+            path: "regulatory",
+            element: <RegulatoryLayout />,
+            children: [
+              {
+                path: "products",
                 children: [
                   {
                     index: true,
-                    element: <ProductOverviewPage />,
+                    element: <ProductListPage />,
                   },
+                  // Product Workspace — portfolio-level view.
                   {
-                    path: "applications",
+                    path: ":productId",
+                    element: <ProductWorkspaceLayout />,
                     children: [
                       {
                         index: true,
-                        element: <RegulatoryApplicationListPage />,
+                        element: <ProductOverviewPage />,
+                      },
+                      {
+                        path: "applications",
+                        children: [
+                          {
+                            index: true,
+                            element: <RegulatoryApplicationListPage />,
+                          },
+                        ],
+                      },
+                      {
+                        path: "documents",
+                        element: <ProductDocumentsListPage />,
                       },
                     ],
                   },
+                  // Application Workspace — execution-level view. Nested under the
+                  // product URL, but a full-screen sibling so its sidebar replaces
+                  // the product sidebar (rather than rendering two sidebars).
                   {
-                    path: "documents",
-                    element: <ProductDocumentsListPage />,
+                    path: ":productId/applications/:applicationId",
+                    element: <ApplicationWorkspaceLayout />,
+                    children: [
+                      {
+                        index: true,
+                        element: <ApplicationOverviewPage />,
+                      },
+                      {
+                        path: "submissions",
+                        element: <ApplicationSubmissionsPage />,
+                      },
+                      {
+                        path: "documents",
+                        element: <ApplicationDocumentsPage />,
+                      },
+                      {
+                        path: "publishing",
+                        element: <ApplicationPublishingPage />,
+                      },
+                      {
+                        path: "history",
+                        element: <ApplicationHistoryPage />,
+                      },
+                    ],
                   },
-                ],
-              },
-              // Application Workspace — execution-level view. Nested under the
-              // product URL, but a full-screen sibling so its sidebar replaces
-              // the product sidebar (rather than rendering two sidebars).
-              {
-                path: ":productId/applications/:applicationId",
-                element: <ApplicationWorkspaceLayout />,
-                children: [
+                  // Submission Workspace — deepest execution context. Also a
+                  // full-screen sibling so its sidebar replaces the application
+                  // sidebar. The URL preserves the full business hierarchy:
+                  // product -> application -> submission.
                   {
-                    index: true,
-                    element: <ApplicationOverviewPage />,
+                    path: ":productId/applications/:applicationId/submissions/:submissionId",
+                    element: <SubmissionWorkspaceLayout />,
+                    children: [
+                      {
+                        index: true,
+                        element: <SubmissionOverviewPage />,
+                      },
+                      {
+                        path: "documents",
+                        element: <SubmissionDocumentsPage />,
+                      },
+                      {
+                        path: "validation",
+                        element: <SubmissionValidationPage />,
+                      },
+                      {
+                        path: "publishing",
+                        element: <SubmissionPublishingPage />,
+                      },
+                      {
+                        path: "history",
+                        element: <SubmissionHistoryPage />,
+                      },
+                    ],
                   },
+                  // Product Document Workspace — full-screen sibling under the
+                  // product URL. Explicit sub-routes; index redirects to overview.
                   {
-                    path: "submissions",
-                    element: <ApplicationSubmissionsPage />,
-                  },
-                  {
-                    path: "documents",
-                    element: <ApplicationDocumentsPage />,
-                  },
-                  {
-                    path: "publishing",
-                    element: <ApplicationPublishingPage />,
-                  },
-                  {
-                    path: "history",
-                    element: <ApplicationHistoryPage />,
-                  },
-                ],
-              },
-              // Submission Workspace — deepest execution context. Also a
-              // full-screen sibling so its sidebar replaces the application
-              // sidebar. The URL preserves the full business hierarchy:
-              // product -> application -> submission.
-              {
-                path: ":productId/applications/:applicationId/submissions/:submissionId",
-                element: <SubmissionWorkspaceLayout />,
-                children: [
-                  {
-                    index: true,
-                    element: <SubmissionOverviewPage />,
-                  },
-                  {
-                    path: "documents",
-                    element: <SubmissionDocumentsPage />,
-                  },
-                  {
-                    path: "validation",
-                    element: <SubmissionValidationPage />,
-                  },
-                  {
-                    path: "publishing",
-                    element: <SubmissionPublishingPage />,
-                  },
-                  {
-                    path: "history",
-                    element: <SubmissionHistoryPage />,
-                  },
-                ],
-              },
-              // Product Document Workspace — full-screen sibling under the
-              // product URL. Explicit sub-routes; index redirects to overview.
-              {
-                path: ":productId/documents/:documentId",
-                element: <DocumentWorkspaceLayout />,
-                children: [
-                  {
-                    index: true,
-                    element: <Navigate to="overview" replace />,
-                  },
-                  {
-                    path: "overview",
-                    element: <DocumentOverviewPage />,
-                  },
-                  {
-                    path: "versions",
-                    element: <DocumentVersionsPage />,
-                  },
-                  {
-                    path: "usage",
-                    element: <DocumentUsagePage />,
-                  },
-                  {
-                    path: "history",
-                    element: <DocumentHistoryPage />,
-                  },
-                  {
-                    path: "ai-insights",
-                    element: <DocumentAiInsightsPage />,
+                    path: ":productId/documents/:documentId",
+                    element: <DocumentWorkspaceLayout />,
+                    children: [
+                      {
+                        index: true,
+                        element: <Navigate to="overview" replace />,
+                      },
+                      {
+                        path: "overview",
+                        element: <DocumentOverviewPage />,
+                      },
+                      {
+                        path: "versions",
+                        element: <DocumentVersionsPage />,
+                      },
+                      {
+                        path: "usage",
+                        element: <DocumentUsagePage />,
+                      },
+                      {
+                        path: "history",
+                        element: <DocumentHistoryPage />,
+                      },
+                      {
+                        path: "ai-insights",
+                        element: <DocumentAiInsightsPage />,
+                      },
+                    ],
                   },
                 ],
               },

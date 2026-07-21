@@ -137,12 +137,14 @@ Two gaps deserve to be stated plainly rather than buried:
    the database regardless of who is asking. This is not a bug in an isolation
    mechanism — those modules have never had one.
 
-2. **`X-Tenant-Id` is not authentication.** `HeaderTenantContext` decides *which*
-   tenant a request is scoped to; it never establishes that the caller is
-   entitled to that tenant. Any caller can set any value. It is a development
-   mechanism, replaced by a claims-based implementation when Epic 3 lands.
+2. ~~**`X-Tenant-Id` is not authentication.**~~ **Closed 2026-07-21 (AUTH-005).**
+   The tenant is now the authenticated caller's organization claim, and
+   `HeaderTenantContext` is deleted rather than disabled. A request carrying
+   `X-Tenant-Id` for another organization returns that organization's data no
+   longer — the header is inert.
+   [ADR-024](../adr/ADR-024-tenancy-is-derived-from-identity.md).
 
-RegOS v1 is not complete until both are closed. See
+RegOS v1 is not complete until the first is closed too. See
 [`roadmap.md`](roadmap.md) and
 [`tenant-inventory.md`](../architecture/tenant-inventory.md).
 

@@ -1,4 +1,4 @@
-import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { RegisterProductRequest } from "../types/RegisterProductRequest";
 import type { RegisterProductResponse } from "../types/RegisterProductResponse";
@@ -6,11 +6,10 @@ import type { RegisterProductResponse } from "../types/RegisterProductResponse";
 export async function registerProduct(
   request: RegisterProductRequest,
 ): Promise<RegisterProductResponse> {
-  const response = await fetch(buildUrl("/api/products"), {
+  const response = await apiFetch(buildUrl("/api/products"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...tenantHeaders(),
     },
     body: JSON.stringify(request),
   });

@@ -1,10 +1,10 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { AttachableProductDocument } from "../types/AttachableProductDocument";
 
 export async function listAttachableProductDocuments(
   submissionId: string
 ): Promise<AttachableProductDocument[]> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/submissions/${submissionId}/attachable-documents`)
   );
 

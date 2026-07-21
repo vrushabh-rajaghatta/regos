@@ -1,10 +1,10 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { SubmissionValidationResult } from "../types/SubmissionValidation";
 
 export async function validateSubmission(
   submissionId: string
 ): Promise<SubmissionValidationResult> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/submissions/${submissionId}/validation`)
   );
 

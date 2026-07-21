@@ -1,4 +1,4 @@
-import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { ProductDetails } from "../types/ProductDetails";
 
@@ -6,11 +6,9 @@ import type { ProductDetails } from "../types/ProductDetails";
 export class ProductNotFoundError extends Error {}
 
 export async function getProduct(id: string): Promise<ProductDetails> {
-  // The tenant travels in a header: a product owned by another organization
-  // returns 404, so the caller cannot ask to see it.
-  const response = await fetch(buildUrl(`/api/products/${id}`), {
-    headers: tenantHeaders(),
-  });
+  // The tenant travels inside the token: a product owned by another
+  // organization returns 404, and the caller has no way to ask otherwise.
+  const response = await apiFetch(buildUrl(`/api/products/${id}`));
 
   if (response.status === 404) {
     throw new ProductNotFoundError("Product not found.");

@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { CreateOrganizationRequest } from "../types/CreateOrganizationRequest";
 import type { CreateOrganizationResponse } from "../types/CreateOrganizationResponse";
@@ -6,7 +6,7 @@ import type { CreateOrganizationResponse } from "../types/CreateOrganizationResp
 export async function createOrganization(
   request: CreateOrganizationRequest,
 ): Promise<CreateOrganizationResponse> {
-  const response = await fetch(buildUrl("/organizations"), {
+  const response = await apiFetch(buildUrl("/organizations"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

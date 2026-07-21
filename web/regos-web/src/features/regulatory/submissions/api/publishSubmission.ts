@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { SubmissionValidationResult } from "../types/SubmissionValidation";
 
 export interface PublishSubmissionOutcome {
@@ -11,7 +11,7 @@ export interface PublishSubmissionOutcome {
 export async function publishSubmission(
   submissionId: string
 ): Promise<PublishSubmissionOutcome> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/submissions/${submissionId}/publish`),
     { method: "POST" }
   );

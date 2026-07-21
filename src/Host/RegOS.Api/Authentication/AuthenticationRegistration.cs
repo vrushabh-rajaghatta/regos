@@ -1,6 +1,7 @@
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -72,7 +73,17 @@ public static class AuthenticationRegistration
                 };
             });
 
-        services.AddAuthorization();
+        // Authenticated by default. With tenancy now derived from a claim, an
+        // endpoint that forgets RequireAuthorization would not merely be open —
+        // it would reach ITenantContext with no identity behind it. Opting out
+        // is explicit and visible: exactly one endpoint calls AllowAnonymous,
+        // and it is the one that issues tokens.
+        services.AddAuthorization(options =>
+        {
+            options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+        });
 
         return services;
     }

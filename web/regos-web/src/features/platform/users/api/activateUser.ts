@@ -1,9 +1,9 @@
-import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export async function activateUser(userId: string): Promise<void> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/api/platform/users/${userId}/activate`),
-    { method: "POST", headers: tenantHeaders() },
+    { method: "POST" },
   );
 
   if (response.ok) return;

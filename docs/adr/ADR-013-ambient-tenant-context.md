@@ -2,7 +2,8 @@
 
 **Status:** Accepted · **Date:** 2026-07-20 (retro-documented) ·
 **Implemented by:** commit `0af343e` (ARCH-002) ·
-**Related:** ADR-015 (organization is the tenant) ·
+**Related:** ADR-015 (organization is the tenant),
+[ADR-024](ADR-024-tenancy-is-derived-from-identity.md) (tenancy from identity) ·
 **Detail:** [`docs/architecture/tenant-inventory.md`](../architecture/tenant-inventory.md)
 
 > **Retro-documented.** Shipped during ARCH-002 and documented in
@@ -11,6 +12,13 @@
 > against a parallel numbering series. ADR-008 in the canonical series is
 > Composition Modules, so this decision takes the next free number. **Any
 > reference to "ADR-008 (tenant context)" means this document.**
+
+> **The implementation described below is gone.** `HeaderTenantContext` and
+> `X-Tenant-Id` were deleted by
+> [ADR-024](ADR-024-tenancy-is-derived-from-identity.md); the tenant now comes
+> from the authenticated caller's claim. The *decision* in this ADR — that
+> tenant context is ambient and never a command property — still stands, and
+> `ITenantContext` is unchanged. Read the header sections as history.
 
 ## Context
 

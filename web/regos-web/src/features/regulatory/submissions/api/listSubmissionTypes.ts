@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { SubmissionTypeOption } from "../types/SubmissionTypeOption";
 
 export async function listSubmissionTypes(
@@ -6,7 +6,7 @@ export async function listSubmissionTypes(
 ): Promise<SubmissionTypeOption[]> {
   // Filtered to the application's authority so a user can only pick a type
   // that belongs to it — mirrors the backend's Rule 3 (authority match).
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/submission-types?authorityId=${authorityId}`)
   );
 

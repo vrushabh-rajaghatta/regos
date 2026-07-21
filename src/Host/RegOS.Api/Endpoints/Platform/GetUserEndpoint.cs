@@ -18,7 +18,8 @@ public static class GetUserEndpoint
         return app;
     }
 
-    // The tenant is ambient (X-Tenant-Id), so it is not a parameter here. A
+    // The tenant is ambient, and now comes from the caller's token, so it is
+    // not a parameter here and cannot be chosen by the caller at all. A
     // missing user and one outside the caller's tenant both surface as 404 via
     // the NotFoundException mapping, so the API never reveals that a record
     // exists in another organization.

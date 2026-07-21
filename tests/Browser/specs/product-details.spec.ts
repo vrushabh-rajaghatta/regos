@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
 
-import { api, collectErrors, EXPECTED_404 } from "./support";
+import { test, api, collectErrors, EXPECTED_404 } from "./support";
 
 test.describe("Product details", () => {
   test("navigates from the list and projects every field", async ({ page }) => {

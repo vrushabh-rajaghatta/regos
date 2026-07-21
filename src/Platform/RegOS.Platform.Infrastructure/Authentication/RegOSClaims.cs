@@ -8,10 +8,9 @@ namespace RegOS.Platform.Infrastructure.Authentication;
 public static class RegOSClaims
 {
     /// <summary>
-    /// The organization the user belongs to. This is what replaces the
-    /// <c>X-Tenant-Id</c> header: once tokens are validated, tenant identity
-    /// arrives as a signed claim rather than as something any caller can assert
-    /// (ADR-013).
+    /// The organization the user belongs to, and the source of tenant identity
+    /// for the whole platform. It replaced the <c>X-Tenant-Id</c> header, which
+    /// is deleted: tenancy is now signed rather than asserted (ADR-024).
     /// </summary>
     public const string OrganizationId = "regos:organization_id";
 }

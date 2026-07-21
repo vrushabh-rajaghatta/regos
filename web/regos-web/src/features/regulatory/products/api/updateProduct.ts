@@ -1,4 +1,4 @@
-import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export interface UpdateProductRequest {
   name: string;
@@ -9,11 +9,10 @@ export async function updateProduct(
   productId: string,
   request: UpdateProductRequest,
 ): Promise<void> {
-  const response = await fetch(buildUrl(`/api/products/${productId}`), {
+  const response = await apiFetch(buildUrl(`/api/products/${productId}`), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      ...tenantHeaders(),
     },
     body: JSON.stringify(request),
   });

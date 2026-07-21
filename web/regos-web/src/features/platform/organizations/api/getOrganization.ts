@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { OrganizationDetails } from "../types/OrganizationDetails";
 
@@ -8,7 +8,7 @@ export class OrganizationNotFoundError extends Error {}
 export async function getOrganization(
   id: string,
 ): Promise<OrganizationDetails> {
-  const response = await fetch(buildUrl(`/organizations/${id}`));
+  const response = await apiFetch(buildUrl(`/organizations/${id}`));
 
   if (response.status === 404) {
     throw new OrganizationNotFoundError("Organization not found.");

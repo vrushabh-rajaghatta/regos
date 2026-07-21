@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export interface UploadProductDocumentRequest {
   documentTypeId: string;
@@ -20,7 +20,7 @@ export async function uploadProductDocument(
   form.append("file", request.file);
 
   // No Content-Type header — the browser sets the multipart boundary.
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/api/products/${productId}/documents`),
     {
       method: "POST",

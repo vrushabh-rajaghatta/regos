@@ -10,6 +10,7 @@ public static class LoginEndpoint
         app.MapPost(
             "/api/auth/login",
             HandleAsync)
+        .AllowAnonymous()
         .WithName("Login")
         .WithSummary("Exchange an email and password for an access token")
         .WithTags("Authentication");

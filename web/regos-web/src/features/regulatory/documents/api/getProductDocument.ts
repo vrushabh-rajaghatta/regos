@@ -1,11 +1,11 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { ProductDocumentDetail } from "../types/ProductDocumentDetail";
 
 export async function getProductDocument(
   productId: string,
   documentId: string
 ): Promise<ProductDocumentDetail> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/api/products/${productId}/documents/${documentId}`)
   );
 

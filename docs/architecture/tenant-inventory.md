@@ -12,7 +12,7 @@ Verified against the codebase and against a running API on 2026-07-20.
 |---|---|---|
 | Nature | Infrastructure | Domain |
 | Question it answers | Who is asking? | Who is this record about? |
-| How it travels | Ambient — `ITenantContext`, from `X-Tenant-Id` | Explicit — a command property |
+| How it travels | Ambient — `ITenantContext`, from the caller's token claim | Explicit — a command property |
 | Appears in commands | Never | Where the ubiquitous language says so |
 
 They coincide today: a tenant *is* an organization. The abstraction does not
@@ -79,17 +79,19 @@ Deferred deliberately — each needs a domain decision, not a mechanical change.
 Recommended sequence: resolve (1) as part of the Product bounded context, then
 (2) and (3) follow from it.
 
-## Header-based resolution
+## Claims-based resolution
 
-> Header-based tenant resolution provides deterministic request scoping for
-> development. It is not an authentication or authorization mechanism.
+`ClaimsTenantContext` returns `ICurrentUser.OrganizationId` — the organization
+claim from a signature-checked access token. The caller does not choose the
+tenant; they prove it ([ADR-024](../adr/ADR-024-tenancy-is-derived-from-identity.md)).
 
-Any caller can set `X-Tenant-Id` to any value. It decides *which* tenant a
-request is scoped to; it never establishes that the caller is entitled to that
-tenant. When authentication arrives, `HeaderTenantContext` is replaced by a
-claims-based implementation and nothing above it changes.
+This replaced `HeaderTenantContext`, which read `X-Tenant-Id` and therefore let
+any caller name any tenant. That implementation is deleted, not disabled: there
+is no configuration under which RegOS reads a tenant from a request header.
+**Nothing above `ITenantContext` changed** — all fourteen consumers were
+untouched, which is what the abstraction was introduced for.
 
-Resolution is lazy: the header is read when `TenantId` is first accessed, so
-endpoints that are not tenant-scoped (reference data, master data) never require
-it. A missing or malformed header throws — there is no value of the header that
-produces an unscoped query.
+Resolution is lazy: the claim is read when `TenantId` is first accessed, so
+endpoints that are not tenant-scoped (reference data, master data) never force
+it. An unauthenticated caller throws a 401 — there is no value that produces an
+unscoped query.

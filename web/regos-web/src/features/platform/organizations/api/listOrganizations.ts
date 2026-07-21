@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { OrganizationListItem } from "../types/OrganizationListItem";
 
@@ -8,7 +8,7 @@ import type { OrganizationListItem } from "../types/OrganizationListItem";
  * own organization without returning exactly one row.
  */
 export async function listOrganizations(): Promise<OrganizationListItem[]> {
-  const response = await fetch(buildUrl("/organizations"));
+  const response = await apiFetch(buildUrl("/organizations"));
 
   if (!response.ok) {
     throw new Error("Unable to load organizations.");

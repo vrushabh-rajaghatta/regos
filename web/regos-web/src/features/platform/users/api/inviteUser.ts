@@ -1,4 +1,4 @@
-import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { InviteUserRequest } from "../types/InviteUserRequest";
 import type { InviteUserResponse } from "../types/InviteUserResponse";
@@ -6,11 +6,10 @@ import type { InviteUserResponse } from "../types/InviteUserResponse";
 export async function inviteUser(
   request: InviteUserRequest,
 ): Promise<InviteUserResponse> {
-  const response = await fetch(buildUrl("/api/platform/users/invitations"), {
+  const response = await apiFetch(buildUrl("/api/platform/users/invitations"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...tenantHeaders(),
     },
     body: JSON.stringify(request),
   });

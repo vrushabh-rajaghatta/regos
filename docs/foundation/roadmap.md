@@ -188,13 +188,24 @@ aggregate already exists, so authentication has something to attach credentials
 to. Building user administration first would mean building it twice — once
 against `X-Tenant-Id`, once against a real identity.
 
-### Current state
+### Current state — Phase 1 substantially complete
 
-Not started. No credential, token or password-reset type exists.
+| Slice | | Commit |
+|---|---|---|
+| AUTH-001 | An email address identifies exactly one user (ADR-021) | `60edabd` |
+| AUTH-002 | Store and verify a user password | `5e1b7c7` |
+| AUTH-003 | Sign in and receive an access token (ADR-022) | `592494a` |
+| — | A credential cannot outlive its user (ADR-023) | `e6c6041` |
+| AUTH-004 | Validate access tokens; `ICurrentUser` | `b7fbe13` |
+| AUTH-005 | Tenancy from identity; `X-Tenant-Id` removed (ADR-024) | this slice |
 
-`HeaderTenantContext` reads `X-Tenant-Id` and is the placeholder this milestone
-removes. It decides *which* tenant a request is scoped to and never establishes
-that the caller is entitled to it — any caller can send any value.
+`HeaderTenantContext` is **deleted**. The tenant is the authenticated caller's
+organization claim, so it is proven rather than asserted.
+
+Remaining in Milestone 2: refresh tokens with rotation (AUTH-006), and
+invitation acceptance / first password (AUTH-007), which is where ADR-014 comes
+back into focus. Forgot-password shares the token mechanism with invitation
+acceptance and is deliberately undecided until that code exists.
 
 ### Scope
 
@@ -202,8 +213,9 @@ that the caller is entitled to it — any caller can send any value.
 - Login, logout.
 - JWT access token; refresh token with rotation.
 - Forgot password / reset password.
-- **Replace `HeaderTenantContext` with a claims-based `ITenantContext`.** Nothing
-  above it changes, by design (ADR-013).
+- ~~**Replace `HeaderTenantContext` with a claims-based `ITenantContext`.**~~
+  Done in AUTH-005. Nothing above it changed, by design (ADR-013) — all
+  fourteen `ITenantContext` consumers were untouched.
 - `ICurrentUser`.
 - Authentication middleware; React login flow and protected routes.
 

@@ -53,10 +53,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
         new JsonStringEnumConverter());
 });
 
-// Tenant context is scoped: one per request, resolved from the request itself.
-// Registered before the modules so every handler can depend on it.
+// Tenant context is scoped: one per request, resolved from the authenticated
+// caller. Registered before the modules so every handler can depend on it.
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ITenantContext, HeaderTenantContext>();
+builder.Services.AddScoped<ITenantContext, ClaimsTenantContext>();
 
 builder.Services.AddRegOSAuthentication();
 

@@ -16,7 +16,7 @@ namespace RegOS.Api.Authentication;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Lives in the Host, like <see cref="Tenancy.HeaderTenantContext"/>, because
+/// Lives in the Host, like <see cref="Tenancy.ClaimsTenantContext"/>, because
 /// it is an adapter from HTTP to an abstraction the application layer defines.
 /// Platform.Application knows there is a current user; only the Host knows one
 /// arrives as a bearer token.

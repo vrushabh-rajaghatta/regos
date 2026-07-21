@@ -1,10 +1,10 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { SubmissionDetail } from "../types/SubmissionDetail";
 
 export async function getSubmission(
   submissionId: string
 ): Promise<SubmissionDetail> {
-  const response = await fetch(buildUrl(`/submissions/${submissionId}`));
+  const response = await apiFetch(buildUrl(`/submissions/${submissionId}`));
 
   if (!response.ok) {
     throw new Error("Unable to load Submission.");

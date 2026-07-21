@@ -24,7 +24,7 @@ export function InviteUserForm({ onSuccess }: InviteUserFormProps) {
   const mutation = useInviteUser();
 
   // There is no organization picker: a user is invited into the caller's own
-  // tenant, which the API reads from the X-Tenant-Id header. Inviting into
+  // tenant, which the API reads from the access token. Inviting into
   // someone else's organization is not a permission check that could be
   // forgotten — it cannot be expressed.
   const {

@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export interface CreateSubmissionRequest {
   submissionTypeId: string;
@@ -13,7 +13,7 @@ export async function createSubmission(
   applicationId: string,
   request: CreateSubmissionRequest
 ): Promise<CreateSubmissionResponse> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/applications/${applicationId}/submissions`),
     {
       method: "POST",

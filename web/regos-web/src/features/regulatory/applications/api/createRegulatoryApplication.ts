@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export interface CreateRegulatoryApplicationRequest {
   authorityId: string;
@@ -11,7 +11,7 @@ export async function createRegulatoryApplication(
   productId: string,
   request: CreateRegulatoryApplicationRequest,
 ): Promise<void> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(`/api/products/${productId}/applications`),
     {
       method: "POST",

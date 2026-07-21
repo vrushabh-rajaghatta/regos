@@ -12,7 +12,7 @@ never changes meaning once assigned.
 2. **One decision per file.** No aggregate documents.
 3. **Append-only.** Edit an ADR to correct a broken reference or change its
    status — never to change what was decided.
-4. **New ADRs take the next free number.** Today that is **ADR-024**.
+4. **New ADRs take the next free number.** Today that is **ADR-025**.
 5. **Cite by number in code and commits.** `// ADR-009` in a source file is the
    reason the ADR must never be renumbered.
 
@@ -54,6 +54,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [021](ADR-021-email-is-globally-unique.md) | An email address identifies exactly one user | Accepted | Current |
 | [022](ADR-022-authentication-failure-is-a-fourth-exception.md) | Authentication failure is a fourth exception | Accepted | Current |
 | [023](ADR-023-satellite-aggregate-lifetime.md) | A satellite aggregate's lifetime is enforced by the database | Accepted | Current |
+| [024](ADR-024-tenancy-is-derived-from-identity.md) | Tenancy is derived from identity, not asserted by the caller | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

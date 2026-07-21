@@ -1,4 +1,4 @@
-import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { PagedResult } from "../types/PagedResult";
 import type { ProductSummary } from "../types/ProductSummary";
@@ -24,9 +24,7 @@ export async function listProducts(
 
   const suffix = query.toString() ? `?${query}` : "";
 
-  const response = await fetch(buildUrl(`/api/products${suffix}`), {
-    headers: tenantHeaders(),
-  });
+  const response = await apiFetch(buildUrl(`/api/products${suffix}`));
 
   if (!response.ok) {
     throw new Error("Unable to load products.");

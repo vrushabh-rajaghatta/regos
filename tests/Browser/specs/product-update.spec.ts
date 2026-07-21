@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
 
-import { api, collectErrors } from "./support";
+import { test, api, collectErrors } from "./support";
 
 test.describe("Update product", () => {
   test("edits name and type, and cannot edit the code", async ({ page }) => {

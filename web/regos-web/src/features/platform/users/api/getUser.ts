@@ -1,4 +1,4 @@
-import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { UserDetails } from "../types/UserDetails";
 
@@ -6,11 +6,10 @@ import type { UserDetails } from "../types/UserDetails";
 export class UserNotFoundError extends Error {}
 
 export async function getUser(userId: string): Promise<UserDetails> {
-  // The tenant travels in a header, not the query string - the API decides
-  // visibility, the caller cannot ask to see another organization's user.
-  const response = await fetch(buildUrl(`/api/platform/users/${userId}`), {
-    headers: tenantHeaders(),
-  });
+  // The tenant travels inside the token, not the query string or a header -
+  // the API decides visibility from a signed claim, and the caller cannot ask
+  // to see another organization's user.
+  const response = await apiFetch(buildUrl(`/api/platform/users/${userId}`));
 
   if (response.status === 404) {
     throw new UserNotFoundError("User not found.");

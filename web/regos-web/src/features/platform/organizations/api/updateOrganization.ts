@@ -1,4 +1,4 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { UpdateOrganizationRequest } from "../types/UpdateOrganizationRequest";
 
@@ -6,7 +6,7 @@ export async function updateOrganization(
   id: string,
   request: UpdateOrganizationRequest,
 ): Promise<void> {
-  const response = await fetch(buildUrl(`/organizations/${id}`), {
+  const response = await apiFetch(buildUrl(`/organizations/${id}`), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

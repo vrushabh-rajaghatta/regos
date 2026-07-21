@@ -1,10 +1,10 @@
-import { buildUrl } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export async function removeProductDocument(
   submissionId: string,
   submissionDocumentId: string
 ): Promise<void> {
-  const response = await fetch(
+  const response = await apiFetch(
     buildUrl(
       `/submissions/${submissionId}/documents/${submissionDocumentId}`
     ),

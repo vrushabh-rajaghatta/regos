@@ -1,4 +1,4 @@
-import { buildUrl, tenantHeaders } from "@/shared/api/apiClient";
+import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export interface UpdateUserProfileRequest {
   firstName: string;
@@ -10,11 +10,10 @@ export async function updateUserProfile(
   userId: string,
   request: UpdateUserProfileRequest,
 ): Promise<void> {
-  const response = await fetch(buildUrl(`/api/platform/users/${userId}`), {
+  const response = await apiFetch(buildUrl(`/api/platform/users/${userId}`), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      ...tenantHeaders(),
     },
     body: JSON.stringify(request),
   });
