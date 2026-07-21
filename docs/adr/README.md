@@ -12,7 +12,7 @@ never changes meaning once assigned.
 2. **One decision per file.** No aggregate documents.
 3. **Append-only.** Edit an ADR to correct a broken reference or change its
    status — never to change what was decided.
-4. **New ADRs take the next free number.** Today that is **ADR-028**.
+4. **New ADRs take the next free number.** Today that is **ADR-029**.
 5. **Cite by number in code and commits.** `// ADR-009` in a source file is the
    reason the ADR must never be renumbered.
 
@@ -58,6 +58,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [025](ADR-025-sessions-are-server-owned-cookies.md) | A session is server-owned, and travels in cookies | Accepted | Current |
 | [026](ADR-026-lifecycle-owned-satellites.md) | A satellite is defined by lifecycle ownership, not by its key | Accepted | Current |
 | [027](ADR-027-invitation-is-a-consumable-grant.md) | An invitation is a consumable grant against an existing user | Accepted | Current |
+| [028](ADR-028-credential-replacement-revokes-derived-trust.md) | Replacing a credential revokes everything derived from it | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

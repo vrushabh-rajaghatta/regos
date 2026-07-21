@@ -141,6 +141,7 @@ app.MapLogout();
 app.MapAcceptInvitation();
 app.MapRequestPasswordReset();
 app.MapCompletePasswordReset();
+app.MapChangePassword();
 app.MapGetCurrentUser();
 
 app.MapActivateOrganization();

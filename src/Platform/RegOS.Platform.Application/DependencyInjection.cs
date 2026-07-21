@@ -9,6 +9,7 @@ using RegOS.Platform.Application.Commands.AcceptInvitation;
 using RegOS.Platform.Application.Commands.Login;
 using RegOS.Platform.Application.Commands.Logout;
 using RegOS.Platform.Application.Commands.RefreshSession;
+using RegOS.Platform.Application.Commands.ChangePassword;
 using RegOS.Platform.Application.Commands.CompletePasswordReset;
 using RegOS.Platform.Application.Commands.RequestPasswordReset;
 using RegOS.Platform.Application.Commands.ResendInvitation;
@@ -49,6 +50,13 @@ public static class DependencyInjection
 
         // Stateless: it composes two issuers and holds nothing per request.
         services.AddSingleton<SessionFactory>();
+
+        // Scoped, unlike SessionFactory: these hold repositories.
+        services.AddScoped<SessionRevoker>();
+
+        services.AddScoped<CredentialTrustRevoker>();
+
+        services.AddScoped<ChangePasswordHandler>();
 
         services.AddScoped<LoginHandler>();
 

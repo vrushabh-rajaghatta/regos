@@ -1,3 +1,4 @@
+using RegOS.Platform.Application.Authentication;
 using RegOS.Platform.Application.Commands.Login;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Application.Services;
@@ -33,22 +34,22 @@ namespace RegOS.Platform.Application.Commands.CompletePasswordReset;
 public sealed class CompletePasswordResetHandler
 {
     private readonly SetUserPasswordHandler _setPassword;
+    private readonly CredentialTrustRevoker _revoker;
     private readonly IPasswordResetTokenIssuer _tokens;
     private readonly IPasswordResetRepository _resets;
-    private readonly IRefreshTokenRepository _refreshTokens;
     private readonly IUserRepository _users;
 
     public CompletePasswordResetHandler(
         SetUserPasswordHandler setPassword,
+        CredentialTrustRevoker revoker,
         IPasswordResetTokenIssuer tokens,
         IPasswordResetRepository resets,
-        IRefreshTokenRepository refreshTokens,
         IUserRepository users)
     {
         _setPassword = setPassword;
+        _revoker = revoker;
         _tokens = tokens;
         _resets = resets;
-        _refreshTokens = refreshTokens;
         _users = users;
     }
 
@@ -80,34 +81,17 @@ public sealed class CompletePasswordResetHandler
             new SetUserPasswordCommand(user.Id, command.Password),
             cancellationToken);
 
+        // Consumed before the revocation sweep, so that this grant is already
+        // spent and the sweep finds only the *other* outstanding ones.
         reset.Consume(now);
 
         await _resets.UpdateAsync(reset, cancellationToken);
 
-        await RevokeEverySessionForAsync(user.Id, now, cancellationToken);
-    }
-
-    /// <summary>
-    /// Ends every live session. Whoever forced the reset — the user, or someone
-    /// who had taken the account — the sessions opened before it can no longer
-    /// be assumed to belong to the rightful owner.
-    /// </summary>
-    /// <remarks>
-    /// Second occurrence of this loop; <c>RefreshSessionHandler</c> has the
-    /// first. Intentionally duplicated pending AUTH-009, which will make it the
-    /// third and give extraction real evidence rather than anticipation
-    /// (ADR-018).
-    /// </remarks>
-    private async Task RevokeEverySessionForAsync(
-        UserId userId, DateTime now, CancellationToken cancellationToken)
-    {
-        foreach (var token in await _refreshTokens.GetActiveForUserAsync(
-            userId, cancellationToken))
-        {
-            token.Revoke(now);
-
-            await _refreshTokens.UpdateAsync(token, cancellationToken);
-        }
+        // Whoever forced the reset — the user, or someone who had taken the
+        // account — nothing established with the old password survives it
+        // (ADR-028).
+        await _revoker.RevokeEverythingDerivedFromTheOldPasswordAsync(
+            user.Id, now, cancellationToken);
     }
 
     /// <summary>

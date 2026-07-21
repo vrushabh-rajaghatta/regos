@@ -29,6 +29,15 @@ public static class AuthenticationErrors
     /// unguessable, so naming the likely causes enumerates nothing and tells a
     /// stuck user to ask again.
     /// </summary>
+    /// <summary>
+    /// Deliberately specific, unlike everything else here. Changing a password
+    /// requires a session, so the caller's identity is already established and
+    /// naming the fault reveals nothing — the uniform-message discipline exists
+    /// to stop enumeration, and there is nothing left to enumerate.
+    /// </summary>
+    public const string IncorrectCurrentPassword =
+        "The current password is incorrect.";
+
     public const string InvalidPasswordReset =
         "This password reset link is no longer valid. "
             + "It may have expired or already been used.";

@@ -246,7 +246,8 @@ Known gaps carried forward:
   guarantee is weaker than it looks: a deactivated user cannot *refresh*,
   because `RefreshSessionHandler` re-checks status, but their access token
   keeps working for up to fifteen minutes. The invariant worth holding is
-  "deactivating a user revokes every session immediately." Backlog, not bug.
+  "deactivating a user revokes every session immediately." Backlog, not bug —
+  and since AUTH-009 built `SessionRevoker`, a one-line fix when it is taken.
 
 - **Nothing deletes expired, revoked or consumed tokens** — refresh tokens,
   invitations or password resets. All three tables grow with every sign-in,

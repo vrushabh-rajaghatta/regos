@@ -19,17 +19,20 @@ namespace RegOS.Platform.Application.Commands.RefreshSession;
 public sealed class RefreshSessionHandler
 {
     private readonly SessionFactory _sessions;
+    private readonly SessionRevoker _revoker;
     private readonly IRefreshTokenIssuer _issuer;
     private readonly IRefreshTokenRepository _refreshTokens;
     private readonly IUserRepository _users;
 
     public RefreshSessionHandler(
         SessionFactory sessions,
+        SessionRevoker revoker,
         IRefreshTokenIssuer issuer,
         IRefreshTokenRepository refreshTokens,
         IUserRepository users)
     {
         _sessions = sessions;
+        _revoker = revoker;
         _issuer = issuer;
         _refreshTokens = refreshTokens;
         _users = users;
@@ -63,7 +66,11 @@ public sealed class RefreshSessionHandler
             // out of step or a stolen token is being replayed, and the two are
             // indistinguishable from here — so the whole session ends rather
             // than only this token being refused.
-            await RevokeEverySessionForAsync(
+            //
+            // Sessions only, not the full ADR-028 revocation: no credential was
+            // replaced here, so outstanding reset grants are none of this
+            // handler's business.
+            await _revoker.RevokeEveryFor(
                 presented.UserId, now, cancellationToken);
 
             throw new AuthenticationFailedException(
@@ -90,21 +97,5 @@ public sealed class RefreshSessionHandler
         await _refreshTokens.RotateAsync(presented, replacement, cancellationToken);
 
         return session;
-    }
-
-    private async Task RevokeEverySessionForAsync(
-        UserId userId,
-        DateTime now,
-        CancellationToken cancellationToken)
-    {
-        var active = await _refreshTokens.GetActiveForUserAsync(
-            userId, cancellationToken);
-
-        foreach (var token in active)
-        {
-            token.Revoke(now);
-
-            await _refreshTokens.UpdateAsync(token, cancellationToken);
-        }
     }
 }
