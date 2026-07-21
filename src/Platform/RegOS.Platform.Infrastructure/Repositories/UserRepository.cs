@@ -33,6 +33,14 @@ public sealed class UserRepository : IUserRepository
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public async Task<UserAggregate?> GetByEmailAsync(
+        RegOS.Platform.Domain.ValueObjects.Email email,
+        CancellationToken cancellationToken)
+    {
+        return await _dbContext.Users
+            .FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
+    }
+
     public async Task UpdateAsync(
         UserAggregate user,
         CancellationToken cancellationToken)

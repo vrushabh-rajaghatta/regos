@@ -30,6 +30,14 @@ public sealed class FakeUserRepository : IUserRepository
         => Task.FromResult(
             _existing is not null && _existing.Id == id ? _existing : null);
 
+    public Task<UserAggregate?> GetByEmailAsync(
+        RegOS.Platform.Domain.ValueObjects.Email email,
+        CancellationToken cancellationToken)
+        => Task.FromResult(
+            _existing is not null && _existing.Email == email
+                ? _existing
+                : null);
+
     public Task UpdateAsync(UserAggregate user, CancellationToken cancellationToken)
     {
         Updated = user;

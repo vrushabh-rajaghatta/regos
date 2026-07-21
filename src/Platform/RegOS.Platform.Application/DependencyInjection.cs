@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RegOS.Platform.Application.Commands.ActivateUser;
 using RegOS.Platform.Application.Commands.DeactivateUser;
 using RegOS.Platform.Application.Commands.InviteUser;
+using RegOS.Platform.Application.Commands.Login;
 using RegOS.Platform.Application.Commands.SetUserPassword;
 using RegOS.Platform.Application.Commands.UpdateUserProfile;
 using RegOS.Platform.Application.Queries.GetUserById;
@@ -24,6 +25,8 @@ public static class DependencyInjection
         services.AddScoped<UpdateUserProfileHandler>();
 
         services.AddScoped<SetUserPasswordHandler>();
+
+        services.AddScoped<LoginHandler>();
 
         services.AddScoped<GetUsersHandler>();
 

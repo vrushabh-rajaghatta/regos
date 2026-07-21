@@ -61,9 +61,16 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
     {
         await using var context = NewContext();
 
+        // Credentials for every user in the fixture's organization, not just
+        // the one field this class happens to hold, so a future test that adds
+        // a second user cannot leave an orphaned credential behind.
         await context.Database.ExecuteSqlRawAsync(
-            "DELETE FROM \"UserCredentials\" WHERE \"UserId\" = {0}",
-            _user.Id.Value);
+            """
+            DELETE FROM "UserCredentials"
+            WHERE "UserId" IN (
+                SELECT "Id" FROM "Users" WHERE "OrganizationId" = {0})
+            """,
+            _organizationId.Value);
 
         await context.Database.ExecuteSqlRawAsync(
             "DELETE FROM \"Users\" WHERE \"OrganizationId\" = {0}",
