@@ -10,6 +10,7 @@ const modules: { title: string; to?: string }[] = [
   { title: "CMC" },
   { title: "Safety" },
   { title: "Administration", to: "/platform/users" },
+  { title: "Settings", to: "/settings/security" },
 ];
 
 export function PlatformNavigation() {

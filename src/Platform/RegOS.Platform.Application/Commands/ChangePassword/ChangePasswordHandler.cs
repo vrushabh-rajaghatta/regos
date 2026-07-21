@@ -77,16 +77,24 @@ public sealed class ChangePasswordHandler
                 AuthenticationErrors.InvalidCredentials);
         }
 
-        // Named plainly, unlike sign-in's uniform message. There is no
-        // enumeration risk to defend against: the caller is authenticated, so
-        // the answer tells them nothing they did not already know about which
-        // accounts exist — and "the current password is incorrect" is the
-        // difference between a user who retries and one who is baffled.
+        // A DomainException, so 400 — not 401, which this originally was.
+        //
+        // Named plainly, unlike sign-in's uniform message: the caller is
+        // authenticated, so naming the fault reveals nothing about which
+        // accounts exist. But the *status* matters as much as the message. 401
+        // means "re-authenticate", and every well-behaved client acts on it —
+        // ours refreshes the session and replays the request, then reports the
+        // second 401 as a dead session. A browser spec caught it: mistyping
+        // your current password signed you out of the application.
+        //
+        // The caller is authenticated (so not 401) and permitted to change
+        // their own password (so not 403). What is wrong is a field in the
+        // request, which is a 400.
         if (_passwordHasher.Verify(
                 credential.PasswordHash, command.CurrentPassword ?? string.Empty)
             == PasswordVerification.Failed)
         {
-            throw new AuthenticationFailedException(
+            throw new DomainException(
                 AuthenticationErrors.IncorrectCurrentPassword);
         }
 

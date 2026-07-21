@@ -112,10 +112,20 @@ missing is orchestration across two aggregates, which is an application concern.
 - `DeactivateUserHandler` still revokes nothing. That gap predates this ADR and
   is not a credential replacement, so it is out of scope here — but the service
   it needs now exists, which turns the fix into one line.
-- A wrong current password returns 401 with a *specific* message. The uniform
-  message discipline (ADR-022) exists to prevent enumeration; the caller here is
-  already authenticated, so there is nothing left to enumerate and the vagueness
-  would cost clarity for nothing.
+- A wrong current password returns **400** with a *specific* message. It began
+  as 401 on the reasoning that the uniform-message discipline (ADR-022) exists
+  to prevent enumeration and there is nothing left to enumerate once the caller
+  is authenticated. That reasoning was right about the *message* and wrong about
+  the *status*, and AUTH-009A's browser spec proved it: 401 means
+  "re-authenticate", `apiFetch` acts on it by refreshing and replaying, and the
+  second 401 is reported as a dead session — so mistyping your current password
+  signed you out of the application. The caller is authenticated (not 401) and
+  permitted (not 403); what is wrong is a field in the request, which is 400.
+
+  The general lesson is worth more than the fix: **an HTTP status is an
+  instruction to the client, not only a description of what happened.** Choosing
+  one on semantics alone, without asking what a conforming client will *do* with
+  it, is how a security-motivated decision becomes a usability defect.
 - No password-reuse rule was added. Validity is the `Password` value object's
   business, and reuse policy — none, last N, minimum age — is a product feature
   that should be asked for rather than invented on the way past.

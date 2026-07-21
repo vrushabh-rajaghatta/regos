@@ -209,7 +209,10 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
     {
         var act = () => ChangeAsync(current: "not the current password");
 
-        (await act.Should().ThrowAsync<AuthenticationFailedException>())
+        // A DomainException (400), not AuthenticationFailedException (401).
+        // The caller is authenticated; answering 401 tells a client to
+        // re-authenticate and ours duly threw the user out (ADR-028).
+        (await act.Should().ThrowAsync<DomainException>())
             .WithMessage(AuthenticationErrors.IncorrectCurrentPassword);
 
         (await CanSignInWithAsync(OriginalPassword)).Should().BeTrue();
@@ -222,7 +225,9 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
     {
         var act = () => ChangeAsync(current);
 
-        await act.Should().ThrowAsync<AuthenticationFailedException>();
+        (await act.Should().ThrowAsync<DomainException>())
+            .WithMessage(AuthenticationErrors.IncorrectCurrentPassword);
+
         (await CanSignInWithAsync(OriginalPassword)).Should().BeTrue();
     }
 
@@ -282,7 +287,7 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
 
         var act = () => ChangeAsync(current: "not the current password");
 
-        await act.Should().ThrowAsync<AuthenticationFailedException>();
+        await act.Should().ThrowAsync<DomainException>();
 
         // Otherwise a stranger with a stolen access token could sign everyone
         // out and kill their recovery link without knowing any password.

@@ -120,3 +120,6 @@ export const EXPECTED_404 =
 
 export const EXPECTED_401 =
   /Failed to load resource: the server responded with a status of 401/;
+
+export const EXPECTED_400 =
+  /Failed to load resource: the server responded with a status of 400/;

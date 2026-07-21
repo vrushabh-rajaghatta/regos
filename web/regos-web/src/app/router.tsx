@@ -35,6 +35,8 @@ import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { AcceptInvitationPage } from "@/features/auth/pages/AcceptInvitationPage";
 import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
+import { SettingsLayout } from "@/features/settings/layout/SettingsLayout";
+import { SecurityPage } from "@/features/settings/pages/SecurityPage";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
 
 export const router = createBrowserRouter([
@@ -70,6 +72,20 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: <HomePage />,
+          },
+          {
+            path: "settings",
+            element: <SettingsLayout />,
+            children: [
+              {
+                index: true,
+                element: <Navigate to="security" replace />,
+              },
+              {
+                path: "security",
+                element: <SecurityPage />,
+              },
+            ],
           },
           {
             path: "platform",

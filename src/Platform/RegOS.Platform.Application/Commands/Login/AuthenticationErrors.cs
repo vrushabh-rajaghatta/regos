@@ -29,16 +29,23 @@ public static class AuthenticationErrors
     /// unguessable, so naming the likely causes enumerates nothing and tells a
     /// stuck user to ask again.
     /// </summary>
+    public const string InvalidPasswordReset =
+        "This password reset link is no longer valid. "
+            + "It may have expired or already been used.";
+
     /// <summary>
     /// Deliberately specific, unlike everything else here. Changing a password
     /// requires a session, so the caller's identity is already established and
     /// naming the fault reveals nothing — the uniform-message discipline exists
     /// to stop enumeration, and there is nothing left to enumerate.
+    ///
+    /// Carried by a <c>DomainException</c> (400) rather than an
+    /// <c>AuthenticationFailedException</c> (401), despite living beside them:
+    /// the caller <em>is</em> authenticated, and answering 401 tells every
+    /// well-behaved client to re-authenticate — ours refreshed and replayed,
+    /// then reported the second 401 as a dead session, so a mistyped field
+    /// signed the user out. Found by a browser spec (ADR-028).
     /// </summary>
     public const string IncorrectCurrentPassword =
         "The current password is incorrect.";
-
-    public const string InvalidPasswordReset =
-        "This password reset link is no longer valid. "
-            + "It may have expired or already been used.";
 }

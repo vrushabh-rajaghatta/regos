@@ -195,7 +195,11 @@ public sealed class ChangePasswordLifecycleTests : IAsyncLifetime
 
         var response = await ChangeAsync(session, currentPassword: "wrong");
 
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        // 400, not 401. The caller is authenticated and permitted to do this;
+        // what is wrong is a field. Answering 401 told our own client to
+        // refresh and replay, and a browser spec caught it signing the user
+        // out over a typo (ADR-028).
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         var body = await response.Content.ReadAsStringAsync();
 
