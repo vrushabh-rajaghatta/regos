@@ -21,6 +21,8 @@ using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
+using UserCredentialAggregate =
+    RegOS.Platform.Domain.Aggregates.UserCredential.UserCredential;
 
 namespace RegOS.Persistence;
 
@@ -64,6 +66,9 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<UserAggregate> Users =>
         Set<UserAggregate>();
+
+    public DbSet<UserCredentialAggregate> UserCredentials =>
+        Set<UserCredentialAggregate>();
 
     /// <summary>Read-only projection over Users for the user directory.</summary>
     public DbSet<ReadModels.UserDirectoryRow> UserDirectory =>

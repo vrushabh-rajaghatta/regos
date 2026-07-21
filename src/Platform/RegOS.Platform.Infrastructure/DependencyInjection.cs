@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.User;
+using RegOS.Platform.Domain.Aggregates.UserCredential;
 using RegOS.Platform.Infrastructure.Repositories;
 using RegOS.Platform.Infrastructure.Services;
 
@@ -16,7 +17,14 @@ public static class DependencyInjection
     {
         services.AddScoped<IUserRepository, UserRepository>();
 
+        services.AddScoped<
+            IUserCredentialRepository, UserCredentialRepository>();
+
         services.AddScoped<IUserPolicy, UserPolicy>();
+
+        // Stateless and thread-safe, so a singleton. The framework hasher
+        // allocates no per-request state.
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         return services;
     }
