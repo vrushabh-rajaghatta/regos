@@ -26,6 +26,7 @@ import { DocumentUsagePage } from "@/features/regulatory/documents/pages/Documen
 import { DocumentHistoryPage } from "@/features/regulatory/documents/pages/DocumentHistoryPage";
 import { DocumentAiInsightsPage } from "@/features/regulatory/documents/pages/DocumentAiInsightsPage";
 import { PlatformLayout } from "@/features/platform/layout/PlatformLayout";
+import { OrganizationsPage } from "@/features/platform/organizations/pages/OrganizationsPage";
 import { UsersPage } from "@/features/platform/users/pages/UsersPage";
 import { UserDetailsPage } from "@/features/platform/users/pages/UserDetailsPage";
 import { Navigate } from "react-router-dom";
@@ -45,7 +46,11 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="users" replace />,
+            element: <Navigate to="organizations" replace />,
+          },
+          {
+            path: "organizations",
+            element: <OrganizationsPage />,
           },
           {
             path: "users",

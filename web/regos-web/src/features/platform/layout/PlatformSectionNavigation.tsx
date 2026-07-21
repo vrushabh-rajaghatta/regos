@@ -1,6 +1,9 @@
 import { NavLink } from "react-router-dom";
 
-const items = [{ label: "Users", to: "/platform/users" }];
+const items = [
+  { label: "Organizations", to: "/platform/organizations" },
+  { label: "Users", to: "/platform/users" },
+];
 
 export function PlatformSectionNavigation() {
   return (

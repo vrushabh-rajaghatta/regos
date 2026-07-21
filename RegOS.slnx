@@ -48,6 +48,9 @@
     <Project Path="tests/Platform/RegOS.Platform.Application.Tests/RegOS.Platform.Application.Tests.csproj" />
     <Project Path="tests/Platform/RegOS.Platform.Domain.Tests/RegOS.Platform.Domain.Tests.csproj" />
   </Folder>
+  <Folder Name="/tests/Organization/">
+    <Project Path="tests/Organization/RegOS.Organization.Domain.Tests/RegOS.Organization.Domain.Tests.csproj" />
+  </Folder>
   <Folder Name="/tests/Product/">
     <Project Path="tests/Product/RegOS.Product.Domain.Tests/RegOS.Product.Domain.Tests.csproj" />
   </Folder>

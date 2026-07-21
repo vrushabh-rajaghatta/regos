@@ -23,6 +23,12 @@ public sealed class Organization : AggregateRoot<OrganizationId>
         if (string.IsNullOrWhiteSpace(legalName))
             throw new DomainException(OrganizationErrors.LegalNameRequired);
 
+        // Model binding happily turns {"type": 99} into an OrganizationType,
+        // so without this an organization persists with a type that has no
+        // name. Decidable from the request alone, therefore 400 (ADR-009).
+        if (!Enum.IsDefined(type))
+            throw new DomainException(OrganizationErrors.TypeInvalid);
+
         return new Organization
         {
             Id = id,
