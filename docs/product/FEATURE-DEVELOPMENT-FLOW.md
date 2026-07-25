@@ -1,0 +1,133 @@
+# Feature Development Flow
+
+**Status:** Active · **Effective:** 2026-07-25 · **Applies to:** every human or AI agent building a feature in RegOS
+
+This is the **product-level** lifecycle: how a feature goes from idea to shipped, done one story at a time. It sits above [engineering-workflow.md](../engineering/engineering-workflow.md) (the per-change lifecycle) and hands off to it during implementation. Read both.
+
+Do not skip phases. Each phase reduces uncertainty before the next. The recurring failure mode this flow exists to prevent is **design drift** — endless re-planning that ships nothing. If you find yourself re-deciding something already settled, or designing work three stories ahead, stop and return to the current phase.
+
+---
+
+## The flow
+
+```
+1. Plan the epic
+        ↓
+2. Design the domain      ← entities, columns, and a change-case (future-proofing) analysis
+        ↓
+3. Plan the stories       ← vertical slices, one deliverable each
+        ↓
+4. Implement the stories  ← one at a time, branch → PR → green → merge (per engineering-workflow.md)
+        ↓
+5. Retro                  ← when the epic's stories are done
+        ↓
+   Merge epic branch → main
+```
+
+---
+
+## Branching & integration
+
+`main` is always releasable and only ever receives **completed epics**.
+
+```
+main
+ └── epic/EPIC-XXX-<slug>            (integration branch, cut from main at Phase 1)
+      ├── feat/EPIC-XXX-S001-<slug>  (one branch per story, cut from the epic branch)
+      ├── feat/EPIC-XXX-S002-<slug>
+      └── ...                         → each merged (small PR) back into the epic branch when green
+ ← epic branch merged into main after the retro, at epic completion
+```
+
+- **One epic = one integration branch.** Cut `epic/EPIC-XXX-<slug>` from `main` at Phase 1.
+- **One story = one branch off the epic branch = one small PR back into it.** Keep stories small and independently reviewable — reviewing a whole epic in a single merge is what we avoid (engineering-workflow: *"smaller, focused changes improve review quality"*).
+- **Never leave the epic branch broken.** Same green-before-next discipline, one level down. `main` is broken-proof by construction because only completed epics land on it.
+- **Keep the epic branch current.** Merge `main` into the epic branch regularly so the final merge isn't a conflict cliff, and keep epics small enough to complete before they drift.
+- **Complete → retro → merge epic branch into `main`** (one PR) → flip the epic to 🟢 in `BACKLOG.md`.
+
+---
+
+## Phase 1 — Plan the epic
+
+Define the **outcome**, not the implementation. Produce a one-page epic:
+
+- **Outcome** — one sentence: who gets what value, and how we'll know it works.
+- **In scope / Out of scope** — an explicit deferred list with the *reason* for each deferral (usually YAGNI or Rule of Three). This is the drift fence.
+- **Definition of Done for the epic** — the observable end state.
+
+Output: `docs/product/epics/EPIC-XXX-<slug>.md`. Add a one-line entry to `docs/product/BACKLOG.md`.
+
+## Phase 2 — Design the domain (entities, columns, future-proofing)
+
+Before writing stories, design the data. For each entity:
+
+1. **Entity + columns** — name, fields, types, ownership (global vs tenant-scoped — see ADR-030/031), identity (strongly-typed id), invariants.
+2. **Change-case analysis (required).** For each entity, ask *"what is likely to change about this in the next 1–3 years, and does the shape accommodate it without a breaking migration?"* Fill the table:
+
+   | Likely future change | Probability | How the design accommodates it |
+   |---|---|---|
+   | e.g. more submission types added | High | reference row, not an enum |
+   | e.g. tenant-specific variants | Medium | nullable `TenantId` column present from day one |
+   | e.g. new standard version | Medium | versioned + effective-dated |
+
+   Guiding rules:
+   - **Design the seam now, build the feature later.** Add the column/extension point that avoids a future migration; do *not* build the workflow until a story needs it (Rule of Three, ADR-018).
+   - **High-probability + expensive-to-retrofit change → accommodate now.** Low-probability or cheap-to-add-later → defer and note it.
+   - Prefer reference rows over enums for anything a regulator or customer might extend.
+   - Never delete governed data — model status/lifecycle and effective dating instead.
+
+3. **ADR** — if the design makes a decision affecting bounded contexts, cross-context dependencies, ownership, or public contracts, write an ADR in `docs/adr/` before implementation (ADR only when a decision is *forced* — code is the source of truth).
+
+Output: the entity/column design + change-case tables live in the epic file.
+
+## Phase 3 — Plan the stories
+
+Break the epic into **vertical slices**. Every story:
+
+- Ships **user-visible value end-to-end** (domain → persistence → API → UI where applicable). No backend-only stories; foundational data slices that truly have no UI are verified by API/integration/seed-integrity tests and culminate in a user-visible "explorer/read" story.
+- Is independently shippable and independently reviewable.
+- Uses the story template below and lives as a checklist item in the epic file.
+
+```
+### STORY-XXX — <title>
+As a <role>, I want <capability>, so that <value>.
+Slice: domain → persistence → API → UI → test
+Acceptance:
+- [ ] ...
+Done when: tests green · browser/integration-verified · epic branch not left broken · ADR only if forced
+Branch: feat/EPIC-XXX-SYYY-<slug>  (cut from epic/EPIC-XXX-<slug>)
+Status: Backlog → Ready → In Progress → In Review → Done
+```
+
+## Phase 4 — Implement the stories (one at a time)
+
+- **One story fully to green before the next.** One story = one branch off the **epic branch** = one small PR merged back into it. Never leave the epic branch broken (see [Branching & integration](#branching--integration)).
+- Follow [engineering-workflow.md](../engineering/engineering-workflow.md) and [implementation-standards.md](../engineering/implementation-standards.md) inside each story.
+- Verify to the story's Done bar (automated tests + browser/integration). Tests own the data they mutate — no dependence on ambient seeded rows.
+- Update the story's checkbox and status in the epic file as you go.
+
+## Phase 5 — Retro (per epic)
+
+When the epic's stories are all done, write a short retro: `docs/product/epics/EPIC-XXX-<slug>.md` (Retro section) or `docs/product/retros/EPIC-XXX.md`.
+
+- **What shipped** — the observable outcome vs the Phase-1 Definition of Done.
+- **What the change-case analysis got right / wrong** — did anything we deferred bite us? Did any seam we added pay off?
+- **Decisions to promote** — conventions worth an ADR or a standards-doc update (lessons drive standards, not preference — see engineering-workflow "Continuous Improvement").
+- **Carry-forward** — anything deferred that the next epic inherits.
+
+After the retro, **merge the epic branch into `main`** (one PR) and flip the epic to 🟢 in `BACKLOG.md`.
+
+---
+
+## Artifacts & locations
+
+| Artifact | Location |
+|---|---|
+| Prioritized backlog (one line per epic/feature) | `docs/product/BACKLOG.md` |
+| Epic (outcome, scope, entity design, stories, retro) | `docs/product/epics/EPIC-XXX-<slug>.md` |
+| Architecture decisions | `docs/adr/` (single immutable series) |
+| Engineering standards | `docs/engineering/`, `docs/ENGINEERING_STANDARDS.md` |
+
+## Roles
+
+Founder = final say on priority, scope, product calls. Engineering (human or AI) = decisive recommendation on every decision, implementation, verification. AI is never the authoritative source of architectural decisions (engineering-workflow Principle 3).
