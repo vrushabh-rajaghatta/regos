@@ -135,64 +135,74 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapListCountries();
-app.MapListAuthorities();
-app.MapLogin();
-app.MapRefreshSession();
-app.MapLogout();
-app.MapAcceptInvitation();
-app.MapRequestPasswordReset();
-app.MapCompletePasswordReset();
-app.MapChangePassword();
-app.MapSessions();
-app.MapGetCurrentUser();
+var referenceData = app.MapGroup("").WithTags("Reference Data");
+referenceData.MapListCountries();
+referenceData.MapListAuthorities();
+referenceData.MapListSubmissionTypes();
+referenceData.MapListDocumentTypes();
 
-app.MapActivateOrganization();
-app.MapCreateOrganization();
-app.MapDeactivateOrganization();
-app.MapGetOrganization();
-app.MapListOrganizations();
-app.MapUpdateOrganization();
+var authentication = app.MapGroup("").WithTags("Authentication");
+authentication.MapLogin();
+authentication.MapRefreshSession();
+authentication.MapLogout();
+authentication.MapAcceptInvitation();
+authentication.MapRequestPasswordReset();
+authentication.MapCompletePasswordReset();
+authentication.MapChangePassword();
+authentication.MapSessions();
+authentication.MapGetCurrentUser();
 
-app.MapTenantAdministration();
+var organizations = app.MapGroup("").WithTags("Organizations");
+organizations.MapActivateOrganization();
+organizations.MapCreateOrganization();
+organizations.MapDeactivateOrganization();
+organizations.MapGetOrganization();
+organizations.MapListOrganizations();
+organizations.MapUpdateOrganization();
 
-app.MapInviteUser();
-app.MapResendInvitation();
-app.MapListUsers();
-app.MapGetUser();
-app.MapUpdateUserProfile();
-app.MapActivateUser();
-app.MapDeactivateUser();
-app.MapListSubmissionTypes();
-app.MapListDocumentTypes();
+var platformAdministration = app.MapGroup("").WithTags("Platform Administration");
+platformAdministration.MapTenantAdministration();
 
-app.MapRegisterProductEndpoint();
-app.MapGetProductEndpoint();
-app.MapUpdateProductEndpoint();
-app.MapArchiveProductEndpoint();
-app.MapListProductsEndpoint();
+var users = app.MapGroup("").WithTags("Users");
+users.MapInviteUser();
+users.MapResendInvitation();
+users.MapListUsers();
+users.MapGetUser();
+users.MapUpdateUserProfile();
+users.MapActivateUser();
+users.MapDeactivateUser();
 
-app.MapCreateRegulatoryApplication();
-app.MapListRegulatoryApplications();
-app.MapGetApplication();
+var products = app.MapGroup("").WithTags("Products");
+products.MapRegisterProductEndpoint();
+products.MapGetProductEndpoint();
+products.MapUpdateProductEndpoint();
+products.MapArchiveProductEndpoint();
+products.MapListProductsEndpoint();
 
-app.MapCreateSubmission();
-app.MapListSubmissions();
-app.MapGetSubmission();
-app.MapAttachProductDocument();
-app.MapRemoveProductDocument();
-app.MapListSubmissionDocuments();
-app.MapListAttachableProductDocuments();
-app.MapValidateSubmission();
-app.MapPublishSubmission();
-app.MapGetSubmissionSnapshot();
+var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
+regulatoryApplications.MapCreateRegulatoryApplication();
+regulatoryApplications.MapListRegulatoryApplications();
+regulatoryApplications.MapGetApplication();
 
-app.MapUploadProductDocument();
-app.MapListProductDocuments();
-app.MapGetProductDocument();
-app.MapActivateProductDocument();
-app.MapArchiveProductDocument();
-app.MapGetProductDocumentUsage();
+var submissions = app.MapGroup("").WithTags("Submissions");
+submissions.MapCreateSubmission();
+submissions.MapListSubmissions();
+submissions.MapGetSubmission();
+submissions.MapAttachProductDocument();
+submissions.MapRemoveProductDocument();
+submissions.MapListSubmissionDocuments();
+submissions.MapListAttachableProductDocuments();
+submissions.MapValidateSubmission();
+submissions.MapPublishSubmission();
+submissions.MapGetSubmissionSnapshot();
+
+var productDocuments = app.MapGroup("").WithTags("Product Documents");
+productDocuments.MapUploadProductDocument();
+productDocuments.MapListProductDocuments();
+productDocuments.MapGetProductDocument();
+productDocuments.MapActivateProductDocument();
+productDocuments.MapArchiveProductDocument();
+productDocuments.MapGetProductDocumentUsage();
 
 app.Run();
 /// <summary>
