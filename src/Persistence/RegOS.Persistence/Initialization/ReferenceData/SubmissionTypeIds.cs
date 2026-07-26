@@ -17,4 +17,10 @@ internal static class SubmissionTypeIds
         Guid.Parse("40000000-0000-0000-0000-000000000006");
     public static readonly Guid HcMdl =
         Guid.Parse("40000000-0000-0000-0000-000000000007");
+
+    // FDA drug (pharma) submission types.
+    public static readonly Guid FdaInd =
+        Guid.Parse("40000000-0000-0000-0000-000000000008");
+    public static readonly Guid FdaNda =
+        Guid.Parse("40000000-0000-0000-0000-000000000009");
 }

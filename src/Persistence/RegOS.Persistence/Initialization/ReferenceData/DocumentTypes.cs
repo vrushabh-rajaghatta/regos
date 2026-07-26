@@ -42,6 +42,36 @@ internal static class DocumentTypes
         DocumentTypeEntity.CreateSystemType(
             new DocumentTypeId(DocumentTypeIds.Val),
             "VAL",
-            "Validation Report")
+            "Validation Report"),
+
+        // CTD / pharma document types (thin FDA IND slice).
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.CoverLetter),
+            "COVER_LETTER",
+            "Cover Letter"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.FormFda1571),
+            "FDA_1571",
+            "Form FDA 1571 (IND Application)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.InvestigatorsBrochure),
+            "IB",
+            "Investigator's Brochure"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.NonclinicalOverview),
+            "NONCLINICAL_OVERVIEW",
+            "Nonclinical Overview (Module 2.4)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.ClinicalOverview),
+            "CLINICAL_OVERVIEW",
+            "Clinical Overview (Module 2.5)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.DrugSubstanceSummary),
+            "DRUG_SUBSTANCE",
+            "Drug Substance (Module 3.2.S)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.DrugProductSummary),
+            "DRUG_PRODUCT",
+            "Drug Product (Module 3.2.P)")
     ];
 }

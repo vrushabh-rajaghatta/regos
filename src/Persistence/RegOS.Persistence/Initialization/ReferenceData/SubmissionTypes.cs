@@ -47,6 +47,18 @@ internal static class SubmissionTypes
             new SubmissionTypeId(SubmissionTypeIds.HcMdl),
             "HC_MDL",
             "Medical Device Licence",
-            new AuthorityId(GeographyAndRegulatoryIds.HealthCanada))
+            new AuthorityId(GeographyAndRegulatoryIds.HealthCanada)),
+
+        // FDA drug (pharma) submission types.
+        SubmissionTypeEntity.Create(
+            new SubmissionTypeId(SubmissionTypeIds.FdaInd),
+            "FDA_IND",
+            "Investigational New Drug Application (IND)",
+            new AuthorityId(GeographyAndRegulatoryIds.FDA)),
+        SubmissionTypeEntity.Create(
+            new SubmissionTypeId(SubmissionTypeIds.FdaNda),
+            "FDA_NDA",
+            "New Drug Application (NDA)",
+            new AuthorityId(GeographyAndRegulatoryIds.FDA))
     ];
 }

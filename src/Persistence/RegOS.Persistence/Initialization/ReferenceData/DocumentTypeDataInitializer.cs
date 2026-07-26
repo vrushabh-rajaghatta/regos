@@ -16,12 +16,23 @@ public sealed class DocumentTypeDataInitializer : IDataInitializer
     {
         // IgnoreQueryFilters: initializers run at startup with no request
         // and therefore no tenant; the filter would report an empty table
-        // every time and this would re-insert on every boot (ADR-031).
-        if (!await _dbContext.DocumentTypes
-                .IgnoreQueryFilters()
-                .AnyAsync(cancellationToken))
+        // every time (ADR-031).
+        //
+        // Additive + idempotent: insert only the seed rows whose deterministic
+        // ids are not already present, so newly added reference data lands on
+        // an existing database without wiping the table.
+        var existingIds = await _dbContext.DocumentTypes
+            .IgnoreQueryFilters()
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        var missing = DocumentTypes.Data
+            .Where(x => !existingIds.Contains(x.Id))
+            .ToList();
+
+        if (missing.Count > 0)
         {
-            _dbContext.DocumentTypes.AddRange(DocumentTypes.Data);
+            _dbContext.DocumentTypes.AddRange(missing);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
     }
