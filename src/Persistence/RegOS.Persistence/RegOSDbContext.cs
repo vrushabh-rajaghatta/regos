@@ -20,6 +20,8 @@ using SubmissionSnapshotAggregate =
     RegOS.Submission.Domain.Snapshot.SubmissionSnapshot;
 using DocumentTypeAggregate =
     RegOS.ReferenceData.Domain.DocumentType.DocumentType;
+using RegulatoryTemplateAggregate =
+    RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplate;
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using UserAggregate =
@@ -98,6 +100,9 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<DocumentTypeAggregate> DocumentTypes =>
         Set<DocumentTypeAggregate>();
+
+    public DbSet<RegulatoryTemplateAggregate> RegulatoryTemplates =>
+        Set<RegulatoryTemplateAggregate>();
 
     public DbSet<ProductDocumentAggregate> ProductDocuments =>
         Set<ProductDocumentAggregate>();
@@ -196,6 +201,13 @@ public sealed class RegOSDbContext : DbContext
         // System types (null tenant) are visible to every authenticated
         // tenant; a tenant's own extensions only to that tenant.
         modelBuilder.Entity<DocumentTypeAggregate>().HasQueryFilter(
+            x => CurrentTenant != null
+                && (x.TenantId == null || x.TenantId == CurrentTenant));
+
+        // Shared blueprints (null tenant) are visible to every authenticated
+        // tenant; a tenant's own templates only to that tenant — the same
+        // shared-plus-extensible shape as DocumentType.
+        modelBuilder.Entity<RegulatoryTemplateAggregate>().HasQueryFilter(
             x => CurrentTenant != null
                 && (x.TenantId == null || x.TenantId == CurrentTenant));
 

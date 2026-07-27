@@ -85,8 +85,8 @@ The common attributes every controlled vocabulary carries. Turns four inconsiste
 | # | Story | Status |
 |---|---|---|
 | **STORY-001** | Seed pharma taxonomy — FDA `IND` & `NDA` submission types + CTD document types (Cover Letter, FDA 1571, IB, Nonclinical/Clinical Overview, Drug Substance 3.2.S, Drug Product 3.2.P); make reference-data seeding **additive + idempotent** | ✅ Done — build green, live-verified via API, 466 tests green |
-| **STORY-002** | `RegulatoryTemplate` + `RegulatoryTemplateVersion` (governed, versioned, publish→immutable) + read API | ⚪ Next |
-| **STORY-003** | Template sections (CTD module tree) | ⚪ |
+| **STORY-002** | `RegulatoryTemplate` + `RegulatoryTemplateVersion` (governed, versioned, publish→immutable) + read API | ✅ Done — 2 aggregates + migration + seed (FDA IND v1) + read API; [ADR-034](../../adr/ADR-034-regulatory-templates-are-versioned-shared-blueprints.md); 14 domain tests; live-verified; 480 tests green |
+| **STORY-003** | Template sections (CTD module tree) | ⚪ Next |
 | **STORY-004** | Required documents per section (typed by DocumentType) | ⚪ |
 | **STORY-005** | Validation rules (data only — closed rule-type set) | ⚪ |
 | **STORY-006** | Seed the published FDA IND (CTD) blueprint | ⚪ |

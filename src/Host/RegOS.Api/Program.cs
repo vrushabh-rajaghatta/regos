@@ -140,6 +140,8 @@ referenceData.MapListCountries();
 referenceData.MapListAuthorities();
 referenceData.MapListSubmissionTypes();
 referenceData.MapListDocumentTypes();
+referenceData.MapListRegulatoryTemplates();
+referenceData.MapGetRegulatoryTemplate();
 
 var authentication = app.MapGroup("").WithTags("Authentication");
 authentication.MapLogin();
