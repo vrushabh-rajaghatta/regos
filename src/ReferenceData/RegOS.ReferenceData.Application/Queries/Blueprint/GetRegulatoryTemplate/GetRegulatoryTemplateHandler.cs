@@ -23,6 +23,7 @@ public sealed class GetRegulatoryTemplateHandler
         var template = await _dbContext.RegulatoryTemplates
             .AsNoTracking()
             .Include(x => x.Versions)
+                .ThenInclude(v => v.Sections)
             .FirstOrDefaultAsync(x => x.Id == templateId, cancellationToken);
 
         if (template is null)
@@ -36,7 +37,16 @@ public sealed class GetRegulatoryTemplateHandler
                 v.Status.ToString(),
                 v.EffectiveFrom,
                 v.EffectiveTo,
-                v.PublishedOnUtc))
+                v.PublishedOnUtc,
+                v.Sections
+                    .OrderBy(s => s.Order)
+                    .Select(s => new TemplateSectionDto(
+                        s.Id,
+                        s.Code,
+                        s.Title,
+                        s.ParentSectionId?.Value,
+                        s.Order))
+                    .ToList()))
             .ToList();
 
         return new RegulatoryTemplateDetailDto(

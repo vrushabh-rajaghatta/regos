@@ -25,4 +25,22 @@ public static class RegulatoryTemplateErrors
 
     public const string VersionAlreadyPublished =
         "The version is already published.";
+
+    public const string SectionCodeRequired =
+        "Template section code is required.";
+
+    public const string SectionTitleRequired =
+        "Template section title is required.";
+
+    public const string NoDraftVersion =
+        "There is no draft version to modify; start a draft first.";
+
+    public const string VersionNotDraft =
+        "A published version's structure is frozen and cannot be changed.";
+
+    public const string DuplicateSectionCode =
+        "A section with this code already exists in the version.";
+
+    public const string ParentSectionNotFound =
+        "The parent section does not belong to this version.";
 }

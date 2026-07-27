@@ -10,6 +10,8 @@ namespace RegOS.ReferenceData.Domain.Blueprint;
 /// </summary>
 public sealed class RegulatoryTemplateVersion
 {
+    private readonly List<TemplateSection> _sections = [];
+
     // Internal so only the RegulatoryTemplate aggregate (same assembly) can
     // create a version — there is no path to instantiate one independently of
     // its root.
@@ -36,6 +38,9 @@ public sealed class RegulatoryTemplateVersion
 
     public DateTime? PublishedOnUtc { get; private set; }
 
+    // Section management stays inside the aggregate — never expose a mutable list.
+    public IReadOnlyCollection<TemplateSection> Sections => _sections.AsReadOnly();
+
     internal void Publish(DateOnly? effectiveFrom, DateTime publishedOnUtc)
     {
         if (Status == TemplateVersionStatus.Published)
@@ -45,5 +50,34 @@ public sealed class RegulatoryTemplateVersion
         Status = TemplateVersionStatus.Published;
         EffectiveFrom = effectiveFrom;
         PublishedOnUtc = publishedOnUtc;
+    }
+
+    internal TemplateSection AddSection(
+        string code,
+        string title,
+        TemplateSectionId? parentSectionId,
+        int order)
+    {
+        if (Status != TemplateVersionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.VersionNotDraft);
+
+        // Construct first — the entity validates code/title format.
+        var section = new TemplateSection(
+            TemplateSectionId.New(), code, title, parentSectionId, order);
+
+        if (_sections.Any(s => string.Equals(
+                s.Code, section.Code, StringComparison.OrdinalIgnoreCase)))
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.DuplicateSectionCode);
+
+        if (section.ParentSectionId is { } parentId
+            && _sections.All(s => s.Id != parentId))
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.ParentSectionNotFound);
+
+        _sections.Add(section);
+
+        return section;
     }
 }

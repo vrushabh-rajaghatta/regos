@@ -154,4 +154,22 @@ public sealed class RegulatoryTemplate
 
         version.Publish(effectiveFrom, publishedOnUtc);
     }
+
+    /// <summary>
+    /// Adds a section to the template's open draft version. There is at most
+    /// one draft; a published version's structure is frozen.
+    /// </summary>
+    public TemplateSection AddSection(
+        string code,
+        string title,
+        TemplateSectionId? parentSectionId = null,
+        int order = 0)
+    {
+        var draft = _versions.FirstOrDefault(
+                v => v.Status == TemplateVersionStatus.Draft)
+            ?? throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.NoDraftVersion);
+
+        return draft.AddSection(code, title, parentSectionId, order);
+    }
 }

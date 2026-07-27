@@ -50,5 +50,15 @@ public sealed class RegulatoryTemplateVersionConfiguration
                 "RegulatoryTemplateId",
                 nameof(RegulatoryTemplateVersion.VersionNumber))
             .IsUnique();
+
+        // Ownership: version (1) -> sections (N). The child holds a shadow FK.
+        builder.HasMany(x => x.Sections)
+            .WithOne()
+            .HasForeignKey("RegulatoryTemplateVersionId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(RegulatoryTemplateVersion.Sections))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

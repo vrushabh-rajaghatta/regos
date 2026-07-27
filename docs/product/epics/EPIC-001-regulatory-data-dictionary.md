@@ -74,7 +74,13 @@ The common attributes every controlled vocabulary carries. Turns four inconsiste
 ### Area B — Geography & markets  _TBD_
 ### Area C — Authorities & regulatory frameworks  _TBD_
 ### Area D — Product classification & core descriptors  _TBD_
-### Area E — Dossier blueprint (template → version → section → required doc → rule)  _TBD_
+### Area E — Dossier blueprint
+
+**Template + Version** — built in STORY-002 (see [ADR-034](../../adr/ADR-034-regulatory-templates-are-versioned-shared-blueprints.md)).
+
+**Template sections (STORY-003)** — `TemplateSection`, a node owned by a version. Columns: `Id`, `Code` (CTD code, case preserved), `Title`, `ParentSectionId?` (null = top-level module), `Order`. Invariants: code unique within a version; parent must belong to the same version; added only while the version is `Draft`. **Decisions (approved 2026-07-27):** (1) tree = adjacency list (parent pointer + order), not nested-set; (2) structure mutable only while `Draft`, frozen on publish; (3) dev blueprint re-seeded (reset) each story as it grows — dev reference data is disposable. The section↔document link is a `TemplateSectionId` FK on `RequiredDocument` (STORY-004), not on the section.
+
+**Required documents (S004), Validation rules (S005)** — _TBD._
 
 ---
 
@@ -86,8 +92,8 @@ The common attributes every controlled vocabulary carries. Turns four inconsiste
 |---|---|---|
 | **STORY-001** | Seed pharma taxonomy — FDA `IND` & `NDA` submission types + CTD document types (Cover Letter, FDA 1571, IB, Nonclinical/Clinical Overview, Drug Substance 3.2.S, Drug Product 3.2.P); make reference-data seeding **additive + idempotent** | ✅ Done — build green, live-verified via API, 466 tests green |
 | **STORY-002** | `RegulatoryTemplate` + `RegulatoryTemplateVersion` (governed, versioned, publish→immutable) + read API | ✅ Done — 2 aggregates + migration + seed (FDA IND v1) + read API; [ADR-034](../../adr/ADR-034-regulatory-templates-are-versioned-shared-blueprints.md); 14 domain tests; live-verified; 480 tests green |
-| **STORY-003** | Template sections (CTD module tree) | ⚪ Next |
-| **STORY-004** | Required documents per section (typed by DocumentType) | ⚪ |
+| **STORY-003** | Template sections (CTD module tree) | ✅ Done — `TemplateSection` adjacency-tree, draft-only; migration; sections in read API; FDA IND seeded with a 7-section CTD slice; 11 domain tests; live-verified; 491 tests green |
+| **STORY-004** | Required documents per section (typed by DocumentType) | ⚪ Next |
 | **STORY-005** | Validation rules (data only — closed rule-type set) | ⚪ |
 | **STORY-006** | Seed the published FDA IND (CTD) blueprint | ⚪ |
 | **STORY-007** | Reference Data / Blueprint viewer page (bare-bones, browser-verified) | ⚪ |

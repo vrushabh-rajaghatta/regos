@@ -16,4 +16,12 @@ public sealed record RegulatoryTemplateVersionDto(
     string Status,
     DateOnly? EffectiveFrom,
     DateOnly? EffectiveTo,
-    DateTime? PublishedOnUtc);
+    DateTime? PublishedOnUtc,
+    IReadOnlyList<TemplateSectionDto> Sections);
+
+public sealed record TemplateSectionDto(
+    Guid Id,
+    string Code,
+    string Title,
+    Guid? ParentSectionId,
+    int Order);
