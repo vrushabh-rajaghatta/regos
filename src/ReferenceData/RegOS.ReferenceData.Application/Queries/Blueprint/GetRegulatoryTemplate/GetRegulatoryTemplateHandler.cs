@@ -26,6 +26,8 @@ public sealed class GetRegulatoryTemplateHandler
                 .ThenInclude(v => v.Sections)
             .Include(x => x.Versions)
                 .ThenInclude(v => v.RequiredDocuments)
+            .Include(x => x.Versions)
+                .ThenInclude(v => v.ValidationRules)
             .FirstOrDefaultAsync(x => x.Id == templateId, cancellationToken);
 
         if (template is null)
@@ -57,6 +59,18 @@ public sealed class GetRegulatoryTemplateHandler
                         d.DocumentTypeId,
                         d.IsMandatory,
                         d.Order))
+                    .ToList(),
+                v.ValidationRules
+                    .OrderBy(r => r.Order)
+                    .Select(r => new ValidationRuleDto(
+                        r.Id,
+                        r.Code,
+                        r.RuleType.ToString(),
+                        r.Severity.ToString(),
+                        r.SectionId?.Value,
+                        r.Parameters,
+                        r.Message,
+                        r.Order))
                     .ToList()))
             .ToList();
 

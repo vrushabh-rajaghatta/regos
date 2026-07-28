@@ -13,6 +13,7 @@ public sealed class RegulatoryTemplateVersion
 {
     private readonly List<TemplateSection> _sections = [];
     private readonly List<RequiredDocument> _requiredDocuments = [];
+    private readonly List<ValidationRule> _validationRules = [];
 
     // Internal so only the RegulatoryTemplate aggregate (same assembly) can
     // create a version — there is no path to instantiate one independently of
@@ -46,6 +47,10 @@ public sealed class RegulatoryTemplateVersion
     // Required documents hang off the version (flat), each pointing at its section.
     public IReadOnlyCollection<RequiredDocument> RequiredDocuments
         => _requiredDocuments.AsReadOnly();
+
+    // Validation rules hang off the version (flat); each optionally targets a section.
+    public IReadOnlyCollection<ValidationRule> ValidationRules
+        => _validationRules.AsReadOnly();
 
     internal void Publish(DateOnly? effectiveFrom, DateTime publishedOnUtc)
     {
@@ -115,5 +120,38 @@ public sealed class RegulatoryTemplateVersion
         _requiredDocuments.Add(document);
 
         return document;
+    }
+
+    internal ValidationRule AddValidationRule(
+        string code,
+        ValidationRuleType ruleType,
+        ValidationSeverity severity,
+        string message,
+        TemplateSectionId? sectionId,
+        string? parameters,
+        int order)
+    {
+        if (Status != TemplateVersionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.VersionNotDraft);
+
+        // A section-scoped rule must target a section that lives in this version.
+        if (sectionId is { } target && _sections.All(s => s.Id != target))
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.ValidationRuleSectionNotFound);
+
+        // Construct first — the entity validates code/message format.
+        var rule = new ValidationRule(
+            ValidationRuleId.New(), code, ruleType, severity,
+            message, sectionId, parameters, order);
+
+        if (_validationRules.Any(r => string.Equals(
+                r.Code, rule.Code, StringComparison.OrdinalIgnoreCase)))
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.DuplicateValidationRuleCode);
+
+        _validationRules.Add(rule);
+
+        return rule;
     }
 }

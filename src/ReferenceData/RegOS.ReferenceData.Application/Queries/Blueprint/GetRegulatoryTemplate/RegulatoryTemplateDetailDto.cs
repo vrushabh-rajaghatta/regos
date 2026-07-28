@@ -18,7 +18,8 @@ public sealed record RegulatoryTemplateVersionDto(
     DateOnly? EffectiveTo,
     DateTime? PublishedOnUtc,
     IReadOnlyList<TemplateSectionDto> Sections,
-    IReadOnlyList<RequiredDocumentDto> RequiredDocuments);
+    IReadOnlyList<RequiredDocumentDto> RequiredDocuments,
+    IReadOnlyList<ValidationRuleDto> ValidationRules);
 
 public sealed record TemplateSectionDto(
     Guid Id,
@@ -32,4 +33,14 @@ public sealed record RequiredDocumentDto(
     Guid SectionId,
     Guid DocumentTypeId,
     bool IsMandatory,
+    int Order);
+
+public sealed record ValidationRuleDto(
+    Guid Id,
+    string Code,
+    string RuleType,
+    string Severity,
+    Guid? SectionId,
+    string? Parameters,
+    string Message,
     int Order);

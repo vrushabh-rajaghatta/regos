@@ -52,4 +52,16 @@ public static class RegulatoryTemplateErrors
 
     public const string DuplicateRequiredDocument =
         "This document type is already required in the section.";
+
+    public const string ValidationRuleCodeRequired =
+        "Validation rule code is required.";
+
+    public const string ValidationRuleMessageRequired =
+        "Validation rule message is required.";
+
+    public const string ValidationRuleSectionNotFound =
+        "The section does not belong to this version.";
+
+    public const string DuplicateValidationRuleCode =
+        "A validation rule with this code already exists in the version.";
 }

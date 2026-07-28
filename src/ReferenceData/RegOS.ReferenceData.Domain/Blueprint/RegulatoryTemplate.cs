@@ -192,4 +192,27 @@ public sealed class RegulatoryTemplate
         return draft.AddRequiredDocument(
             sectionId, documentTypeId, isMandatory, order);
     }
+
+    /// <summary>
+    /// Adds a validation rule to the draft version. Draft-only; a section-scoped
+    /// rule must target a section in the draft. The rule is inert data — nothing
+    /// executes it here.
+    /// </summary>
+    public ValidationRule AddValidationRule(
+        string code,
+        ValidationRuleType ruleType,
+        ValidationSeverity severity,
+        string message,
+        TemplateSectionId? sectionId = null,
+        string? parameters = null,
+        int order = 0)
+    {
+        var draft = _versions.FirstOrDefault(
+                v => v.Status == TemplateVersionStatus.Draft)
+            ?? throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.NoDraftVersion);
+
+        return draft.AddValidationRule(
+            code, ruleType, severity, message, sectionId, parameters, order);
+    }
 }

@@ -71,5 +71,16 @@ public sealed class RegulatoryTemplateVersionConfiguration
         builder.Metadata
             .FindNavigation(nameof(RegulatoryTemplateVersion.RequiredDocuments))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // Ownership: version (1) -> validation rules (N). The child holds a
+        // shadow FK; the rules die with the version.
+        builder.HasMany(x => x.ValidationRules)
+            .WithOne()
+            .HasForeignKey("RegulatoryTemplateVersionId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(RegulatoryTemplateVersion.ValidationRules))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }
