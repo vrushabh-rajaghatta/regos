@@ -104,6 +104,17 @@ The common attributes every controlled vocabulary carries. Turns four inconsiste
 
 **Shipped (7 stories, 2026-07-26 → 2026-07-28):** the metadata backbone proven end-to-end on **US · FDA · IND (CTD)**. A governed, versioned, publish-immutable dossier blueprint — template → version → section tree → required documents → validation rules — seeded with a representative FDA IND blueprint (38 sections, 13 required docs, 4 rules, 21 document types) and rendered read-only in the app, browser-verified.
 
+**Final gate:** backend **511/511**; browser suite **46 relevant pass** — incl. `templates.spec.ts` (blueprint renders end-to-end) and the new `blueprint-seed-integrity.spec.ts` (API-level canary: 38 sections / 13 docs / 4 rules, published + immutable). One pre-existing, branch-independent red — see Follow-ups.
+
+**Definition of Done — reconciled against Phase 1**
+
+| DoD bullet | Outcome |
+|---|---|
+| All reference entities carry the governance shape; existing ones aligned | **Partial — consciously descoped.** New blueprint entities carry it; the four legacy vocabularies (Country/Authority/SubmissionType/DocumentType) were *not* retrofitted (Area-A deferral). Moved out of this epic → follow-up. |
+| FDA IND blueprint published + immutable with sections, required docs, rules — verifiable via API + seed-integrity tests | **Met.** 38/13/4, published + effective-dated; verified via API and two browser specs (`templates`, `blueprint-seed-integrity`). |
+| Explorer renders the IND blueprint end-to-end, browser-verified | **Met.** Playwright `templates.spec.ts` + screenshot. |
+| `main` never broken; ADRs for governance shape, ownership, forced decisions | **Met for ownership** (ADR-034) and `main` (untouched until merge). The *governance-shape* ADR (Area-A base type) was **not** written — it belongs with the deferred retrofit, not this slice. |
+
 **What went well**
 - **Vertical slices held.** Every story shipped build-green, tested, and live/browser-verified before commit; `main` was never touched until the merge. The domain grew one aggregate-child at a time (sections → required docs → rules) on the same `RegulatoryTemplate` root.
 - **Greenfield governance beat retrofit.** Baking provenance/versioning into the *new* blueprint entities (and deferring the Area-A retrofit of the four legacy vocabularies) got us to a working slice without migration pain — the pragmatic re-sequence paid off.
@@ -116,4 +127,9 @@ The common attributes every controlled vocabulary carries. Turns four inconsiste
 - **Additive-by-id seeding never *updates* an existing row** — a changed blueprint needs a DB reset in dev. Acceptable for disposable dev data; revisit if/when reference data is authored rather than seeded (EPIC-012).
 - **Ownership invariant is by-construction, not enforced.** "A shared blueprint must not reference tenant-owned reference data" (ADR-034) holds because everything seeded is shared; real enforcement waits for authoring.
 
-**Verification approach that worked:** throwaway Postgres DBs + a second API instance on port 5301 (never disturbing the founder's running stack on 5225), and — for the capstone — the existing Playwright harness driving real Chrome against the real API, with the screenshot read back by eye.
+**Verification approach that worked:** throwaway Postgres DBs + a second API instance on port 5301 (never disturbing the founder's running stack on 5225), and — for the capstone — the existing Playwright harness driving real Chrome against the real API, with the screenshot read back by eye. The blueprint now has its own API-level canary (`blueprint-seed-integrity.spec.ts`) that pins the seeded shape so a future seed drift fails loudly.
+
+**Follow-ups (tracked, not blocking this epic)**
+- **Area-A governance-shape retrofit** of the four legacy vocabularies + its ADR — the one descoped DoD item. Own story/epic.
+- **Blueprint-from-data-file** (JSON/YAML seeding) — the "regulatory knowledge as data, not code" evolution flagged in S006. Own epic.
+- **Dev-DB hygiene / org canary.** `seed-integrity.spec.ts` (demo *organizations*) fails on the shared dev DB: prior browser runs left "Browser … Org" residue and mutated away the demo Manufacturer + Sponsor orgs — a spec is violating the "own the data you mutate" rule (ADR-019). **Not an EPIC-001 change** (the epic branch touches zero org/tenant code, verified via `git diff main...HEAD`); it fails identically on `main`. Fix: reset the dev DB and/or the offending org spec, separately.
