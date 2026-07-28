@@ -1,6 +1,6 @@
 # EPIC-001 — The Regulatory Data Dictionary
 
-**Status:** 🟡 Planning · **Branch:** `epic/EPIC-001-regulatory-data-dictionary` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 Complete (all 7 stories shipped; ready to merge to `main`) · **Branch:** `epic/EPIC-001-regulatory-data-dictionary` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Complete Reference Data as the governed, standards-aligned controlled-vocabulary + dossier-blueprint backbone of the RIM, seeded for **FDA IND (CTD)**.
 
@@ -98,7 +98,22 @@ The common attributes every controlled vocabulary carries. Turns four inconsiste
 | **STORY-004** | Required documents per section (typed by DocumentType) | ✅ Done — `RequiredDocument` owned by the version (points up at its section), draft-only, DocumentType FK `Restrict`, unique per (section, doc type); migration; flat `requiredDocuments` in read API; FDA IND seeded with 6 required docs; 9 domain tests; live-verified; 500 tests green |
 | **STORY-005** | Validation rules (data only — closed rule-type set) | ✅ Done — `ValidationRule` owned by the version, draft-only, closed `ValidationRuleType {FileFormat, SectionNotEmpty}` + `Severity {Error, Warning}`, version- or section-scoped, `Parameters` string; unique code per version; migration; flat `validationRules` in read API; FDA IND seeded with 3 rules (PDF-format Error, M1 non-empty Error, M4 non-empty Warning); 11 domain tests; live-verified; 511 tests green |
 | **STORY-006** | Seed the published FDA IND (CTD) blueprint | ✅ Done — representative CTD skeleton (section families, not every leaf; IB at 1.13, numbering template-driven): **38 sections** (M1 IND essentials + harmonized M2–M5, 3.2.S/3.2.P one level deep), **13 required docs**, **4 validation rules**; **21 document types** (+6 IND artifacts: FDA 1572/3674, protocol, QOS, nonclinical/clinical summaries); seed-only (no new schema); live-verified full tree via API; 511 tests green |
-| **STORY-007** | Reference Data / Blueprint viewer page (bare-bones, browser-verified) | ⚪ |
+| **STORY-007** | Reference Data / Blueprint viewer page (bare-bones, browser-verified) | ✅ Done — `features/regulatory/templates/` slice (api/hooks/types/components/pages, matching house conventions); Templates list + blueprint detail lit up the pre-existing "Templates" nav stub at `/regulatory/templates`; flat→tree shaping client-side; doc-type IDs resolved via existing `useDocumentTypes`; `npm run build` green; Playwright `templates.spec.ts` asserts the FDA IND blueprint renders end-to-end (structure + required docs + rule badges) and captures a screenshot — screenshot eyeballed |
 
 ## Phase 5 — Retro
-_At epic completion._
+
+**Shipped (7 stories, 2026-07-26 → 2026-07-28):** the metadata backbone proven end-to-end on **US · FDA · IND (CTD)**. A governed, versioned, publish-immutable dossier blueprint — template → version → section tree → required documents → validation rules — seeded with a representative FDA IND blueprint (38 sections, 13 required docs, 4 rules, 21 document types) and rendered read-only in the app, browser-verified.
+
+**What went well**
+- **Vertical slices held.** Every story shipped build-green, tested, and live/browser-verified before commit; `main` was never touched until the merge. The domain grew one aggregate-child at a time (sections → required docs → rules) on the same `RegulatoryTemplate` root.
+- **Greenfield governance beat retrofit.** Baking provenance/versioning into the *new* blueprint entities (and deferring the Area-A retrofit of the four legacy vocabularies) got us to a working slice without migration pain — the pragmatic re-sequence paid off.
+- **Decisions captured as we went.** ADR-034 + the per-story decision logs (draft-only mutation, one-source-of-truth for mandatory presence, closed rule-type enum) mean the *why* survives.
+- **The frontend already had a seam.** A dangling "Templates" nav stub meant the capstone lit up an existing hole rather than inventing navigation.
+
+**What to watch / carried forward**
+- **Seed is hardcoded C# builders.** Fine at this size, but the real RegOS thesis is *regulatory knowledge as versioned data, not code*. Seeding blueprints from a data file (JSON/YAML) is a real architectural evolution — **its own epic**, not a mid-epic detour. Flagged during S006, deferred deliberately.
+- **Deferred debt, tracked:** Area-A governance-shape retrofit of Country/Authority/SubmissionType/DocumentType; RIM breadth (geography/authority/product-classification, Areas B–D); document-type-level rule targeting; true cardinality on required docs; temporal-query logic on the effective-dating seam. All are columns-now-logic-later seams, not rework.
+- **Additive-by-id seeding never *updates* an existing row** — a changed blueprint needs a DB reset in dev. Acceptable for disposable dev data; revisit if/when reference data is authored rather than seeded (EPIC-012).
+- **Ownership invariant is by-construction, not enforced.** "A shared blueprint must not reference tenant-owned reference data" (ADR-034) holds because everything seeded is shared; real enforcement waits for authoring.
+
+**Verification approach that worked:** throwaway Postgres DBs + a second API instance on port 5301 (never disturbing the founder's running stack on 5225), and — for the capstone — the existing Playwright harness driving real Chrome against the real API, with the screenshot read back by eye.

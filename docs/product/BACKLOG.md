@@ -26,7 +26,7 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 | ID | Epic | Status | Notes |
 |---|---|---|---|
-| **EPIC-001** | **The Regulatory Data Dictionary** — complete Reference Data as the governed, standards-aligned controlled-vocabulary + dossier-blueprint backbone; seeded for FDA IND (CTD) | 🟡 Planning | → `epics/EPIC-001-regulatory-data-dictionary.md` |
+| **EPIC-001** | **The Regulatory Data Dictionary** — complete Reference Data as the governed, standards-aligned controlled-vocabulary + dossier-blueprint backbone; seeded for FDA IND (CTD) | 🟢 Complete | → `epics/EPIC-001-regulatory-data-dictionary.md` |
 
 ## Next
 

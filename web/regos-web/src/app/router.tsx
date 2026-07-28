@@ -41,6 +41,8 @@ import { SettingsLayout } from "@/features/settings/layout/SettingsLayout";
 import { SecurityPage } from "@/features/settings/pages/SecurityPage";
 import { SessionsPage } from "@/features/settings/pages/SessionsPage";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
+import { TemplateListPage } from "@/features/regulatory/templates/pages/TemplateListPage";
+import { TemplateDetailPage } from "@/features/regulatory/templates/pages/TemplateDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -128,6 +130,19 @@ export const router = createBrowserRouter([
             path: "regulatory",
             element: <RegulatoryLayout />,
             children: [
+              {
+                path: "templates",
+                children: [
+                  {
+                    index: true,
+                    element: <TemplateListPage />,
+                  },
+                  {
+                    path: ":templateId",
+                    element: <TemplateDetailPage />,
+                  },
+                ],
+              },
               {
                 path: "products",
                 children: [
