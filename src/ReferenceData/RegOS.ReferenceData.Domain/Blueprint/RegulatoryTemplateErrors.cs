@@ -43,4 +43,13 @@ public static class RegulatoryTemplateErrors
 
     public const string ParentSectionNotFound =
         "The parent section does not belong to this version.";
+
+    public const string RequiredDocumentTypeRequired =
+        "A required document must reference a document type.";
+
+    public const string RequiredDocumentSectionNotFound =
+        "The section does not belong to this version.";
+
+    public const string DuplicateRequiredDocument =
+        "This document type is already required in the section.";
 }

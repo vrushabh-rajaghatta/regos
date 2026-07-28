@@ -24,6 +24,8 @@ public sealed class GetRegulatoryTemplateHandler
             .AsNoTracking()
             .Include(x => x.Versions)
                 .ThenInclude(v => v.Sections)
+            .Include(x => x.Versions)
+                .ThenInclude(v => v.RequiredDocuments)
             .FirstOrDefaultAsync(x => x.Id == templateId, cancellationToken);
 
         if (template is null)
@@ -46,6 +48,15 @@ public sealed class GetRegulatoryTemplateHandler
                         s.Title,
                         s.ParentSectionId?.Value,
                         s.Order))
+                    .ToList(),
+                v.RequiredDocuments
+                    .OrderBy(d => d.Order)
+                    .Select(d => new RequiredDocumentDto(
+                        d.Id,
+                        d.SectionId,
+                        d.DocumentTypeId,
+                        d.IsMandatory,
+                        d.Order))
                     .ToList()))
             .ToList();
 

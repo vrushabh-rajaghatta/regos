@@ -1,3 +1,4 @@
+using RegOS.ReferenceData.Domain.DocumentType;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ReferenceData.Domain.Blueprint;
@@ -11,6 +12,7 @@ namespace RegOS.ReferenceData.Domain.Blueprint;
 public sealed class RegulatoryTemplateVersion
 {
     private readonly List<TemplateSection> _sections = [];
+    private readonly List<RequiredDocument> _requiredDocuments = [];
 
     // Internal so only the RegulatoryTemplate aggregate (same assembly) can
     // create a version — there is no path to instantiate one independently of
@@ -40,6 +42,10 @@ public sealed class RegulatoryTemplateVersion
 
     // Section management stays inside the aggregate — never expose a mutable list.
     public IReadOnlyCollection<TemplateSection> Sections => _sections.AsReadOnly();
+
+    // Required documents hang off the version (flat), each pointing at its section.
+    public IReadOnlyCollection<RequiredDocument> RequiredDocuments
+        => _requiredDocuments.AsReadOnly();
 
     internal void Publish(DateOnly? effectiveFrom, DateTime publishedOnUtc)
     {
@@ -79,5 +85,35 @@ public sealed class RegulatoryTemplateVersion
         _sections.Add(section);
 
         return section;
+    }
+
+    internal RequiredDocument AddRequiredDocument(
+        TemplateSectionId sectionId,
+        DocumentTypeId documentTypeId,
+        bool isMandatory,
+        int order)
+    {
+        if (Status != TemplateVersionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.VersionNotDraft);
+
+        // The document must attach to a section that lives in this version.
+        if (_sections.All(s => s.Id != sectionId))
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.RequiredDocumentSectionNotFound);
+
+        // One requirement per (section, document type): presence, not cardinality.
+        if (_requiredDocuments.Any(
+                d => d.SectionId == sectionId && d.DocumentTypeId == documentTypeId))
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.DuplicateRequiredDocument);
+
+        // Construct after the section check — the entity validates the type id.
+        var document = new RequiredDocument(
+            RequiredDocumentId.New(), sectionId, documentTypeId, isMandatory, order);
+
+        _requiredDocuments.Add(document);
+
+        return document;
     }
 }

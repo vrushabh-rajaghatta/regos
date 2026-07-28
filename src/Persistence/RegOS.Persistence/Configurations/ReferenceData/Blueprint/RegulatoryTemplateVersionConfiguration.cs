@@ -60,5 +60,16 @@ public sealed class RegulatoryTemplateVersionConfiguration
         builder.Metadata
             .FindNavigation(nameof(RegulatoryTemplateVersion.Sections))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // Ownership: version (1) -> required documents (N). The child holds a
+        // shadow FK; the placeholders die with the version.
+        builder.HasMany(x => x.RequiredDocuments)
+            .WithOne()
+            .HasForeignKey("RegulatoryTemplateVersionId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(RegulatoryTemplateVersion.RequiredDocuments))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

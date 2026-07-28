@@ -1,3 +1,4 @@
+using RegOS.ReferenceData.Domain.DocumentType;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.SharedKernel.Exceptions;
@@ -171,5 +172,24 @@ public sealed class RegulatoryTemplate
                 RegulatoryTemplateErrors.NoDraftVersion);
 
         return draft.AddSection(code, title, parentSectionId, order);
+    }
+
+    /// <summary>
+    /// Declares that the draft version expects a document of the given type in
+    /// one of its sections. Draft-only; the section must belong to the draft.
+    /// </summary>
+    public RequiredDocument AddRequiredDocument(
+        TemplateSectionId sectionId,
+        DocumentTypeId documentTypeId,
+        bool isMandatory = true,
+        int order = 0)
+    {
+        var draft = _versions.FirstOrDefault(
+                v => v.Status == TemplateVersionStatus.Draft)
+            ?? throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.NoDraftVersion);
+
+        return draft.AddRequiredDocument(
+            sectionId, documentTypeId, isMandatory, order);
     }
 }

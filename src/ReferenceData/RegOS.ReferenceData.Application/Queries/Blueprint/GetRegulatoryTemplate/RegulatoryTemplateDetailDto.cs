@@ -17,11 +17,19 @@ public sealed record RegulatoryTemplateVersionDto(
     DateOnly? EffectiveFrom,
     DateOnly? EffectiveTo,
     DateTime? PublishedOnUtc,
-    IReadOnlyList<TemplateSectionDto> Sections);
+    IReadOnlyList<TemplateSectionDto> Sections,
+    IReadOnlyList<RequiredDocumentDto> RequiredDocuments);
 
 public sealed record TemplateSectionDto(
     Guid Id,
     string Code,
     string Title,
     Guid? ParentSectionId,
+    int Order);
+
+public sealed record RequiredDocumentDto(
+    Guid Id,
+    Guid SectionId,
+    Guid DocumentTypeId,
+    bool IsMandatory,
     int Order);
