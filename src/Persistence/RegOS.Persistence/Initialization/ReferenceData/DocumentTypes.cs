@@ -72,6 +72,32 @@ internal static class DocumentTypes
         DocumentTypeEntity.CreateSystemType(
             new DocumentTypeId(DocumentTypeIds.DrugProductSummary),
             "DRUG_PRODUCT",
-            "Drug Product (Module 3.2.P)")
+            "Drug Product (Module 3.2.P)"),
+
+        // Additional IND artifacts (full FDA IND blueprint).
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.FormFda1572),
+            "FDA_1572",
+            "Form FDA 1572 (Statement of Investigator)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.FormFda3674),
+            "FDA_3674",
+            "Form FDA 3674 (Certification of Compliance, clinicaltrials.gov)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.StudyProtocol),
+            "PROTOCOL",
+            "Clinical Study Protocol"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.QualityOverallSummary),
+            "QOS",
+            "Quality Overall Summary (Module 2.3)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.NonclinicalSummary),
+            "NONCLINICAL_SUMMARY",
+            "Nonclinical Written and Tabulated Summaries (Module 2.6)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.ClinicalSummary),
+            "CLINICAL_SUMMARY",
+            "Clinical Summary (Module 2.7)")
     ];
 }
