@@ -99,6 +99,9 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -473,6 +476,199 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("DocumentVersions", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SubmissionTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityId");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("\"TenantId\" IS NULL");
+
+                    b.HasIndex("SubmissionTypeId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("RegulatoryTemplates", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplateVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("PublishedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RegulatoryTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegulatoryTemplateId");
+
+                    b.HasIndex("RegulatoryTemplateId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("RegulatoryTemplateVersions", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.RequiredDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DocumentTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsMandatory")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RegulatoryTemplateVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SectionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentTypeId");
+
+                    b.HasIndex("RegulatoryTemplateVersionId");
+
+                    b.HasIndex("SectionId", "DocumentTypeId")
+                        .IsUnique();
+
+                    b.ToTable("RequiredDocuments", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.TemplateSection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ParentSectionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RegulatoryTemplateVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegulatoryTemplateVersionId");
+
+                    b.HasIndex("RegulatoryTemplateVersionId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("TemplateSections", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.ValidationRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Parameters")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("RegulatoryTemplateVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RuleType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("SectionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegulatoryTemplateVersionId");
+
+                    b.HasIndex("RegulatoryTemplateVersionId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("ValidationRules", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.ReferenceData.Domain.DocumentType.DocumentType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -845,6 +1041,68 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplate", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.ReferenceData.Domain.SubmissionType.SubmissionType", null)
+                        .WithMany()
+                        .HasForeignKey("SubmissionTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Platform.Domain.Aggregates.Tenant.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplateVersion", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplate", null)
+                        .WithMany("Versions")
+                        .HasForeignKey("RegulatoryTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.RequiredDocument", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.DocumentType.DocumentType", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplateVersion", null)
+                        .WithMany("RequiredDocuments")
+                        .HasForeignKey("RegulatoryTemplateVersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.TemplateSection", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplateVersion", null)
+                        .WithMany("Sections")
+                        .HasForeignKey("RegulatoryTemplateVersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.ValidationRule", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplateVersion", null)
+                        .WithMany("ValidationRules")
+                        .HasForeignKey("RegulatoryTemplateVersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RegOS.ReferenceData.Domain.DocumentType.DocumentType", b =>
                 {
                     b.HasOne("RegOS.Platform.Domain.Aggregates.Tenant.Tenant", null)
@@ -955,6 +1213,20 @@ namespace RegOS.Persistence.Migrations
             modelBuilder.Entity("RegOS.ProductDocument.Domain.Aggregates.ProductDocument", b =>
                 {
                     b.Navigation("Versions");
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplate", b =>
+                {
+                    b.Navigation("Versions");
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplateVersion", b =>
+                {
+                    b.Navigation("RequiredDocuments");
+
+                    b.Navigation("Sections");
+
+                    b.Navigation("ValidationRules");
                 });
 
             modelBuilder.Entity("RegOS.Submission.Domain.Snapshot.SubmissionSnapshot", b =>

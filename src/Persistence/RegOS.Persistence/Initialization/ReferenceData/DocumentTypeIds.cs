@@ -19,4 +19,42 @@ internal static class DocumentTypeIds
         Guid.Parse("50000000-0000-0000-0000-000000000007");
     public static readonly Guid Val =
         Guid.Parse("50000000-0000-0000-0000-000000000008");
+
+    // CTD / pharma document types (thin FDA IND slice).
+    public static readonly Guid CoverLetter =
+        Guid.Parse("50000000-0000-0000-0000-000000000009");
+    public static readonly Guid FormFda1571 =
+        Guid.Parse("50000000-0000-0000-0000-00000000000a");
+    public static readonly Guid InvestigatorsBrochure =
+        Guid.Parse("50000000-0000-0000-0000-00000000000b");
+    public static readonly Guid NonclinicalOverview =
+        Guid.Parse("50000000-0000-0000-0000-00000000000c");
+    public static readonly Guid ClinicalOverview =
+        Guid.Parse("50000000-0000-0000-0000-00000000000d");
+    public static readonly Guid DrugSubstanceSummary =
+        Guid.Parse("50000000-0000-0000-0000-00000000000e");
+    public static readonly Guid DrugProductSummary =
+        Guid.Parse("50000000-0000-0000-0000-00000000000f");
+
+    // Additional IND artifacts (STORY-006 — full FDA IND blueprint).
+    public static readonly Guid FormFda1572 =
+        Guid.Parse("50000000-0000-0000-0000-000000000010");
+    public static readonly Guid FormFda3674 =
+        Guid.Parse("50000000-0000-0000-0000-000000000011");
+    public static readonly Guid StudyProtocol =
+        Guid.Parse("50000000-0000-0000-0000-000000000012");
+    public static readonly Guid QualityOverallSummary =
+        Guid.Parse("50000000-0000-0000-0000-000000000013");
+    public static readonly Guid NonclinicalSummary =
+        Guid.Parse("50000000-0000-0000-0000-000000000014");
+    public static readonly Guid ClinicalSummary =
+        Guid.Parse("50000000-0000-0000-0000-000000000015");
+
+    // Regional Module 1 application forms (STORY-008 — CA / AU / IN blueprints).
+    public static readonly Guid HcCtaForm =
+        Guid.Parse("50000000-0000-0000-0000-000000000016");
+    public static readonly Guid TgaCtnForm =
+        Guid.Parse("50000000-0000-0000-0000-000000000017");
+    public static readonly Guid CdscoFormCt04 =
+        Guid.Parse("50000000-0000-0000-0000-000000000018");
 }

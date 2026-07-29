@@ -42,6 +42,76 @@ internal static class DocumentTypes
         DocumentTypeEntity.CreateSystemType(
             new DocumentTypeId(DocumentTypeIds.Val),
             "VAL",
-            "Validation Report")
+            "Validation Report"),
+
+        // CTD / pharma document types (thin FDA IND slice).
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.CoverLetter),
+            "COVER_LETTER",
+            "Cover Letter"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.FormFda1571),
+            "FDA_1571",
+            "Form FDA 1571 (IND Application)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.InvestigatorsBrochure),
+            "IB",
+            "Investigator's Brochure"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.NonclinicalOverview),
+            "NONCLINICAL_OVERVIEW",
+            "Nonclinical Overview (Module 2.4)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.ClinicalOverview),
+            "CLINICAL_OVERVIEW",
+            "Clinical Overview (Module 2.5)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.DrugSubstanceSummary),
+            "DRUG_SUBSTANCE",
+            "Drug Substance (Module 3.2.S)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.DrugProductSummary),
+            "DRUG_PRODUCT",
+            "Drug Product (Module 3.2.P)"),
+
+        // Additional IND artifacts (full FDA IND blueprint).
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.FormFda1572),
+            "FDA_1572",
+            "Form FDA 1572 (Statement of Investigator)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.FormFda3674),
+            "FDA_3674",
+            "Form FDA 3674 (Certification of Compliance, clinicaltrials.gov)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.StudyProtocol),
+            "PROTOCOL",
+            "Clinical Study Protocol"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.QualityOverallSummary),
+            "QOS",
+            "Quality Overall Summary (Module 2.3)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.NonclinicalSummary),
+            "NONCLINICAL_SUMMARY",
+            "Nonclinical Written and Tabulated Summaries (Module 2.6)"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.ClinicalSummary),
+            "CLINICAL_SUMMARY",
+            "Clinical Summary (Module 2.7)"),
+
+        // Regional Module 1 application forms (CA / AU / IN clinical-trial apps).
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.HcCtaForm),
+            "HC_CTA_FORM",
+            "Health Canada Clinical Trial Application Form"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.TgaCtnForm),
+            "TGA_CTN_FORM",
+            "TGA Clinical Trial Notification (CTN) Form"),
+        DocumentTypeEntity.CreateSystemType(
+            new DocumentTypeId(DocumentTypeIds.CdscoFormCt04),
+            "CDSCO_CT04",
+            "Form CT-04 (Application for Permission to Conduct Clinical Trial)")
     ];
 }

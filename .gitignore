@@ -91,3 +91,6 @@ storage/
 tests/Browser/node_modules/
 tests/Browser/test-results/
 tests/Browser/playwright-report/
+
+scratchpad
+.claude
