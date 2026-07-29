@@ -59,6 +59,23 @@ internal static class SubmissionTypes
             new SubmissionTypeId(SubmissionTypeIds.FdaNda),
             "FDA_NDA",
             "New Drug Application (NDA)",
-            new AuthorityId(GeographyAndRegulatoryIds.FDA))
+            new AuthorityId(GeographyAndRegulatoryIds.FDA)),
+
+        // Clinical-trial applications for other authorities (pharma).
+        SubmissionTypeEntity.Create(
+            new SubmissionTypeId(SubmissionTypeIds.HcCta),
+            "HC_CTA",
+            "Clinical Trial Application (CTA)",
+            new AuthorityId(GeographyAndRegulatoryIds.HealthCanada)),
+        SubmissionTypeEntity.Create(
+            new SubmissionTypeId(SubmissionTypeIds.TgaCtn),
+            "TGA_CTN",
+            "Clinical Trial Notification (CTN)",
+            new AuthorityId(GeographyAndRegulatoryIds.TGA)),
+        SubmissionTypeEntity.Create(
+            new SubmissionTypeId(SubmissionTypeIds.CdscoCta),
+            "CDSCO_CTA",
+            "Clinical Trial Application (Form CT-04)",
+            new AuthorityId(GeographyAndRegulatoryIds.CDSCO))
     ];
 }

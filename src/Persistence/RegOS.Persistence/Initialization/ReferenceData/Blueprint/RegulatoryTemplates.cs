@@ -9,11 +9,21 @@ internal static class RegulatoryTemplates
 {
     // Deterministic ids from RegulatoryTemplateIds; the authority and
     // submission-type references reuse the ids already seeded elsewhere.
+    //
+    // Four clinical-trial blueprints (US IND, Canada CTA, Australia CTN,
+    // India CT-04). CTD Modules 2–5 are ICH-harmonized, so every blueprint
+    // shares them via AddHarmonizedCtdModules; only Module 1 is regional.
+    // That split is the whole point — a new authority's dossier is seed data,
+    // not code.
     public static IReadOnlyList<RegulatoryTemplate> Data =>
     [
-        BuildFdaIndCtd()
+        BuildFdaIndCtd(),
+        BuildHcCtaCtd(),
+        BuildTgaCtnCtd(),
+        BuildCdscoCtaCtd()
     ];
 
+    // ── United States · FDA · IND ────────────────────────────────────────────
     private static RegulatoryTemplate BuildFdaIndCtd()
     {
         var template = RegulatoryTemplate.Create(
@@ -24,14 +34,9 @@ internal static class RegulatoryTemplates
             new SubmissionTypeId(SubmissionTypeIds.FdaInd),
             "ICH eCTD / FDA");
 
-        // Build the v1 blueprint on a draft, then publish (freeze) it. A
-        // representative CTD skeleton for FDA IND: the harmonized modules (2–5)
-        // to their standard section families, the FDA regional Module 1 to its
-        // IND essentials — one level below 3.2.S / 3.2.P, not every CTD leaf.
-        // Numbering is template data (e.g. IB at 1.13), never application logic.
         var v1 = template.StartDraftVersion();
 
-        // ── Module 1 — Administrative Information (FDA regional) ──────────────
+        // Regional Module 1 (FDA) — administrative essentials for an IND.
         var m1 = template.AddSection(
             "M1", "Administrative Information and Prescribing Information", null, 1);
         var forms = template.AddSection("1.1", "Forms", m1.Id, 1);
@@ -41,6 +46,179 @@ internal static class RegulatoryTemplates
         var ib = template.AddSection("1.13", "Investigator's Brochure", m1.Id, 5);
         template.AddSection("1.14", "Labeling", m1.Id, 6);
 
+        template.AddRequiredDocument(
+            coverLetter.Id, new DocumentTypeId(DocumentTypeIds.CoverLetter), true, 1);
+        template.AddRequiredDocument(
+            forms.Id, new DocumentTypeId(DocumentTypeIds.FormFda1571), true, 1);
+        template.AddRequiredDocument(
+            forms.Id, new DocumentTypeId(DocumentTypeIds.FormFda1572), true, 2);
+        template.AddRequiredDocument(
+            forms.Id, new DocumentTypeId(DocumentTypeIds.FormFda3674), true, 3);
+        template.AddRequiredDocument(
+            ib.Id, new DocumentTypeId(DocumentTypeIds.InvestigatorsBrochure), true, 1);
+
+        template.AddValidationRule(
+            "FDA-IND-1.1-FORMS-NONEMPTY",
+            ValidationRuleType.SectionNotEmpty,
+            ValidationSeverity.Error,
+            "Module 1.1 (Forms) must contain the required IND forms.",
+            sectionId: forms.Id,
+            parameters: null,
+            order: 2);
+
+        AddHarmonizedCtdModules(template, "FDA-IND");
+
+        template.PublishVersion(v1.Id, new DateOnly(2026, 1, 1), DateTime.UtcNow);
+
+        return template;
+    }
+
+    // ── Canada · Health Canada · CTA ─────────────────────────────────────────
+    private static RegulatoryTemplate BuildHcCtaCtd()
+    {
+        var template = RegulatoryTemplate.Create(
+            new RegulatoryTemplateId(RegulatoryTemplateIds.HcCtaCtd),
+            "HC_CTA_CTD",
+            "Health Canada CTA (CTD)",
+            new AuthorityId(GeographyAndRegulatoryIds.HealthCanada),
+            new SubmissionTypeId(SubmissionTypeIds.HcCta),
+            "ICH eCTD / Health Canada");
+
+        var v1 = template.StartDraftVersion();
+
+        // Regional Module 1 (Health Canada) — representative CTA essentials.
+        var m1 = template.AddSection(
+            "M1", "Administrative and Regional Information (Health Canada)", null, 1);
+        var forms = template.AddSection("1.1", "Forms", m1.Id, 1);
+        var coverLetter = template.AddSection("1.2", "Cover Letter", m1.Id, 2);
+        template.AddSection("1.3", "Administrative Information", m1.Id, 3);
+        var ib = template.AddSection("1.4", "Investigator's Brochure", m1.Id, 4);
+
+        template.AddRequiredDocument(
+            forms.Id, new DocumentTypeId(DocumentTypeIds.HcCtaForm), true, 1);
+        template.AddRequiredDocument(
+            coverLetter.Id, new DocumentTypeId(DocumentTypeIds.CoverLetter), true, 1);
+        template.AddRequiredDocument(
+            ib.Id, new DocumentTypeId(DocumentTypeIds.InvestigatorsBrochure), true, 1);
+
+        template.AddValidationRule(
+            "HC-CTA-1.1-FORMS-NONEMPTY",
+            ValidationRuleType.SectionNotEmpty,
+            ValidationSeverity.Error,
+            "Module 1.1 (Forms) must contain the Health Canada CTA application form.",
+            sectionId: forms.Id,
+            parameters: null,
+            order: 2);
+
+        AddHarmonizedCtdModules(template, "HC-CTA");
+
+        template.PublishVersion(v1.Id, new DateOnly(2026, 1, 1), DateTime.UtcNow);
+
+        return template;
+    }
+
+    // ── Australia · TGA · CTN ────────────────────────────────────────────────
+    private static RegulatoryTemplate BuildTgaCtnCtd()
+    {
+        var template = RegulatoryTemplate.Create(
+            new RegulatoryTemplateId(RegulatoryTemplateIds.TgaCtnCtd),
+            "TGA_CTN_CTD",
+            "TGA CTN (CTD)",
+            new AuthorityId(GeographyAndRegulatoryIds.TGA),
+            new SubmissionTypeId(SubmissionTypeIds.TgaCtn),
+            "ICH eCTD / TGA");
+
+        var v1 = template.StartDraftVersion();
+
+        // Regional Module 1 (TGA) — the CTN notification is form-and-protocol led.
+        var m1 = template.AddSection(
+            "M1", "Administrative and Regional Information (TGA)", null, 1);
+        var forms = template.AddSection("1.1", "Forms", m1.Id, 1);
+        var coverLetter = template.AddSection("1.2", "Cover Letter", m1.Id, 2);
+        var ib = template.AddSection("1.3", "Investigator's Brochure", m1.Id, 3);
+        var protocol = template.AddSection("1.4", "Protocol", m1.Id, 4);
+
+        template.AddRequiredDocument(
+            forms.Id, new DocumentTypeId(DocumentTypeIds.TgaCtnForm), true, 1);
+        template.AddRequiredDocument(
+            coverLetter.Id, new DocumentTypeId(DocumentTypeIds.CoverLetter), true, 1);
+        template.AddRequiredDocument(
+            ib.Id, new DocumentTypeId(DocumentTypeIds.InvestigatorsBrochure), true, 1);
+        template.AddRequiredDocument(
+            protocol.Id, new DocumentTypeId(DocumentTypeIds.StudyProtocol), true, 1);
+
+        template.AddValidationRule(
+            "TGA-CTN-1.1-FORMS-NONEMPTY",
+            ValidationRuleType.SectionNotEmpty,
+            ValidationSeverity.Error,
+            "Module 1.1 (Forms) must contain the TGA CTN notification form.",
+            sectionId: forms.Id,
+            parameters: null,
+            order: 2);
+
+        AddHarmonizedCtdModules(template, "TGA-CTN");
+
+        template.PublishVersion(v1.Id, new DateOnly(2026, 1, 1), DateTime.UtcNow);
+
+        return template;
+    }
+
+    // ── India · CDSCO · Clinical Trial Permission (Form CT-04) ────────────────
+    private static RegulatoryTemplate BuildCdscoCtaCtd()
+    {
+        var template = RegulatoryTemplate.Create(
+            new RegulatoryTemplateId(RegulatoryTemplateIds.CdscoCtaCtd),
+            "CDSCO_CTA_CTD",
+            "CDSCO CTA (CTD)",
+            new AuthorityId(GeographyAndRegulatoryIds.CDSCO),
+            new SubmissionTypeId(SubmissionTypeIds.CdscoCta),
+            "CDSCO / NDCT Rules 2019");
+
+        var v1 = template.StartDraftVersion();
+
+        // Regional Module 1 (CDSCO) — representative, per the NDCT Rules 2019.
+        var m1 = template.AddSection(
+            "M1", "Administrative and Regional Information (CDSCO)", null, 1);
+        var forms = template.AddSection("1.1", "Forms", m1.Id, 1);
+        var coverLetter = template.AddSection("1.2", "Cover Letter", m1.Id, 2);
+        var ib = template.AddSection("1.3", "Investigator's Brochure", m1.Id, 3);
+        var protocol = template.AddSection("1.4", "Protocol", m1.Id, 4);
+
+        template.AddRequiredDocument(
+            forms.Id, new DocumentTypeId(DocumentTypeIds.CdscoFormCt04), true, 1);
+        template.AddRequiredDocument(
+            coverLetter.Id, new DocumentTypeId(DocumentTypeIds.CoverLetter), true, 1);
+        template.AddRequiredDocument(
+            ib.Id, new DocumentTypeId(DocumentTypeIds.InvestigatorsBrochure), true, 1);
+        template.AddRequiredDocument(
+            protocol.Id, new DocumentTypeId(DocumentTypeIds.StudyProtocol), true, 1);
+
+        template.AddValidationRule(
+            "CDSCO-CTA-1.1-FORMS-NONEMPTY",
+            ValidationRuleType.SectionNotEmpty,
+            ValidationSeverity.Error,
+            "Module 1.1 (Forms) must contain Form CT-04.",
+            sectionId: forms.Id,
+            parameters: null,
+            order: 2);
+
+        AddHarmonizedCtdModules(template, "CDSCO-CTA");
+
+        template.PublishVersion(v1.Id, new DateOnly(2026, 1, 1), DateTime.UtcNow);
+
+        return template;
+    }
+
+    /// <summary>
+    /// Adds the ICH-harmonized CTD Modules 2–5 — identical across authorities —
+    /// to a template's open draft: the section families, the documents they
+    /// expect, and the format/stability rules. <paramref name="rulePrefix"/>
+    /// namespaces the rule codes per blueprint (rule codes are unique within a
+    /// version). Module 1 is regional and stays with each caller.
+    /// </summary>
+    private static void AddHarmonizedCtdModules(
+        RegulatoryTemplate template, string rulePrefix)
+    {
         // ── Module 2 — CTD Summaries ─────────────────────────────────────────
         var m2 = template.AddSection(
             "M2", "Common Technical Document Summaries", null, 2);
@@ -88,17 +266,7 @@ internal static class RegulatoryTemplates
         var clinicalReports =
             template.AddSection("5.3", "Clinical Study Reports", m5.Id, 2);
 
-        // ── The documents each section expects, typed by DocumentType ────────
-        template.AddRequiredDocument(
-            coverLetter.Id, new DocumentTypeId(DocumentTypeIds.CoverLetter), true, 1);
-        template.AddRequiredDocument(
-            forms.Id, new DocumentTypeId(DocumentTypeIds.FormFda1571), true, 1);
-        template.AddRequiredDocument(
-            forms.Id, new DocumentTypeId(DocumentTypeIds.FormFda1572), true, 2);
-        template.AddRequiredDocument(
-            forms.Id, new DocumentTypeId(DocumentTypeIds.FormFda3674), true, 3);
-        template.AddRequiredDocument(
-            ib.Id, new DocumentTypeId(DocumentTypeIds.InvestigatorsBrochure), true, 1);
+        // ── Harmonized required documents ────────────────────────────────────
         template.AddRequiredDocument(
             qos.Id, new DocumentTypeId(DocumentTypeIds.QualityOverallSummary), true, 1);
         template.AddRequiredDocument(
@@ -120,9 +288,9 @@ internal static class RegulatoryTemplates
         template.AddRequiredDocument(
             clinicalReports.Id, new DocumentTypeId(DocumentTypeIds.StudyProtocol), true, 1);
 
-        // ── Validation rules — checkable constraints, data only ──────────────
+        // ── Harmonized validation rules ──────────────────────────────────────
         template.AddValidationRule(
-            "FDA-IND-PDF",
+            $"{rulePrefix}-PDF",
             ValidationRuleType.FileFormat,
             ValidationSeverity.Error,
             "All submission documents must be provided as PDF.",
@@ -130,15 +298,7 @@ internal static class RegulatoryTemplates
             parameters: "pdf",
             order: 1);
         template.AddValidationRule(
-            "FDA-IND-1.1-FORMS-NONEMPTY",
-            ValidationRuleType.SectionNotEmpty,
-            ValidationSeverity.Error,
-            "Module 1.1 (Forms) must contain the required IND forms.",
-            sectionId: forms.Id,
-            parameters: null,
-            order: 2);
-        template.AddValidationRule(
-            "FDA-IND-3.2.S.7-STABILITY-NONEMPTY",
+            $"{rulePrefix}-3.2.S.7-STABILITY-NONEMPTY",
             ValidationRuleType.SectionNotEmpty,
             ValidationSeverity.Warning,
             "Drug Substance stability data (3.2.S.7) is expected.",
@@ -146,16 +306,12 @@ internal static class RegulatoryTemplates
             parameters: null,
             order: 3);
         template.AddValidationRule(
-            "FDA-IND-3.2.P.8-STABILITY-NONEMPTY",
+            $"{rulePrefix}-3.2.P.8-STABILITY-NONEMPTY",
             ValidationRuleType.SectionNotEmpty,
             ValidationSeverity.Warning,
             "Drug Product stability data (3.2.P.8) is expected.",
             sectionId: pStability.Id,
             parameters: null,
             order: 4);
-
-        template.PublishVersion(v1.Id, new DateOnly(2026, 1, 1), DateTime.UtcNow);
-
-        return template;
     }
 }

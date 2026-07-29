@@ -8,14 +8,23 @@ test.describe("Regulatory templates explorer", () => {
   }) => {
     const errors = collectErrors(page);
 
-    // List
+    // List — all four clinical-trial blueprints are present.
     await page.goto("/regulatory/templates");
     await expect(page.getByTestId("template-list")).toBeVisible();
 
-    const row = page.getByTestId("template-row").first();
-    await expect(row).toContainText("FDA IND");
+    const list = page.getByTestId("template-list");
+    await expect(list).toContainText("FDA IND");
+    await expect(list).toContainText("Health Canada CTA");
+    await expect(list).toContainText("TGA CTN");
+    await expect(list).toContainText("CDSCO CTA");
 
-    // Detail — the blueprint renders end to end.
+    // Detail — the FDA IND blueprint renders end to end. Select it by name
+    // rather than position: the list is ordered by name, so FDA is not first.
+    const row = page
+      .getByTestId("template-row")
+      .filter({ hasText: "FDA IND" });
+    await expect(row).toBeVisible();
+
     await row.click();
 
     const tree = page.getByTestId("blueprint-tree");

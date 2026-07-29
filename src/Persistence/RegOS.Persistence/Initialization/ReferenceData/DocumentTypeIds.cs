@@ -49,4 +49,12 @@ internal static class DocumentTypeIds
         Guid.Parse("50000000-0000-0000-0000-000000000014");
     public static readonly Guid ClinicalSummary =
         Guid.Parse("50000000-0000-0000-0000-000000000015");
+
+    // Regional Module 1 application forms (STORY-008 — CA / AU / IN blueprints).
+    public static readonly Guid HcCtaForm =
+        Guid.Parse("50000000-0000-0000-0000-000000000016");
+    public static readonly Guid TgaCtnForm =
+        Guid.Parse("50000000-0000-0000-0000-000000000017");
+    public static readonly Guid CdscoFormCt04 =
+        Guid.Parse("50000000-0000-0000-0000-000000000018");
 }
