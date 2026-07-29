@@ -93,3 +93,4 @@ tests/Browser/test-results/
 tests/Browser/playwright-report/
 
 scratchpad
+.claude
