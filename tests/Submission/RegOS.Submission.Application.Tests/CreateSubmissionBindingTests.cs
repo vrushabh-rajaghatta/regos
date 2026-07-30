@@ -161,75 +161,11 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// A shared parent application pinned to the FDA, so the create handler's
+    /// A parent application pinned to the FDA, so the create handler's
     /// "submission type must belong to the application's authority" rule is
     /// satisfied for both submission types under test.
     /// </summary>
     private static async Task<RegulatoryApplicationId> EnsureFdaApplicationAsync(
         RegOSDbContext ctx)
-    {
-        const string fixtureCode = "TEST-BINDING-FDA";
-        var code = ProductCode.Create(fixtureCode);
-
-        var productId = await ctx.Products
-            .AsNoTracking()
-            .Where(x => x.Code == code)
-            .Select(x => x.Id)
-            .FirstOrDefaultAsync();
-
-        if (productId is not null)
-        {
-            var existing = await ctx.RegulatoryApplications
-                .AsNoTracking()
-                .Where(x => x.ProductId == productId)
-                .Select(x => x.Id)
-                .FirstOrDefaultAsync();
-
-            if (existing != default)
-                return existing;
-        }
-
-        var countryId = await ctx.Countries
-            .AsNoTracking().Select(x => x.Id).FirstAsync();
-        var organizationId = await ctx.Organizations
-            .AsNoTracking().Select(x => x.Id).FirstAsync();
-
-        var product = ProductAggregate.Register(
-            TestTenant.Id, fixtureCode, "Blueprint Binding Product", ProductType.Drug);
-
-        var application = RegulatoryApplicationAggregate.Create(
-            TestTenant.Id,
-            product.Id,
-            countryId,
-            Fda,
-            organizationId,
-            "Blueprint Binding Application");
-
-        ctx.Products.Add(product);
-        ctx.RegulatoryApplications.Add(application);
-
-        try
-        {
-            await ctx.SaveChangesAsync();
-
-            return application.Id;
-        }
-        catch (DbUpdateException)
-        {
-            // Another test class won the race — use its row.
-            ctx.ChangeTracker.Clear();
-
-            var winnerProductId = await ctx.Products
-                .AsNoTracking()
-                .Where(x => x.Code == code)
-                .Select(x => x.Id)
-                .FirstAsync();
-
-            return await ctx.RegulatoryApplications
-                .AsNoTracking()
-                .Where(x => x.ProductId == winnerProductId)
-                .Select(x => x.Id)
-                .FirstAsync();
-        }
-    }
+        => (await TestFdaApplication.EnsureAsync(ctx)).AppId;
 }

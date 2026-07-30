@@ -15,4 +15,17 @@ public static class SubmissionValidationCodes
 
     /// <summary>An attached document version no longer exists (data integrity guard).</summary>
     public const string MissingDocumentVersion = "MissingDocumentVersion";
+
+    /// <summary>
+    /// A document type the bound blueprint requires is not attached. Blocking.
+    /// </summary>
+    public const string RequiredDocumentMissing = "RequiredDocumentMissing";
+
+    /// <summary>
+    /// No published blueprint governs this submission, so its completeness was
+    /// not checked. Informational — an unbound submission is a legitimate
+    /// state, not a failure.
+    /// </summary>
+    public const string SubmissionNotBoundToBlueprint =
+        "SubmissionNotBoundToBlueprint";
 }
