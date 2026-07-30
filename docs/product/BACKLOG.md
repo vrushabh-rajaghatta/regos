@@ -31,13 +31,14 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-_Nothing in flight — pull the top of **Next**._
+| ID | Epic | Status | Notes |
+|---|---|---|---|
+| **EPIC-003** | **Submission planning & content** — place documents into the bound blueprint's sections; placeholder-shaped content plan / gap view (the dossier builder); placement-aware validation | 🟡 In Progress | 4 stories → `epics/EPIC-003-submission-planning-and-content.md` |
 
 ## Next
 
 | ID | Epic | Status | Depends on |
 |---|---|---|---|
-| **EPIC-003** | **Submission planning & content** — regulatory activities; instantiate template sections onto a submission; content plan / gap view (the drag-a-document-onto-a-placeholder dossier builder) | ⚪ Not Started | EPIC-001, 002 |
 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering; lifecycle beyond Draft/Published | ⚪ Not Started | EPIC-003 |
 | **EPIC-005** | **Registration tracking** — a product's registrations per market: status, license/approval numbers, key dates, renewals, variations (the RIM core) | ⚪ Not Started | EPIC-001 |
 
