@@ -15,4 +15,31 @@ public static class SubmissionValidationCodes
 
     /// <summary>An attached document version no longer exists (data integrity guard).</summary>
     public const string MissingDocumentVersion = "MissingDocumentVersion";
+
+    /// <summary>
+    /// A document type the bound blueprint requires is not attached. Blocking.
+    /// </summary>
+    public const string RequiredDocumentMissing = "RequiredDocumentMissing";
+
+    /// <summary>
+    /// No published blueprint governs this submission, so its completeness was
+    /// not checked. Informational — an unbound submission is a legitimate
+    /// state, not a failure.
+    /// </summary>
+    public const string SubmissionNotBoundToBlueprint =
+        "SubmissionNotBoundToBlueprint";
+
+    /// <summary>
+    /// A rule carried by the bound blueprint was violated. The rule's own code
+    /// (e.g. <c>FDA-IND-PDF</c>) travels on the issue's <c>RuleCode</c>, keeping
+    /// this set of codes closed while preserving regulatory traceability.
+    /// </summary>
+    public const string BlueprintRuleViolation = "BlueprintRuleViolation";
+
+    /// <summary>
+    /// The blueprint carries rule types this version of the engine cannot
+    /// execute yet. Informational, and a statement about the validator's
+    /// capability — not a claim that those rules passed or failed.
+    /// </summary>
+    public const string BlueprintRulesNotEvaluated = "BlueprintRulesNotEvaluated";
 }

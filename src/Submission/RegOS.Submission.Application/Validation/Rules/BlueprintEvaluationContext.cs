@@ -1,0 +1,35 @@
+using RegOS.ReferenceData.Domain.Blueprint;
+using RegOS.ReferenceData.Domain.DocumentType;
+
+namespace RegOS.Submission.Application.Validation.Rules;
+
+/// <summary>
+/// Everything the evaluators need about a submission and the blueprint version
+/// it is bound to, gathered once by the orchestrator.
+/// </summary>
+/// <remarks>
+/// Passing state rather than a <c>DbContext</c> is what keeps each evaluator a
+/// pure function over its inputs: they are unit-testable without a database,
+/// and the number of queries stays a property of the orchestrator rather than
+/// growing with every rule type added.
+/// </remarks>
+public sealed record BlueprintEvaluationContext(
+    RegulatoryTemplateVersion Version,
+    IReadOnlyList<AttachedDocument> AttachedDocuments,
+    IReadOnlyDictionary<DocumentTypeId, string> DocumentTypeNames)
+{
+    public string NameFor(DocumentTypeId documentTypeId) =>
+        DocumentTypeNames.TryGetValue(documentTypeId, out var name)
+            ? name
+            : documentTypeId.Value.ToString();
+}
+
+/// <summary>
+/// One document attached to the submission, flattened to the facts rules are
+/// written about. The file itself is never read — only what was recorded about
+/// it when it was uploaded.
+/// </summary>
+public sealed record AttachedDocument(
+    DocumentTypeId DocumentTypeId,
+    string OriginalFileName,
+    string ContentType);

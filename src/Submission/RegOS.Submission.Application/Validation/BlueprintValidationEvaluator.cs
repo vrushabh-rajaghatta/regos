@@ -1,0 +1,209 @@
+using Microsoft.EntityFrameworkCore;
+
+using RegOS.Persistence;
+using RegOS.ReferenceData.Domain.Blueprint;
+using RegOS.ReferenceData.Domain.DocumentType;
+using RegOS.Submission.Application.Validation.Models;
+using RegOS.Submission.Application.Validation.Rules;
+
+using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
+using IssueSeverity = RegOS.Submission.Application.Validation.Models.ValidationSeverity;
+
+namespace RegOS.Submission.Application.Validation;
+
+/// <summary>
+/// Judges a submission against the blueprint it is bound to — the point where
+/// reference data governs customer data. Rules are not written in code: they are
+/// read from the published template version the submission was pinned to.
+/// </summary>
+/// <remarks>
+/// Orchestration only. It gathers the facts once, then runs two pipelines:
+/// checks derived from the blueprint's structure (required-document coverage
+/// today, placement completeness later), and the blueprint's explicit
+/// <see cref="ValidationRule"/> rows, each handed to whichever
+/// <see cref="IBlueprintRuleEvaluator"/> can execute it.
+/// <para>
+/// A rule no evaluator claims is <em>disclosed</em>, never silently skipped: a
+/// regulated engine must be able to say "passed", "failed" and "not evaluated"
+/// as three different things.
+/// </para>
+/// </remarks>
+public sealed class BlueprintValidationEvaluator
+{
+    private readonly RegOSDbContext _dbContext;
+    private readonly IReadOnlyList<IBlueprintRuleEvaluator> _ruleEvaluators;
+    private readonly RequiredDocumentCoverageEvaluator _coverage = new();
+
+    public BlueprintValidationEvaluator(RegOSDbContext dbContext)
+        : this(dbContext, DefaultRuleEvaluators())
+    {
+    }
+
+    public BlueprintValidationEvaluator(
+        RegOSDbContext dbContext,
+        IEnumerable<IBlueprintRuleEvaluator> ruleEvaluators)
+    {
+        _dbContext = dbContext;
+        _ruleEvaluators = ruleEvaluators.ToList();
+    }
+
+    /// <summary>The rule evaluators this engine ships with.</summary>
+    public static IReadOnlyList<IBlueprintRuleEvaluator> DefaultRuleEvaluators() =>
+        [new FileFormatEvaluator()];
+
+    public async Task EvaluateAsync(
+        SubmissionAggregate submission,
+        SubmissionValidationResult result,
+        CancellationToken cancellationToken)
+    {
+        // An unbound submission is legitimate (no published blueprint targets
+        // its submission type), but silently skipping the check would be
+        // indistinguishable from passing it. Say so, without blocking.
+        if (submission.BoundTemplateVersionId is not { } versionId)
+        {
+            result.AddIssue(
+                SubmissionValidationCodes.SubmissionNotBoundToBlueprint,
+                "This submission is not bound to a published blueprint, so its "
+                    + "completeness against a dossier template was not checked.",
+                IssueSeverity.Information);
+
+            return;
+        }
+
+        var version = await LoadVersionAsync(versionId, cancellationToken);
+
+        if (version is null)
+            return;
+
+        var context = new BlueprintEvaluationContext(
+            version,
+            await LoadAttachedDocumentsAsync(submission, cancellationToken),
+            await LoadDocumentTypeNamesAsync(version, cancellationToken));
+
+        _coverage.Evaluate(context, result);
+
+        EvaluateRules(context, result);
+    }
+
+    private void EvaluateRules(
+        BlueprintEvaluationContext context,
+        SubmissionValidationResult result)
+    {
+        var unevaluated = new List<ValidationRule>();
+
+        foreach (var rule in context.Version.ValidationRules.OrderBy(r => r.Order))
+        {
+            var evaluator = _ruleEvaluators.FirstOrDefault(e => e.CanEvaluate(rule));
+
+            if (evaluator is null)
+            {
+                unevaluated.Add(rule);
+                continue;
+            }
+
+            evaluator.Evaluate(rule, context, result);
+        }
+
+        if (unevaluated.Count == 0)
+            return;
+
+        // One disclosure, not one per rule. Deliberately phrased as a statement
+        // about this engine's capability — it does not say the rules passed, and
+        // it does not say they failed, because neither is known. It says nothing
+        // about how the blueprint graded them either: reporting "an Error rule
+        // was not evaluated" would invite the reader to conclude they have an
+        // error, which is exactly what is not known.
+        var ruleTypes = unevaluated
+            .Select(r => r.RuleType.ToString())
+            .Distinct()
+            .OrderBy(name => name)
+            .ToList();
+
+        result.AddIssue(new SubmissionValidationIssue(
+            SubmissionValidationCodes.BlueprintRulesNotEvaluated,
+            "This validator does not yet execute these blueprint rule types: "
+                + $"{string.Join(", ", ruleTypes)}.",
+            IssueSeverity.Information,
+            UnevaluatedRuleTypes: ruleTypes));
+    }
+
+    /// <summary>
+    /// The bound version with everything the evaluators read. The version is a
+    /// child of the template aggregate, so it is reached through its root.
+    /// </summary>
+    private async Task<RegulatoryTemplateVersion?> LoadVersionAsync(
+        RegulatoryTemplateVersionId versionId,
+        CancellationToken cancellationToken)
+    {
+        var template = await _dbContext.RegulatoryTemplates
+            .AsNoTracking()
+            .Include(t => t.Versions)
+                .ThenInclude(v => v.RequiredDocuments)
+            .Include(t => t.Versions)
+                .ThenInclude(v => v.ValidationRules)
+            .FirstOrDefaultAsync(
+                t => t.Versions.Any(v => v.Id == versionId), cancellationToken);
+
+        return template?.Versions.FirstOrDefault(v => v.Id == versionId);
+    }
+
+    private async Task<IReadOnlyList<AttachedDocument>> LoadAttachedDocumentsAsync(
+        SubmissionAggregate submission,
+        CancellationToken cancellationToken)
+    {
+        var productDocumentIds = submission.Documents
+            .Select(d => d.ProductDocumentId)
+            .ToList();
+
+        if (productDocumentIds.Count == 0)
+            return [];
+
+        // The attached *version* is what was pinned, so its file facts — not the
+        // document's latest — are what the rules are judged against.
+        var rows = await _dbContext.ProductDocuments
+            .AsNoTracking()
+            .Where(d => productDocumentIds.Contains(d.Id))
+            .SelectMany(
+                d => d.Versions,
+                (d, version) => new
+                {
+                    d.DocumentTypeId,
+                    version.Id,
+                    version.OriginalFileName,
+                    version.ContentType,
+                })
+            .ToListAsync(cancellationToken);
+
+        var attachedVersionIds = submission.Documents
+            .Select(d => d.DocumentVersionId)
+            .ToHashSet();
+
+        return rows
+            .Where(r => attachedVersionIds.Contains(r.Id))
+            .Select(r => new AttachedDocument(
+                r.DocumentTypeId, r.OriginalFileName, r.ContentType))
+            .ToList();
+    }
+
+    private async Task<IReadOnlyDictionary<DocumentTypeId, string>>
+        LoadDocumentTypeNamesAsync(
+            RegulatoryTemplateVersion version,
+            CancellationToken cancellationToken)
+    {
+        var documentTypeIds = version.RequiredDocuments
+            .Select(d => d.DocumentTypeId)
+            .Distinct()
+            .ToList();
+
+        if (documentTypeIds.Count == 0)
+            return new Dictionary<DocumentTypeId, string>();
+
+        var rows = await _dbContext.DocumentTypes
+            .AsNoTracking()
+            .Where(t => documentTypeIds.Contains(t.Id))
+            .Select(t => new { t.Id, t.Name })
+            .ToListAsync(cancellationToken);
+
+        return rows.ToDictionary(r => r.Id, r => r.Name);
+    }
+}

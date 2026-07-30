@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
+using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.Submission.Domain.Submission;
 
 namespace RegOS.Submission.Application.Queries.GetSubmission;
@@ -39,6 +40,7 @@ public sealed class GetSubmissionHandler
                 SubmissionTypeName = submissionType.Name,
                 submission.Status,
                 submission.CreatedOn,
+                submission.BoundTemplateVersionId,
             }).SingleOrDefaultAsync(cancellationToken);
 
         if (row is null)
@@ -52,6 +54,39 @@ public sealed class GetSubmissionHandler
             row.SubmissionTypeId.Value,
             row.SubmissionTypeName,
             row.Status.ToString(),
-            row.CreatedOn);
+            row.CreatedOn,
+            await LoadBoundTemplateAsync(
+                row.BoundTemplateVersionId, cancellationToken));
+    }
+
+    /// <summary>
+    /// Resolves the names behind a bound template version. A second query
+    /// rather than a left join: the binding is usually absent or hits a handful
+    /// of cached reference rows, and it keeps the main projection readable.
+    /// </summary>
+    private async Task<BoundTemplateDto?> LoadBoundTemplateAsync(
+        RegulatoryTemplateVersionId? versionId,
+        CancellationToken cancellationToken)
+    {
+        if (versionId is not { } id)
+            return null;
+
+        var template = await _dbContext.RegulatoryTemplates
+            .AsNoTracking()
+            .Include(t => t.Versions)
+            .FirstOrDefaultAsync(
+                t => t.Versions.Any(v => v.Id == id), cancellationToken);
+
+        if (template is null)
+            return null;
+
+        var version = template.Versions.First(v => v.Id == id);
+
+        return new BoundTemplateDto(
+            version.Id.Value,
+            template.Id.Value,
+            template.Code,
+            template.Name,
+            version.VersionNumber);
     }
 }

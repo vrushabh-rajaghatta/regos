@@ -40,7 +40,10 @@ export function SubmissionPublishingPage() {
       </div>
 
       {isPublished && (
-        <div className="rounded-lg border border-emerald-600/40 bg-emerald-50 p-6 dark:bg-emerald-950/30">
+        <div
+          className="rounded-lg border border-emerald-600/40 bg-emerald-50 p-6 dark:bg-emerald-950/30"
+          data-testid="submission-published"
+        >
           <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
             Published
           </h3>
@@ -72,6 +75,7 @@ export function SubmissionPublishingPage() {
           <Button
             disabled={!isReady || publish.isPending}
             onClick={() => publish.mutate()}
+            data-testid="publish-submission"
           >
             {publish.isPending ? "Publishing..." : "Publish"}
           </Button>

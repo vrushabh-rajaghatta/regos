@@ -27,13 +27,23 @@ public sealed class SubmissionValidator
 {
     private readonly ISubmissionRepository _submissions;
     private readonly RegOSDbContext _dbContext;
+    private readonly BlueprintValidationEvaluator _blueprint;
 
     public SubmissionValidator(
         ISubmissionRepository submissions,
         RegOSDbContext dbContext)
+        : this(submissions, dbContext, new BlueprintValidationEvaluator(dbContext))
+    {
+    }
+
+    public SubmissionValidator(
+        ISubmissionRepository submissions,
+        RegOSDbContext dbContext,
+        BlueprintValidationEvaluator blueprint)
     {
         _submissions = submissions;
         _dbContext = dbContext;
+        _blueprint = blueprint;
     }
 
     /// <summary>
@@ -75,6 +85,10 @@ public sealed class SubmissionValidator
         // fail under normal operation (the DocumentVersion FK is RESTRICT), but the
         // validator detects data corruption rather than trusting the invariant blindly.
         await AddMissingDocumentVersionIssuesAsync(submission, result, cancellationToken);
+
+        // Rules the blueprint carries, rather than rules written here: what the
+        // bound template version says this dossier must contain.
+        await _blueprint.EvaluateAsync(submission, result, cancellationToken);
 
         return result;
     }

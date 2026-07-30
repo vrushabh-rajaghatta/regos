@@ -1,6 +1,7 @@
 using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 
+using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Domain.Submission;
@@ -27,5 +28,28 @@ public class SubmissionCreationTests
     public void Create_PopulatesCreatedOn()
     {
         NewDraft().CreatedOn.Should().NotBe(default);
+    }
+
+    [Fact]
+    public void Create_WithoutATemplate_LeavesTheSubmissionUnbound()
+    {
+        // Reference data that has no published blueprint (device submissions
+        // today) must never block creating a submission.
+        NewDraft().BoundTemplateVersionId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Create_PinsTheBoundTemplateVersion()
+    {
+        var versionId = RegulatoryTemplateVersionId.New();
+
+        var submission = SubmissionAggregate.Create(
+            TenantId.New(),
+            new RegulatoryApplicationId(Guid.NewGuid()),
+            new SubmissionTypeId(Guid.NewGuid()),
+            "Initial IND",
+            versionId);
+
+        submission.BoundTemplateVersionId.Should().Be(versionId);
     }
 }

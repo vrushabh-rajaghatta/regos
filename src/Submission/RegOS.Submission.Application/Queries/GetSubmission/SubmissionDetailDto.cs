@@ -8,4 +8,19 @@ public sealed record SubmissionDetailDto(
     Guid SubmissionTypeId,
     string SubmissionTypeName,
     string Status,
-    DateTime CreatedOn);
+    DateTime CreatedOn,
+    // The blueprint this submission is judged against, pinned at creation.
+    // Null when no published template governs its submission type.
+    BoundTemplateDto? BoundTemplate);
+
+/// <summary>
+/// The published template version a submission is bound to, carrying the names
+/// the UI needs ("FDA IND (CTD) v1") so reading a submission never costs a
+/// second call to reference data.
+/// </summary>
+public sealed record BoundTemplateDto(
+    Guid TemplateVersionId,
+    Guid TemplateId,
+    string TemplateCode,
+    string TemplateName,
+    int VersionNumber);

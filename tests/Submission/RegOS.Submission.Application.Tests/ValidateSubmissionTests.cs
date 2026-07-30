@@ -127,6 +127,19 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
     private static SubmissionValidator ValidatorFor(RegOSDbContext ctx) =>
         new(new SubmissionRepository(ctx), ctx);
 
+    /// <summary>
+    /// The issues that actually block publishing. These fixtures create
+    /// submissions directly (so they are unbound), and an unbound submission
+    /// now also reports an informational "not checked against a blueprint"
+    /// issue. Filtering to errors keeps each test asserting what it was written
+    /// to assert: which blocking rule fired.
+    /// </summary>
+    private static IReadOnlyList<SubmissionValidationIssue> ErrorsOf(
+        SubmissionValidationResult result) =>
+        result.Issues
+            .Where(i => i.Severity == ValidationSeverity.Error)
+            .ToList();
+
     // --- Validator: issue rules ----------------------------------------------
 
     [Fact]
@@ -144,7 +157,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
         var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
 
         result.IsValid.Should().BeTrue();
-        result.Issues.Should().BeEmpty();
+        ErrorsOf(result).Should().BeEmpty();
     }
 
     [Fact]
@@ -161,7 +174,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
         var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
 
         result.IsValid.Should().BeFalse();
-        result.Issues.Should().ContainSingle()
+        ErrorsOf(result).Should().ContainSingle()
             .Which.Code.Should().Be(SubmissionValidationCodes.SubmissionHasNoDocuments);
     }
 
@@ -181,7 +194,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
         var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
 
         result.IsValid.Should().BeFalse();
-        result.Issues.Should().ContainSingle()
+        ErrorsOf(result).Should().ContainSingle()
             .Which.Code.Should().Be(SubmissionValidationCodes.SubmissionAlreadyPublished);
     }
 
@@ -200,7 +213,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
 
         // The validator reports all problems, not just the first.
         result.IsValid.Should().BeFalse();
-        result.Issues.Select(i => i.Code).Should().BeEquivalentTo(new[]
+        ErrorsOf(result).Select(i => i.Code).Should().BeEquivalentTo(new[]
         {
             SubmissionValidationCodes.SubmissionAlreadyPublished,
             SubmissionValidationCodes.SubmissionHasNoDocuments,
@@ -235,9 +248,10 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
         var response = await handler.HandleAsync(submissionId, default);
 
         response.IsValid.Should().BeFalse();
-        response.Issues.Should().ContainSingle();
-        var issue = response.Issues.Single();
+
+        var issue = response.Issues
+            .Should().ContainSingle(i => i.Severity == ValidationSeverity.Error)
+            .Subject;
         issue.Code.Should().Be(SubmissionValidationCodes.SubmissionHasNoDocuments);
-        issue.Severity.Should().Be(ValidationSeverity.Error);
     }
 }

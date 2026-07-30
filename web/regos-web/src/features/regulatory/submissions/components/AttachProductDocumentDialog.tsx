@@ -100,6 +100,7 @@ export function AttachProductDocumentDialog({
                           variant="outline"
                           disabled={attach.isPending}
                           onClick={() => attach.mutate(doc.productDocumentId)}
+                          data-testid="attach-document"
                         >
                           {pending ? "Attaching..." : "Attach"}
                         </Button>
