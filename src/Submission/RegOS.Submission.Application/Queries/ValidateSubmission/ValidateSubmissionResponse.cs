@@ -18,7 +18,9 @@ public sealed record ValidateSubmissionResponse(
             .Select(issue => new ValidationIssueResponse(
                 issue.Code,
                 issue.Message,
-                issue.Severity))
+                issue.Severity,
+                issue.RuleCode,
+                issue.UnevaluatedRuleTypes))
             .ToList();
 
         return new ValidateSubmissionResponse(result.IsValid, issues);
@@ -26,7 +28,17 @@ public sealed record ValidateSubmissionResponse(
 }
 
 /// <summary>A single validation issue as exposed over the API.</summary>
+/// <param name="RuleCode">
+/// The blueprint rule behind the issue (e.g. <c>FDA-IND-PDF</c>), when one
+/// produced it. Null for the validator's own rules.
+/// </param>
+/// <param name="UnevaluatedRuleTypes">
+/// Structured detail for the "not evaluated" disclosure, so clients never parse
+/// the message text. Null on every other issue.
+/// </param>
 public sealed record ValidationIssueResponse(
     string Code,
     string Message,
-    ValidationSeverity Severity);
+    ValidationSeverity Severity,
+    string? RuleCode = null,
+    IReadOnlyList<string>? UnevaluatedRuleTypes = null);

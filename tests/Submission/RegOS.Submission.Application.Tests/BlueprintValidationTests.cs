@@ -185,6 +185,67 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         submission.Status.Should().Be(SubmissionStatus.Draft);
     }
 
+    [Fact]
+    public async Task NonPdfDocument_ViolatesTheBlueprintsFormatRule()
+    {
+        await using var ctx = New();
+        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND format");
+
+        await AttachAsync(
+            ctx, submissionId, productId, CoverLetter,
+            originalFileName: "cover-letter.docx",
+            contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+
+        await using var act = New();
+        var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
+
+        // The rule came from the blueprint, and says so.
+        var violation = result.Issues.Should().ContainSingle(
+            i => i.Code == SubmissionValidationCodes.BlueprintRuleViolation).Subject;
+
+        violation.RuleCode.Should().Be("FDA-IND-PDF");
+        violation.Severity.Should().Be(ValidationSeverity.Error);
+        violation.Message.Should().Contain("cover-letter.docx");
+        result.IsValid.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task PdfDocuments_SatisfyTheFormatRule()
+    {
+        await using var ctx = New();
+        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND format ok");
+
+        await AttachAsync(ctx, submissionId, productId, CoverLetter);
+
+        await using var act = New();
+        var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
+
+        result.Issues.Should().NotContain(
+            i => i.Code == SubmissionValidationCodes.BlueprintRuleViolation);
+    }
+
+    [Fact]
+    public async Task RuleTypesTheEngineCannotRunYet_AreDisclosed()
+    {
+        await using var ctx = New();
+        var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND disclosure");
+
+        var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
+
+        var disclosure = result.Issues.Should().ContainSingle(
+            i => i.Code == SubmissionValidationCodes.BlueprintRulesNotEvaluated)
+            .Subject;
+
+        // A statement about this engine's capability — not a claim that those
+        // rules passed or failed, so it must not block.
+        disclosure.Severity.Should().Be(ValidationSeverity.Information);
+        disclosure.UnevaluatedRuleTypes.Should().Contain("SectionNotEmpty");
+        disclosure.Message.Should().NotContainAny("Error", "Warning");
+    }
+
     // --- helpers -------------------------------------------------------------
 
     private static SubmissionValidator ValidatorFor(RegOSDbContext ctx) =>
@@ -221,15 +282,17 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         RegOSDbContext ctx,
         SubmissionId submissionId,
         ProductId productId,
-        DocumentTypeId documentTypeId)
+        DocumentTypeId documentTypeId,
+        string originalFileName = "doc.pdf",
+        string contentType = "application/pdf")
     {
         var document = ProductDocumentAggregate.Create(
             TestTenant.Id, productId, documentTypeId, "Blueprint Doc " + Guid.NewGuid());
 
         document.AddInitialVersion(
-            originalFileName: "doc.pdf",
+            originalFileName: originalFileName,
             storedFileName: "v1.pdf",
-            contentType: "application/pdf",
+            contentType: contentType,
             fileSize: 1024,
             storagePath: $"products/{productId.Value}/{document.Id.Value}/v1.pdf",
             checksum: "sha256-x");

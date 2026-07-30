@@ -12,6 +12,7 @@ using RegOS.Submission.Application.Queries.ListSubmissionDocuments;
 using RegOS.Submission.Application.Queries.ListSubmissions;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Application.Validation;
+using RegOS.Submission.Application.Validation.Rules;
 
 namespace RegOS.Submission.Application;
 
@@ -35,6 +36,12 @@ public static class DependencyInjection
         services.AddScoped<ListAttachableProductDocumentsHandler>();
 
         services.AddScoped<ListProductDocumentUsageHandler>();
+
+        // Blueprint rule evaluators. Adding a rule type is one more line here
+        // plus its evaluator — the orchestrator never changes.
+        services.AddScoped<IBlueprintRuleEvaluator, FileFormatEvaluator>();
+
+        services.AddScoped<BlueprintValidationEvaluator>();
 
         services.AddScoped<SubmissionValidator>();
 

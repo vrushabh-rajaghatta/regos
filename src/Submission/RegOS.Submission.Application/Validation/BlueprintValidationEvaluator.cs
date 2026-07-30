@@ -4,44 +4,52 @@ using RegOS.Persistence;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.DocumentType;
 using RegOS.Submission.Application.Validation.Models;
+using RegOS.Submission.Application.Validation.Rules;
 
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
-
-// Two ValidationSeverity types meet in this file: the blueprint's (how a
-// regulatory rule is graded) and the validator's (how an issue affects
-// readiness). They are separate concepts in separate contexts, so they are
-// named apart rather than merged.
 using IssueSeverity = RegOS.Submission.Application.Validation.Models.ValidationSeverity;
 
 namespace RegOS.Submission.Application.Validation;
 
 /// <summary>
 /// Judges a submission against the blueprint it is bound to — the point where
-/// reference data starts governing customer data. Rules are no longer written
-/// in code: they are read from the published template version the submission
-/// was pinned to at creation.
+/// reference data governs customer data. Rules are not written in code: they are
+/// read from the published template version the submission was pinned to.
 /// </summary>
 /// <remarks>
-/// A collaborator of <see cref="SubmissionValidator"/> rather than more
-/// branches inside it, so later capabilities (placement, cardinality, metadata,
-/// cross-document checks) arrive as sibling evaluators instead of growing one
-/// method.
+/// Orchestration only. It gathers the facts once, then runs two pipelines:
+/// checks derived from the blueprint's structure (required-document coverage
+/// today, placement completeness later), and the blueprint's explicit
+/// <see cref="ValidationRule"/> rows, each handed to whichever
+/// <see cref="IBlueprintRuleEvaluator"/> can execute it.
 /// <para>
-/// Coverage is answered <em>by document type</em>: "is a document of this type
-/// attached?", not "is it in the right section". Placement does not exist until
-/// the content plan (EPIC-003), so a type required by two sections is satisfied
-/// by one attachment. Today's blueprints require each type once, so nothing is
-/// masked — but the limit is real and deliberate.
+/// A rule no evaluator claims is <em>disclosed</em>, never silently skipped: a
+/// regulated engine must be able to say "passed", "failed" and "not evaluated"
+/// as three different things.
 /// </para>
 /// </remarks>
 public sealed class BlueprintValidationEvaluator
 {
     private readonly RegOSDbContext _dbContext;
+    private readonly IReadOnlyList<IBlueprintRuleEvaluator> _ruleEvaluators;
+    private readonly RequiredDocumentCoverageEvaluator _coverage = new();
 
     public BlueprintValidationEvaluator(RegOSDbContext dbContext)
+        : this(dbContext, DefaultRuleEvaluators())
+    {
+    }
+
+    public BlueprintValidationEvaluator(
+        RegOSDbContext dbContext,
+        IEnumerable<IBlueprintRuleEvaluator> ruleEvaluators)
     {
         _dbContext = dbContext;
+        _ruleEvaluators = ruleEvaluators.ToList();
     }
+
+    /// <summary>The rule evaluators this engine ships with.</summary>
+    public static IReadOnlyList<IBlueprintRuleEvaluator> DefaultRuleEvaluators() =>
+        [new FileFormatEvaluator()];
 
     public async Task EvaluateAsync(
         SubmissionAggregate submission,
@@ -62,69 +70,84 @@ public sealed class BlueprintValidationEvaluator
             return;
         }
 
-        var required = await LoadMandatoryDocumentTypesAsync(
-            versionId, cancellationToken);
+        var version = await LoadVersionAsync(versionId, cancellationToken);
 
-        if (required.Count == 0)
+        if (version is null)
             return;
 
-        var attached = await LoadAttachedDocumentTypesAsync(
-            submission, cancellationToken);
+        var context = new BlueprintEvaluationContext(
+            version,
+            await LoadAttachedDocumentsAsync(submission, cancellationToken),
+            await LoadDocumentTypeNamesAsync(version, cancellationToken));
 
-        var missing = required.Where(id => !attached.Contains(id)).ToList();
+        _coverage.Evaluate(context, result);
 
-        if (missing.Count == 0)
-            return;
+        EvaluateRules(context, result);
+    }
 
-        // Name the types rather than reporting bare ids: a validation issue is
-        // read by a person deciding what to do next.
-        var names = await LoadDocumentTypeNamesAsync(missing, cancellationToken);
+    private void EvaluateRules(
+        BlueprintEvaluationContext context,
+        SubmissionValidationResult result)
+    {
+        var unevaluated = new List<ValidationRule>();
 
-        foreach (var documentTypeId in missing)
+        foreach (var rule in context.Version.ValidationRules.OrderBy(r => r.Order))
         {
-            var name = names.TryGetValue(documentTypeId, out var found)
-                ? found
-                : documentTypeId.Value.ToString();
+            var evaluator = _ruleEvaluators.FirstOrDefault(e => e.CanEvaluate(rule));
 
-            result.AddIssue(
-                SubmissionValidationCodes.RequiredDocumentMissing,
-                $"Required document '{name}' is missing.",
-                IssueSeverity.Error);
+            if (evaluator is null)
+            {
+                unevaluated.Add(rule);
+                continue;
+            }
+
+            evaluator.Evaluate(rule, context, result);
         }
+
+        if (unevaluated.Count == 0)
+            return;
+
+        // One disclosure, not one per rule. Deliberately phrased as a statement
+        // about this engine's capability — it does not say the rules passed, and
+        // it does not say they failed, because neither is known. It says nothing
+        // about how the blueprint graded them either: reporting "an Error rule
+        // was not evaluated" would invite the reader to conclude they have an
+        // error, which is exactly what is not known.
+        var ruleTypes = unevaluated
+            .Select(r => r.RuleType.ToString())
+            .Distinct()
+            .OrderBy(name => name)
+            .ToList();
+
+        result.AddIssue(new SubmissionValidationIssue(
+            SubmissionValidationCodes.BlueprintRulesNotEvaluated,
+            "This validator does not yet execute these blueprint rule types: "
+                + $"{string.Join(", ", ruleTypes)}.",
+            IssueSeverity.Information,
+            UnevaluatedRuleTypes: ruleTypes));
     }
 
     /// <summary>
-    /// The document types the bound version requires, deduplicated. Optional
-    /// requirements are excluded: the validator answers "can this proceed?",
-    /// not "how could this be improved".
+    /// The bound version with everything the evaluators read. The version is a
+    /// child of the template aggregate, so it is reached through its root.
     /// </summary>
-    private async Task<IReadOnlyList<DocumentTypeId>> LoadMandatoryDocumentTypesAsync(
+    private async Task<RegulatoryTemplateVersion?> LoadVersionAsync(
         RegulatoryTemplateVersionId versionId,
         CancellationToken cancellationToken)
     {
-        // The version is a child of the template aggregate, so it is reached
-        // through its root. Small reference data — materialize, then filter in
-        // memory rather than fighting LINQ translation.
         var template = await _dbContext.RegulatoryTemplates
             .AsNoTracking()
             .Include(t => t.Versions)
                 .ThenInclude(v => v.RequiredDocuments)
+            .Include(t => t.Versions)
+                .ThenInclude(v => v.ValidationRules)
             .FirstOrDefaultAsync(
                 t => t.Versions.Any(v => v.Id == versionId), cancellationToken);
 
-        var version = template?.Versions.FirstOrDefault(v => v.Id == versionId);
-
-        if (version is null)
-            return [];
-
-        return version.RequiredDocuments
-            .Where(d => d.IsMandatory)
-            .Select(d => d.DocumentTypeId)
-            .Distinct()
-            .ToList();
+        return template?.Versions.FirstOrDefault(v => v.Id == versionId);
     }
 
-    private async Task<HashSet<DocumentTypeId>> LoadAttachedDocumentTypesAsync(
+    private async Task<IReadOnlyList<AttachedDocument>> LoadAttachedDocumentsAsync(
         SubmissionAggregate submission,
         CancellationToken cancellationToken)
     {
@@ -135,19 +158,46 @@ public sealed class BlueprintValidationEvaluator
         if (productDocumentIds.Count == 0)
             return [];
 
-        var types = await _dbContext.ProductDocuments
+        // The attached *version* is what was pinned, so its file facts — not the
+        // document's latest — are what the rules are judged against.
+        var rows = await _dbContext.ProductDocuments
             .AsNoTracking()
             .Where(d => productDocumentIds.Contains(d.Id))
-            .Select(d => d.DocumentTypeId)
+            .SelectMany(
+                d => d.Versions,
+                (d, version) => new
+                {
+                    d.DocumentTypeId,
+                    version.Id,
+                    version.OriginalFileName,
+                    version.ContentType,
+                })
             .ToListAsync(cancellationToken);
 
-        return [.. types];
+        var attachedVersionIds = submission.Documents
+            .Select(d => d.DocumentVersionId)
+            .ToHashSet();
+
+        return rows
+            .Where(r => attachedVersionIds.Contains(r.Id))
+            .Select(r => new AttachedDocument(
+                r.DocumentTypeId, r.OriginalFileName, r.ContentType))
+            .ToList();
     }
 
-    private async Task<Dictionary<DocumentTypeId, string>> LoadDocumentTypeNamesAsync(
-        IReadOnlyList<DocumentTypeId> documentTypeIds,
-        CancellationToken cancellationToken)
+    private async Task<IReadOnlyDictionary<DocumentTypeId, string>>
+        LoadDocumentTypeNamesAsync(
+            RegulatoryTemplateVersion version,
+            CancellationToken cancellationToken)
     {
+        var documentTypeIds = version.RequiredDocuments
+            .Select(d => d.DocumentTypeId)
+            .Distinct()
+            .ToList();
+
+        if (documentTypeIds.Count == 0)
+            return new Dictionary<DocumentTypeId, string>();
+
         var rows = await _dbContext.DocumentTypes
             .AsNoTracking()
             .Where(t => documentTypeIds.Contains(t.Id))

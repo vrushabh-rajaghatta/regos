@@ -38,4 +38,14 @@ public sealed class SubmissionValidationResult
     {
         _issues.Add(new SubmissionValidationIssue(code, message, severity));
     }
+
+    /// <summary>
+    /// Records a fully-formed issue — for the ones carrying more than a code and
+    /// a message, such as a blueprint rule's own code or the structured list of
+    /// rule types this engine cannot execute yet.
+    /// </summary>
+    public void AddIssue(SubmissionValidationIssue issue)
+    {
+        _issues.Add(issue);
+    }
 }

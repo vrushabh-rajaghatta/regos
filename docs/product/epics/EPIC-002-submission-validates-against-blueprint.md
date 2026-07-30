@@ -80,8 +80,28 @@ A regulatory user validates a draft submission against the **published blueprint
 
 **Consequence worth knowing:** an empty bound FDA IND submission now reports **13** specific missing-document errors alongside the generic `SubmissionHasNoDocuments`. Both are kept: the generic one reads as a summary, the specific ones are actionable. Grouping them is a presentation concern.
 
-### Area C — Rule execution (STORY-003) _TBD_
-### Area C — Rule execution (STORY-003) _TBD_
+### Area C — Rule execution (STORY-003)
+
+The engine gains an extension point. `BlueprintValidationEvaluator` becomes orchestration only: it gathers the facts once into a `BlueprintEvaluationContext` and runs two pipelines —
+
+```
+BlueprintValidationEvaluator            (orchestration, owns the queries)
+ ├── RequiredDocumentCoverageEvaluator  ← derived from RequiredDocument rows
+ └── rule loop over IBlueprintRuleEvaluator
+      └── FileFormatEvaluator           ← CanEvaluate(rule)
+```
+
+Adding a rule type (Regex, MaxFileSize, Cardinality) is one class plus one DI registration; no switch grows and no existing evaluator changes. Because the context is passed as state rather than a `DbContext`, evaluators are pure and unit-testable without a database, and query count stays a property of the orchestrator.
+
+**The asymmetry, deliberately preserved:** required-document coverage is derived from the blueprint's *structure* (`RequiredDocument` rows) and has no rule type, so it is **not** an `IBlueprintRuleEvaluator` — forcing it into `CanEvaluate(rule)` would be abstraction for its own sake. Two categories, two pipelines: derived semantics, and explicit rules.
+
+**`BlueprintSeverityMapper` — correctness, not ceremony.** The two `ValidationSeverity` enums do not share ordinals: blueprint `Error = 1`, issue `Information = 1`. A cast (`(IssueSeverity)rule.Severity`) would have silently downgraded every blocking regulatory rule to a note, leaving `IsValid` true and publishing a submission that should have been stopped. The mapping is explicit, tested, and fails closed on an unrecognised grading.
+
+**Decisions (approved 2026-07-30):**
+1. **Disclosure over silence.** Rule types the engine cannot execute yet produce **one** `Information` issue carrying a structured `UnevaluatedRuleTypes` list — so clients never parse message text, and the list shrinks by itself as evaluators are added. Phrased purely as validator capability ("this validator does not yet execute these blueprint rule types: SectionNotEmpty"): it deliberately does **not** mention how the blueprint graded them, because "an Error rule was not evaluated" invites the reader to conclude they have an error, which is exactly what is not known. A regulated engine must distinguish **passed / failed / not evaluated**.
+2. **Stable code plus dynamic rule code.** `Code = BlueprintRuleViolation` keeps the closed set consumers switch on; the blueprint rule's own code (`FDA-IND-PDF`) travels on a new nullable `RuleCode`, preserving regulatory traceability.
+3. **Format detection: extension → content type → fail closed.** Filenames are what users and reviewers see; content types are assigned by whichever client uploaded and are unreliable for Office and archive formats. When neither establishes a format, the document is reported — inability to establish compliance is not compliance.
+4. **Version-scoped `FileFormat` rules only.** A section-scoped rule asks which documents belong to that section, which needs placement (EPIC-003); such rules join the unevaluated disclosure rather than being applied dossier-wide as if version-scoped.
 
 ---
 
@@ -91,7 +111,7 @@ A regulatory user validates a draft submission against the **published blueprint
 |---|---|---|
 | **STORY-001** | Bind a submission to its published template version (resolve at creation, persist, expose on the read API) | ✅ Done — `BoundTemplateVersionId` on `Submission` (nullable, `Restrict` FK to the version); resolution at creation prefers tenant-owned then newest effective published version; `boundTemplate` (code/name/version) on the submission read API; migration `AddSubmissionTemplateBinding`; 2 domain + 4 integration tests against real seeded data (FDA IND binds, 510(k) stays unbound); 517 tests green |
 | **STORY-002** | Required-document coverage — missing mandatory documents become validation errors, gating publish | ✅ Done — `BlueprintValidationEvaluator` reports each uncovered mandatory document type as a named `Error` (empty FDA IND ⇒ 13); unbound submissions report a non-blocking `Information` issue; **`IsValid` corrected to "no Error-severity issues"** (bug fix — severity was defined but unused); publish gate verified blocked; 6 result-model unit tests + 4 integration tests against the real seeded blueprint; 6 existing assertions re-scoped to errors; 527 tests green |
-| **STORY-003** | `FileFormat` rule execution, severity-aware (Error blocks, Warning informs) | ⚪ |
+| **STORY-003** | `FileFormat` rule execution, severity-aware (Error blocks, Warning informs) | ✅ Done — `IBlueprintRuleEvaluator` + `FileFormatEvaluator`; coverage extracted to `RequiredDocumentCoverageEvaluator`; orchestrator gathers a `BlueprintEvaluationContext` once so evaluators are pure and DB-free; **`BlueprintSeverityMapper`** (the two severity enums do not share ordinals — a cast would have downgraded blocking rules to notes); unevaluated rule types disclosed as one `Information` issue with structured `UnevaluatedRuleTypes`; issues carry `RuleCode` (`FDA-IND-PDF`); 20 unit + 3 integration tests; 550 tests green |
 | **STORY-004** | Capstone — validation UX grouped by severity, browser-verified end-to-end loop, ADR, retro | ⚪ |
 
 ## Phase 5 — Retro
