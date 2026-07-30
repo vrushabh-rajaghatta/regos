@@ -22,6 +22,13 @@ public static class SubmissionValidationCodes
     public const string RequiredDocumentMissing = "RequiredDocumentMissing";
 
     /// <summary>
+    /// Documents are attached but not placed into any section of the blueprint,
+    /// so they satisfy nothing. Informational — untidy, not invalid. Which
+    /// documents they are is the content plan's answer, not this issue's.
+    /// </summary>
+    public const string DocumentsNotPlaced = "DocumentsNotPlaced";
+
+    /// <summary>
     /// No published blueprint governs this submission, so its completeness was
     /// not checked. Informational — an unbound submission is a legitimate
     /// state, not a failure.

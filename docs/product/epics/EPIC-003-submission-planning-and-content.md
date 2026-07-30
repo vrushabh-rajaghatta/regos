@@ -1,6 +1,6 @@
 # EPIC-003 — Submission planning & content
 
-**Status:** 🟡 In Progress (1 of 4 stories shipped) · **Branch:** `epic/EPIC-003-submission-planning-and-content` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress (2 of 4 stories shipped) · **Branch:** `epic/EPIC-003-submission-planning-and-content` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Give the dossier a **structure**. EPIC-002 made a submission answer *"do I have the right documents?"*; this epic makes it answer *"is each document in the right place?"* — and turns the blueprint's section tree into the working surface where a regulatory user builds the dossier.
 
@@ -100,7 +100,7 @@ Once coverage is placement-based, **attaching without placing satisfies nothing*
 | # | Story | Status | Retires |
 |---|---|---|---|
 | **STORY-001** | **Placement** — `SubmissionDocument.TemplateSectionId`, place/unplace through the aggregate, and the placeholder-shaped content-plan read model | 🟢 Complete | — |
-| **STORY-002** | **Placement-aware coverage** — match on (section, type); disclose unplaced documents | ⚪ Not Started | ADR-035 trade-off: *coverage is by document type, not placement* |
+| **STORY-002** | **Placement-aware coverage** — match on (section, type); disclose unplaced documents | 🟢 Complete | ADR-035 trade-off: *coverage is by document type, not placement* |
 | **STORY-003** | **`SectionNotEmptyEvaluator`** + section-scoped `FileFormat` | ⚪ Not Started | ADR-035 trade-off: *the validator advertises its own gaps* |
 | **STORY-004** | **Dossier builder UI** + gap view + capstone browser proof + ADR-036 + retro | ⚪ Not Started | — |
 
@@ -126,5 +126,30 @@ One nullable column, `SubmissionDocuments.TemplateSectionId`, with a `Restrict` 
 **Not done here:** nothing validates differently. Coverage is still by document type, exactly as EPIC-002 left it — this story only builds the seam STORY-002 evaluates against, the way EPIC-002's STORY-001 established the binding before anything read it.
 
 **Verified:** 576 backend tests green (11 new domain, 11 new application against the real seeded FDA IND blueprint); all 51 browser tests green; and the three endpoints exercised live on an isolated stack — attach-with-placement, attach-then-place, move, clear, the content plan's derived placeholders, supporting content sitting beside a satisfied placeholder in the same section, and a section from another blueprint rejected with 409.
+
+### STORY-002 — Placement-aware coverage (shipped)
+
+The predicate changed from `DocumentType` to `(TemplateSection, DocumentType)`. The evaluator's responsibilities did not.
+
+**Decisions (approved 2026-07-30):**
+
+1. **Exact section match — no ancestor or descendant inference.** A document in `3.2.S` does not satisfy a placeholder in `3.2.S.1`. Regulators file into the leaf, and "close enough" completeness is worse than no check. If parent-level satisfaction is ever wanted it should be an explicit blueprint rule, not an inference made by the matcher.
+2. **Issues name the section as well as the type** — *"Required document 'Form FDA 1571 (IND Application)' is missing from 1.1 Forms."* Now that placement decides the verdict, *where* is half the answer.
+3. **Unplaced documents get their own evaluator.** Coverage asks *is every placeholder satisfied?*; `UnplacedDocumentEvaluator` asks *is every document somewhere?*. Two independent questions, two evaluators — merging them would have coverage accumulate responsibilities unrelated to completeness, and is what kept coverage's diff to the predicate.
+4. **The unplaced issue carries a count, not names or ids.** The content plan is already the authoritative structured answer to *which* documents; teaching the validation response to reproduce dossier structure would create a second representation to keep in sync, and a message that grows without bound as a submission does. This is why it differs from `UnevaluatedRuleTypes`, which exists precisely because nothing else can answer that question. **Validation says something needs attention; the content plan says what and where.**
+
+**The `.Distinct()` on document type is gone.** That dedupe *was* the ADR-035 limit — a type required by two sections satisfied by one attachment. This is not new support for duplicates; it is the evaluator finally validating what the blueprint has always expressed. Tested with a synthetic blueprint, because no seeded template contains that case yet.
+
+**The deliberate behavioural change, asserted rather than absorbed.** One integration test and one browser step encoded *"attachment satisfies completeness"*. Both now assert the opposite, with comments naming this epic — the browser journey attaches through the UI, proves nothing was satisfied and the disclosure appeared, then places through the API and watches exactly one requirement clear. The test documents the new rule instead of surviving it.
+
+**Diff surface** — the architectural check this story existed to run:
+
+| Changed | Untouched |
+|---|---|
+| `RequiredDocumentCoverageEvaluator` (the predicate), `AttachedDocument` (+1 field), `BlueprintEvaluationContext` (+`SectionLabelFor`), orchestrator (3 edits), new `UnplacedDocumentEvaluator`, new issue code | `SubmissionValidator`, `SubmissionValidationResult`, `BlueprintSeverityMapper`, `IBlueprintRuleEvaluator`, `FileFormatEvaluator`, the rule loop, the disclosure mechanism, severity mapping, `IsValid` |
+
+The honest caveat: the context had to start carrying placement. That is additive and the format evaluator never noticed, but it was not zero.
+
+**Verified:** 592 backend tests green (16 new); 51/51 browser tests green against an isolated stack; the temporary CORS widening used for that run was reverted and confirmed absent from the commit.
 
 **STORY-003 is the epic's architectural proof.** If adding `SectionNotEmptyEvaluator` costs one class, one DI registration, and its tests — and nothing else moves — then the evaluator seam built in EPIC-002 was genuinely extensible. If anything else has to change, that is worth knowing and recording in the retro.

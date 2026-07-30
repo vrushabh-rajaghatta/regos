@@ -33,6 +33,7 @@ public sealed class BlueprintValidationEvaluator
     private readonly RegOSDbContext _dbContext;
     private readonly IReadOnlyList<IBlueprintRuleEvaluator> _ruleEvaluators;
     private readonly RequiredDocumentCoverageEvaluator _coverage = new();
+    private readonly UnplacedDocumentEvaluator _unplaced = new();
 
     public BlueprintValidationEvaluator(RegOSDbContext dbContext)
         : this(dbContext, DefaultRuleEvaluators())
@@ -80,7 +81,10 @@ public sealed class BlueprintValidationEvaluator
             await LoadAttachedDocumentsAsync(submission, cancellationToken),
             await LoadDocumentTypeNamesAsync(version, cancellationToken));
 
+        // Two complementary questions about structure: is every placeholder
+        // satisfied, and is every document somewhere. Neither subsumes the other.
         _coverage.Evaluate(context, result);
+        _unplaced.Evaluate(context, result);
 
         EvaluateRules(context, result);
     }
@@ -138,6 +142,10 @@ public sealed class BlueprintValidationEvaluator
         var template = await _dbContext.RegulatoryTemplates
             .AsNoTracking()
             .Include(t => t.Versions)
+                // Sections, so issues can name where a document is expected —
+                // and, from STORY-003, so a rule can be scoped to one.
+                .ThenInclude(v => v.Sections)
+            .Include(t => t.Versions)
                 .ThenInclude(v => v.RequiredDocuments)
             .Include(t => t.Versions)
                 .ThenInclude(v => v.ValidationRules)
@@ -174,14 +182,19 @@ public sealed class BlueprintValidationEvaluator
                 })
             .ToListAsync(cancellationToken);
 
-        var attachedVersionIds = submission.Documents
-            .Select(d => d.DocumentVersionId)
-            .ToHashSet();
+        // Where each attachment sits. Keyed by the pinned version because that
+        // is what the rows above carry; a Product Document may be attached only
+        // once per submission, so the key is unique.
+        var placementByVersion = submission.Documents
+            .ToDictionary(d => d.DocumentVersionId, d => d.TemplateSectionId);
 
         return rows
-            .Where(r => attachedVersionIds.Contains(r.Id))
+            .Where(r => placementByVersion.ContainsKey(r.Id))
             .Select(r => new AttachedDocument(
-                r.DocumentTypeId, r.OriginalFileName, r.ContentType))
+                r.DocumentTypeId,
+                r.OriginalFileName,
+                r.ContentType,
+                placementByVersion[r.Id]))
             .ToList();
     }
 

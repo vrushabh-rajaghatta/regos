@@ -22,6 +22,20 @@ public sealed record BlueprintEvaluationContext(
         DocumentTypeNames.TryGetValue(documentTypeId, out var name)
             ? name
             : documentTypeId.Value.ToString();
+
+    /// <summary>
+    /// A section as a person refers to it — "1.1 Forms". Issues about a
+    /// requirement have to say <em>where</em>, now that where is what decides
+    /// whether the requirement is met.
+    /// </summary>
+    public string SectionLabelFor(TemplateSectionId sectionId)
+    {
+        var section = Version.Sections.FirstOrDefault(s => s.Id == sectionId);
+
+        return section is null
+            ? sectionId.Value.ToString()
+            : $"{section.Code} {section.Title}";
+    }
 }
 
 /// <summary>
@@ -29,7 +43,13 @@ public sealed record BlueprintEvaluationContext(
 /// written about. The file itself is never read — only what was recorded about
 /// it when it was uploaded.
 /// </summary>
+/// <param name="TemplateSectionId">
+/// Where it sits in the dossier, or null if it is attached but not placed.
+/// Defaults to unplaced so rules that have nothing to do with structure — the
+/// format rules — need not mention it.
+/// </param>
 public sealed record AttachedDocument(
     DocumentTypeId DocumentTypeId,
     string OriginalFileName,
-    string ContentType);
+    string ContentType,
+    TemplateSectionId? TemplateSectionId = null);
