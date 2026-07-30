@@ -1,6 +1,6 @@
 # EPIC-002 — Submission validates against the blueprint
 
-**Status:** 🟡 In Progress · **Branch:** `epic/EPIC-002-submission-validates-against-blueprint` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 Complete (4 stories shipped; ready to merge to `main`) · **Branch:** `epic/EPIC-002-submission-validates-against-blueprint` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Bind a Submission to a published template version and replace the hardcoded readiness validator with the **metadata-driven engine**, so publishing is gated on the blueprint EPIC-001 made data.
 
@@ -112,7 +112,35 @@ Adding a rule type (Regex, MaxFileSize, Cardinality) is one class plus one DI re
 | **STORY-001** | Bind a submission to its published template version (resolve at creation, persist, expose on the read API) | ✅ Done — `BoundTemplateVersionId` on `Submission` (nullable, `Restrict` FK to the version); resolution at creation prefers tenant-owned then newest effective published version; `boundTemplate` (code/name/version) on the submission read API; migration `AddSubmissionTemplateBinding`; 2 domain + 4 integration tests against real seeded data (FDA IND binds, 510(k) stays unbound); 517 tests green |
 | **STORY-002** | Required-document coverage — missing mandatory documents become validation errors, gating publish | ✅ Done — `BlueprintValidationEvaluator` reports each uncovered mandatory document type as a named `Error` (empty FDA IND ⇒ 13); unbound submissions report a non-blocking `Information` issue; **`IsValid` corrected to "no Error-severity issues"** (bug fix — severity was defined but unused); publish gate verified blocked; 6 result-model unit tests + 4 integration tests against the real seeded blueprint; 6 existing assertions re-scoped to errors; 527 tests green |
 | **STORY-003** | `FileFormat` rule execution, severity-aware (Error blocks, Warning informs) | ✅ Done — `IBlueprintRuleEvaluator` + `FileFormatEvaluator`; coverage extracted to `RequiredDocumentCoverageEvaluator`; orchestrator gathers a `BlueprintEvaluationContext` once so evaluators are pure and DB-free; **`BlueprintSeverityMapper`** (the two severity enums do not share ordinals — a cast would have downgraded blocking rules to notes); unevaluated rule types disclosed as one `Information` issue with structured `UnevaluatedRuleTypes`; issues carry `RuleCode` (`FDA-IND-PDF`); 20 unit + 3 integration tests; 550 tests green |
-| **STORY-004** | Capstone — validation UX grouped by severity, browser-verified end-to-end loop, ADR, retro | ⚪ |
+| **STORY-004** | Capstone — validation UX grouped by severity, browser-verified end-to-end loop, ADR, retro | ✅ Done — validation page rebuilt: publishability and findings are independent (a ready submission still shows its notes), grouped Errors → Warnings → Information, `ruleCode` chips, structured `unevaluatedRuleTypes`; **issue ordering moved into the API contract**; browser journey `submission-validation.spec.ts` proves 14 blocking → attach via UI → 13 → complete → **Ready to publish (disclosure intact)** → published; [ADR-035](../../adr/ADR-035-submissions-bind-to-a-published-template-version.md); 554 backend + 49 browser tests green |
 
 ## Phase 5 — Retro
-_At epic completion._
+
+**Shipped (4 stories, 2026-07-30):** the metadata engine does real work. A submission binds to the published blueprint that governs it, is judged against that blueprint's required documents and rules, and cannot be published while anything blocks — visible end-to-end in the browser. This is the first vertical slice where reference data governs customer behaviour all the way to a user's decision.
+
+**Final gate:** backend **554/554**; browser **49 pass, 1 pre-existing failure** (see Follow-ups).
+
+**Definition of Done — reconciled**
+
+| DoD bullet | Outcome |
+|---|---|
+| Submissions resolve and persist a bound published version; unmatched types stay unbound | **Met.** FDA IND binds; FDA 510(k) under the same authority stays unbound, verified against real seed data. |
+| Validation reports required-document and rule issues with stable codes and severity | **Met.** 13 named missing-document errors + `FileFormat` execution, `RuleCode` for traceability. |
+| Publishing blocked while an Error stands, permitted when clean, snapshot still captured | **Met**, proven in the browser journey. |
+| Evaluator unit tests + browser verification of the full loop | **Met.** 20 of the rule tests need no database. |
+| ADR for the binding model | **Met** — [ADR-035](../../adr/ADR-035-submissions-bind-to-a-published-template-version.md). |
+
+**What went well**
+- **The same bug, caught twice, at two layers.** `IsValid` counted issues, making every severity blocking and the severity model decorative; the validation page then rendered issues *only when invalid*, so a ready submission would have hidden its own disclosure. Both were found by asking "what does this claim when it has nothing to say?"
+- **The severity mapper was correctness, not ceremony.** The two enums do not share ordinals (blueprint `Error` = 1, issue `Information` = 1), so a cast would have downgraded every blocking regulatory rule to a note. A guard test now asserts the collision exists, so nobody deletes the mapper as redundant.
+- **Context-not-DbContext.** The orchestrator owning all persistence and handing evaluators immutable state made rule logic pure — most new tests need no database, and query count cannot grow with rule types.
+- **The browser spec reads the blueprint to learn its own work**, so it asserts "every required document was satisfied" rather than "these thirteen strings appeared", and survives the template growing.
+
+**What to watch / carried forward**
+- **`SectionNotEmpty` remains unexecuted**, including an `Error`-severity FDA rule on Module 1.1. Disclosed rather than hidden, but the gap is real until placement exists (EPIC-003).
+- **Coverage is by document type, not placement** — one attachment satisfies a type required by two sections.
+- **Re-binding an in-flight submission to a newer template version** is unsolved and needs a policy decision.
+- **A published submission does not record which blueprint version it was judged against.** The binding is on the submission, not the snapshot; worth adding when the snapshot is next touched.
+
+**Follow-ups (tracked, not blocking)**
+- **`seed-integrity.spec.ts` is stale, and my earlier diagnosis of it was wrong.** I first attributed the failure to residue from prior browser runs mutating the demo organizations. Running the suite against a *fresh* database disproved that: it fails there too. The demo organizations are each seeded into **their own tenant** (`TenantId == its own id`), so under the fail-closed query filter (ADR-031) the development user — who belongs to the Demo MAH tenant — can only ever see one of the three. The spec encodes a pre-tenant-isolation expectation. Fix is to assert only the organization the acting tenant can legitimately see; deliberately left out of this epic's commits.

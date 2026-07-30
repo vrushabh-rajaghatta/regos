@@ -25,14 +25,13 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | ID | Epic | Status | Notes |
 |---|---|---|---|
 | **EPIC-001** | **The Regulatory Data Dictionary** — complete Reference Data as the governed, standards-aligned controlled-vocabulary + dossier-blueprint backbone; seeded for FDA IND (CTD) + CA/AU/IN | 🟢 Complete | 8 stories; merged to `main` (PR #5) → `epics/EPIC-001-regulatory-data-dictionary.md` |
+| **EPIC-002** | **Submission validates against the blueprint** — bind a Submission to a published template version; metadata-driven validation engine; publishing gated on it | 🟢 Complete | 4 stories; [ADR-035](../adr/ADR-035-submissions-bind-to-a-published-template-version.md) → `epics/EPIC-002-submission-validates-against-blueprint.md` |
 
 ---
 
 ## Now
 
-| ID | Epic | Status | Notes |
-|---|---|---|---|
-| **EPIC-002** | **Submission validates against the blueprint** — bind a Submission to a published template version; replace the hardcoded validator with the metadata-driven engine; gate publishing on validation | 🟡 In Progress | depends on EPIC-001 → `epics/EPIC-002-submission-validates-against-blueprint.md` |
+_Nothing in flight — pull the top of **Next**._
 
 ## Next
 

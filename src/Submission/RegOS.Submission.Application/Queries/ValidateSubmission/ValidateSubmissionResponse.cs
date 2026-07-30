@@ -12,9 +12,20 @@ public sealed record ValidateSubmissionResponse(
     IReadOnlyCollection<ValidationIssueResponse> Issues)
 {
     /// <summary>Projects the internal validation result onto the API contract.</summary>
+    /// <remarks>
+    /// Issues come back in a deterministic order — most severe first, then by
+    /// code, rule code and message. Ordering belongs to the contract rather than
+    /// to one client: users build spatial memory of a validation screen they
+    /// revisit after every change, and every consumer (UI, exports, telemetry)
+    /// should see the same sequence.
+    /// </remarks>
     public static ValidateSubmissionResponse From(SubmissionValidationResult result)
     {
         var issues = result.Issues
+            .OrderByDescending(issue => issue.Severity)
+            .ThenBy(issue => issue.Code, StringComparer.Ordinal)
+            .ThenBy(issue => issue.RuleCode ?? string.Empty, StringComparer.Ordinal)
+            .ThenBy(issue => issue.Message, StringComparer.Ordinal)
             .Select(issue => new ValidationIssueResponse(
                 issue.Code,
                 issue.Message,

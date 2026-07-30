@@ -29,7 +29,10 @@ export function SubmissionDocumentsPage() {
         description="The Product Documents that make up this submission dossier."
         actions={
           isDraft ? (
-            <Button onClick={() => setDialogOpen(true)}>
+            <Button
+              onClick={() => setDialogOpen(true)}
+              data-testid="open-attach-dialog"
+            >
               Attach Product Document
             </Button>
           ) : undefined
