@@ -1,4 +1,5 @@
 using RegOS.ProductDocument.Domain.IDs;
+using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
@@ -15,6 +16,7 @@ public sealed class Submission
         TenantId tenantId,
         RegulatoryApplicationId applicationId,
         SubmissionTypeId submissionTypeId,
+        RegulatoryTemplateVersionId? boundTemplateVersionId,
         string title,
         DateTime createdOn)
     {
@@ -22,6 +24,7 @@ public sealed class Submission
         TenantId = tenantId;
         ApplicationId = applicationId;
         SubmissionTypeId = submissionTypeId;
+        BoundTemplateVersionId = boundTemplateVersionId;
         Title = title;
         Status = SubmissionStatus.Draft;
         CreatedOn = createdOn;
@@ -38,6 +41,13 @@ public sealed class Submission
 
     public SubmissionTypeId SubmissionTypeId { get; }
 
+    // The published blueprint version this submission is judged against, pinned
+    // at creation so a later template version never silently changes what a
+    // submission must contain. Null when no published template governs this
+    // submission type (device submissions today) — incomplete reference data
+    // must never block creating a submission.
+    public RegulatoryTemplateVersionId? BoundTemplateVersionId { get; private set; }
+
     public string Title { get; private set; }
 
     public SubmissionStatus Status { get; private set; }
@@ -53,11 +63,17 @@ public sealed class Submission
     public IReadOnlyCollection<SubmissionDocument> Documents
         => _documents.AsReadOnly();
 
+    /// <param name="boundTemplateVersionId">
+    /// The published template version that governs this submission, resolved by
+    /// the application layer. Optional: when no published blueprint targets the
+    /// submission type, the submission is created unbound rather than rejected.
+    /// </param>
     public static Submission Create(
         TenantId tenantId,
         RegulatoryApplicationId applicationId,
         SubmissionTypeId submissionTypeId,
-        string title)
+        string title,
+        RegulatoryTemplateVersionId? boundTemplateVersionId = null)
     {
         if (tenantId is null)
             throw new DomainException(SubmissionErrors.TenantRequired);
@@ -76,6 +92,7 @@ public sealed class Submission
             tenantId,
             applicationId,
             submissionTypeId,
+            boundTemplateVersionId,
             title.Trim(),
             DateTime.UtcNow);
     }
