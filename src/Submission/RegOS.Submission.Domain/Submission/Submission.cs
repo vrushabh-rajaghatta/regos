@@ -98,16 +98,24 @@ public sealed class Submission
     }
 
     /// <summary>
-    /// Attaches a reference to a specific version of a Product Document.
+    /// Attaches a reference to a specific version of a Product Document,
+    /// optionally placing it into a section of the dossier in the same step.
     /// The aggregate enforces only what it can see from its own state: the
     /// submission must be a draft, and a given Product Document may appear
-    /// only once. Existence, product ownership, active status, and version
-    /// resolution are the application layer's responsibility.
+    /// only once. Existence, product ownership, active status, version
+    /// resolution, and whether the section belongs to this submission's bound
+    /// template version are the application layer's responsibility.
     /// </summary>
+    /// <param name="templateSectionId">
+    /// Where the document sits in the dossier. Optional: "upload this into
+    /// 3.2.S.2" is one user action, but attaching without placing is equally
+    /// legitimate and leaves the document unplaced.
+    /// </param>
     /// <returns>The newly created attachment.</returns>
     public SubmissionDocument AttachDocument(
         ProductDocumentId productDocumentId,
-        DocumentVersionId documentVersionId)
+        DocumentVersionId documentVersionId,
+        TemplateSectionId? templateSectionId = null)
     {
         if (productDocumentId == default)
             throw new DomainException(SubmissionErrors.ProductDocumentRequired);
@@ -136,9 +144,63 @@ public sealed class Submission
             productDocumentId,
             documentVersionId,
             displayOrder,
-            DateTime.UtcNow);
+            DateTime.UtcNow,
+            templateSectionId);
 
         _documents.Add(document);
+
+        return document;
+    }
+
+    /// <summary>
+    /// Places an already-attached document into a section of the dossier,
+    /// moving it if it was placed elsewhere.
+    /// </summary>
+    /// <remarks>
+    /// This is a placement, never an attachment: the document must already
+    /// belong to this submission. Allowing an unknown id through would turn
+    /// placement into an "attach by reference" back door that bypasses every
+    /// rule <see cref="AttachDocument"/> enforces — product ownership, active
+    /// status, version pinning.
+    /// <para>
+    /// The aggregate cannot check that the section belongs to its bound
+    /// template version: sections are Reference Data, and reaching across that
+    /// boundary from inside the aggregate would be worse than the handler
+    /// owning the rule.
+    /// </para>
+    /// </remarks>
+    public void PlaceDocument(
+        SubmissionDocumentId submissionDocumentId,
+        TemplateSectionId templateSectionId)
+    {
+        if (templateSectionId == default)
+            throw new DomainException(SubmissionErrors.TemplateSectionRequired);
+
+        Placeable(submissionDocumentId).PlaceIn(templateSectionId);
+    }
+
+    /// <summary>
+    /// Removes a document from the dossier structure without detaching it. It
+    /// stays part of the submission, but sits nowhere — a state the validator
+    /// reports rather than tolerates silently.
+    /// </summary>
+    public void ClearPlacement(SubmissionDocumentId submissionDocumentId)
+        => Placeable(submissionDocumentId).PlaceIn(null);
+
+    private SubmissionDocument Placeable(SubmissionDocumentId submissionDocumentId)
+    {
+        // Rule 1 — only a draft dossier may change.
+        if (Status != SubmissionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.DocumentsLockedUnlessDraft);
+
+        // Rule 4 — can only place something that is actually attached.
+        var document = _documents.SingleOrDefault(
+            d => d.Id == submissionDocumentId);
+
+        if (document is null)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.DocumentNotAttached);
 
         return document;
     }

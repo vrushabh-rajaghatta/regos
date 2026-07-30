@@ -1,6 +1,6 @@
 # EPIC-003 — Submission planning & content
 
-**Status:** 🟡 In Progress (Phase 1–2 approved; 0 of 4 stories shipped) · **Branch:** `epic/EPIC-003-submission-planning-and-content` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress (1 of 4 stories shipped) · **Branch:** `epic/EPIC-003-submission-planning-and-content` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Give the dossier a **structure**. EPIC-002 made a submission answer *"do I have the right documents?"*; this epic makes it answer *"is each document in the right place?"* — and turns the blueprint's section tree into the working surface where a regulatory user builds the dossier.
 
@@ -99,9 +99,32 @@ Once coverage is placement-based, **attaching without placing satisfies nothing*
 
 | # | Story | Status | Retires |
 |---|---|---|---|
-| **STORY-001** | **Placement** — `SubmissionDocument.TemplateSectionId`, place/unplace through the aggregate, and the placeholder-shaped content-plan read model | ⚪ Not Started | — |
+| **STORY-001** | **Placement** — `SubmissionDocument.TemplateSectionId`, place/unplace through the aggregate, and the placeholder-shaped content-plan read model | 🟢 Complete | — |
 | **STORY-002** | **Placement-aware coverage** — match on (section, type); disclose unplaced documents | ⚪ Not Started | ADR-035 trade-off: *coverage is by document type, not placement* |
 | **STORY-003** | **`SectionNotEmptyEvaluator`** + section-scoped `FileFormat` | ⚪ Not Started | ADR-035 trade-off: *the validator advertises its own gaps* |
 | **STORY-004** | **Dossier builder UI** + gap view + capstone browser proof + ADR-036 + retro | ⚪ Not Started | — |
+
+### STORY-001 — Placement (shipped)
+
+One nullable column, `SubmissionDocuments.TemplateSectionId`, with a `Restrict` FK to `TemplateSections`. Nothing else in the schema moved.
+
+**Decisions (approved 2026-07-30):**
+
+1. **One placement per attached document.** eCTD leaf reuse — the same document appearing under several sections — is a real regulatory capability, deliberately deferred rather than overlooked. Nothing in the product exercises it, and the migration when it arrives is *one row per existing placement*: no inference, no ambiguity, no data loss. Recorded in the deferred list below.
+2. **Attach and place in one call.** `POST /submissions/{id}/documents` takes an optional `templateSectionId`. Requiring a second round-trip would manufacture an unplaced state that exists only because of API shape — and STORY-002 is about to start reporting that state as a finding.
+3. **`PUT .../documents/{id}/placement` states the whole placement.** A null section clears it. This is the endpoint drag-and-drop calls in STORY-004, which is why it expresses a destination rather than a delta.
+4. **The enforcement split.** The aggregate checks what it can see — the submission is a draft, and the document is *already attached to this submission*. That second one is a first-class invariant with its own test: accepting an unknown id would make placement a second, unguarded way to attach, bypassing product ownership, active status and version pinning. Whether the section belongs to the bound version is Reference Data's business and lives in `SectionPlacementPolicy`, shared by both write paths — a rule enforced on one path and not the other is not a rule.
+5. **Placeholder satisfaction is derived, never stored.** `GetSubmissionContentPlanHandler` computes it from (section, document type) on every read. There is no satisfaction column to fall out of date.
+
+**Deferred from this story**
+
+| Deferred | Why |
+|---|---|
+| **Multi-placement (eCTD leaf reuse)** | A genuine regulatory need, not an oversight. Deferred until something exercises it; the migration path is mechanical. |
+| Reordering within a section | `DisplayOrder` is submission-wide today. No user need yet. |
+
+**Not done here:** nothing validates differently. Coverage is still by document type, exactly as EPIC-002 left it — this story only builds the seam STORY-002 evaluates against, the way EPIC-002's STORY-001 established the binding before anything read it.
+
+**Verified:** 576 backend tests green (11 new domain, 11 new application against the real seeded FDA IND blueprint); all 51 browser tests green; and the three endpoints exercised live on an isolated stack — attach-with-placement, attach-then-place, move, clear, the content plan's derived placeholders, supporting content sitting beside a satisfied placeholder in the same section, and a section from another blueprint rejected with 409.
 
 **STORY-003 is the epic's architectural proof.** If adding `SectionNotEmptyEvaluator` costs one class, one DI registration, and its tests — and nothing else moves — then the evaluator seam built in EPIC-002 was genuinely extensible. If anything else has to change, that is worth knowing and recording in the retro.

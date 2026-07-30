@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.ProductDocument.Domain.IDs;
+using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.Submission.Domain.Submission;
 
 using DocumentVersionEntity = RegOS.ProductDocument.Domain.Entities.DocumentVersion;
@@ -41,6 +42,16 @@ public sealed class SubmissionDocumentConfiguration
             .HasColumnType("timestamp with time zone")
             .IsRequired();
 
+        // Where the document sits in the dossier. Nullable: attached but not
+        // yet placed is a legitimate state, and a submission bound to no
+        // blueprint has no sections to place into at all.
+        builder.Property(x => x.TemplateSectionId)
+            .HasConversion(
+                id => id != null ? id.Value.Value : (Guid?)null,
+                value => value != null
+                    ? new TemplateSectionId(value.Value)
+                    : (TemplateSectionId?)null);
+
         // Shadow FK to the owning submission — the child holds no FK property.
         // Declared with the aggregate's strongly-typed id (and its converter)
         // so it is compatible with Submission's primary key; the ownership
@@ -58,8 +69,19 @@ public sealed class SubmissionDocumentConfiguration
             .HasForeignKey(x => x.DocumentVersionId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // The section this document is placed in. Like the bound version on
+        // Submission, a deliberate reference to a child entity of the
+        // RegulatoryTemplate aggregate — placement is meaningless without
+        // naming the exact immutable section. Restrict: a section a dossier is
+        // organised around must never be deleted out from under it.
+        builder.HasOne<TemplateSection>()
+            .WithMany()
+            .HasForeignKey(x => x.TemplateSectionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex("SubmissionId");
         builder.HasIndex(x => x.DocumentVersionId);
+        builder.HasIndex(x => x.TemplateSectionId);
 
         // Mirrors the aggregate invariant: a Product Document may appear only
         // once per submission. Guards against corruption from concurrent

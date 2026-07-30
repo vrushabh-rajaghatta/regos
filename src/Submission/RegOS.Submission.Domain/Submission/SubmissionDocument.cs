@@ -1,4 +1,5 @@
 using RegOS.ProductDocument.Domain.IDs;
+using RegOS.ReferenceData.Domain.Blueprint;
 
 namespace RegOS.Submission.Domain.Submission;
 
@@ -9,8 +10,9 @@ namespace RegOS.Submission.Domain.Submission;
 /// removed through the aggregate.
 ///
 /// It records the <em>selection</em> (which document, which version, in what
-/// order), never the file itself. Name, status, storage, and content are read
-/// through the referenced Product Document / version.
+/// order) and its <em>placement</em> (where in the dossier it sits), never the
+/// file itself. Name, status, storage, and content are read through the
+/// referenced Product Document / version.
 /// </summary>
 public sealed class SubmissionDocument
 {
@@ -20,13 +22,15 @@ public sealed class SubmissionDocument
         ProductDocumentId productDocumentId,
         DocumentVersionId documentVersionId,
         int displayOrder,
-        DateTime attachedAt)
+        DateTime attachedAt,
+        TemplateSectionId? templateSectionId = null)
     {
         Id = id;
         ProductDocumentId = productDocumentId;
         DocumentVersionId = documentVersionId;
         DisplayOrder = displayOrder;
         AttachedAt = attachedAt;
+        TemplateSectionId = templateSectionId;
     }
 
     public SubmissionDocumentId Id { get; }
@@ -40,4 +44,28 @@ public sealed class SubmissionDocument
     public int DisplayOrder { get; }
 
     public DateTime AttachedAt { get; }
+
+    /// <summary>
+    /// Where this document sits in the dossier: a section of the submission's
+    /// bound template version. Null while attached but not yet placed — a
+    /// legitimate intermediate state, not an error.
+    /// </summary>
+    /// <remarks>
+    /// One section, not many. eCTD does allow the same document to appear under
+    /// several sections (leaf reuse), and that capability is deliberately
+    /// deferred rather than overlooked — nothing in the product exercises it
+    /// yet, and the migration to a placement collection is one row per existing
+    /// placement, with no inference and no data loss.
+    /// <para>
+    /// Placement answers <em>where a document belongs</em>. Whether it satisfies
+    /// a requirement is derived from (section, document type) by the validator —
+    /// the hierarchy is organisational, placeholders are a validation construct.
+    /// </para>
+    /// </remarks>
+    public TemplateSectionId? TemplateSectionId { get; private set; }
+
+    // Only the aggregate may move a document; callers go through
+    // Submission.PlaceDocument / ClearPlacement so the invariants are enforced.
+    internal void PlaceIn(TemplateSectionId? templateSectionId)
+        => TemplateSectionId = templateSectionId;
 }

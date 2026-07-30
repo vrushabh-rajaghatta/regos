@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.ProductDocument.Domain.Enums;
+using RegOS.Submission.Application.Placement;
 using RegOS.Submission.Domain.Submission;
 using RegOS.SharedKernel.Exceptions;
 
@@ -81,9 +82,19 @@ public sealed class AttachProductDocumentHandler
             throw new DomainException(
                 SubmissionRuleErrors.ProductDocumentHasNoCurrentVersion);
 
+        // Placement is optional, but when asked for it is checked before the
+        // attachment happens — attaching and then rejecting the placement would
+        // leave the caller with a document somewhere they did not ask for.
+        if (command.TemplateSectionId is { } sectionId)
+        {
+            await SectionPlacementPolicy.EnsureSectionIsInBoundBlueprintAsync(
+                _dbContext, submission, sectionId, cancellationToken);
+        }
+
         var attachment = submission.AttachDocument(
             command.ProductDocumentId,
-            productDocument.CurrentVersionId.Value);
+            productDocument.CurrentVersionId.Value,
+            command.TemplateSectionId);
 
         await _repository.UpdateAsync(submission, cancellationToken);
 

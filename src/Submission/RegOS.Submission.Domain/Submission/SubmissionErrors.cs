@@ -30,6 +30,10 @@ public static class SubmissionErrors
     public const string DocumentVersionRequired =
         "Document Version is required.";
 
+    // Placement
+    public const string TemplateSectionRequired =
+        "A template section is required to place a document.";
+
     // Lifecycle
     public const string SubmissionNotDraft =
         "Only a draft submission can be published.";

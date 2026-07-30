@@ -1,4 +1,5 @@
 using RegOS.ProductDocument.Domain.IDs;
+using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.Submission.Application.Commands.AttachProductDocument;
 using RegOS.Submission.Domain.Submission;
 
@@ -27,7 +28,10 @@ public static class AttachProductDocumentEndpoint
         var result = await handler.HandleAsync(
             new AttachProductDocumentCommand(
                 new SubmissionId(submissionId),
-                new ProductDocumentId(request.ProductDocumentId)),
+                new ProductDocumentId(request.ProductDocumentId),
+                request.TemplateSectionId is { } sectionId
+                    ? new TemplateSectionId(sectionId)
+                    : null),
             cancellationToken);
 
         return Results.Created(
