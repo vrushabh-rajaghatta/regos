@@ -212,6 +212,8 @@ registrations.MapRecordRegistrationApproval();
 registrations.MapChangeRegistrationStatus();
 registrations.MapGetRegistration();
 registrations.MapListProductRegistrations();
+registrations.MapListMarketRegistrations();
+registrations.MapListRegistrationMarkets();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

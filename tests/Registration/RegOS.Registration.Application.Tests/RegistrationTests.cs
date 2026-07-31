@@ -10,7 +10,9 @@ using RegOS.Registration.Application.Commands.ChangeRegistrationStatus;
 using RegOS.Registration.Application.Commands.CreateRegistration;
 using RegOS.Registration.Application.Commands.RecordRegistrationApproval;
 using RegOS.Registration.Application.Queries.GetRegistration;
+using RegOS.Registration.Application.Queries.ListMarketRegistrations;
 using RegOS.Registration.Application.Queries.ListProductRegistrations;
+using RegOS.Registration.Application.Queries.ListRegistrationMarkets;
 using RegOS.Registration.Application.Tests.Fixtures;
 using RegOS.Registration.Domain.Aggregates.Registration;
 using RegOS.Registration.Infrastructure.Repositories;
@@ -504,6 +506,106 @@ public sealed class RegistrationTests : IAsyncLifetime
             .HandleAsync(ProductId.New(), default);
 
         rows.Should().BeNull();
+    }
+
+    // --- The market axis -----------------------------------------------------
+
+    [Fact]
+    public async Task TheMarketViewListsWhatIsHeldThereByProduct()
+    {
+        await using var ctx = New();
+        var productId = await ProductAsync(ctx);
+        var id = await CreateAsync(ctx, productId);
+
+        await using var check = New();
+        var rows = await new ListMarketRegistrationsHandler(check)
+            .HandleAsync(UnitedStates, default);
+
+        var row = rows!.Should().ContainSingle(x => x.RegistrationId == id.Value)
+            .Subject;
+
+        row.ProductId.Should().Be(productId.Value);
+        row.ProductName.Should().NotBeNullOrWhiteSpace();
+        row.ProductCode.Should().NotBeNullOrWhiteSpace();
+        row.AuthorityName.Should().NotBeNullOrWhiteSpace();
+        row.Status.Should().Be(nameof(RegistrationStatus.Planned));
+    }
+
+    /// <summary>
+    /// "What do we hold" is not "what is currently marketable": a withdrawn
+    /// authorisation is still part of the regulatory portfolio, so nothing is
+    /// filtered away. Narrowing the view is the client's business.
+    /// </summary>
+    [Fact]
+    public async Task TheMarketViewHidesNothingButLeadsWithLiveAuthorisations()
+    {
+        await using var ctx = New();
+
+        var surrendered = await ProductAsync(ctx);
+        var surrenderedId = await CreateAsync(
+            ctx, surrendered, occurredOn: new DateOnly(2020, 1, 1));
+        await ChangeAsync(
+            surrenderedId, RegistrationStatus.Withdrawn, new(2021, 1, 1));
+
+        var live = await ProductAsync(ctx);
+        var liveId = await CreateAsync(
+            ctx, live, occurredOn: new DateOnly(2020, 1, 1));
+        await ApproveAsync(liveId, "NDA-live", new(2021, 6, 1));
+
+        await using var check = New();
+        var rows = await new ListMarketRegistrationsHandler(check)
+            .HandleAsync(UnitedStates, default);
+
+        var mine = rows!
+            .Where(x => x.RegistrationId == liveId.Value
+                || x.RegistrationId == surrenderedId.Value)
+            .ToList();
+
+        mine.Should().HaveCount(2, "nothing is filtered away");
+        mine[0].RegistrationId.Should().Be(liveId.Value, "approved leads");
+        mine[1].RegistrationId.Should().Be(surrenderedId.Value);
+    }
+
+    [Fact]
+    public async Task AnUnknownCountryHasNoMarketView()
+    {
+        await using var ctx = New();
+
+        var rows = await new ListMarketRegistrationsHandler(ctx)
+            .HandleAsync(new CountryId(Guid.NewGuid()), default);
+
+        rows.Should().BeNull();
+    }
+
+    /// <summary>
+    /// The way into the market view: only countries something is actually held
+    /// in, because nobody starts by browsing two hundred of them.
+    /// </summary>
+    [Fact]
+    public async Task TheMarketsIndexNamesOnlyCountriesSomethingIsHeldIn()
+    {
+        await using var ctx = New();
+        var productId = await ProductAsync(ctx);
+        await CreateAsync(ctx, productId);
+        await CreateAsync(ctx, productId);
+
+        await using var check = New();
+        var markets = await new ListRegistrationMarketsHandler(check)
+            .HandleAsync(default);
+
+        var market = markets.Should()
+            .ContainSingle(x => x.CountryId == UnitedStates.Value).Subject;
+
+        market.CountryName.Should().NotBeNullOrWhiteSpace();
+        market.CountryCode.Should().NotBeNullOrWhiteSpace();
+        market.RegistrationCount.Should().BeGreaterThanOrEqualTo(2);
+
+        // A country with nothing in it is simply absent — this is navigation,
+        // not a catalogue, so the index is far shorter than the country list.
+        var countries = await check.Countries.AsNoTracking().CountAsync();
+
+        markets.Should().OnlyContain(x => x.RegistrationCount > 0);
+        markets.Count.Should().BeLessThan(countries);
     }
 
     // --- helpers -------------------------------------------------------------

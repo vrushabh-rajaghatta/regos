@@ -8,8 +8,9 @@ using RegistrationAggregate = RegOS.Registration.Domain.Aggregates.Registration.
 namespace RegOS.Registration.Application.Queries.ListProductRegistrations;
 
 /// <summary>
-/// "Where is this product registered?" — the first half of the portfolio
-/// question. The other half, "what do we hold in this market?", is STORY-003.
+/// "Where is this product registered?" — one half of the portfolio question.
+/// The mirror, "what do we hold in this market?", is
+/// <c>ListMarketRegistrationsHandler</c>.
 /// </summary>
 public sealed class ListProductRegistrationsHandler
 {

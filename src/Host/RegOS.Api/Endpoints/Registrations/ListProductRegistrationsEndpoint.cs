@@ -8,8 +8,8 @@ public static class ListProductRegistrationsEndpoint
     public static IEndpointRouteBuilder MapListProductRegistrations(
         this IEndpointRouteBuilder app)
     {
-        // "Where is this product registered?" — half the portfolio question.
-        // The other half, by market, arrives in STORY-003.
+        // "Where is this product registered?" — half the portfolio question;
+        // the other half is scoped by country.
         app.MapGet("/api/products/{productId:guid}/registrations", HandleAsync);
 
         return app;

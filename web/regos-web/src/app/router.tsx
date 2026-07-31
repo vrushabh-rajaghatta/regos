@@ -44,6 +44,10 @@ import { SessionsPage } from "@/features/settings/pages/SessionsPage";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
 import { TemplateListPage } from "@/features/regulatory/templates/pages/TemplateListPage";
 import { TemplateDetailPage } from "@/features/regulatory/templates/pages/TemplateDetailPage";
+import { ProductRegistrationsPage } from "@/features/regulatory/registrations/pages/ProductRegistrationsPage";
+import { RegistrationMarketsPage } from "@/features/regulatory/registrations/pages/RegistrationMarketsPage";
+import { MarketRegistrationsPage } from "@/features/regulatory/registrations/pages/MarketRegistrationsPage";
+import { RegistrationDetailPage } from "@/features/regulatory/registrations/pages/RegistrationDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -173,6 +177,10 @@ export const router = createBrowserRouter([
                         path: "documents",
                         element: <ProductDocumentsListPage />,
                       },
+                      {
+                        path: "registrations",
+                        element: <ProductRegistrationsPage />,
+                      },
                     ],
                   },
                   // Application Workspace — execution-level view. Nested under the
@@ -269,6 +277,26 @@ export const router = createBrowserRouter([
                         element: <DocumentAiInsightsPage />,
                       },
                     ],
+                  },
+                ],
+              },
+              // Registrations are regulatory assets, not product work, so they
+              // sit beside Products rather than beneath one. A registration has
+              // a single canonical URL whichever portfolio axis reached it.
+              {
+                path: "registrations",
+                children: [
+                  {
+                    index: true,
+                    element: <RegistrationMarketsPage />,
+                  },
+                  {
+                    path: "markets/:countryId",
+                    element: <MarketRegistrationsPage />,
+                  },
+                  {
+                    path: ":registrationId",
+                    element: <RegistrationDetailPage />,
                   },
                 ],
               },

@@ -1,6 +1,6 @@
 # EPIC-005 — Registration tracking
 
-**Status:** 🟡 In Progress (2 of 4 stories shipped) · **Branch:** `epic/EPIC-005-registration-tracking` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress (3 of 4 stories shipped) · **Branch:** `epic/EPIC-005-registration-tracking` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The first capability about the world **after** a submission. EPIC-001–003 made RegOS able to prepare, validate and assemble a filing; this makes it able to say what that filing produced, and what the business holds today across every market.
 
@@ -103,7 +103,7 @@ Mirroring `RegulatoryApplication.ApplicantOrganizationId`. The platform keeps te
 |---|---|---|
 | **STORY-001** | **The Registration aggregate** — create for a product in a market, record the grant (number + dates), optional application link; persistence, API, read model | 🟢 Complete |
 | **STORY-002** | **Lifecycle** — the transitions the domain permits, each dated, with an immutable history | 🟢 Complete |
-| **STORY-003** | **Portfolio views** — *where is this product registered?* / *what do we hold in this market?* + the registration UI | ⚪ Not Started |
+| **STORY-003** | **Portfolio views** — *where is this product registered?* / *what do we hold in this market?* + the registration UI | 🟢 Complete |
 | **STORY-004** | **Expiry & renewal visibility** (derived, no scheduler) + capstone browser proof + ADR-037 + retro | ⚪ Not Started |
 
 ### STORY-001 — The Registration aggregate (shipped)
@@ -237,3 +237,63 @@ expiring 2031-02-08, on a registration now `Withdrawn`.
 registration dated *today* and then approved it in *2019* — a history that was
 never coherent, and that only the chronology invariant made visible. Re-dated to
 tell the migration story properly.
+
+### STORY-003 — Portfolio views & the registration workspace (shipped)
+
+The capability is *manage registrations*, not *view registrations*. Half the
+server side already existed — `ListProductRegistrations` shipped in STORY-001 —
+so this added the opposite axis and made both reachable.
+
+**Decisions (approved 2026-07-31):**
+
+1. **Two read models, not one.** `RegistrationSummary` (by product) and
+   `MarketRegistrationSummary` (by market) are mirror images: one repeats the
+   product in every row, the other the country. A single DTO carrying both axes
+   would leave every consumer ignoring half its fields — coupling rather than
+   reuse.
+2. **A markets index, `GET /api/registrations/markets`.** Without it the market
+   workspace has no entry point, because nobody starts by browsing two hundred
+   countries to find the three they are in. Deliberately thin — *Canada (12)* —
+   so it stays navigation rather than analytics, and EPIC-011 can add
+   breakdowns without changing this contract.
+3. **One canonical URL: `/regulatory/registrations/{id}`.** Flat, not nested
+   under the product. A registration is an aggregate in its own right — a
+   regulatory asset rather than product work — and nesting it would mint a
+   second URL for the same thing. Registrations sit beside Products in the
+   navigation for the same reason.
+4. **No server-side status filtering.** *"What do we hold"* is not *"what is
+   currently marketable"*: a withdrawn authorisation is still part of the
+   portfolio. Everything is returned, ordered so live authorisations lead.
+   Narrowing is presentation; hiding rows would be data loss dressed as a
+   default.
+5. **The grant dialog is chosen client-side from `registrationNumber`.** No
+   extra server flag. That is not lifecycle policy — it is selecting the right
+   interaction from the shape of the record. Revisit if a registration ever
+   gains a second route to `Approved`.
+
+**The UI reimplements no regulatory logic.** The detail page renders one button
+per entry in `allowedNextStatuses`. It never asks *"may I show Suspend?"*, only
+*"did the server include it?"* — so a terminal registration arrives with an
+empty array and the page simply says the lifecycle has ended. The server's
+refusals are shown verbatim, because they are written for a regulatory reader.
+
+**One deviation from the plan, deliberately.** The filter is a status
+dropdown whose options are derived from the rows on screen, not an *"Active
+only"* toggle. Deciding that "active" means one set of statuses rather than
+another would have put the terminal-state knowledge back in the client — the
+exact policy STORY-002 kept on the server. The live-first ordering already
+delivers the benefit the toggle was for.
+
+**API:** `GET /api/countries/{countryId}/registrations` ·
+`GET /api/registrations/markets`.
+
+**Verified:** 739 backend tests green (4 new integration); frontend typecheck,
+lint and build clean; **54 browser tests green** against an isolated stack
+(API 5301, web 5174, throwaway database `regos_e005s3`), including the new
+portfolio spec — create through the form, find it under the product, find it
+under the market, and prove both routes reach the same URL.
+
+**Two defects the browser found before release**, both in code written this
+story: a rejected mutation escaped as an unhandled page error rather than being
+caught and rendered, and the shared status badge carried a `data-testid` that
+made "the status" mean every badge on the page at once. Both fixed at source.
