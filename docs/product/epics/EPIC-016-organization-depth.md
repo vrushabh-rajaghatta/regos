@@ -176,7 +176,7 @@ that justifies it.
 | # | Story | Status |
 |---|---|---|
 | **STORY-001** | **`OrganizationSite`** — aggregate + `PostalAddress` value object + `IdentifierScheme` reference data + fail-closed tenant filter (and the stale `RegOSDbContext` remarks fix) + persistence + API + the country/type directory | 🟢 Complete |
-| **STORY-002** | **`Contact`** — aggregate + `ContactRole` reference data + emails/phones + tenant filter + directory by role | ⚪ Not Started |
+| **STORY-002** | **`Contact`** — aggregate + `ContactRole` reference data + emails/phones + tenant filter + directory by role | 🟢 Complete |
 | **STORY-003** | **`OrganizationDivision`** + deepen `Organization` (identifier, acronym, native name, status date) | ⚪ Not Started |
 | **STORY-004** | **Capstone** — organization workspace (org → divisions → sites → contacts), browser proof, ADR-038, retro | ⚪ Not Started |
 
@@ -236,3 +236,58 @@ creates three tables with the unique `(OrganizationSiteId, SchemeId)` index and
 `Restrict` FKs to Countries, Organizations and IdentifierSchemes. The isolation
 claim is proved directly: a second tenant finds the site neither by id, nor
 through the directory, nor through the detail read model.
+
+### STORY-002 — `Contact` and the role directory (shipped)
+
+**Decisions (approved 2026-07-31):**
+
+1. **Status is an activation flag, as for a site.** *Do not use this contact* is
+   configuration, not a regulatory event — a `StatusDate` and no history.
+2. **`ContactRole` is shared plus extensible, unlike `IdentifierScheme`**, and
+   the difference is ownership. A scheme describes the outside world; a role
+   describes how a company organises people, and the vocabulary is genuinely
+   mixed — *Qualified Person* is legislated, *APAC Regulatory Lead* is one
+   company's word. Six platform roles ship with a null tenant; a tenant's own
+   stay private to it.
+3. **Roles, emails and phones are collections**, because multiple values are
+   ordinary for all three. **No `preferred` or `primary` abstraction** — nothing
+   yet needs to rank them, and inventing an order would be speculative.
+4. **The site is optional**, though RIM requires it: an authority reviewer or a
+   head-office regulatory lead has none, and refusing them would lose the person.
+   The country is optional too — unlike a site's, which the directory filters by.
+5. **A `Contact` is not a `User`**, recorded in the aggregate so nobody unifies
+   them later without a conversation.
+
+**API:** `POST /api/organizations/{id}/contacts` · `GET /api/contacts/{id}` ·
+`GET /api/organizations/{id}/contacts` · `GET /api/contacts?roleId=`.
+
+### The slice conventions arrived mid-story
+
+`docs/engineering/slice-conventions.md` and `tests/Architecture/` landed while
+STORY-002 was being written, and **all five backend failures were this story's
+code**. Fixed rather than grandfathered, per the doc's own rule that a new entry
+to unblock new code defeats the mechanism:
+
+| Rule | What changed |
+|---|---|
+| SC-001 | Every contact route moved under `/api` |
+| SC-002 | `IContactRepository` and `IOrganizationSiteRepository` moved to their Domain projects |
+| SC-003 | Query records added for all six site and contact queries |
+| SC-004 | Endpoint lambdas became named `HandleAsync` methods |
+| SC-005 | `CreateContact.cs` and `ContactQueries.cs` split into one file per type |
+
+**Four grandfathered entries were retired** while in the slice — STORY-001's
+three site routes and its `OrganizationSiteQueryEndpoints.cs`. They were free to
+move because the site UI does not exist until STORY-004, so no frontend caller
+changed.
+
+**Frontend SC-101/102/105 applied to the registrations feature** from EPIC-005,
+which the conventions doc names as the ❌ example: `api/registrations.ts` split
+into eight call files plus `problemDetail.ts`, `hooks/useRegistrations.ts` into
+eight hook files, and `statusLabel.ts` / `expiry.ts` moved out of `components/`
+into `constants/` and `utils/`.
+
+**Verified:** 833 backend tests green (43 new: 21 domain, 12 integration, plus
+the 10 architecture tests now all passing); migration `AddContacts` creates five
+tables with unique indexes on `(ContactId, RoleId)` and `(TenantId, Code)`;
+frontend typecheck, lint and build clean.

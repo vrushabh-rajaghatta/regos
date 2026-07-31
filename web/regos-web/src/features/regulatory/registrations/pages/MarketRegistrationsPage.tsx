@@ -8,7 +8,7 @@ import { useCountries } from "../../masterData/hooks/useCountries";
 import { RegistrationExpiry } from "../components/RegistrationExpiry";
 import { RegistrationStatusBadge } from "../components/RegistrationStatusBadge";
 import { RegistrationStatusFilter } from "../components/RegistrationStatusFilter";
-import { useMarketRegistrations } from "../hooks/useRegistrations";
+import { useMarketRegistrations } from "../hooks/useMarketRegistrations";
 
 /**
  * "What do we hold in this market?" — the mirror of the product portfolio.

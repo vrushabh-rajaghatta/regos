@@ -22,6 +22,123 @@ namespace RegOS.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CountryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("OrganizationSiteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("StatusDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("LastName");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("OrganizationSiteId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Contacts", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactEmail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<Guid?>("ContactId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId");
+
+                    b.ToTable("ContactEmails", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactPhone", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ContactId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId");
+
+                    b.ToTable("ContactPhones", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactRoleAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ContactId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("ContactId", "RoleId")
+                        .IsUnique();
+
+                    b.ToTable("ContactRoleAssignments", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Organization.Organization", b =>
                 {
                     b.Property<Guid>("Id")
@@ -811,6 +928,36 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Countries", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Organization.ContactRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("ContactRoles", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.ReferenceData.Domain.Organization.IdentifierScheme", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1164,6 +1311,55 @@ namespace RegOS.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("SubmissionDocuments", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Geography.Country.Country", null)
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationSiteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactEmail", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Contact.Contact", null)
+                        .WithMany("Emails")
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactPhone", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Contact.Contact", null)
+                        .WithMany("Phones")
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactRoleAssignment", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Contact.Contact", null)
+                        .WithMany("Roles")
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Organization.ContactRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", b =>
@@ -1540,6 +1736,15 @@ namespace RegOS.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("TemplateSectionId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
+                {
+                    b.Navigation("Emails");
+
+                    b.Navigation("Phones");
+
+                    b.Navigation("Roles");
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", b =>

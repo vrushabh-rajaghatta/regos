@@ -7,11 +7,11 @@
 
 **Status:** Approved
 
-**Version:** 1.0
+**Version:** 1.1
 
 **Effective Date:** 2026-07-08
 
-**Last Reviewed:** 2026-07-08
+**Last Reviewed:** 2026-07-31
 
 **Next Review:** 2027-07-08
 
@@ -19,6 +19,7 @@
 - ENGINEERING.md
 - philosophy.md
 - README.md
+- slice-conventions.md
 
 **Related ADRs:**
 - None
@@ -84,24 +85,39 @@ The top-level repository is organized as follows.
 ```text
 regos/
 
-├── apps/
 ├── src/
+├── web/
 ├── tests/
 ├── docs/
-├── .ai/
-├── .github/
-├── tools/
-├── scripts/
-├── docker/
+├── CLAUDE.md
 ```
 
-## apps/
+> **Corrected 2026-07-31.** Version 1.0 of this document described `apps/`,
+> `.ai/`, `.github/`, `tools/`, `scripts/` and `docker/`. None were ever
+> created. They are recorded under *Planned Structure* below rather than
+> described as if they exist — a structural document that is wrong about the
+> basics teaches engineers to stop reading structural documents.
 
-Contains deployable applications.
+## web/
 
-Examples include the web application and public API.
+Contains the deployable web application (`regos-web`), organized feature-first.
 
 Applications expose business capabilities but do not own business logic.
+
+Version 1.0 named this `apps/`, anticipating more than one deployable. One
+exists, so the directory is named for it. It becomes `apps/` when a second
+arrives.
+
+---
+
+## CLAUDE.md
+
+Repository instructions for AI engineering agents, loaded automatically.
+
+It is deliberately thin and points at the canon rather than restating it — a
+second copy of the standards would drift from the first. Version 1.0 proposed
+a `.ai/` directory for this purpose, before the convention of a root
+`CLAUDE.md` settled.
 
 ---
 
@@ -125,37 +141,26 @@ Unit tests belong alongside the projects they verify.
 
 Contains the company's foundational knowledge, architecture, capability specifications, and engineering standards.
 
----
-
-## .ai/
-
-Contains documentation and standards intended for AI engineering agents.
-
-These documents enable AI to implement architecture consistently.
+`docs/adr/` is the single immutable decision series. `docs/engineering/` holds
+the standards, including [slice-conventions.md](slice-conventions.md), which
+specifies file and folder layout inside a bounded context and is enforced by
+`tests/Architecture/RegOS.Architecture.Tests`.
 
 ---
 
-## .github/
+# Planned Structure
 
-Contains repository automation, workflows, templates, and governance configuration.
+The following do not exist yet. They are recorded as intent, and each should be
+created when it has a first real occupant — not in advance
+([ADR-018](../adr/ADR-018-rule-of-three.md)).
 
----
-
-## tools/
-
-Contains engineering utilities such as generators, validators, and development tooling.
-
----
-
-## scripts/
-
-Contains development and release automation scripts.
-
----
-
-## docker/
-
-Contains container configurations used during development and deployment.
+| Directory | Purpose | Created when |
+|---|---|---|
+| `.github/` | Workflows, PR templates, governance | CI runs on push — the natural home for the architecture tests |
+| `tools/` | Generators, validators, dev tooling | A first tool exists |
+| `scripts/` | Development and release automation | A first script outgrows a README snippet |
+| `docker/` | Container configuration | Deployment stops being local-only |
+| `apps/` | Replaces `web/` | A second deployable exists |
 
 ---
 
@@ -165,29 +170,27 @@ Business capabilities are implemented as bounded contexts.
 
 Each bounded context owns its implementation and evolves independently.
 
-Example:
+The contexts that exist today:
 
 ```text
 src/
 
-Platform/
-
+Platform/                 identity, tenancy, sessions — engineering capabilities
+Organization/             the regulatory party, its sites and contacts
 Product/
-
-Regulations/
-
-Evidence/
-
-Decision/
-
+ProductDocument/
+RegulatoryApplication/
 Submission/
-
-Change/
-
-Processes/
-
-Connectors/
+Registration/
+ReferenceData/            countries, authorities, document types, templates
+Persistence/              RegOSDbContext, EF configuration, migrations
+Shared/                   RegOS.SharedKernel (ADR-017 scope only)
 ```
+
+> Version 1.0 listed `Regulations/`, `Evidence/`, `Decision/`, `Change/`,
+> `Processes/` and `Connectors/` as examples. None were built, and the domain
+> was carved differently once the first vertical was real. The list above is
+> the actual solution, not an aspiration.
 
 New bounded contexts require architectural approval before implementation.
 
@@ -202,10 +205,18 @@ RegOS.<Context>.Domain
 
 RegOS.<Context>.Application
 
-RegOS.<Context>.Contracts
-
 RegOS.<Context>.Infrastructure
 ```
+
+> Version 1.0 also mandated `RegOS.<Context>.Contracts`. No context has one.
+> Cross-context reads have not yet needed a published contract surface, and
+> `IProductReader` — built for exactly that and never consumed — was deleted
+> along with its project ([ADR-018](../adr/ADR-018-rule-of-three.md)). The
+> project returns when a real cross-context consumer exists.
+
+The internal layout of these projects — folders, filenames, where a repository
+interface goes — is specified by
+[slice-conventions.md](slice-conventions.md) and enforced by test.
 
 Additional projects may only be introduced when they represent a genuine architectural responsibility.
 
@@ -318,3 +329,4 @@ Before adding a new directory or project, verify the following.
 | Version | Date | Summary |
 |----------|------------|-----------------------------------------|
 | 1.0 | 2026-07-08 | Initial approved version. |
+| 1.1 | 2026-07-31 | Corrected to describe the repository that exists. Unbuilt directories moved to *Planned Structure*; context list and project structure replaced with actual; linked slice-conventions.md. |

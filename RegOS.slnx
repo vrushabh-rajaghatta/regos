@@ -49,6 +49,9 @@
     <Project Path="src/Shared/RegOS.SharedKernel/RegOS.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/tests/" />
+  <Folder Name="/tests/Architecture/">
+    <Project Path="tests/Architecture/RegOS.Architecture.Tests/RegOS.Architecture.Tests.csproj" />
+  </Folder>
   <Folder Name="/tests/Platform/">
     <Project Path="tests/Host/RegOS.Api.Tests/RegOS.Api.Tests.csproj" />
     <Project Path="tests/Platform/RegOS.Platform.Application.Tests/RegOS.Platform.Application.Tests.csproj" />

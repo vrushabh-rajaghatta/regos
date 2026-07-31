@@ -31,10 +31,11 @@ public sealed class SiteDirectoryHandler
     }
 
     public async Task<IReadOnlyList<SiteDirectoryRow>> HandleAsync(
-        CountryId? countryId,
-        OrganizationSiteType? type,
+        SiteDirectoryQuery query,
         CancellationToken cancellationToken)
     {
+        var (countryId, type) = (query.CountryId, query.Type);
+
         var sites = _dbContext.OrganizationSites.AsNoTracking();
 
         if (countryId is { } country)

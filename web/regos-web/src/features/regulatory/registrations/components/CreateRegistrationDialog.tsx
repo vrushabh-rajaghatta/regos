@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useAuthorities } from "../../masterData/hooks/useAuthorities";
 import { useCountries } from "../../masterData/hooks/useCountries";
 import { useOrganizations } from "../../masterData/hooks/useOrganizations";
-import { useCreateRegistration } from "../hooks/useRegistrations";
+import { useCreateRegistration } from "../hooks/useCreateRegistration";
 
 interface Props {
   productId: string;

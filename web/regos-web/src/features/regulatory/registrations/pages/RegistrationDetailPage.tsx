@@ -10,8 +10,8 @@ import { ChangeRegistrationStatusDialog } from "../components/ChangeRegistration
 import { RegistrationExpiry } from "../components/RegistrationExpiry";
 import { RegistrationHistoryTimeline } from "../components/RegistrationHistoryTimeline";
 import { RegistrationStatusBadge } from "../components/RegistrationStatusBadge";
-import { statusLabel } from "../components/statusLabel";
-import { useRegistration } from "../hooks/useRegistrations";
+import { statusLabel } from "../constants/statusLabel";
+import { useRegistration } from "../hooks/useRegistration";
 
 /**
  * A registration's own page — one canonical URL, reached from either portfolio

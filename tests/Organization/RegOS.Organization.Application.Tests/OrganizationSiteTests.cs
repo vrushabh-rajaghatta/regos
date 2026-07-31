@@ -240,12 +240,12 @@ public sealed class OrganizationSiteTests : IAsyncLifetime
         // ...and through the directory, which is the route that made the site
         // a root in the first place.
         var directory = await new SiteDirectoryHandler(intruder)
-            .HandleAsync(India, null, default);
+            .HandleAsync(new SiteDirectoryQuery(India), default);
 
         directory.Should().NotContain(x => x.SiteId == id.Value);
 
         // The detail read model agrees: not visible is not found.
-        (await new GetOrganizationSiteHandler(intruder).HandleAsync(id, default))
+        (await new GetOrganizationSiteHandler(intruder).HandleAsync(new GetOrganizationSiteQuery(id), default))
             .Should().BeNull();
     }
 
@@ -269,12 +269,12 @@ public sealed class OrganizationSiteTests : IAsyncLifetime
         await using var check = New();
         var handler = new SiteDirectoryHandler(check);
 
-        var inIndia = await handler.HandleAsync(India, null, default);
+        var inIndia = await handler.HandleAsync(new SiteDirectoryQuery(India), default);
         inIndia.Should().Contain(x => x.SiteId == plant.Value);
         inIndia.Should().Contain(x => x.SiteId == lab.Value);
 
         var manufacturing = await handler.HandleAsync(
-            India, OrganizationSiteType.Manufacturing, default);
+            new SiteDirectoryQuery(India, OrganizationSiteType.Manufacturing), default);
 
         manufacturing.Should().Contain(x => x.SiteId == plant.Value);
         manufacturing.Should().NotContain(x => x.SiteId == lab.Value);
@@ -303,7 +303,7 @@ public sealed class OrganizationSiteTests : IAsyncLifetime
 
         await using var check = New();
         var row = (await new SiteDirectoryHandler(check)
-            .HandleAsync(India, null, default))
+            .HandleAsync(new SiteDirectoryQuery(India), default))
             .Single(x => x.SiteId == id.Value);
 
         row.Status.Should().Be(nameof(OrganizationStatus.Inactive));
@@ -320,7 +320,7 @@ public sealed class OrganizationSiteTests : IAsyncLifetime
 
         await using var check = New();
         var sites = await new ListOrganizationSitesHandler(check)
-            .HandleAsync(organizationId, default);
+            .HandleAsync(new ListOrganizationSitesQuery(organizationId), default);
 
         var row = sites!.Should().ContainSingle().Subject;
 
@@ -335,7 +335,7 @@ public sealed class OrganizationSiteTests : IAsyncLifetime
         await using var ctx = New();
 
         (await new ListOrganizationSitesHandler(ctx)
-            .HandleAsync(OrganizationId.New(), default))
+            .HandleAsync(new ListOrganizationSitesQuery(OrganizationId.New()), default))
             .Should().BeNull();
     }
 
@@ -349,7 +349,7 @@ public sealed class OrganizationSiteTests : IAsyncLifetime
 
         await using var check = New();
         var detail = await new GetOrganizationSiteHandler(check)
-            .HandleAsync(id, default);
+            .HandleAsync(new GetOrganizationSiteQuery(id), default);
 
         detail.Should().NotBeNull();
         detail!.OrganizationName.Should().NotBeNullOrWhiteSpace();

@@ -4,7 +4,7 @@ import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { ExpiringRegistrations } from "../components/ExpiringRegistrations";
-import { useRegistrationMarkets } from "../hooks/useRegistrations";
+import { useRegistrationMarkets } from "../hooks/useRegistrationMarkets";
 
 /**
  * The way into the market view: the countries something is actually held in.

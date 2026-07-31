@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { statusLabel } from "./statusLabel";
+import { statusLabel } from "../constants/statusLabel";
 
 interface Props {
   statuses: string[];

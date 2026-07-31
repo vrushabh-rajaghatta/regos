@@ -13,7 +13,7 @@ public static class CreateOrganizationSiteEndpoint
     {
         // Organization-scoped: a site is always somewhere a company operates,
         // and the route says so.
-        app.MapPost("/organizations/{organizationId:guid}/sites", HandleAsync)
+        app.MapPost("/api/organizations/{organizationId:guid}/sites", HandleAsync)
             .WithName("CreateOrganizationSite")
             .WithSummary("Record a site an organization operates")
             .WithTags("Organization Sites");
@@ -49,7 +49,7 @@ public static class CreateOrganizationSiteEndpoint
             cancellationToken);
 
         return Results.Created(
-            $"/organization-sites/{siteId.Value}",
+            $"/api/organization-sites/{siteId.Value}",
             new CreateOrganizationSiteResponse(siteId.Value));
     }
 }

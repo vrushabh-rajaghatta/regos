@@ -1,10 +1,9 @@
-using RegOS.Organization.Domain.Aggregates.OrganizationSite;
-
-namespace RegOS.Organization.Application.Persistence;
+namespace RegOS.Organization.Domain.Aggregates.OrganizationSite;
 
 /// <summary>
-/// Aggregates only. Reads for screens project from the database directly rather
-/// than loading aggregates through here (ADR-006, ADR-016).
+/// Aggregates only. Reads for screens project from <c>RegOSDbContext</c>
+/// directly with <c>AsNoTracking()</c> — a query handler never loads an
+/// aggregate (ADR-016).
 /// </summary>
 public interface IOrganizationSiteRepository
 {

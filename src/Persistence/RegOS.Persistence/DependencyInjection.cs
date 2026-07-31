@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IDataInitializer, SubmissionTypeDataInitializer>();
         services.AddScoped<IDataInitializer, DocumentTypeDataInitializer>();
         services.AddScoped<IDataInitializer, IdentifierSchemeDataInitializer>();
+        services.AddScoped<IDataInitializer, ContactRoleDataInitializer>();
         // After submission types and authorities: a template references both.
         services.AddScoped<IDataInitializer, RegulatoryTemplateDataInitializer>();
 

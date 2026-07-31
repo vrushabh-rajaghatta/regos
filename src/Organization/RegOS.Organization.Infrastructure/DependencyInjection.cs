@@ -2,6 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Organization.Application.Persistence;
 using RegOS.Organization.Application.Services;
+using RegOS.Organization.Domain.Aggregates.Contact;
+using RegOS.Organization.Domain.Aggregates.OrganizationSite;
 using RegOS.Organization.Infrastructure.Services;
 using RegOS.Organization.Infrastructure.Persistence;
 
@@ -19,6 +21,10 @@ public static class DependencyInjection
 
         services.AddScoped<
             IOrganizationSiteCreationPolicy, OrganizationSiteCreationPolicy>();
+
+        services.AddScoped<IContactRepository, ContactRepository>();
+
+        services.AddScoped<IContactCreationPolicy, ContactCreationPolicy>();
 
         return services;
     }

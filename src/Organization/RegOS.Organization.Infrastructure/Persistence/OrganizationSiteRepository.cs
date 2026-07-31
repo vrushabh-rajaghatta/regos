@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.Organization.Application.Persistence;
 using RegOS.Organization.Domain.Aggregates.OrganizationSite;
 using RegOS.Persistence;
 

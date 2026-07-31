@@ -1,4 +1,4 @@
-import { expiryPhrase, needsAttention } from "./expiry";
+import { expiryPhrase, needsAttention } from "../utils/expiry";
 
 interface Props {
   expiresOn: string | null;

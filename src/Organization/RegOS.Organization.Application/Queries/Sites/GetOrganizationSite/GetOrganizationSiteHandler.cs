@@ -20,9 +20,11 @@ public sealed class GetOrganizationSiteHandler
     /// exist — so the endpoint can 404 rather than return an empty one.
     /// </summary>
     public async Task<OrganizationSiteDetails?> HandleAsync(
-        OrganizationSiteId id,
+        GetOrganizationSiteQuery query,
         CancellationToken cancellationToken)
     {
+        var id = query.SiteId;
+
         var site = await _dbContext.OrganizationSites
             .AsNoTracking()
             .Include(x => x.Identifiers)

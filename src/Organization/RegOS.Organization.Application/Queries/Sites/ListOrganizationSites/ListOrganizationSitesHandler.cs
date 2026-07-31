@@ -31,9 +31,11 @@ public sealed class ListOrganizationSitesHandler
     /// company that was never there.
     /// </summary>
     public async Task<IReadOnlyList<OrganizationSiteRow>?> HandleAsync(
-        OrganizationId organizationId,
+        ListOrganizationSitesQuery query,
         CancellationToken cancellationToken)
     {
+        var organizationId = query.OrganizationId;
+
         var organizationExists = await _dbContext.Organizations
             .AsNoTracking()
             .AnyAsync(x => x.Id == organizationId, cancellationToken);
@@ -76,15 +78,3 @@ public sealed class ListOrganizationSitesHandler
             .ToList();
     }
 }
-
-/// <summary>A site as seen from inside its own organization.</summary>
-public sealed record OrganizationSiteRow(
-    Guid SiteId,
-    string Name,
-    string Type,
-    Guid CountryId,
-    string CountryName,
-    string? City,
-    string Status,
-    DateOnly StatusDate,
-    IReadOnlyList<SiteIdentifierDto> Identifiers);
