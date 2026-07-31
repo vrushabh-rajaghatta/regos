@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using RegOS.Persistence;
 using RegOS.Submission.Application.Commands.AttachProductDocument;
 using RegOS.Submission.Application.Commands.CreateSubmission;
 using RegOS.Submission.Application.Commands.PlaceSubmissionDocument;
@@ -14,7 +15,6 @@ using RegOS.Submission.Application.Queries.ListSubmissionDocuments;
 using RegOS.Submission.Application.Queries.ListSubmissions;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Application.Validation;
-using RegOS.Submission.Application.Validation.Rules;
 
 namespace RegOS.Submission.Application;
 
@@ -43,11 +43,12 @@ public static class DependencyInjection
 
         services.AddScoped<ListProductDocumentUsageHandler>();
 
-        // Blueprint rule evaluators. Adding a rule type is one more line here
-        // plus its evaluator — the orchestrator never changes.
-        services.AddScoped<IBlueprintRuleEvaluator, FileFormatEvaluator>();
-
-        services.AddScoped<BlueprintValidationEvaluator>();
+        // Composed from the evaluator registry rather than from a second list
+        // of registrations kept in step by hand. Constructed explicitly so a
+        // missing registration can never resolve to an engine with no
+        // evaluators that silently reports every rule as unevaluated.
+        services.AddScoped(sp =>
+            new BlueprintValidationEvaluator(sp.GetRequiredService<RegOSDbContext>()));
 
         services.AddScoped<SubmissionValidator>();
 

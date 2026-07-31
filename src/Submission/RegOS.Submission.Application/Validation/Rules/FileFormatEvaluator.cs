@@ -4,10 +4,15 @@ using RegOS.Submission.Application.Validation.Models;
 namespace RegOS.Submission.Application.Validation.Rules;
 
 /// <summary>
-/// Executes <see cref="ValidationRuleType.FileFormat"/> rules: every attached
-/// document must be one of the formats the blueprint accepts (parameters, e.g.
-/// <c>"pdf"</c> or <c>"pdf,docx"</c>).
+/// Executes <see cref="ValidationRuleType.FileFormat"/> rules: every document
+/// the rule covers must be one of the formats the blueprint accepts
+/// (parameters, e.g. <c>"pdf"</c> or <c>"pdf,docx"</c>).
 /// </summary>
+/// <remarks>
+/// Version-wide rules cover the whole dossier. A section-scoped rule covers the
+/// documents placed in that section or beneath it — a distinction EPIC-002 had
+/// to disclose as unevaluable, because nothing recorded where a document sat.
+/// </remarks>
 public sealed class FileFormatEvaluator : IBlueprintRuleEvaluator
 {
     public bool CanEvaluate(ValidationRule rule)
@@ -17,13 +22,7 @@ public sealed class FileFormatEvaluator : IBlueprintRuleEvaluator
 
         // A rule with no accepted formats states nothing to check; treat it as
         // unevaluated (and therefore disclosed) rather than vacuously passing.
-        if (AcceptedFormats(rule).Count == 0)
-            return false;
-
-        // Section-scoped rules ask "which documents belong to this section?" —
-        // a question document placement answers, and placement does not exist
-        // yet. Version-wide rules apply to the whole dossier, so they can run.
-        return rule.SectionId is null;
+        return AcceptedFormats(rule).Count > 0;
     }
 
     public void Evaluate(
@@ -34,7 +33,14 @@ public sealed class FileFormatEvaluator : IBlueprintRuleEvaluator
         var accepted = AcceptedFormats(rule);
         var severity = BlueprintSeverityMapper.ToIssueSeverity(rule.Severity);
 
-        foreach (var document in context.AttachedDocuments)
+        // A section-scoped rule judges only what is filed in that part of the
+        // dossier; a version-wide one judges everything attached, placed or not
+        // — a document's format does not depend on where it sits.
+        var documents = rule.SectionId is { } sectionId
+            ? context.DocumentsIn(sectionId)
+            : context.AttachedDocuments;
+
+        foreach (var document in documents)
         {
             var format = FormatOf(document);
 

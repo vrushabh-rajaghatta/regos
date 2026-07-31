@@ -48,9 +48,20 @@ public sealed class BlueprintValidationEvaluator
         _ruleEvaluators = ruleEvaluators.ToList();
     }
 
-    /// <summary>The rule evaluators this engine ships with.</summary>
+    /// <summary>
+    /// The registry: every rule evaluator this engine can run. Adding a rule
+    /// type is one evaluator plus one entry here, and nowhere else.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately the single source of truth. This list and the container's
+    /// registrations used to be two lists that had to agree, with nothing making
+    /// them — the one place in the architecture that contradicted the "one
+    /// evaluator, one registration" story. Composition now reads from here.
+    /// Evaluators are stateless functions of (rule, context), so a shared list
+    /// of instances is safe.
+    /// </remarks>
     public static IReadOnlyList<IBlueprintRuleEvaluator> DefaultRuleEvaluators() =>
-        [new FileFormatEvaluator()];
+        [new FileFormatEvaluator(), new SectionNotEmptyEvaluator()];
 
     public async Task EvaluateAsync(
         SubmissionAggregate submission,

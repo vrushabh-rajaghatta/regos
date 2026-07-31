@@ -1,6 +1,6 @@
 # EPIC-003 — Submission planning & content
 
-**Status:** 🟡 In Progress (2 of 4 stories shipped) · **Branch:** `epic/EPIC-003-submission-planning-and-content` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress (3 of 4 stories shipped) · **Branch:** `epic/EPIC-003-submission-planning-and-content` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Give the dossier a **structure**. EPIC-002 made a submission answer *"do I have the right documents?"*; this epic makes it answer *"is each document in the right place?"* — and turns the blueprint's section tree into the working surface where a regulatory user builds the dossier.
 
@@ -101,7 +101,7 @@ Once coverage is placement-based, **attaching without placing satisfies nothing*
 |---|---|---|---|
 | **STORY-001** | **Placement** — `SubmissionDocument.TemplateSectionId`, place/unplace through the aggregate, and the placeholder-shaped content-plan read model | 🟢 Complete | — |
 | **STORY-002** | **Placement-aware coverage** — match on (section, type); disclose unplaced documents | 🟢 Complete | ADR-035 trade-off: *coverage is by document type, not placement* |
-| **STORY-003** | **`SectionNotEmptyEvaluator`** + section-scoped `FileFormat` | ⚪ Not Started | ADR-035 trade-off: *the validator advertises its own gaps* |
+| **STORY-003** | **`SectionNotEmptyEvaluator`** + section-scoped `FileFormat` | 🟢 Complete | ADR-035 trade-off: *the validator advertises its own gaps* |
 | **STORY-004** | **Dossier builder UI** + gap view + capstone browser proof + ADR-036 + retro | ⚪ Not Started | — |
 
 ### STORY-001 — Placement (shipped)
@@ -152,4 +152,29 @@ The honest caveat: the context had to start carrying placement. That is additive
 
 **Verified:** 592 backend tests green (16 new); 51/51 browser tests green against an isolated stack; the temporary CORS widening used for that run was reverted and confirmed absent from the commit.
 
-**STORY-003 is the epic's architectural proof.** If adding `SectionNotEmptyEvaluator` costs one class, one DI registration, and its tests — and nothing else moves — then the evaluator seam built in EPIC-002 was genuinely extensible. If anything else has to change, that is worth knowing and recording in the retro.
+### STORY-003 — The deferred section rules execute (shipped)
+
+The story that tested whether EPIC-002's evaluator seam was real. It mostly was; the exercise found one thing that wasn't, and fixed it.
+
+**Decisions (approved 2026-07-30):**
+
+1. **Section-scoped rules see the subtree; placeholder coverage stays exact.** Not a contradiction — two different predicates. Coverage asks *"does this placeholder have a satisfying document?"*, which must be exact. A section-scoped rule asks *"what is in this part of the dossier?"*, which naturally includes what is filed beneath it. An author writing `SectionNotEmpty` against `3.2.S` means "Drug Substance must contain content", not "a document must be filed directly on the parent node" — which a well-organised dossier never does, because documents live in leaves. For a rule targeting a leaf the two readings are identical, so this costs nothing today and only shapes blueprints not yet written.
+2. **`BlueprintEvaluationContext.DocumentsIn(sectionId)` is the shared semantic boundary** — *"documents placed in this section or any descendant"* — used by `SectionNotEmptyEvaluator` and section-scoped `FileFormat` alike, and documented so a future `MaxDocumentsInSection` inherits the meaning instead of re-deriving it.
+3. **One evaluator registry, fixed in this story rather than deferred.** Adding an evaluator used to require two entries — a DI registration *and* `DefaultRuleEvaluators()` — two lists representing the same thing with nothing keeping them in step. It was the only part of the architecture that contradicted the extensibility story, so it was folded into the story already touching that code. Composition now reads from the registry, constructed explicitly so a missing registration can never resolve to an engine with **no** evaluators that silently reports every rule as unevaluated.
+4. **A `SectionNotEmpty` rule with no section is disclosed, not widened.** "The dossier must not be empty" is a different rule, and not the one the author wrote.
+
+**The disclosure retired itself.** `BlueprintRulesNotEvaluated` no longer appears for any seeded blueprint — and the disclosure code was not touched. That is what makes it a statement about engine capability rather than a hard-coded caveat.
+
+**What the user sees instead.** A fully-placed FDA IND is now *"Ready to publish"* with **two warnings** — *"Drug Product stability data (3.2.P.8) is expected. No documents are placed in 3.2.P.8 Stability."* EPIC-002's principle that publishability and findings are independent survives, but its subject improved: the surviving finding used to be the engine confessing a gap in itself, and is now the blueprint's own advisory judgement.
+
+**Tests that changed, and why none of it is weakening**
+
+| Test | Change |
+|---|---|
+| `DoesNotEvaluate_SectionScopedRules` | → `Evaluates_SectionScopedFileFormatRules` — the deferral it guarded is lifted |
+| two format-rule integration tests | re-scoped from "the only `BlueprintRuleViolation`" to `RuleCode == "FDA-IND-PDF"` — the blueprint now has other rules that report through the same code |
+| `RuleTypesTheEngineCannotRunYet_AreDisclosed` | split in two: one asserts nothing is unevaluated for the seeded blueprint, the other runs the engine **with no evaluators at all** to prove the mechanism still distinguishes *could not evaluate* from *passed*. Better than depending on a permanently unimplemented enum member. |
+
+**Cost, honestly:** one new evaluator, one registry entry, one additive context method, the planned lifting of `FileFormatEvaluator`'s deferral, and the registry cleanup. **Untouched:** the orchestrator, `SubmissionValidator`, `SubmissionValidationResult`, `BlueprintSeverityMapper`, `IBlueprintRuleEvaluator`, the rule loop, the disclosure mechanism, severity mapping, `IsValid`. The context helper needed the section tree, which STORY-002 already loads — so the orchestrator did not move.
+
+**Verified:** 606 backend tests green (24 new); 51/51 browser tests green against an isolated stack; CORS widening reverted and absent from the commit.

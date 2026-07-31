@@ -287,11 +287,13 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         await using var act = New();
         var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
 
-        // The rule came from the blueprint, and says so.
+        // The rule came from the blueprint, and says so. Scoped to this rule:
+        // the same blueprint carries SectionNotEmpty rules that also report
+        // through BlueprintRuleViolation, and this test is about format.
         var violation = result.Issues.Should().ContainSingle(
-            i => i.Code == SubmissionValidationCodes.BlueprintRuleViolation).Subject;
+            i => i.RuleCode == "FDA-IND-PDF").Subject;
 
-        violation.RuleCode.Should().Be("FDA-IND-PDF");
+        violation.Code.Should().Be(SubmissionValidationCodes.BlueprintRuleViolation);
         violation.Severity.Should().Be(ValidationSeverity.Error);
         violation.Message.Should().Contain("cover-letter.docx");
         result.IsValid.Should().BeFalse();
@@ -309,28 +311,89 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         await using var act = New();
         var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
 
-        result.Issues.Should().NotContain(
-            i => i.Code == SubmissionValidationCodes.BlueprintRuleViolation);
+        result.Issues.Should().NotContain(i => i.RuleCode == "FDA-IND-PDF");
     }
 
+    /// <summary>
+    /// The disclosure retires itself. EPIC-002 shipped with an
+    /// <c>Information</c> issue naming <c>SectionNotEmpty</c> as unexecutable;
+    /// now that every rule type the blueprint carries has an evaluator, it
+    /// disappears — without the disclosure mechanism being touched. That is what
+    /// makes it a statement about capability rather than a hard-coded caveat.
+    /// </summary>
     [Fact]
-    public async Task RuleTypesTheEngineCannotRunYet_AreDisclosed()
+    public async Task EveryRuleTypeTheSeededBlueprintCarries_IsNowExecuted()
+    {
+        await using var ctx = New();
+        var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND executed");
+
+        var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
+
+        result.Issues.Should().NotContain(
+            i => i.Code == SubmissionValidationCodes.BlueprintRulesNotEvaluated);
+    }
+
+    /// <summary>
+    /// And the mechanism still works. Proved by running the engine with no
+    /// evaluators at all rather than by relying on a permanently unimplemented
+    /// rule type: the invariant worth protecting is that the engine can
+    /// distinguish "could not evaluate" from "passed", whatever it ships with.
+    /// </summary>
+    [Fact]
+    public async Task RulesNoEvaluatorClaims_AreStillDisclosed()
     {
         await using var ctx = New();
         var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND disclosure");
 
-        var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
+        var engineWithNoEvaluators = new BlueprintValidationEvaluator(ctx, []);
+
+        var result = await new SubmissionValidator(
+                new SubmissionRepository(ctx), ctx, engineWithNoEvaluators)
+            .ValidateAsync(submissionId, default);
 
         var disclosure = result.Issues.Should().ContainSingle(
             i => i.Code == SubmissionValidationCodes.BlueprintRulesNotEvaluated)
             .Subject;
 
-        // A statement about this engine's capability — not a claim that those
+        // A statement about the engine's capability — not a claim that those
         // rules passed or failed, so it must not block.
         disclosure.Severity.Should().Be(ValidationSeverity.Information);
-        disclosure.UnevaluatedRuleTypes.Should().Contain("SectionNotEmpty");
+        disclosure.UnevaluatedRuleTypes
+            .Should().Contain(["FileFormat", "SectionNotEmpty"]);
         disclosure.Message.Should().NotContainAny("Error", "Warning");
+    }
+
+    /// <summary>
+    /// The rule EPIC-002 could only disclose, now doing regulatory work: an
+    /// empty Module 1.1 blocks an FDA IND, and the message says which section.
+    /// </summary>
+    [Fact]
+    public async Task AnEmptySectionViolatesTheBlueprintsSectionNotEmptyRule()
+    {
+        await using var ctx = New();
+        var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND empty section");
+
+        var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
+
+        var violation = result.Issues.Should().ContainSingle(
+            i => i.RuleCode == "FDA-IND-1.1-FORMS-NONEMPTY").Subject;
+
+        violation.Severity.Should().Be(ValidationSeverity.Error);
+        violation.Message.Should().Contain("1.1 Forms");
+
+        // The stability rules are graded Warning by the blueprint, so they
+        // report without blocking — severity comes from the data, not the code.
+        var stability = result.Issues
+            .Where(i => i.RuleCode is not null
+                && i.RuleCode.EndsWith("STABILITY-NONEMPTY"))
+            .ToList();
+
+        stability.Should().HaveCount(2);
+        stability.Should().OnlyContain(
+            i => i.Severity == ValidationSeverity.Warning);
     }
 
     // --- helpers -------------------------------------------------------------

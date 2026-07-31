@@ -36,6 +36,9 @@ type Requirement = {
 
 type Seeded = { documentId: string; requirement: Requirement };
 
+/** A rule the blueprint carries, graded by the blueprint, not by the engine. */
+type Rule = { code: string; ruleType: string; severity: string; sectionId: string | null };
+
 test.describe("Submission validation against the blueprint", () => {
   test("blocks publishing until the blueprint is satisfied, then publishes", async ({
     page,
@@ -68,6 +71,22 @@ test.describe("Submission validation against the blueprint", () => {
       requiredTypeIds,
       "today's blueprint requires each document type exactly once",
     ).toHaveLength(requirements.length);
+
+    // The blueprint's own SectionNotEmpty rules, executable since EPIC-003
+    // STORY-003. Their severity is the blueprint's decision, not this spec's:
+    // the FDA IND blocks on an empty Module 1.1 and merely warns about missing
+    // stability data.
+    const notEmpty: Rule[] = version.validationRules.filter(
+      (r: Rule) => r.ruleType === "SectionNotEmpty",
+    );
+
+    const blocking = notEmpty.filter((r) => r.severity === "Error");
+    const advisory = notEmpty.filter((r) => r.severity === "Warning");
+
+    expect(blocking.length, "an FDA IND blocks on an empty Module 1.1")
+      .toBeGreaterThan(0);
+    expect(advisory.length, "and warns about missing stability data")
+      .toBeGreaterThan(0);
 
     // --- prerequisites, through the API -----------------------------------
     const productId = await createProduct(unique);
@@ -104,15 +123,23 @@ test.describe("Submission validation against the blueprint", () => {
       page.locator('[data-testid="validation-group"][data-severity="Error"]'),
     ).toBeVisible();
 
-    // One blocking issue per unfilled placeholder, plus the validator's own
-    // "this submission has no documents" summary.
-    expect(await countIssues(page, "Error")).toBe(requirements.length + 1);
+    // One blocking issue per unfilled placeholder, the validator's own "this
+    // submission has no documents" summary, and every blocking SectionNotEmpty
+    // rule the blueprint carries — every section is empty.
+    expect(await countIssues(page, "Error")).toBe(
+      requirements.length + 1 + blocking.length,
+    );
 
-    // Checks this validator cannot perform yet are disclosed, not hidden.
-    await expect(
-      page.locator('[data-testid="validation-group"][data-severity="Information"]'),
-    ).toBeVisible();
-    await expect(page.getByTestId("unevaluated-rule-type").first()).toBeVisible();
+    // The blueprint's advisory rules report without blocking. Severity comes
+    // from the data: nothing in the validator knows stability is a warning.
+    expect(await countIssues(page, "Warning")).toBe(advisory.length);
+
+    // And nothing is disclosed as unevaluated any more. EPIC-002 shipped an
+    // Information issue naming SectionNotEmpty as a gap in the engine; every
+    // rule type the blueprint carries now has an evaluator, so the disclosure
+    // retired itself — no change to the disclosure mechanism, which is what
+    // makes it a statement about capability rather than a hard-coded caveat.
+    await expect(page.getByTestId("unevaluated-rule-type")).toHaveCount(0);
 
     await page.screenshot({
       path: "test-results/validation-blocked.png",
@@ -136,10 +163,12 @@ test.describe("Submission validation against the blueprint", () => {
     await page.goto(validationUrl);
     await expect(page.getByTestId("validation-status")).toBeVisible();
 
-    // Every placeholder is still unfilled. Only the "no documents at all"
-    // summary cleared, which is why this is one fewer than before, not one
-    // fewer requirement.
-    expect(await countIssues(page, "Error")).toBe(requirements.length);
+    // Every placeholder is still unfilled, and every section is still empty.
+    // Only the "no documents at all" summary cleared — which is why this is one
+    // fewer than before, not one fewer requirement.
+    expect(await countIssues(page, "Error")).toBe(
+      requirements.length + blocking.length,
+    );
 
     // And the document is not ignored either: attaching something that counts
     // for nothing, and hearing nothing about it, is how a dossier gets
@@ -167,6 +196,16 @@ test.describe("Submission validation against the blueprint", () => {
       (r) => r.documentTypeId === unplaced.documentTypeId,
     )!.sectionId;
 
+    // Its own placeholder is the one to watch — asserted by name rather than by
+    // arithmetic, because placing a document may also satisfy a
+    // SectionNotEmpty rule covering that section, and this step is about the
+    // placeholder.
+    const itsPlaceholder = page
+      .getByTestId("validation-issue")
+      .filter({ hasText: `'${unplaced.documentTypeName}' is missing` });
+
+    await expect(itsPlaceholder).toBeVisible();
+
     const placed = await api(
       `/submissions/${submissionId}/documents/${unplaced.submissionDocumentId}/placement`,
       { method: "PUT", body: JSON.stringify({ templateSectionId: itsSection }) },
@@ -177,7 +216,12 @@ test.describe("Submission validation against the blueprint", () => {
     await page.goto(validationUrl);
     await expect(page.getByTestId("validation-status")).toBeVisible();
 
-    expect(await countIssues(page, "Error")).toBe(requirements.length - 1);
+    await expect(itsPlaceholder).toHaveCount(0);
+
+    // Placed, so nothing is loose in the dossier any more.
+    await expect(
+      page.getByTestId("validation-issue").filter({ hasText: "not been placed" }),
+    ).toHaveCount(0);
 
     // --- 4. the rest through the API, attached and placed -----------------
     // "Attachable" already excludes whatever the UI attached a moment ago, so
@@ -216,20 +260,28 @@ test.describe("Submission validation against the blueprint", () => {
       "Ready to publish",
     );
 
-    // Being publishable does not mean there is nothing to report: the
-    // disclosure survives success. This is the assertion the whole epic's
-    // "passed / failed / not evaluated" distinction comes down to.
+    expect(await countIssues(page, "Error")).toBe(0);
+
+    // Being publishable does not mean there is nothing to report — the
+    // assertion the whole epic's "passed / failed / not evaluated" distinction
+    // comes down to. In EPIC-002 the surviving finding was the engine confessing
+    // a gap in itself; now it is the blueprint's own advisory judgement that
+    // stability data is expected. A stronger thing for a user to be shown.
+    expect(await countIssues(page, "Warning")).toBe(advisory.length);
+
+    // Nothing loose, nothing unevaluated: the two Information disclosures this
+    // epic introduced and retired are both absent, and the submission is still
+    // publishable with findings standing.
     await expect(
       page.locator('[data-testid="validation-group"][data-severity="Information"]'),
-    ).toBeVisible();
-    expect(await countIssues(page, "Error")).toBe(0);
+    ).toHaveCount(0);
 
     await page.screenshot({
       path: "test-results/validation-ready.png",
       fullPage: true,
     });
 
-    // --- 4. and it publishes ----------------------------------------------
+    // --- 5. and it publishes ----------------------------------------------
     await page.goto(
       `/regulatory/products/${productId}/applications/${applicationId}` +
         `/submissions/${submissionId}/publishing`,
