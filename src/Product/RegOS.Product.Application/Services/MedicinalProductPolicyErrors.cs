@@ -7,4 +7,7 @@ public static class MedicinalProductPolicyErrors
 
     public const string CountryDoesNotExist =
         "Country does not exist.";
+
+    public const string MedicinalProductDoesNotExist =
+        "Market does not exist.";
 }

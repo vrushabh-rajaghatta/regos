@@ -123,3 +123,7 @@ export const EXPECTED_401 =
 
 export const EXPECTED_400 =
   /Failed to load resource: the server responded with a status of 400/;
+
+/** A business rule refused a valid request — ADR-012's 409. */
+export const EXPECTED_409 =
+  /Failed to load resource: the server responded with a status of 409/;

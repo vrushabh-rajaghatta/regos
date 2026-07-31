@@ -2,7 +2,9 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
+using RegOS.Product.Application.Commands.AddTradeName;
 using RegOS.Product.Application.Commands.CreateMedicinalProduct;
+using RegOS.Product.Application.Commands.RemoveTradeName;
 using RegOS.Product.Application.Queries.ListMedicinalProducts;
 using RegOS.Product.Application.Services;
 using RegOS.Product.Application.Tests.Fixtures;
@@ -165,6 +167,142 @@ public sealed class MedicinalProductTests : IAsyncLifetime
         held.Should().Be(0);
     }
 
+    // --- Trade names ---------------------------------------------------------
+
+    [Fact]
+    public async Task ATradeNameIsRecordedAgainstTheMarket()
+    {
+        await using var ctx = New();
+        var market = await CreateAsync(ctx, await ProductAsync(ctx));
+
+        await AddTradeNameAsync(market, "en", "Cardiolex");
+
+        await using var check = New();
+        var reloaded = await check.MedicinalProducts
+            .AsNoTracking()
+            .Include(x => x.TradeNames)
+            .FirstAsync(x => x.Id == market);
+
+        var tradeName = reloaded.TradeNames.Should().ContainSingle().Subject;
+
+        tradeName.Name.Should().Be("Cardiolex");
+        tradeName.Language.Should().Be(LanguageCode.Parse("en"));
+    }
+
+    /// <summary>
+    /// The deliberate opposite of the rule one tier up. Two market presences in
+    /// one country are two business objects; two English names for one market
+    /// presence are two labels for one thing, so one of them is wrong.
+    /// </summary>
+    [Fact]
+    public async Task AMarketMayHaveOneNamePerLanguageAndNoMore()
+    {
+        await using var ctx = New();
+        var market = await CreateAsync(ctx, await ProductAsync(ctx));
+
+        await AddTradeNameAsync(market, "en", "Cardiolex");
+        await AddTradeNameAsync(market, "fr", "Cardiolexe");
+
+        var third = async () => await AddTradeNameAsync(market, "en", "Cardio");
+
+        await third.Should().ThrowAsync<BusinessRuleViolationException>()
+            .WithMessage(MedicinalProductErrors.TradeNameLanguageAlreadyRecorded);
+    }
+
+    /// <summary>
+    /// <b>The test that matters.</b> Proving the aggregate rejects a duplicate
+    /// in memory is easy; proving it still rejects one after a save and a
+    /// reload is what validates the <c>Include</c>, the repository and the
+    /// handler as a single slice. EPIC-016 learned this the hard way.
+    /// </summary>
+    [Fact]
+    public async Task TheOneNamePerLanguageRuleSurvivesAReload()
+    {
+        await using var ctx = New();
+        var market = await CreateAsync(ctx, await ProductAsync(ctx));
+
+        await AddTradeNameAsync(market, "en", "Cardiolex");
+
+        // A fresh context, exactly as a second request would arrive.
+        var again = async () => await AddTradeNameAsync(market, "en", "Other");
+
+        await again.Should().ThrowAsync<BusinessRuleViolationException>()
+            .WithMessage(MedicinalProductErrors.TradeNameLanguageAlreadyRecorded);
+    }
+
+    [Fact]
+    public async Task CaseIsNotASecondLanguage()
+    {
+        await using var ctx = New();
+        var market = await CreateAsync(ctx, await ProductAsync(ctx));
+
+        await AddTradeNameAsync(market, "en", "Cardiolex");
+
+        var shouting = async () => await AddTradeNameAsync(market, "EN", "Other");
+
+        await shouting.Should().ThrowAsync<BusinessRuleViolationException>()
+            .WithMessage(MedicinalProductErrors.TradeNameLanguageAlreadyRecorded);
+    }
+
+    /// <summary>
+    /// Removing frees the language again — which is also the only way to
+    /// correct a name, and why there is no Rename.
+    /// </summary>
+    [Fact]
+    public async Task RemovingANameFreesItsLanguage()
+    {
+        await using var ctx = New();
+        var market = await CreateAsync(ctx, await ProductAsync(ctx));
+        var id = await AddTradeNameAsync(market, "en", "Cardiolex");
+
+        await using var removing = New();
+        await new RemoveTradeNameHandler(new MedicinalProductRepository(removing))
+            .HandleAsync(new RemoveTradeNameCommand(market, id), default);
+
+        var readded = async () => await AddTradeNameAsync(market, "en", "Renamed");
+
+        await readded.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task RemovingANameThatIsNotThereIsNotFound()
+    {
+        await using var ctx = New();
+        var market = await CreateAsync(ctx, await ProductAsync(ctx));
+
+        var remove = async () =>
+            await new RemoveTradeNameHandler(new MedicinalProductRepository(ctx))
+                .HandleAsync(
+                    new RemoveTradeNameCommand(market, TradeNameId.New()),
+                    default);
+
+        await remove.Should().ThrowAsync<NotFoundException>()
+            .WithMessage(MedicinalProductErrors.TradeNameNotFound);
+    }
+
+    [Fact]
+    public async Task AddingANameToAMarketThatIsNotThereIsNotFound()
+    {
+        var add = async () =>
+            await AddTradeNameAsync(MedicinalProductId.New(), "en", "Cardiolex");
+
+        await add.Should().ThrowAsync<NotFoundException>()
+            .WithMessage(
+                MedicinalProductPolicyErrors.MedicinalProductDoesNotExist);
+    }
+
+    [Fact]
+    public async Task AMalformedLanguageIsRejectedBeforeAnythingIsLoaded()
+    {
+        await using var ctx = New();
+        var market = await CreateAsync(ctx, await ProductAsync(ctx));
+
+        var add = async () => await AddTradeNameAsync(market, "en-CA", "Cardiolex");
+
+        await add.Should().ThrowAsync<DomainException>()
+            .WithMessage(MedicinalProductErrors.LanguageNotRecognised);
+    }
+
     // --- Reading -------------------------------------------------------------
 
     [Fact]
@@ -187,6 +325,30 @@ public sealed class MedicinalProductTests : IAsyncLifetime
         row.CountryCode.Should().NotBeNullOrWhiteSpace();
         row.Status.Should().Be(nameof(MedicinalProductStatus.Active));
         row.StatusDate.Should().Be(Today);
+        row.TradeNames.Should().BeEmpty("branding is settled after entry");
+    }
+
+    [Fact]
+    public async Task TheMarketsListCarriesWhatTheProductIsCalledThere()
+    {
+        await using var ctx = New();
+        var globalProductId = await ProductAsync(ctx);
+        var market = await CreateAsync(ctx, globalProductId);
+
+        await AddTradeNameAsync(market, "fr", "Cardiolexe");
+        await AddTradeNameAsync(market, "en", "Cardiolex");
+
+        await using var check = New();
+        var rows = await new ListMedicinalProductsHandler(check)
+            .HandleAsync(new ListMedicinalProductsQuery(globalProductId), default);
+
+        var row = rows!.Should().ContainSingle().Subject;
+
+        row.TradeNames.Select(name => name.Name)
+            .Should().Equal("Cardiolex", "Cardiolexe");
+
+        row.TradeNames.Select(name => name.Language)
+            .Should().Equal("en", "fr");
     }
 
     /// <summary>
@@ -212,6 +374,26 @@ public sealed class MedicinalProductTests : IAsyncLifetime
     }
 
     // --- helpers -------------------------------------------------------------
+
+    /// <summary>
+    /// Each call through its own context, the way a request would arrive — so
+    /// the one-name-per-language rule is exercised against persisted state
+    /// rather than an aggregate that never left memory.
+    /// </summary>
+    private static async Task<TradeNameId> AddTradeNameAsync(
+        MedicinalProductId market,
+        string? language,
+        string? name)
+    {
+        await using var ctx = New();
+
+        var result = await new AddTradeNameHandler(
+                new MedicinalProductRepository(ctx))
+            .HandleAsync(
+                new AddTradeNameCommand(market, language, name), default);
+
+        return result.Id;
+    }
 
     private async Task<MedicinalProductId> CreateAsync(
         RegOSDbContext ctx,

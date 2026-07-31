@@ -70,5 +70,16 @@ public sealed class MedicinalProductConfiguration
         // This is the same call EPIC-005 made for Registration, one tier up,
         // and it is what makes resolve-or-create impossible rather than merely
         // unwise.
+
+        // Ownership: MedicinalProduct (1) -> trade names (N). The child holds
+        // no FK property, so EF uses a shadow "MedicinalProductId".
+        builder.HasMany(x => x.TradeNames)
+            .WithOne()
+            .HasForeignKey("MedicinalProductId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(MedicinalProduct.TradeNames))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

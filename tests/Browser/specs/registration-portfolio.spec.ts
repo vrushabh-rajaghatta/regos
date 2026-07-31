@@ -1,6 +1,12 @@
 import { expect } from "@playwright/test";
 
-import { test, api, collectErrors, EXPECTED_404 } from "./support";
+import {
+  test,
+  api,
+  collectErrors,
+  EXPECTED_404,
+  EXPECTED_409,
+} from "./support";
 
 /**
  * The registration workspace: both portfolio axes, and the one canonical page
@@ -134,6 +140,75 @@ test.describe("Registration portfolio", () => {
   });
 
   /**
+   * What the product is called there — one name per language, and the refusal
+   * of a second is a real business rule rather than a structural error, so this
+   * also discharges the EPIC-016 house rule for the trade-name dialog.
+   *
+   * The opposite of the rule one tier up, which this same page proves elsewhere:
+   * two market presences in one country are allowed, two English names for one
+   * market presence are not.
+   */
+  test("a market is named once per language, and a second name in one is refused", async ({
+    page,
+  }) => {
+    const errors = collectErrors(page, [EXPECTED_409]);
+    const unique = Date.now();
+
+    const globalProductId = await createProduct(
+      unique,
+      `Trade Name Product ${unique}`,
+    );
+
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
+
+    await page.getByRole("button", { name: "Add market" }).click();
+    await page.getByLabel("Country").selectOption({ label: "Canada" });
+    await page.getByLabel("Present since").fill("2019-06-01");
+    await page.getByRole("button", { name: "Add" }).click();
+
+    // --- 1. a market with no branding says so ----------------------------
+    await expect(page.getByTestId("market-unnamed")).toBeVisible();
+
+    // --- 2. named in two languages, which is the point of the tier -------
+    await addTradeName(page, "English", `Cardiolex ${unique}`);
+    await expect(page.getByTestId("market-trade-name")).toHaveCount(1);
+
+    await addTradeName(page, "French", `Cardiolexe ${unique}`);
+    await expect(page.getByTestId("market-trade-name")).toHaveCount(2);
+    await expect(page.getByTestId("product-markets")).toContainText("French");
+
+    // --- 3. a second English name is one of them being wrong -------------
+    await page.getByRole("button", { name: "Add name" }).click();
+    await page.getByLabel("Language").selectOption({ label: "English" });
+    await page.getByLabel("Trade name").fill("Conflicting");
+    await page.getByRole("button", { name: "Save" }).click();
+
+    await expect(page.getByTestId("add-trade-name-error")).toContainText(
+      "already has a trade name in that language",
+    );
+
+    // The dialog stays open holding what was typed, and nothing was added.
+    await expect(page.getByLabel("Trade name")).toHaveValue("Conflicting");
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("market-trade-name")).toHaveCount(2);
+
+    // --- 4. removing frees the language, which is how a name is corrected -
+    await page
+      .getByRole("button", { name: `Remove Cardiolex ${unique}` })
+      .click();
+
+    await expect(page.getByTestId("market-trade-name")).toHaveCount(1);
+
+    await addTradeName(page, "English", `Renamed ${unique}`);
+    await expect(page.getByTestId("market-trade-name")).toHaveCount(2);
+    await expect(page.getByTestId("product-markets")).toContainText(
+      `Renamed ${unique}`,
+    );
+
+    expect(errors()).toEqual([]);
+  });
+
+  /**
    * The EPIC-016 house rule: every new mutation dialog is walked through at
    * least one real server refusal, because success-path verification is what
    * let six forms ship with an unhandled promise rejection escaping to the
@@ -167,6 +242,17 @@ test.describe("Registration portfolio", () => {
     expect(errors()).toEqual([]);
   });
 });
+
+async function addTradeName(
+  page: import("@playwright/test").Page,
+  language: string,
+  name: string,
+) {
+  await page.getByRole("button", { name: "Add name" }).click();
+  await page.getByLabel("Language").selectOption({ label: language });
+  await page.getByLabel("Trade name").fill(name);
+  await page.getByRole("button", { name: "Save" }).click();
+}
 
 async function createProduct(unique: number, name: string): Promise<string> {
   const response = await api("/api/products", {

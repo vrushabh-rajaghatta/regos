@@ -332,12 +332,94 @@ re-pointing that broke it rather than kept alive by it.
 **Verification:** 863 backend tests (+7), 61 browser specs (+1), migration
 verified three ways, CORS widening reverted with an empty `Program.cs` diff.
 
-**Carried out of the story — a finding, not a fix.** The EPIC-016 mutation
+**Carried out of S001 — a finding, not a fix.** The EPIC-016 mutation
 defect (`await mutateAsync` with no `catch`, so a server refusal renders
 *and* escapes to the window as an unhandled rejection) is live in **nine more
 forms** across users, products, applications, submissions and documents. EPIC-016
 fixed six and the house rule was written, but the sweep was never run outside
 that epic's slices. Fixing them is a coherent piece of work and belongs to
-whoever schedules it, not to this story.
+whoever schedules it, not to this story. **Approved as a small maintenance
+epic after EPIC-017 lands** — the pattern, browser proof and rationale already
+exist, so what remains is mechanical and is worth keeping away from domain work.
+
+---
+
+### S002 — Trade Name *(shipped)*
+
+*What it is called there.* `MedicinalProduct` gains a `TradeNames` child
+collection, one name per language, and nothing else moves.
+
+**A child entity, not a root.** Against ADR-038's three justifications: nobody
+quotes its id, it has no lifecycle, no query reaches it directly, and no
+aggregate references it. *"What is this called in Canada?"* enters through the
+market and stops there — so it carries no `TenantId` and needs no query filter.
+The country is **inherited from the parent** rather than repeated, which is one
+of the things the tier was worth having for.
+
+**`LanguageCode` is a value object, and there is no `Language` table.** The
+deciding test was ADR-038's own: *does a rule branch on it?* No. Language
+participates in **identity** — `(market, language)` — but never in **behaviour**.
+Countries drive validation, authority selection and market identity; language
+currently drives display, and those are not equivalent. Governed reference data
+exists because the domain needs governed facts, not because dropdowns need
+labels — the picker's readable names come from `Intl.DisplayNames` over a
+curated code list in `constants/` (SC-105).
+
+> **ADR-039 will record:** `LanguageCode` intentionally models the minimum
+> demonstrated requirement (ISO 639-1 language). If future domain rules
+> distinguish regional variants — for example `en-CA` vs `en-US` — this value
+> object may evolve into a locale **without changing aggregate semantics**. A
+> reference-data aggregate is deferred until the domain requires governed
+> language metadata rather than validated identifiers.
+>
+> The principle underneath, which this epic has followed throughout: **model the
+> business concept, not the standard.** ISO 639-1 is implemented because the
+> domain currently needs a language, not because ISO publishes a list.
+
+The value object owns parsing — `Parse`, `TryParse`, `FromIso639_1`, value
+equality — so **no caller anywhere handles a raw language string.** That is
+precisely what makes the locale evolution above a change to one file.
+
+**Add and Remove, no Rename.** Without effective dating a rename is
+indistinguishable from remove-then-add, and offering one would imply a
+historical identity the model does not keep. When regulators care that *Brand A
+became Brand B*, that arrives as dating or status history and renaming becomes a
+distinct act worth naming. Removing is therefore also how a name is corrected,
+and a test proves removing frees the language again.
+
+**Uniqueness on `(market, language)` — the deliberate opposite of the tier's own
+rule**, enforced in the aggregate *and* as a unique index. Two market presences
+in one country are two business objects a company may legitimately hold; two
+English names for one market presence are two labels for one thing, so one of
+them is wrong. Different concepts, different invariants — stated in both the
+aggregate and the EF configuration, because a reader will otherwise ask why the
+two rules disagree.
+
+The test that matters is **`TheOneNamePerLanguageRuleSurvivesAReload`**. Proving
+the aggregate rejects a duplicate in memory is easy; proving it still rejects
+one through a fresh context validates the `Include`, the repository and the
+handler as one slice. `IMedicinalProductRepository.GetByIdAsync` always loads
+trade names, with the reason written into the interface.
+
+**One trigger that did not fire.** EPIC-017 was the *named* milestone for
+extracting scheme-plus-value from `SiteIdentifier` + `OrganizationIdentifier`.
+`TradeName` is `(language, name)` with a different rule attached — not that
+shape. **Both breadcrumbs stay standing and the third occurrence is still
+ahead.** The Rule of Three fires when an abstraction emerges, not when two
+classes happen to hold two properties.
+
+**A wording fix the browser caught.** The dialog was titled *"Trade name in
+Canada"* above a field labelled *"Trade name"* — a stutter, and indistinguishable
+from its own field to anything addressing the page by accessible name. Retitled
+*"Name in Canada"*. The second time a Playwright strict-mode violation has
+surfaced a genuine redundancy rather than a test problem (after EPIC-016's
+"Identifier" → "Identifier Value").
+
+**Deferred to S004 as agreed:** portfolio-view enrichment. S002 answers exactly
+one question — *can I manage trade names for a market?* — and stays almost
+entirely inside one aggregate.
+
+**Verification:** 886 backend tests (+23), 62 browser specs (+1), CORS widening
+reverted with no `Program.cs` diff.
 
 **Sequencing note:** this epic and **EPIC-004** are genuinely independent — sequences live inside `Submission` and never touch `ProductId`; this never touches submission internals. Neither makes the other harder. Order is a **value call**: this one completes an epic already in flight (EPIC-005); EPIC-004 completes nothing in flight but may be what a customer is waiting on.

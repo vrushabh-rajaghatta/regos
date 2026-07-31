@@ -1,7 +1,7 @@
 namespace RegOS.Product.Application.Queries.ListMedicinalProducts;
 
 /// <summary>
-/// One market this product is present in.
+/// One market this product is present in, and what it is called there.
 /// </summary>
 /// <remarks>
 /// Deliberately does not count the registrations held there. The count is a
@@ -15,4 +15,11 @@ public sealed record MedicinalProductListItem(
     string CountryName,
     string CountryCode,
     string Status,
-    DateOnly StatusDate);
+    DateOnly StatusDate,
+    IReadOnlyList<TradeNameListItem> TradeNames);
+
+/// <param name="Language">An ISO 639-1 code. The screen renders the name.</param>
+public sealed record TradeNameListItem(
+    Guid TradeNameId,
+    string Language,
+    string Name);

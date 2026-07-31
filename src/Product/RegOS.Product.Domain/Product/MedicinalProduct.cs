@@ -38,6 +38,8 @@ namespace RegOS.Product.Domain.Product;
 /// </remarks>
 public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
 {
+    private readonly List<TradeName> _tradeNames = [];
+
     // Parameterized private constructor, no parameterless one: EF binds by
     // parameter name, and this keeps every field non-nullable. Same shape as
     // GlobalProduct beside it.
@@ -86,6 +88,12 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
 
     public DateOnly StatusDate { get; private set; }
 
+    /// <summary>
+    /// What the product is called here — one name per language. Empty is
+    /// ordinary: a market presence exists before the branding is settled.
+    /// </summary>
+    public IReadOnlyCollection<TradeName> TradeNames => _tradeNames.AsReadOnly();
+
     /// <param name="statusDate">
     /// The business date this market-local record came into being — supplied,
     /// never read from the clock, so a migrated portfolio can state when the
@@ -118,5 +126,51 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
             countryId,
             MedicinalProductStatus.Active,
             statusDate);
+    }
+
+    /// <summary>
+    /// Records what this product is called here, in one language.
+    /// </summary>
+    /// <remarks>
+    /// One per language, and this is the <em>deliberate opposite</em> of the
+    /// rule one tier up. Two market presences in one country are two business
+    /// objects a company may legitimately hold; two English names for one
+    /// market presence are two labels for one thing, so one of them is wrong.
+    /// Different concepts, different invariants.
+    /// <para>
+    /// The database carries the same rule as a unique index, so a race between
+    /// two concurrent requests cannot slip a second one past this check.
+    /// </para>
+    /// </remarks>
+    public TradeName AddTradeName(LanguageCode language, string? name)
+    {
+        if (language is null)
+            throw new DomainException(MedicinalProductErrors.LanguageRequired);
+
+        if (_tradeNames.Any(x => x.Language == language))
+            throw new BusinessRuleViolationException(
+                MedicinalProductErrors.TradeNameLanguageAlreadyRecorded);
+
+        var tradeName = new TradeName(TradeNameId.New(), language, name);
+
+        _tradeNames.Add(tradeName);
+
+        return tradeName;
+    }
+
+    /// <remarks>
+    /// There is no Rename, deliberately. Without effective dating a rename is
+    /// indistinguishable from remove-then-add, and offering one would imply a
+    /// historical identity the model does not keep. When regulators care that
+    /// <em>Brand A became Brand B</em>, that arrives as dating or status
+    /// history, and renaming becomes a distinct act worth naming.
+    /// </remarks>
+    public void RemoveTradeName(TradeNameId tradeNameId)
+    {
+        var tradeName = _tradeNames.FirstOrDefault(x => x.Id == tradeNameId)
+            ?? throw new NotFoundException(
+                MedicinalProductErrors.TradeNameNotFound);
+
+        _tradeNames.Remove(tradeName);
     }
 }

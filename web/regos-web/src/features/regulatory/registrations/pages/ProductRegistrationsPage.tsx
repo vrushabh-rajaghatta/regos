@@ -6,6 +6,8 @@ import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { AddMarketDialog } from "../../medicinalProducts/components/AddMarketDialog";
+import { AddTradeNameDialog } from "../../medicinalProducts/components/AddTradeNameDialog";
+import { MarketTradeNames } from "../../medicinalProducts/components/MarketTradeNames";
 import { useMedicinalProducts } from "../../medicinalProducts/hooks/useMedicinalProducts";
 import type { MedicinalProduct } from "../../medicinalProducts/types/MedicinalProduct";
 import { CreateRegistrationDialog } from "../components/CreateRegistrationDialog";
@@ -33,6 +35,7 @@ export function ProductRegistrationsPage() {
   const [registeringIn, setRegisteringIn] = useState<MedicinalProduct | null>(
     null
   );
+  const [namingIn, setNamingIn] = useState<MedicinalProduct | null>(null);
   const [status, setStatus] = useState("");
 
   const markets = useMedicinalProducts(globalProductId!);
@@ -84,6 +87,7 @@ export function ProductRegistrationsPage() {
               <thead className="bg-muted/50 text-left">
                 <tr>
                   <th className="px-4 py-2 font-medium">Market</th>
+                  <th className="px-4 py-2 font-medium">Called</th>
                   <th className="px-4 py-2 font-medium">Present since</th>
                   <th className="px-4 py-2 font-medium">Authorisations</th>
                   <th className="px-4 py-2" />
@@ -100,6 +104,12 @@ export function ProductRegistrationsPage() {
                     <td className="px-4 py-2 font-medium">
                       {market.countryName}
                     </td>
+                    <td className="px-4 py-2">
+                      <MarketTradeNames
+                        medicinalProductId={market.medicinalProductId}
+                        tradeNames={market.tradeNames}
+                      />
+                    </td>
                     <td className="px-4 py-2">{market.statusDate}</td>
                     <td className="px-4 py-2">
                       {
@@ -109,7 +119,15 @@ export function ProductRegistrationsPage() {
                         ).length
                       }
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 text-right whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setNamingIn(market)}
+                      >
+                        Add name
+                      </Button>
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -215,6 +233,17 @@ export function ProductRegistrationsPage() {
         open={addingMarket}
         onOpenChange={setAddingMarket}
       />
+
+      {namingIn && (
+        <AddTradeNameDialog
+          medicinalProductId={namingIn.medicinalProductId}
+          countryName={namingIn.countryName}
+          open
+          onOpenChange={(open) => {
+            if (!open) setNamingIn(null);
+          }}
+        />
+      )}
 
       {/* Mounted per market so the dialog never has to ask which one it is in;
           unmounting on close is also what resets the form. */}

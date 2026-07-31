@@ -45,6 +45,18 @@ public sealed class ListMedicinalProductsHandler
                 CountryCode = country.Code,
                 market.Status,
                 market.StatusDate,
+                // Projected, not Include()d: this is a read, and the trade
+                // names travel as part of the row rather than as an aggregate
+                // the query handler would have no business loading (ADR-016).
+                TradeNames = market.TradeNames
+                    .OrderBy(name => name.Name)
+                    .Select(name => new
+                    {
+                        name.Id,
+                        name.Language,
+                        name.Name,
+                    })
+                    .ToList(),
             }).ToListAsync(cancellationToken);
 
         return rows
@@ -54,7 +66,11 @@ public sealed class ListMedicinalProductsHandler
                 row.CountryName,
                 row.CountryCode,
                 row.Status.ToString(),
-                row.StatusDate))
+                row.StatusDate,
+                [.. row.TradeNames.Select(name => new TradeNameListItem(
+                    name.Id.Value,
+                    name.Language.Value,
+                    name.Name))]))
             .ToList();
     }
 }
