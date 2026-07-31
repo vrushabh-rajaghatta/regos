@@ -173,13 +173,20 @@ Future examples include:
 - Product Variant
 - Manufacturer
 - Product Classification
-- Market Registration
+
+> **Market Registration was moved out of this list (EPIC-005).** It was a
+> reasonable child entity before a submission model existed. It is now its own
+> aggregate — see *Registration Management* below — because it has an identity
+> outsiders quote, a lifecycle of its own, and is queried across products rather
+> than within one.
 
 ### Relationships
 
 One Organization owns many Products.
 
 One Product may have many Applications.
+
+One Product may hold many Registrations.
 
 ---
 
@@ -235,6 +242,35 @@ One Submission
 ↓
 
 Many Documents
+
+---
+
+## Registration Management
+
+Owns market authorisations — what the business *holds*, as opposed to what it
+*does* (an Application) or what it *sends* (a Submission).
+
+### Aggregate Root
+
+Registration
+
+A product's authorisation to be marketed in one jurisdiction: its licence
+number, its status over time, and the dates that govern it.
+
+### Child Entities
+
+- Registration Status History (immutable; one row per dated transition)
+
+### Relationships
+
+One Product may hold many Registrations, in one market or several.
+
+A Registration *may* name the Application that produced it — optional, because
+acquired and in-licensed products carry authorisations RegOS never witnessed
+being filed.
+
+The holder Organization is distinct from the owning Tenant: an authorisation can
+be held on a partner's behalf.
 
 ---
 
