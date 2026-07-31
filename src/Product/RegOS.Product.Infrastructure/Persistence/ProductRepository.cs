@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
-using RegOS.Product.Application.Persistence;
 using RegOS.Product.Domain.Product;
 
 

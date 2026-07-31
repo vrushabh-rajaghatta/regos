@@ -1,5 +1,5 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
-import { detailOf } from "./problemDetail";
+import { detailOf } from "@/shared/api/problemDetail";
 
 export interface RecordApprovalBody {
   registrationNumber: string;

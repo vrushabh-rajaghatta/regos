@@ -5,11 +5,8 @@ public static class RegistrationErrors
     public const string TenantRequired =
         "Tenant is required.";
 
-    public const string ProductRequired =
-        "Product is required.";
-
-    public const string CountryRequired =
-        "Country is required.";
+    public const string MedicinalProductRequired =
+        "Medicinal product is required.";
 
     public const string AuthorityRequired =
         "Authority is required.";

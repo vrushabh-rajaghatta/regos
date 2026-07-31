@@ -1,6 +1,8 @@
 /** A row in "where is this product registered?" — the market is the answer. */
 export interface RegistrationSummary {
   registrationId: string;
+  /** The market this licence was granted over — the tier, not the country. */
+  medicinalProductId: string;
   countryId: string;
   countryName: string;
   authorityId: string;

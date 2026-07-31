@@ -20,6 +20,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Registration\RegOS.Registration.Application\RegOS.Registration.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Registration\RegOS.Registration.Infrastructure\RegOS.Registration.Infrastructure.csproj" />
+    <!-- A registration is granted over a medicinal product, so these tests need
+         the handler that creates one. The fixture builds its world through the
+         real application surface rather than inserting rows. -->
+    <ProjectReference Include="..\..\..\src\Product\RegOS.Product.Infrastructure\RegOS.Product.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

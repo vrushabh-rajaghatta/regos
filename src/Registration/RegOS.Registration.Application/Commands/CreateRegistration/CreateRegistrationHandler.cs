@@ -27,8 +27,7 @@ public sealed class CreateRegistrationHandler
         CancellationToken cancellationToken)
     {
         await _creationPolicy.EnsureCanCreateAsync(
-            command.GlobalProductId,
-            command.CountryId,
+            command.MedicinalProductId,
             command.AuthorityId,
             command.HolderOrganizationId,
             command.OriginatingApplicationId,
@@ -39,8 +38,7 @@ public sealed class CreateRegistrationHandler
         // distinction RegulatoryApplication draws between tenant and applicant.
         var registration = RegistrationAggregate.Create(
             _tenantContext.TenantId,
-            command.GlobalProductId,
-            command.CountryId,
+            command.MedicinalProductId,
             command.AuthorityId,
             command.HolderOrganizationId,
             command.OccurredOn,

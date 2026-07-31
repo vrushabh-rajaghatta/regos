@@ -17,11 +17,15 @@ public sealed class PersistenceConventionTests
     /// Interfaces that predate the rule being enforced. Shrink, never grow.
     /// Moving one is a namespace change and a handful of usings — cheap, but
     /// it touches command handlers, so it happens per context.
+    /// <para>
+    /// <b>Empty since EPIC-017 S001</b>, which retired the last entry
+    /// (<c>IProductRepository</c>) while adding <c>IMedicinalProductRepository</c>
+    /// to the same context — leaving two sibling repository interfaces in
+    /// different projects would have been worse than the move. SC-002 now has
+    /// no exemptions.
+    /// </para>
     /// </summary>
-    private static readonly HashSet<string> Grandfathered =
-    [
-        "src/Product/RegOS.Product.Application/Persistence/IProductRepository.cs"
-    ];
+    private static readonly HashSet<string> Grandfathered = [];
 
     [Fact]
     public void Repository_interfaces_live_in_the_domain_project()

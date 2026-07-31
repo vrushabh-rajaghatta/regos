@@ -2,6 +2,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\RegOS.SharedKernel\RegOS.SharedKernel.csproj" />
+    <!-- MedicinalProduct names a CountryId. The same edge Registration.Domain,
+         Organization.Domain and RegulatoryApplication.Domain already have:
+         reference data is world facts every context reads. -->
+    <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Domain\RegOS.ReferenceData.Domain.csproj" />
   </ItemGroup>
 
 </Project>

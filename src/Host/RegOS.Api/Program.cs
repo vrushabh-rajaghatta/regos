@@ -8,6 +8,7 @@ using RegOS.Api.Endpoints.Contacts;
 using RegOS.Api.Endpoints.OrganizationDivisions;
 using RegOS.Api.Endpoints.Platform;
 using RegOS.Api.Endpoints.PlatformAdministration;
+using RegOS.Api.Endpoints.MedicinalProducts;
 using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
@@ -209,6 +210,10 @@ products.MapGetProductEndpoint();
 products.MapUpdateProductEndpoint();
 products.MapArchiveProductEndpoint();
 products.MapListProductsEndpoint();
+
+var medicinalProducts = app.MapGroup("").WithTags("Medicinal Products");
+medicinalProducts.MapCreateMedicinalProduct();
+medicinalProducts.MapListMedicinalProducts();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

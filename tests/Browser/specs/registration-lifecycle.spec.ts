@@ -35,11 +35,20 @@ test.describe("Registration lifecycle", () => {
     const productName = `Lifecycle Product ${unique}`;
     const globalProductId = await createProduct(unique, productName);
 
-    // --- 1. record an intention ------------------------------------------
+    // --- 1. enter the market, then record an intention in it -------------
     await page.goto(`/regulatory/products/${globalProductId}/registrations`);
-    await page.getByRole("button", { name: "New registration" }).click();
 
-    await page.getByLabel("Market").selectOption({ label: "United States" });
+    await page.getByRole("button", { name: "Add market" }).click();
+    await page.getByLabel("Country").selectOption({ label: "United States" });
+    await page.getByLabel("Present since").fill("2019-06-01");
+    await page.getByRole("button", { name: "Add" }).click();
+
+    await page
+      .getByTestId("product-market-row")
+      .first()
+      .getByRole("button", { name: "New registration" })
+      .click();
+
     await page.getByLabel("Authority").selectOption({ index: 1 });
     await page.getByLabel("Authorisation holder").selectOption({ index: 1 });
     await page.getByLabel("Planned on").fill("2020-01-10");

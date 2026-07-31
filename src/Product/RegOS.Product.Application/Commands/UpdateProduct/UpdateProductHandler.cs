@@ -1,4 +1,4 @@
-using RegOS.Product.Application.Persistence;
+using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 

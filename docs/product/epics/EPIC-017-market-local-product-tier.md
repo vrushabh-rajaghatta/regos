@@ -235,4 +235,103 @@ semantic one.
 
 **ADR to write:** *The market-local product tier, and which tier each reference means* — next free number (expected **ADR-039**).
 
+---
+
+### S001 — The tier *(shipped)*
+
+`MedicinalProduct` exists, `Registration` is granted over it, and every existing
+registration was migrated onto the market it was already in.
+
+**The design decision that shaped everything else.** The sketch had
+`Registration` keep `CountryId`. It doesn't. Once a registration names a
+medicinal product, the country is *the medicinal product's fact*, and a second
+copy on the registration is duplicated domain state with no transaction able to
+keep the two in agreement.
+
+The same argument then applies to `GlobalProductId`, and it was followed:
+**`Registration` carries neither the product nor the country — only
+`MedicinalProductId`.** The dependency chain is `GlobalProduct →
+MedicinalProduct → Registration`, each step narrowing context, and "Canadian
+medicinal product, Australian registration" is now *unrepresentable* rather than
+merely forbidden.
+
+Read models are unchanged in shape — `countryId` and `countryName` still reach
+every caller — because they now join through the tier.
+
+**The aggregate, deliberately almost empty.**
+
+| Field | Note |
+|---|---|
+| `Id`, `TenantId` | fail-closed filter, shape 1 (ADR-031/038) |
+| `GlobalProductId`, `CountryId` | both immutable; `Restrict` FKs |
+| `Status`, `StatusDate` | an **activation flag** — one date, no history |
+
+Everything else arrives with the feature that reads it. `Name` was cut from the
+approved shape on the founder's own test — *who reads this?* — and joins
+`AtcCode`, `IsInvestigational` and `MarketingAuthorizationHolderId` in the
+deferred column. **`Status` carries no transition methods yet**: adding
+`Activate`/`Deactivate` with no endpoint would be the unreachable-capability
+defect EPIC-016 shipped twice. The field exists because retrofitting a lifecycle
+column later means backfilling a guess; the capability arrives in S003 with the
+market lifecycle that makes it reachable.
+
+**No MAH on the tier.** EPIC-005 decision 4 already established that partial
+divestment puts different holders on two registrations in one market. A holder
+on the tier would be wrong the first time that happens; a *default* holder is a
+different concept and can be added when a flow wants one.
+
+**No uniqueness on (global product, country)** — asserted by a test, the way
+EPIC-005 asserted its own missing index. This is what makes resolve-or-create
+impossible rather than merely unwise (Amendment B).
+
+**The migration.** Additive. One medicinal product per distinct
+`(tenant, global product, country)` already on a registration; status date taken
+from the *earliest business date in that registration's own history*, never the
+clock. Every row is derived from data that was already there.
+
+The scaffolded migration would have **renamed** `GlobalProductId` to
+`MedicinalProductId` and dropped `CountryId` — structurally valid and
+semantically catastrophic. Rewritten by hand as create → backfill → tighten →
+drop, in one SQL statement so `RETURNING` carries generated ids straight into
+the `UPDATE`.
+
+Verified three ways: on a **fresh** database; on a **clone of the dev database**
+seeded with an extra registration sharing a market, where 6 registrations
+collapsed to 5 markets with **0 orphans and 6/6 keeping their exact
+(product, country)**; and by rolling `Down` and confirming all 6 came back
+byte-identical.
+
+**Reachability.** `POST`/`GET /api/products/{id}/medicinal-products` and
+`POST /api/medicinal-products/{id}/registrations` ship with the tier, and the
+product page gained a **Markets** section — a market is added as its own act,
+and a registration is recorded against a market row. That is Amendment B's
+"pick-or-create lives in the UI", built where it was always going to live.
+
+**Two exemptions retired while in the neighbourhood.**
+
+- **SC-002's grandfathered list is now empty.** `IProductRepository` moved to the
+  Domain project; leaving it in `Application/Persistence/` while adding
+  `IMedicinalProductRepository` to `Domain/` would have put two sibling
+  interfaces in two projects.
+- **`detailOf` is now shared.** The organizations copy had written its own
+  trigger — *"across slices it is the second occurrence, and a shared
+  `src/shared/api` helper waits for the third"*. Medicinal products is the
+  third, so both copies collapsed into `shared/api/problemDetail.ts`. ADR-018
+  firing as designed rather than on a symmetry argument.
+
+**Also removed:** `IRegistrationRepository.ListByProductAsync`, which had no
+callers and read aggregates for a query in defiance of ADR-016. Deleted with the
+re-pointing that broke it rather than kept alive by it.
+
+**Verification:** 863 backend tests (+7), 61 browser specs (+1), migration
+verified three ways, CORS widening reverted with an empty `Program.cs` diff.
+
+**Carried out of the story — a finding, not a fix.** The EPIC-016 mutation
+defect (`await mutateAsync` with no `catch`, so a server refusal renders
+*and* escapes to the window as an unhandled rejection) is live in **nine more
+forms** across users, products, applications, submissions and documents. EPIC-016
+fixed six and the house rule was written, but the sweep was never run outside
+that epic's slices. Fixing them is a coherent piece of work and belongs to
+whoever schedules it, not to this story.
+
 **Sequencing note:** this epic and **EPIC-004** are genuinely independent — sequences live inside `Submission` and never touch `ProductId`; this never touches submission internals. Neither makes the other harder. Order is a **value call**: this one completes an epic already in flight (EPIC-005); EPIC-004 completes nothing in flight but may be what a customer is waiting on.

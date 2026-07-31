@@ -1,6 +1,5 @@
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
-using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Registration.Application.Commands.CreateRegistration;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
@@ -12,25 +11,26 @@ public static class CreateRegistrationEndpoint
     public static IEndpointRouteBuilder MapCreateRegistration(
         this IEndpointRouteBuilder app)
     {
-        // Product-scoped, like applications: a registration is always *for* a
-        // product, and the route says so.
+        // Scoped to the medicinal product, not the global one: a licence is
+        // granted over a product in a market, and the route now names exactly
+        // the thing it is granted over. The country is no longer a body field
+        // because there is nothing left for the caller to decide about it.
         app.MapPost(
-            "/api/products/{globalProductId:guid}/registrations",
+            "/api/medicinal-products/{medicinalProductId:guid}/registrations",
             HandleAsync);
 
         return app;
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid globalProductId,
+        Guid medicinalProductId,
         CreateRegistrationRequest request,
         CreateRegistrationHandler handler,
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(
             new CreateRegistrationCommand(
-                new GlobalProductId(globalProductId),
-                new CountryId(request.CountryId),
+                new MedicinalProductId(medicinalProductId),
                 new AuthorityId(request.AuthorityId),
                 new OrganizationId(request.HolderOrganizationId),
                 request.OccurredOn,
@@ -41,7 +41,7 @@ public static class CreateRegistrationEndpoint
             cancellationToken);
 
         return Results.Created(
-            $"/registrations/{result.Id.Value}",
+            $"/api/registrations/{result.Id.Value}",
             new CreateRegistrationResponse(result.Id.Value));
     }
 }

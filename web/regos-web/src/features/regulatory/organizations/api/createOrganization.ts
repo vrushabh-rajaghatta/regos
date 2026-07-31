@@ -2,7 +2,7 @@ import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { CreateOrganizationRequest } from "../types/CreateOrganizationRequest";
 import type { CreateOrganizationResponse } from "../types/CreateOrganizationResponse";
-import { detailOf } from "./problemDetail";
+import { detailOf } from "@/shared/api/problemDetail";
 
 export async function createOrganization(
   request: CreateOrganizationRequest,

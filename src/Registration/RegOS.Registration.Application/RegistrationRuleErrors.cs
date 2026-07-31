@@ -7,11 +7,8 @@ namespace RegOS.Registration.Application;
 /// </summary>
 public static class RegistrationRuleErrors
 {
-    public const string ProductDoesNotExist =
-        "Product does not exist.";
-
-    public const string CountryDoesNotExist =
-        "Country does not exist.";
+    public const string MedicinalProductDoesNotExist =
+        "Medicinal product does not exist.";
 
     public const string AuthorityDoesNotExist =
         "Authority does not exist.";

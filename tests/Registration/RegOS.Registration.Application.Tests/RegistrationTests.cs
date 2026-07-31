@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
+using RegOS.Product.Application.Commands.CreateMedicinalProduct;
 using RegOS.Product.Domain.Product;
+using RegOS.Product.Infrastructure.Persistence;
+using RegOS.Product.Infrastructure.Services;
 using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Registration.Application.Commands.ChangeRegistrationStatus;
@@ -49,6 +52,7 @@ public sealed class RegistrationTests : IAsyncLifetime
     private static readonly DateOnly Today = new(2026, 7, 31);
 
     private readonly List<Guid> _registrationIds = [];
+    private readonly List<Guid> _medicinalProductIds = [];
     private readonly List<Guid> _productIds = [];
     private readonly List<Guid> _applicationIds = [];
     private readonly List<Guid> _organizationIds = [];
@@ -87,6 +91,19 @@ public sealed class RegistrationTests : IAsyncLifetime
                 ctx.RegulatoryApplications.Remove(application);
         }
 
+        // After the registrations that point at them, before the products they
+        // point at: the FKs are Restrict in both directions.
+        foreach (var id in _medicinalProductIds)
+        {
+            var market = await ctx.MedicinalProducts
+                .FirstOrDefaultAsync(x => x.Id == new MedicinalProductId(id));
+
+            if (market is not null)
+                ctx.MedicinalProducts.Remove(market);
+        }
+
+        await ctx.SaveChangesAsync();
+
         foreach (var id in _productIds)
         {
             var product = await ctx.Products
@@ -114,9 +131,9 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task ARegistrationIsCreatedPlannedAndPersistedWithItsHistory()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
+        var market = await ProductInUsAsync(ctx);
 
-        var id = await CreateAsync(ctx, globalProductId);
+        var id = await CreateAsync(ctx, market);
 
         await using var check = New();
         var registration = await check.Registrations
@@ -124,6 +141,7 @@ public sealed class RegistrationTests : IAsyncLifetime
             .Include(x => x.History)
             .FirstAsync(x => x.Id == id);
 
+        registration.MedicinalProductId.Should().Be(market);
         registration.CurrentStatus.Should().Be(RegistrationStatus.Planned);
         registration.TenantId.Should().Be(TestTenant.Id);
         registration.History.Should().ContainSingle()
@@ -139,32 +157,37 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task AProductMayHoldSeveralRegistrationsInTheSameMarket()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
+        var market = await ProductInUsAsync(ctx);
 
-        await CreateAsync(ctx, globalProductId);
-        var second = async () => await CreateAsync(ctx, globalProductId);
+        await CreateAsync(ctx, market);
+        var second = async () => await CreateAsync(ctx, market);
 
         await second.Should().NotThrowAsync();
 
         await using var check = New();
         var count = await check.Registrations
             .AsNoTracking()
-            .CountAsync(x => x.GlobalProductId == globalProductId);
+            .CountAsync(x => x.MedicinalProductId == market);
 
         count.Should().Be(2);
     }
 
     [Fact]
-    public async Task AnUnknownProductIsNotFound()
+    public async Task AnUnknownMedicinalProductIsNotFound()
     {
         await using var ctx = New();
 
-        var create = async () => await CreateAsync(ctx, GlobalProductId.New());
+        var create = async () => await CreateAsync(ctx, MedicinalProductId.New());
 
         await create.Should().ThrowAsync<NotFoundException>()
-            .WithMessage(RegistrationRuleErrors.ProductDoesNotExist);
+            .WithMessage(RegistrationRuleErrors.MedicinalProductDoesNotExist);
     }
 
+    /// <summary>
+    /// The country is now the medicinal product's, so this rule is checked
+    /// against the tier rather than against a country the caller supplied —
+    /// there is no longer a way to supply one.
+    /// </summary>
     [Fact]
     public async Task TheAuthorityMustBelongToTheCountry()
     {
@@ -178,7 +201,9 @@ public sealed class RegistrationTests : IAsyncLifetime
             .Select(x => x.Id)
             .FirstAsync();
 
-        var create = async () => await CreateAsync(ctx, globalProductId, countryId: elsewhere);
+        var abroad = await MarketAsync(ctx, globalProductId, elsewhere);
+
+        var create = async () => await CreateAsync(ctx, abroad);
 
         await create.Should().ThrowAsync<DomainException>()
             .WithMessage(RegistrationRuleErrors.AuthorityNotInCountry);
@@ -188,7 +213,7 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task TheHolderMustBeActive()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
+        var market = await ProductInUsAsync(ctx);
 
         var retired = OrganizationAggregate.Create(
             TestTenant.Id, $"Retired Holder {Guid.NewGuid()}", OrganizationType.Manufacturer);
@@ -199,7 +224,7 @@ public sealed class RegistrationTests : IAsyncLifetime
         _organizationIds.Add(retired.Id.Value);
 
         var create = async () =>
-            await CreateAsync(ctx, globalProductId, holderId: retired.Id);
+            await CreateAsync(ctx, market, holderId: retired.Id);
 
         await create.Should().ThrowAsync<BusinessRuleViolationException>()
             .WithMessage(RegistrationRuleErrors.OrganizationInactive);
@@ -211,9 +236,9 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task AnAuthorisationFiledElsewhereNeedsNoApplication()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
+        var market = await ProductInUsAsync(ctx);
 
-        var id = await CreateAsync(ctx, globalProductId);
+        var id = await CreateAsync(ctx, market);
 
         await using var check = New();
         var registration = await check.Registrations
@@ -227,9 +252,10 @@ public sealed class RegistrationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var globalProductId = await ProductAsync(ctx);
+        var market = await MarketAsync(ctx, globalProductId);
         var applicationId = await ApplicationAsync(ctx, globalProductId);
 
-        var id = await CreateAsync(ctx, globalProductId, applicationId: applicationId);
+        var id = await CreateAsync(ctx, market, applicationId: applicationId);
 
         await using var check = New();
         var registration = await check.Registrations
@@ -242,12 +268,12 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task AnApplicationForAnotherProductIsRejected()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
+        var market = await ProductInUsAsync(ctx);
         var otherProductId = await ProductAsync(ctx);
         var foreignApplication = await ApplicationAsync(ctx, otherProductId);
 
         var create = async () =>
-            await CreateAsync(ctx, globalProductId, applicationId: foreignApplication);
+            await CreateAsync(ctx, market, applicationId: foreignApplication);
 
         await create.Should().ThrowAsync<DomainException>()
             .WithMessage(RegistrationRuleErrors.ApplicationNotForProduct);
@@ -259,12 +285,12 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task RecordingApprovalPersistsTheNumberDatesAndASecondHistoryEntry()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
+        var market = await ProductInUsAsync(ctx);
 
         // A migrated authorisation: both entries carry their 2019 business
         // dates, in the order they happened, while both are recorded today.
         var id = await CreateAsync(
-            ctx, globalProductId, occurredOn: new DateOnly(2019, 1, 15));
+            ctx, market, occurredOn: new DateOnly(2019, 1, 15));
 
         var granted = new DateOnly(2019, 4, 12);
 
@@ -321,9 +347,9 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task AnEntireLifecycleIsPersistedAsOneChronologicalHistory()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
+        var market = await ProductInUsAsync(ctx);
         var id = await CreateAsync(
-            ctx, globalProductId, occurredOn: new DateOnly(2020, 1, 10));
+            ctx, market, occurredOn: new DateOnly(2020, 1, 10));
 
         await ChangeAsync(id, RegistrationStatus.Submitted, new(2020, 3, 2));
         await ChangeAsync(id, RegistrationStatus.UnderReview, new(2020, 4, 15));
@@ -365,8 +391,8 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task AForbiddenTransitionIsRefusedAndNothingIsWritten()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
-        var id = await CreateAsync(ctx, globalProductId);
+        var market = await ProductInUsAsync(ctx);
+        var id = await CreateAsync(ctx, market);
 
         var suspend = async () =>
             await ChangeAsync(id, RegistrationStatus.Suspended, Today);
@@ -389,8 +415,8 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task ATerminalRegistrationStaysWhereItIs()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
-        var id = await CreateAsync(ctx, globalProductId);
+        var market = await ProductInUsAsync(ctx);
+        var id = await CreateAsync(ctx, market);
 
         await ChangeAsync(id, RegistrationStatus.Refused, Today);
 
@@ -418,8 +444,8 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task TheDetailViewResolvesTheNamesAPersonReads()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
-        var id = await CreateAsync(ctx, globalProductId);
+        var market = await ProductInUsAsync(ctx);
+        var id = await CreateAsync(ctx, market);
 
         await using var check = New();
         var detail = await new GetRegistrationHandler(check).HandleAsync(id, default);
@@ -442,8 +468,8 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task TheDetailViewOffersTheTransitionsTheDomainWouldAccept()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
-        var id = await CreateAsync(ctx, globalProductId);
+        var market = await ProductInUsAsync(ctx);
+        var id = await CreateAsync(ctx, market);
 
         await using var planned = New();
         var whilePlanned = await new GetRegistrationHandler(planned)
@@ -483,7 +509,8 @@ public sealed class RegistrationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var globalProductId = await ProductAsync(ctx);
-        await CreateAsync(ctx, globalProductId);
+        var market = await MarketAsync(ctx, globalProductId);
+        await CreateAsync(ctx, market);
 
         await using var check = New();
         var rows = await new ListProductRegistrationsHandler(check)
@@ -492,6 +519,10 @@ public sealed class RegistrationTests : IAsyncLifetime
         rows.Should().NotBeNull();
         var row = rows!.Should().ContainSingle().Subject;
 
+        // The market reaches the caller through the tier, unchanged in shape:
+        // a client still reads countryId and countryName.
+        row.MedicinalProductId.Should().Be(market.Value);
+        row.CountryId.Should().Be(UnitedStates.Value);
         row.CountryName.Should().NotBeNullOrWhiteSpace();
         row.Status.Should().Be(nameof(RegistrationStatus.Planned));
         row.RegistrationNumber.Should().BeNull("nothing has been granted yet");
@@ -515,7 +546,8 @@ public sealed class RegistrationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var globalProductId = await ProductAsync(ctx);
-        var id = await CreateAsync(ctx, globalProductId);
+        var market = await MarketAsync(ctx, globalProductId);
+        var id = await CreateAsync(ctx, market);
 
         await using var check = New();
         var rows = await new ListMarketRegistrationsHandler(check)
@@ -541,13 +573,13 @@ public sealed class RegistrationTests : IAsyncLifetime
     {
         await using var ctx = New();
 
-        var surrendered = await ProductAsync(ctx);
+        var surrendered = await ProductInUsAsync(ctx);
         var surrenderedId = await CreateAsync(
             ctx, surrendered, occurredOn: new DateOnly(2020, 1, 1));
         await ChangeAsync(
             surrenderedId, RegistrationStatus.Withdrawn, new(2021, 1, 1));
 
-        var live = await ProductAsync(ctx);
+        var live = await ProductInUsAsync(ctx);
         var liveId = await CreateAsync(
             ctx, live, occurredOn: new DateOnly(2020, 1, 1));
         await ApproveAsync(liveId, "NDA-live", new(2021, 6, 1));
@@ -585,20 +617,20 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task TheMarketsIndexNamesOnlyCountriesSomethingIsHeldIn()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
-        await CreateAsync(ctx, globalProductId);
-        await CreateAsync(ctx, globalProductId);
+        var market = await ProductInUsAsync(ctx);
+        await CreateAsync(ctx, market);
+        await CreateAsync(ctx, market);
 
         await using var check = New();
         var markets = await new ListRegistrationMarketsHandler(check)
             .HandleAsync(default);
 
-        var market = markets.Should()
+        var row = markets.Should()
             .ContainSingle(x => x.CountryId == UnitedStates.Value).Subject;
 
-        market.CountryName.Should().NotBeNullOrWhiteSpace();
-        market.CountryCode.Should().NotBeNullOrWhiteSpace();
-        market.RegistrationCount.Should().BeGreaterThanOrEqualTo(2);
+        row.CountryName.Should().NotBeNullOrWhiteSpace();
+        row.CountryCode.Should().NotBeNullOrWhiteSpace();
+        row.RegistrationCount.Should().BeGreaterThanOrEqualTo(2);
 
         // A country with nothing in it is simply absent — this is navigation,
         // not a catalogue, so the index is far shorter than the country list.
@@ -703,9 +735,9 @@ public sealed class RegistrationTests : IAsyncLifetime
     public async Task ARegistrationWithNoExpiryDateIsNotSomethingToActOn()
     {
         await using var ctx = New();
-        var globalProductId = await ProductAsync(ctx);
+        var market = await ProductInUsAsync(ctx);
         var id = await CreateAsync(
-            ctx, globalProductId, occurredOn: new DateOnly(2020, 1, 1));
+            ctx, market, occurredOn: new DateOnly(2020, 1, 1));
 
         // Granted with no validity period — real for authorisations that do not
         // lapse.
@@ -730,8 +762,9 @@ public sealed class RegistrationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var globalProductId = await ProductAsync(ctx);
+        var market = await MarketAsync(ctx, globalProductId);
         var id = await CreateAsync(
-            ctx, globalProductId, occurredOn: new DateOnly(2020, 1, 1));
+            ctx, market, occurredOn: new DateOnly(2020, 1, 1));
         await ApproveAsync(
             id, "NDA-both", new DateOnly(2021, 1, 1), new DateOnly(2030, 1, 1));
 
@@ -758,9 +791,9 @@ public sealed class RegistrationTests : IAsyncLifetime
         string registrationNumber,
         DateOnly expiresOn)
     {
-        var globalProductId = await ProductAsync(ctx);
+        var market = await ProductInUsAsync(ctx);
         var id = await CreateAsync(
-            ctx, globalProductId, occurredOn: new DateOnly(2020, 1, 1));
+            ctx, market, occurredOn: new DateOnly(2020, 1, 1));
 
         await ApproveAsync(id, registrationNumber, new DateOnly(2021, 1, 1), expiresOn);
 
@@ -769,8 +802,7 @@ public sealed class RegistrationTests : IAsyncLifetime
 
     private async Task<RegistrationId> CreateAsync(
         RegOSDbContext ctx,
-        GlobalProductId globalProductId,
-        CountryId? countryId = null,
+        MedicinalProductId medicinalProductId,
         OrganizationId? holderId = null,
         RegulatoryApplicationId? applicationId = null,
         DateOnly? occurredOn = null)
@@ -782,8 +814,7 @@ public sealed class RegistrationTests : IAsyncLifetime
 
         var result = await handler.HandleAsync(
             new CreateRegistrationCommand(
-                globalProductId,
-                countryId ?? UnitedStates,
+                medicinalProductId,
                 Fda,
                 holderId ?? Holder,
                 occurredOn ?? Today,
@@ -794,6 +825,34 @@ public sealed class RegistrationTests : IAsyncLifetime
 
         return result.Id;
     }
+
+    /// <summary>
+    /// The tier a licence is now granted over. Defaults to the US market
+    /// because that is where the seeded FDA regulates.
+    /// </summary>
+    private async Task<MedicinalProductId> MarketAsync(
+        RegOSDbContext ctx,
+        GlobalProductId globalProductId,
+        CountryId? countryId = null)
+    {
+        var handler = new CreateMedicinalProductHandler(
+            new MedicinalProductPolicy(ctx),
+            new MedicinalProductRepository(ctx),
+            TestTenant.Context);
+
+        var result = await handler.HandleAsync(
+            new CreateMedicinalProductCommand(
+                globalProductId, countryId ?? UnitedStates, Today),
+            default);
+
+        _medicinalProductIds.Add(result.Id.Value);
+
+        return result.Id;
+    }
+
+    /// <summary>A product with one market presence — the usual starting point.</summary>
+    private async Task<MedicinalProductId> ProductInUsAsync(RegOSDbContext ctx)
+        => await MarketAsync(ctx, await ProductAsync(ctx));
 
     /// <summary>
     /// Each transition through its own context, the way a request would arrive —

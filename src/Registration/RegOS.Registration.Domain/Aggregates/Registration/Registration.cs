@@ -1,6 +1,5 @@
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
-using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
@@ -14,15 +13,23 @@ namespace RegOS.Registration.Domain.Aggregates.Registration;
 /// RegulatoryApplication) or what it <em>sends</em> (a Submission).
 /// </summary>
 /// <remarks>
-/// An aggregate root rather than a child of Product: it has an identity
-/// outsiders quote (the registration number), a lifecycle of its own, and is
-/// queried across the portfolio — "what do we hold in Canada?" — rather than
-/// within a single product.
+/// An aggregate root rather than a child of the medicinal product: it has an
+/// identity outsiders quote (the registration number), a lifecycle of its own,
+/// and is queried across the portfolio — "what do we hold in Canada?" — rather
+/// than within a single product. The medicinal product owns its
+/// <em>lifecycle</em>; it does not contain it.
 /// <para>
-/// Several registrations may legitimately exist for the same product in the
-/// same market: different strengths, presentations, holders after a partial
-/// divestment, or legacy authorisations never surrendered. Nothing here
-/// enforces one per market.
+/// Several registrations may legitimately exist for the same medicinal product:
+/// different strengths, presentations, holders after a partial divestment, or
+/// legacy authorisations never surrendered. Nothing here enforces one per
+/// market.
+/// </para>
+/// <para>
+/// <b>It names a medicinal product and nothing above it.</b> The global product
+/// and the country are the medicinal product's facts; a second copy here could
+/// disagree with them, and no transaction spans both aggregates to stop it. A
+/// registration therefore cannot express "Canadian product, Australian licence"
+/// — that state is unrepresentable rather than merely forbidden (EPIC-017 S001).
 /// </para>
 /// </remarks>
 public sealed class Registration
@@ -34,8 +41,7 @@ public sealed class Registration
     private Registration(
         RegistrationId id,
         TenantId tenantId,
-        GlobalProductId globalProductId,
-        CountryId countryId,
+        MedicinalProductId medicinalProductId,
         AuthorityId authorityId,
         OrganizationId holderOrganizationId,
         RegulatoryApplicationId? originatingApplicationId,
@@ -43,8 +49,7 @@ public sealed class Registration
     {
         Id = id;
         TenantId = tenantId;
-        GlobalProductId = globalProductId;
-        CountryId = countryId;
+        MedicinalProductId = medicinalProductId;
         AuthorityId = authorityId;
         HolderOrganizationId = holderOrganizationId;
         OriginatingApplicationId = originatingApplicationId;
@@ -61,9 +66,12 @@ public sealed class Registration
     /// </summary>
     public TenantId TenantId { get; }
 
-    public GlobalProductId GlobalProductId { get; }
-
-    public CountryId CountryId { get; }
+    /// <summary>
+    /// The market-local product this authorisation was granted over. The only
+    /// route to the global product and the country — see the remarks on the
+    /// class for why neither is repeated here.
+    /// </summary>
+    public MedicinalProductId MedicinalProductId { get; }
 
     public AuthorityId AuthorityId { get; }
 
@@ -113,8 +121,7 @@ public sealed class Registration
     /// </param>
     public static Registration Create(
         TenantId tenantId,
-        GlobalProductId globalProductId,
-        CountryId countryId,
+        MedicinalProductId medicinalProductId,
         AuthorityId authorityId,
         OrganizationId holderOrganizationId,
         DateOnly occurredOn,
@@ -124,11 +131,9 @@ public sealed class Registration
         if (tenantId is null)
             throw new DomainException(RegistrationErrors.TenantRequired);
 
-        if (globalProductId == default)
-            throw new DomainException(RegistrationErrors.ProductRequired);
-
-        if (countryId == default)
-            throw new DomainException(RegistrationErrors.CountryRequired);
+        if (medicinalProductId is null)
+            throw new DomainException(
+                RegistrationErrors.MedicinalProductRequired);
 
         if (authorityId == default)
             throw new DomainException(RegistrationErrors.AuthorityRequired);
@@ -143,8 +148,7 @@ public sealed class Registration
         var registration = new Registration(
             RegistrationId.New(),
             tenantId,
-            globalProductId,
-            countryId,
+            medicinalProductId,
             authorityId,
             holderOrganizationId,
             originatingApplicationId,

@@ -1,7 +1,4 @@
-using RegOS.Product.Domain.Product;
-
-
-namespace RegOS.Product.Application.Persistence;
+namespace RegOS.Product.Domain.Product;
 
 /// <summary>
 /// Aggregates only. Reads for screens project from the database directly rather

@@ -34,11 +34,13 @@ public sealed class ListRegistrationMarketsHandler
         var rows = await (
             from registration in _dbContext.Set<RegistrationAggregate>()
                 .AsNoTracking()
+            join market in _dbContext.MedicinalProducts
+                on registration.MedicinalProductId equals market.Id
             join country in _dbContext.Countries
-                on registration.CountryId equals country.Id
+                on market.CountryId equals country.Id
             group country by new
             {
-                registration.CountryId,
+                market.CountryId,
                 country.Name,
                 country.Code,
             }

@@ -32,19 +32,31 @@ public sealed class GetRegistrationHandler
         if (registration is null)
             return null;
 
-        // The aggregate carries ids; names come from the referenced records.
-        // Name is a value object; project the string it wraps.
-        var product = await _dbContext.Products
+        // The aggregate carries one id upwards; the global product and the
+        // market are read from the tier it names.
+        var market = await _dbContext.MedicinalProducts
             .AsNoTracking()
-            .Where(x => x.Id == registration.GlobalProductId)
-            .Select(x => x.Name.Value)
+            .Where(x => x.Id == registration.MedicinalProductId)
+            .Select(x => new { x.GlobalProductId, x.CountryId })
             .FirstOrDefaultAsync(cancellationToken);
 
-        var country = await _dbContext.Countries
-            .AsNoTracking()
-            .Where(x => x.Id == registration.CountryId)
-            .Select(x => x.Name)
-            .FirstOrDefaultAsync(cancellationToken);
+        // Names come from the referenced records. Name is a value object;
+        // project the string it wraps.
+        var product = market is null
+            ? null
+            : await _dbContext.Products
+                .AsNoTracking()
+                .Where(x => x.Id == market.GlobalProductId)
+                .Select(x => x.Name.Value)
+                .FirstOrDefaultAsync(cancellationToken);
+
+        var country = market is null
+            ? null
+            : await _dbContext.Countries
+                .AsNoTracking()
+                .Where(x => x.Id == market.CountryId)
+                .Select(x => x.Name)
+                .FirstOrDefaultAsync(cancellationToken);
 
         var authority = await _dbContext.Authorities
             .AsNoTracking()
@@ -65,9 +77,10 @@ public sealed class GetRegistrationHandler
 
         return new RegistrationDetailDto(
             registration.Id.Value,
-            registration.GlobalProductId.Value,
+            registration.MedicinalProductId.Value,
+            market?.GlobalProductId.Value ?? Guid.Empty,
             product ?? string.Empty,
-            registration.CountryId.Value,
+            market?.CountryId.Value ?? Guid.Empty,
             country ?? string.Empty,
             registration.AuthorityId.Value,
             authority ?? string.Empty,

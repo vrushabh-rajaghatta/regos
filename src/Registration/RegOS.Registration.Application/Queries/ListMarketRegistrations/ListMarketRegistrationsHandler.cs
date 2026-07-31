@@ -49,9 +49,11 @@ public sealed class ListMarketRegistrationsHandler
         var rows = await (
             from registration in _dbContext.Set<RegistrationAggregate>()
                 .AsNoTracking()
-            where registration.CountryId == countryId
+            join market in _dbContext.MedicinalProducts
+                on registration.MedicinalProductId equals market.Id
+            where market.CountryId == countryId
             join product in _dbContext.Products
-                on registration.GlobalProductId equals product.Id
+                on market.GlobalProductId equals product.Id
             join authority in _dbContext.Authorities
                 on registration.AuthorityId equals authority.Id
             join holder in _dbContext.Organizations
@@ -59,7 +61,7 @@ public sealed class ListMarketRegistrationsHandler
             select new
             {
                 registration.Id,
-                registration.GlobalProductId,
+                market.GlobalProductId,
                 ProductCode = product.Code,
                 ProductName = product.Name,
                 registration.AuthorityId,
