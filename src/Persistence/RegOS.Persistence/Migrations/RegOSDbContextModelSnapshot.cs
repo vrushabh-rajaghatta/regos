@@ -794,6 +794,92 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("SubmissionTypes", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.Registration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ApprovedOn")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CountryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("ExpiresOn")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("HolderOrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("OriginatingApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RegistrationNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityId");
+
+                    b.HasIndex("HolderOrganizationId");
+
+                    b.HasIndex("OriginatingApplicationId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("CountryId", "CurrentStatus");
+
+                    b.ToTable("Registrations", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.RegistrationStatusEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly>("OccurredOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("RecordedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RegistrationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegistrationId");
+
+                    b.HasIndex("RegistrationId", "OccurredOn");
+
+                    b.ToTable("RegistrationStatusHistory", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1139,6 +1225,47 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.Registration", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Geography.Country.Country", null)
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("HolderOrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", null)
+                        .WithMany()
+                        .HasForeignKey("OriginatingApplicationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.Product.Domain.Product.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.RegistrationStatusEntry", b =>
+                {
+                    b.HasOne("RegOS.Registration.Domain.Aggregates.Registration.Registration", null)
+                        .WithMany("History")
+                        .HasForeignKey("RegistrationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", b =>
                 {
                     b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
@@ -1247,6 +1374,11 @@ namespace RegOS.Persistence.Migrations
                     b.Navigation("Sections");
 
                     b.Navigation("ValidationRules");
+                });
+
+            modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.Registration", b =>
+                {
+                    b.Navigation("History");
                 });
 
             modelBuilder.Entity("RegOS.Submission.Domain.Snapshot.SubmissionSnapshot", b =>

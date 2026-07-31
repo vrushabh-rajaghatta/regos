@@ -1,6 +1,12 @@
 import { NavLink } from "react-router-dom";
 
-const items = ["Products", "Submissions", "Authorities", "Templates"];
+const items = [
+  "Products",
+  "Registrations",
+  "Submissions",
+  "Authorities",
+  "Templates",
+];
 
 export function RegulatoryNavigation() {
   return (

@@ -24,6 +24,8 @@ using RegulatoryTemplateAggregate =
     RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplate;
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
+using RegistrationAggregate =
+    RegOS.Registration.Domain.Aggregates.Registration.Registration;
 using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
 using TenantAggregate =
@@ -97,6 +99,9 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<SubmissionSnapshotAggregate> SubmissionSnapshots =>
         Set<SubmissionSnapshotAggregate>();
+
+    public DbSet<RegistrationAggregate> Registrations =>
+        Set<RegistrationAggregate>();
 
     public DbSet<DocumentTypeAggregate> DocumentTypes =>
         Set<DocumentTypeAggregate>();
@@ -189,6 +194,9 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<ProductDocumentAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<RegistrationAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // A tenant's registry of business relationships — even the *names*

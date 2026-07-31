@@ -35,6 +35,11 @@
     <Project Path="src/Submission/RegOS.Submission.Domain/RegOS.Submission.Domain.csproj" />
     <Project Path="src/Submission/RegOS.Submission.Infrastructure/RegOS.Submission.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Registration/">
+    <Project Path="src/Registration/RegOS.Registration.Application/RegOS.Registration.Application.csproj" />
+    <Project Path="src/Registration/RegOS.Registration.Domain/RegOS.Registration.Domain.csproj" />
+    <Project Path="src/Registration/RegOS.Registration.Infrastructure/RegOS.Registration.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/ProductDocument/">
     <Project Path="src/ProductDocument/RegOS.ProductDocument.Application/RegOS.ProductDocument.Application.csproj" />
     <Project Path="src/ProductDocument/RegOS.ProductDocument.Domain/RegOS.ProductDocument.Domain.csproj" />
@@ -60,6 +65,10 @@
   </Folder>
   <Folder Name="/tests/RegulatoryApplication/">
     <Project Path="tests/RegulatoryApplication/RegOS.RegulatoryApplication.Domain.Tests/RegOS.RegulatoryApplication.Domain.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Registration/">
+    <Project Path="tests/Registration/RegOS.Registration.Application.Tests/RegOS.Registration.Application.Tests.csproj" />
+    <Project Path="tests/Registration/RegOS.Registration.Domain.Tests/RegOS.Registration.Domain.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Submission/">
     <Project Path="tests/Submission/RegOS.Submission.Domain.Tests/RegOS.Submission.Domain.Tests.csproj" />

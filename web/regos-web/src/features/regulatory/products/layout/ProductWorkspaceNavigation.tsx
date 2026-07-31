@@ -36,6 +36,13 @@ export function ProductWorkspaceNavigation() {
         Documents
       </NavLink>
 
+      <NavLink
+        to={`/regulatory/products/${productId}/registrations`}
+        className={linkClass}
+      >
+        Registrations
+      </NavLink>
+
       {comingSoon.map((label) => (
         <div
           key={label}
