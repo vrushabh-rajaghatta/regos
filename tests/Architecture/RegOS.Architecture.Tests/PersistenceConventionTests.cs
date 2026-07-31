@@ -20,8 +20,7 @@ public sealed class PersistenceConventionTests
     /// </summary>
     private static readonly HashSet<string> Grandfathered =
     [
-        "src/Product/RegOS.Product.Application/Persistence/IProductRepository.cs",
-        "src/Organization/RegOS.Organization.Application/Persistence/IOrganizationRepository.cs"
+        "src/Product/RegOS.Product.Application/Persistence/IProductRepository.cs"
     ];
 
     [Fact]

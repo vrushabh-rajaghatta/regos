@@ -1,5 +1,7 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
+import { detailOf } from "./problemDetail";
+
 export async function activateOrganization(
   organizationId: string,
 ): Promise<void> {
@@ -10,17 +12,7 @@ export async function activateOrganization(
 
   if (response.ok) return;
 
-  let message = "Unable to activate this organization.";
-
-  try {
-    const problem = await response.json();
-
-    if (typeof problem?.detail === "string") {
-      message = problem.detail;
-    }
-  } catch {
-    // No problem body — fall back to the generic message.
-  }
-
-  throw new Error(message);
+  throw new Error(
+    await detailOf(response, "Unable to activate this organization."),
+  );
 }

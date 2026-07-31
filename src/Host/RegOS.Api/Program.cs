@@ -151,6 +151,7 @@ referenceData.MapListSubmissionTypes();
 referenceData.MapListDocumentTypes();
 referenceData.MapListRegulatoryTemplates();
 referenceData.MapGetRegulatoryTemplate();
+referenceData.MapListIdentifierSchemes();
 
 var authentication = app.MapGroup("").WithTags("Authentication");
 authentication.MapLogin();
@@ -170,6 +171,8 @@ organizations.MapDeactivateOrganization();
 organizations.MapGetOrganization();
 organizations.MapListOrganizations();
 organizations.MapUpdateOrganization();
+organizations.MapAddOrganizationIdentifier();
+organizations.MapRemoveOrganizationIdentifier();
 
 var organizationSites = app.MapGroup("").WithTags("Organization Sites");
 organizationSites.MapCreateOrganizationSite();

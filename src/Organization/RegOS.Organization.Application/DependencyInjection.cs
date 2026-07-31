@@ -1,11 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Organization.Application.Commands.ActivateOrganization;
+using RegOS.Organization.Application.Commands.AddOrganizationIdentifier;
 using RegOS.Organization.Application.Commands.CreateOrganization;
 using RegOS.Organization.Application.Commands.CreateContact;
 using RegOS.Organization.Application.Commands.CreateOrganizationDivision;
 using RegOS.Organization.Application.Commands.CreateOrganizationSite;
 using RegOS.Organization.Application.Commands.DeactivateOrganization;
+using RegOS.Organization.Application.Commands.RemoveOrganizationIdentifier;
 using RegOS.Organization.Application.Commands.UpdateOrganization;
 using RegOS.Organization.Application.Queries.Organizations.GetOrganization;
 using RegOS.Organization.Application.Queries.Organizations.ListOrganizations;
@@ -30,6 +32,8 @@ public static class DependencyInjection
         services.AddScoped<GetOrganizationHandler>();
         services.AddScoped<ListOrganizationsHandler>();
         services.AddScoped<UpdateOrganizationHandler>();
+        services.AddScoped<AddOrganizationIdentifierHandler>();
+        services.AddScoped<RemoveOrganizationIdentifierHandler>();
 
         services.AddScoped<CreateOrganizationSiteHandler>();
         services.AddScoped<GetOrganizationSiteHandler>();

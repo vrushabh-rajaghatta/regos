@@ -9,6 +9,7 @@ import { OrganizationNotFoundError } from "../api/getOrganization";
 import { ActivateOrganizationDialog } from "../components/ActivateOrganizationDialog";
 import { DeactivateOrganizationDialog } from "../components/DeactivateOrganizationDialog";
 import { EditOrganizationDialog } from "../components/EditOrganizationDialog";
+import { OrganizationIdentifiers } from "../components/OrganizationIdentifiers";
 import { OrganizationStatusBadge } from "../components/OrganizationStatusBadge";
 import { useOrganization } from "../hooks/useOrganization";
 import { organizationTypeLabel } from "../types/OrganizationType";
@@ -125,11 +126,44 @@ export function OrganizationDetailsPage() {
 
             <div>
               <dt className="text-sm text-muted-foreground">Status</dt>
-              <dd className="mt-1">
+              <dd className="mt-1 flex items-center gap-2">
                 <OrganizationStatusBadge status={organization.status} />
+
+                <span className="text-sm text-muted-foreground">
+                  since {organization.statusDate}
+                </span>
               </dd>
             </div>
+
+            {/* Only when recorded. An empty row for a company that files in one
+                script would be noise dressed as information. */}
+            {organization.acronym && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Acronym</dt>
+                <dd className="mt-1 font-medium">{organization.acronym}</dd>
+              </div>
+            )}
+
+            {organization.nameNativeLanguage && (
+              <div>
+                <dt className="text-sm text-muted-foreground">
+                  Name (Native Language)
+                </dt>
+                <dd className="mt-1 font-medium">
+                  {organization.nameNativeLanguage}
+                </dd>
+              </div>
+            )}
           </dl>
+        </PageSection>
+      </div>
+
+      <div className="mt-6">
+        <PageSection title="Identifiers">
+          <OrganizationIdentifiers
+            organizationId={organization.id}
+            identifiers={organization.identifiers}
+          />
         </PageSection>
       </div>
     </>

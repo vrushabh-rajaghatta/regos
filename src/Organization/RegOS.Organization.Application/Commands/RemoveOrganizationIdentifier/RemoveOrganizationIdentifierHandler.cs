@@ -1,33 +1,32 @@
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.SharedKernel.Exceptions;
 
-namespace RegOS.Organization.Application.Commands.ActivateOrganization;
+namespace RegOS.Organization.Application.Commands.RemoveOrganizationIdentifier;
 
-public sealed class ActivateOrganizationHandler
+public sealed class RemoveOrganizationIdentifierHandler
 {
     private readonly IOrganizationRepository _repository;
 
-    public ActivateOrganizationHandler(IOrganizationRepository repository)
+    public RemoveOrganizationIdentifierHandler(
+        IOrganizationRepository repository)
     {
         _repository = repository;
     }
 
     public async Task HandleAsync(
-        ActivateOrganizationCommand command,
+        RemoveOrganizationIdentifierCommand command,
         CancellationToken cancellationToken)
     {
         var organization = await _repository.GetByIdAsync(
-            command.Id,
+            command.OrganizationId,
             cancellationToken);
 
-        // Absent or another tenant's — the query filter (ADR-032) makes both
-        // a 404. See UpdateOrganizationHandler.
         if (organization is null)
             throw new NotFoundException(OrganizationErrors.NotFound);
 
-        // The aggregate decides whether the transition is legal; activating an
-        // already-active organization raises from there.
-        organization.Activate();
+        // An identifier belonging to another organization is not found here
+        // either: the aggregate only searches its own.
+        organization.RemoveIdentifier(command.IdentifierId);
 
         await _repository.UpdateAsync(organization, cancellationToken);
     }

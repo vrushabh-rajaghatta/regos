@@ -47,11 +47,19 @@ export function EditOrganizationForm({
     defaultValues: {
       legalName: organization.legalName,
       type: organization.type,
+      acronym: organization.acronym ?? "",
+      nameNativeLanguage: organization.nameNativeLanguage ?? "",
     },
   });
 
   async function onSubmit(values: UpdateOrganizationFormValues) {
-    await mutation.mutateAsync(values);
+    // Empty means "not recorded", not "the empty string" — the server treats a
+    // null and a blank identically, and this keeps the round trip honest.
+    await mutation.mutateAsync({
+      ...values,
+      acronym: values.acronym || null,
+      nameNativeLanguage: values.nameNativeLanguage || null,
+    });
 
     onSuccess();
   }
@@ -95,6 +103,40 @@ export function EditOrganizationForm({
               </Select>
 
               <FieldError errors={[errors.type]} />
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="acronym"
+          render={({ field }) => (
+            <Field data-invalid={!!errors.acronym}>
+              <FieldLabel htmlFor="acronym">Acronym</FieldLabel>
+
+              <Input id="acronym" placeholder="DML" {...field} />
+
+              <FieldError errors={[errors.acronym]} />
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="nameNativeLanguage"
+          render={({ field }) => (
+            <Field data-invalid={!!errors.nameNativeLanguage}>
+              <FieldLabel htmlFor="nameNativeLanguage">
+                Name (Native Language)
+              </FieldLabel>
+
+              <Input
+                id="nameNativeLanguage"
+                placeholder="デモ製薬株式会社"
+                {...field}
+              />
+
+              <FieldError errors={[errors.nameNativeLanguage]} />
             </Field>
           )}
         />

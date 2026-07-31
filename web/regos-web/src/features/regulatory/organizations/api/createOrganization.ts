@@ -2,6 +2,7 @@ import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { CreateOrganizationRequest } from "../types/CreateOrganizationRequest";
 import type { CreateOrganizationResponse } from "../types/CreateOrganizationResponse";
+import { detailOf } from "./problemDetail";
 
 export async function createOrganization(
   request: CreateOrganizationRequest,
@@ -14,22 +15,10 @@ export async function createOrganization(
     body: JSON.stringify(request),
   });
 
+  // Surface the API's ProblemDetails message so the user sees why the
+  // organization was rejected rather than a generic failure.
   if (!response.ok) {
-    // Surface the API's ProblemDetails message so the user sees why the
-    // organization was rejected rather than a generic failure.
-    let message = "Unable to create organization.";
-
-    try {
-      const problem = await response.json();
-
-      if (typeof problem?.detail === "string") {
-        message = problem.detail;
-      }
-    } catch {
-      // No problem body — fall back to the generic message.
-    }
-
-    throw new Error(message);
+    throw new Error(await detailOf(response, "Unable to create organization."));
   }
 
   return response.json();

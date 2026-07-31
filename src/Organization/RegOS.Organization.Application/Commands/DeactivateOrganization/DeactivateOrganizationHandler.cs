@@ -1,4 +1,3 @@
-using RegOS.Organization.Application.Persistence;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.SharedKernel.Exceptions;
 

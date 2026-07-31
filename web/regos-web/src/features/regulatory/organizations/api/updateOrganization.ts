@@ -1,6 +1,7 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { UpdateOrganizationRequest } from "../types/UpdateOrganizationRequest";
+import { detailOf } from "./problemDetail";
 
 export async function updateOrganization(
   id: string,
@@ -16,17 +17,7 @@ export async function updateOrganization(
 
   if (response.ok) return;
 
-  let message = "Unable to update this organization.";
-
-  try {
-    const problem = await response.json();
-
-    if (typeof problem?.detail === "string") {
-      message = problem.detail;
-    }
-  } catch {
-    // No problem body — fall back to the generic message.
-  }
-
-  throw new Error(message);
+  throw new Error(
+    await detailOf(response, "Unable to update this organization."),
+  );
 }

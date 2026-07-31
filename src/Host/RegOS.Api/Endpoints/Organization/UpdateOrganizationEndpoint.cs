@@ -28,7 +28,9 @@ public static class UpdateOrganizationEndpoint
             new UpdateOrganizationCommand(
                 new OrganizationId(id),
                 request.LegalName,
-                request.Type),
+                request.Type,
+                request.Acronym,
+                request.NameNativeLanguage),
             cancellationToken);
 
         return Results.NoContent();
