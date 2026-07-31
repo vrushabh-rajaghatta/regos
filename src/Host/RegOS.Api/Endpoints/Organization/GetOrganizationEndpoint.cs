@@ -9,7 +9,7 @@ public static class GetOrganizationEndpoint
         this IEndpointRouteBuilder app)
     {
         app.MapGet(
-            "/organizations/{id:guid}",
+            "/api/organizations/{id:guid}",
             HandleAsync)
         .WithName("GetOrganization")
         .WithSummary("Get an organization")

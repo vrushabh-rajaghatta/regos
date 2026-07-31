@@ -6,7 +6,7 @@ const LIST = "/regulatory/organizations";
 
 /** Seeds through the API so a spec does not depend on another feature's form. */
 async function seedOrganization(legalName: string, type = "Manufacturer") {
-  const response = await api("/organizations", {
+  const response = await api("/api/organizations", {
     method: "POST",
     body: JSON.stringify({ legalName, type }),
   });
@@ -18,7 +18,7 @@ async function seedOrganization(legalName: string, type = "Manufacturer") {
 
 /** Organizations are never deleted, so retire what the spec created. */
 async function retire(id: string) {
-  await api(`/organizations/${id}/deactivate`, { method: "POST" });
+  await api(`/api/organizations/${id}/deactivate`, { method: "POST" });
 }
 
 const unique = (prefix: string) =>
@@ -73,7 +73,7 @@ test.describe("Organization directory", () => {
 
     expect(errors()).toEqual([]);
 
-    const organizations = await (await api("/organizations")).json();
+    const organizations = await (await api("/api/organizations")).json();
 
     for (const organization of organizations) {
       if (organization.legalName === legalName) await retire(organization.id);

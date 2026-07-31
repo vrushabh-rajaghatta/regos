@@ -334,7 +334,7 @@ async function createProduct(unique: number): Promise<string> {
 }
 
 async function createApplication(productId: string): Promise<string> {
-  const organizations = await (await api("/organizations")).json();
+  const organizations = await (await api("/api/organizations")).json();
 
   // An active one specifically — other specs create and deactivate
   // organizations, and "whatever came back first" is how a suite starts

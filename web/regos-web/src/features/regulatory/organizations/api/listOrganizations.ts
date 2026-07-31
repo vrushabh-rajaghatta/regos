@@ -9,7 +9,7 @@ import type { OrganizationListItem } from "../types/OrganizationListItem";
  * tenant/organization model, retired by ADR-030.)
  */
 export async function listOrganizations(): Promise<OrganizationListItem[]> {
-  const response = await apiFetch(buildUrl("/organizations"));
+  const response = await apiFetch(buildUrl("/api/organizations"));
 
   if (!response.ok) {
     throw new Error("Unable to load organizations.");

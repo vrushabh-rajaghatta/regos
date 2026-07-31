@@ -8,7 +8,7 @@ export class OrganizationNotFoundError extends Error {}
 export async function getOrganization(
   id: string,
 ): Promise<OrganizationDetails> {
-  const response = await apiFetch(buildUrl(`/organizations/${id}`));
+  const response = await apiFetch(buildUrl(`/api/organizations/${id}`));
 
   if (response.status === 404) {
     throw new OrganizationNotFoundError("Organization not found.");

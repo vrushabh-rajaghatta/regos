@@ -4,7 +4,7 @@ export async function deactivateOrganization(
   organizationId: string,
 ): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/organizations/${organizationId}/deactivate`),
+    buildUrl(`/api/organizations/${organizationId}/deactivate`),
     { method: "POST" },
   );
 

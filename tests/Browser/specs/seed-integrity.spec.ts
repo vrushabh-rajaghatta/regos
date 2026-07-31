@@ -34,7 +34,7 @@ const OTHER_TENANTS_ORGANIZATIONS = [
 
 test.describe("Seed integrity", () => {
   test("the acting tenant's demo organization is untouched", async () => {
-    const organizations = await (await api("/organizations")).json();
+    const organizations = await (await api("/api/organizations")).json();
 
     const actual = organizations.find(
       (organization: { id: string }) => organization.id === DEMO_MAH.id,
@@ -51,7 +51,7 @@ test.describe("Seed integrity", () => {
   });
 
   test("organizations belonging to other tenants are not visible", async () => {
-    const organizations = await (await api("/organizations")).json();
+    const organizations = await (await api("/api/organizations")).json();
     const visible = organizations.map((o: { id: string }) => o.id);
 
     for (const id of OTHER_TENANTS_ORGANIZATIONS) {

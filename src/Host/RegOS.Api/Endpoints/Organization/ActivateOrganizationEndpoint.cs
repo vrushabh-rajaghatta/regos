@@ -9,7 +9,7 @@ public static class ActivateOrganizationEndpoint
         this IEndpointRouteBuilder app)
     {
         app.MapPost(
-            "/organizations/{id:guid}/activate",
+            "/api/organizations/{id:guid}/activate",
             HandleAsync)
         .WithName("ActivateOrganization")
         .WithSummary("Activate an organization")

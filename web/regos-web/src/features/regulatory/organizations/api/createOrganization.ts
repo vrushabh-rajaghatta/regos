@@ -6,7 +6,7 @@ import type { CreateOrganizationResponse } from "../types/CreateOrganizationResp
 export async function createOrganization(
   request: CreateOrganizationRequest,
 ): Promise<CreateOrganizationResponse> {
-  const response = await apiFetch(buildUrl("/organizations"), {
+  const response = await apiFetch(buildUrl("/api/organizations"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
