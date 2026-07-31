@@ -9,7 +9,7 @@ import { CreateRegistrationDialog } from "../components/CreateRegistrationDialog
 import { RegistrationExpiry } from "../components/RegistrationExpiry";
 import { RegistrationStatusBadge } from "../components/RegistrationStatusBadge";
 import { RegistrationStatusFilter } from "../components/RegistrationStatusFilter";
-import { useProductRegistrations } from "../hooks/useRegistrations";
+import { useProductRegistrations } from "../hooks/useProductRegistrations";
 
 /**
  * "Where is this product registered?" — one half of the portfolio question.

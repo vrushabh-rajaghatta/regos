@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 
-import { statusLabel } from "./statusLabel";
+import { statusLabel } from "../constants/statusLabel";
 
 /**
  * Which statuses read as live, which as pending, and which as ended. A visual

@@ -10,11 +10,9 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-import { statusLabel } from "./statusLabel";
-import {
-  useChangeRegistrationStatus,
-  useRecordRegistrationApproval,
-} from "../hooks/useRegistrations";
+import { statusLabel } from "../constants/statusLabel";
+import { useChangeRegistrationStatus } from "../hooks/useChangeRegistrationStatus";
+import { useRecordRegistrationApproval } from "../hooks/useRecordRegistrationApproval";
 import type { RegistrationDetail } from "../types/RegistrationDetail";
 
 interface Props {

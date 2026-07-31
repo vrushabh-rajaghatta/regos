@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 
-using RegOS.Organization.Application.Persistence;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
 
@@ -35,6 +34,7 @@ public sealed class OrganizationRepository : IOrganizationRepository
         OrganizationId id,
         CancellationToken cancellationToken)
         => await _dbContext.Organizations
+            .Include(x => x.Identifiers)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public async Task UpdateAsync(

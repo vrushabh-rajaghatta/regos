@@ -91,6 +91,25 @@ public sealed class RegOSDbContext : DbContext
     public DbSet<OrganizationAggregate> Organizations =>
         Set<OrganizationAggregate>();
 
+    public DbSet<RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite>
+        OrganizationSites =>
+        Set<RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite>();
+
+    public DbSet<RegOS.ReferenceData.Domain.Organization.IdentifierScheme>
+        IdentifierSchemes =>
+        Set<RegOS.ReferenceData.Domain.Organization.IdentifierScheme>();
+
+    public DbSet<RegOS.Organization.Domain.Aggregates.OrganizationDivision.OrganizationDivision>
+        OrganizationDivisions =>
+        Set<RegOS.Organization.Domain.Aggregates.OrganizationDivision.OrganizationDivision>();
+
+    public DbSet<RegOS.Organization.Domain.Aggregates.Contact.Contact> Contacts =>
+        Set<RegOS.Organization.Domain.Aggregates.Contact.Contact>();
+
+    public DbSet<RegOS.ReferenceData.Domain.Organization.ContactRole>
+        ContactRoles =>
+        Set<RegOS.ReferenceData.Domain.Organization.ContactRole>();
+
     public DbSet<SubmissionTypeAggregate> SubmissionTypes =>
         Set<SubmissionTypeAggregate>();
 
@@ -166,14 +185,37 @@ public sealed class RegOSDbContext : DbContext
     /// rows".
     /// </para>
     /// <para>
-    /// Deliberately unfiltered, by tier (ADR-031): <c>Tenants</c> and
-    /// <c>Organizations</c> (global directories), <c>Countries</c>,
-    /// <c>Authorities</c>, <c>SubmissionTypes</c> (world facts), and the
-    /// person-scoped satellites (<c>UserCredentials</c>, <c>RefreshTokens</c>,
-    /// <c>Invitations</c>, <c>PasswordResets</c>, <c>Sessions</c>), which
-    /// carry no tenant and are reachable only by user id or token hash.
-    /// Child entities (<c>SubmissionDocuments</c>, <c>DocumentVersions</c>,
-    /// <c>SnapshotDocuments</c>) are reachable only through a filtered root.
+    /// Tenant filtering has <b>three shapes</b>, and choosing between them is
+    /// the decision every new entity faces:
+    /// <list type="number">
+    /// <item><b>Fail-closed tenant-owned</b> — <c>x.TenantId == CurrentTenant</c>.
+    /// The tenant owns the data. <c>Users</c>, <c>Products</c>,
+    /// <c>RegulatoryApplications</c>, <c>Submissions</c>,
+    /// <c>SubmissionSnapshots</c>, <c>ProductDocuments</c>,
+    /// <c>Registrations</c>, <c>Organizations</c>, <c>OrganizationSites</c>,
+    /// <c>Contacts</c>, <c>OrganizationDivisions</c>.</item>
+    /// <item><b>Shared plus extensible</b> — <c>TenantId == null || == CurrentTenant</c>.
+    /// The platform ships a baseline the tenant may extend.
+    /// <c>DocumentTypes</c>, <c>RegulatoryTemplates</c>, <c>ContactRoles</c>.</item>
+    /// <item><b>Global world facts</b> — no filter. RegOS is describing an
+    /// external reality that does not differ by tenant. <c>Countries</c>,
+    /// <c>Authorities</c>, <c>SubmissionTypes</c>, <c>IdentifierSchemes</c>.</item>
+    /// </list>
+    /// Also unfiltered, for different reasons: <c>Tenants</c> (the platform
+    /// tier), and the person-scoped satellites (<c>UserCredentials</c>,
+    /// <c>RefreshTokens</c>, <c>Invitations</c>, <c>PasswordResets</c>,
+    /// <c>Sessions</c>), which carry no tenant and are reachable only by user
+    /// id or token hash. Child entities (<c>SubmissionDocuments</c>,
+    /// <c>DocumentVersions</c>, <c>SnapshotDocuments</c>,
+    /// <c>RegistrationStatusHistory</c>, <c>SiteIdentifiers</c>,
+    /// <c>ContactRoleAssignments</c>, <c>ContactEmails</c>, <c>ContactPhones</c>,
+    /// <c>OrganizationIdentifiers</c>)
+    /// are reachable
+    /// only through a filtered root.
+    /// <para>
+    /// <c>Organizations</c> was listed here as an unfiltered global directory
+    /// until ADR-032 made it tenant-owned; the list above is the corrected one.
+    /// </para>
     /// </para>
     /// </remarks>
     private void ApplyTenantFilters(ModelBuilder modelBuilder)
@@ -206,6 +248,30 @@ public sealed class RegOSDbContext : DbContext
         modelBuilder.Entity<OrganizationAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
+        // A site is a ROOT, reachable directly through the tenant-wide
+        // directory rather than only through its organization — so it carries
+        // its own tenant and its own filter instead of inheriting the parent's.
+        // Site addresses are exactly the competitively sensitive data ADR-032
+        // was written for.
+        modelBuilder.Entity<
+            RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite>()
+            .HasQueryFilter(
+                x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // A named person at a partner or an authority — a root reachable
+        // through the contact directory, so it carries its own filter for the
+        // same reason a site does.
+        modelBuilder.Entity<RegOS.Organization.Domain.Aggregates.Contact.Contact>()
+            .HasQueryFilter(
+                x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // A root by stable identity rather than by an immediate directory —
+        // EPIC-006 will reference *this division* by id. Same filter shape.
+        modelBuilder.Entity<
+            RegOS.Organization.Domain.Aggregates.OrganizationDivision.OrganizationDivision>()
+            .HasQueryFilter(
+                x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
         // System types (null tenant) are visible to every authenticated
         // tenant; a tenant's own extensions only to that tenant.
         modelBuilder.Entity<DocumentTypeAggregate>().HasQueryFilter(
@@ -218,6 +284,14 @@ public sealed class RegOSDbContext : DbContext
         modelBuilder.Entity<RegulatoryTemplateAggregate>().HasQueryFilter(
             x => CurrentTenant != null
                 && (x.TenantId == null || x.TenantId == CurrentTenant));
+
+        // Roles mix legislated vocabulary ("Qualified Person") with a company's
+        // own words ("APAC Regulatory Lead"), so the platform ships a baseline
+        // and a tenant extends it — the DocumentType shape, not the Country one.
+        modelBuilder.Entity<RegOS.ReferenceData.Domain.Organization.ContactRole>()
+            .HasQueryFilter(
+                x => CurrentTenant != null
+                    && (x.TenantId == null || x.TenantId == CurrentTenant));
 
         // The ToView read models map onto the same physical tables but are
         // different CLR types — the aggregate filters above do NOT propagate

@@ -3,6 +3,9 @@ using RegOS.Api.Endpoints.Applications;
 using RegOS.Api.Development;
 using RegOS.Api.Endpoints.Authentication;
 using RegOS.Api.Endpoints.Organization;
+using RegOS.Api.Endpoints.OrganizationSites;
+using RegOS.Api.Endpoints.Contacts;
+using RegOS.Api.Endpoints.OrganizationDivisions;
 using RegOS.Api.Endpoints.Platform;
 using RegOS.Api.Endpoints.PlatformAdministration;
 using RegOS.Api.Endpoints.ProductDocuments;
@@ -148,6 +151,8 @@ referenceData.MapListSubmissionTypes();
 referenceData.MapListDocumentTypes();
 referenceData.MapListRegulatoryTemplates();
 referenceData.MapGetRegulatoryTemplate();
+referenceData.MapListIdentifierSchemes();
+referenceData.MapListContactRoles();
 
 var authentication = app.MapGroup("").WithTags("Authentication");
 authentication.MapLogin();
@@ -167,6 +172,24 @@ organizations.MapDeactivateOrganization();
 organizations.MapGetOrganization();
 organizations.MapListOrganizations();
 organizations.MapUpdateOrganization();
+organizations.MapAddOrganizationIdentifier();
+organizations.MapRemoveOrganizationIdentifier();
+
+var organizationSites = app.MapGroup("").WithTags("Organization Sites");
+organizationSites.MapCreateOrganizationSite();
+organizationSites.MapGetOrganizationSite();
+organizationSites.MapListOrganizationSites();
+organizationSites.MapSiteDirectory();
+
+var contacts = app.MapGroup("").WithTags("Contacts");
+contacts.MapCreateContact();
+contacts.MapGetContact();
+contacts.MapListOrganizationContacts();
+contacts.MapContactDirectory();
+
+var organizationDivisions = app.MapGroup("").WithTags("Organization Divisions");
+organizationDivisions.MapCreateOrganizationDivision();
+organizationDivisions.MapListOrganizationDivisions();
 
 var platformAdministration = app.MapGroup("").WithTags("Platform Administration");
 platformAdministration.MapTenantAdministration();

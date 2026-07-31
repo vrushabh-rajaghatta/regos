@@ -8,7 +8,7 @@ public static class CreateOrganizationEndpoint
         this IEndpointRouteBuilder app)
     {
         app.MapPost(
-            "/organizations",
+            "/api/organizations",
             HandleAsync)
         .WithName("CreateOrganization")
         .WithSummary("Create an organization")
@@ -29,7 +29,7 @@ public static class CreateOrganizationEndpoint
             cancellationToken);
 
         return Results.Created(
-            $"/organizations/{organizationId.Value}",
+            $"/api/organizations/{organizationId.Value}",
             new CreateOrganizationResponse(organizationId.Value));
     }
 }

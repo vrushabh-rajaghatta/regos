@@ -121,7 +121,7 @@ public sealed class TenantProvisioningTests : IAsyncLifetime
         // Their registry holds exactly the mirror entry, guid-shared with the
         // tenant (ADR-032) — the default applicant for their filings.
         var organizations = await admin.SendAsync(
-            _client, HttpMethod.Get, "/organizations");
+            _client, HttpMethod.Get, "/api/organizations");
         var registry = await organizations.Content
             .ReadFromJsonAsync<List<Dictionary<string, object>>>();
 

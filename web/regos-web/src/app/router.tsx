@@ -27,8 +27,14 @@ import { DocumentUsagePage } from "@/features/regulatory/documents/pages/Documen
 import { DocumentHistoryPage } from "@/features/regulatory/documents/pages/DocumentHistoryPage";
 import { DocumentAiInsightsPage } from "@/features/regulatory/documents/pages/DocumentAiInsightsPage";
 import { PlatformLayout } from "@/features/platform/layout/PlatformLayout";
-import { OrganizationDetailsPage } from "@/features/platform/organizations/pages/OrganizationDetailsPage";
-import { OrganizationsPage } from "@/features/platform/organizations/pages/OrganizationsPage";
+import { OrganizationWorkspaceLayout } from "@/features/regulatory/organizations/layout/OrganizationWorkspaceLayout";
+import { OrganizationOverviewPage } from "@/features/regulatory/organizations/pages/OrganizationOverviewPage";
+import { OrganizationDivisionsPage } from "@/features/regulatory/organizations/pages/OrganizationDivisionsPage";
+import { OrganizationSitesPage } from "@/features/regulatory/organizations/pages/OrganizationSitesPage";
+import { OrganizationContactsPage } from "@/features/regulatory/organizations/pages/OrganizationContactsPage";
+import { OrganizationsPage } from "@/features/regulatory/organizations/pages/OrganizationsPage";
+import { SiteDirectoryPage } from "@/features/regulatory/organizations/pages/SiteDirectoryPage";
+import { ContactDirectoryPage } from "@/features/regulatory/organizations/pages/ContactDirectoryPage";
 import { TenantsPage } from "@/features/platform/tenants/pages/TenantsPage";
 import { PlatformIndexRedirect } from "@/features/platform/layout/PlatformIndexRedirect";
 import { UsersPage } from "@/features/platform/users/pages/UsersPage";
@@ -112,14 +118,6 @@ export const router = createBrowserRouter([
               {
                 path: "tenants",
                 element: <TenantsPage />,
-              },
-              {
-                path: "organizations",
-                element: <OrganizationsPage />,
-              },
-              {
-                path: "organizations/:organizationId",
-                element: <OrganizationDetailsPage />,
               },
               {
                 path: "users",
@@ -279,6 +277,60 @@ export const router = createBrowserRouter([
                     ],
                   },
                 ],
+              },
+              // Organizations are regulatory parties (ADR-030, ADR-032) — the
+              // sponsor, manufacturer or agent named on a submission — not
+              // platform administration. They lived under /platform until
+              // EPIC-016 S004, a leftover of the ADR-015 model where an
+              // organization *was* the tenant. Tenants and Users stayed behind.
+              {
+                path: "organizations",
+                children: [
+                  {
+                    index: true,
+                    element: <OrganizationsPage />,
+                  },
+                  // Organization Workspace — the first whose subject is a
+                  // company rather than a product. Four angles on one party:
+                  // who it is, how it is organised, where it operates, who it
+                  // names.
+                  {
+                    path: ":organizationId",
+                    element: <OrganizationWorkspaceLayout />,
+                    children: [
+                      {
+                        index: true,
+                        element: <OrganizationOverviewPage />,
+                      },
+                      {
+                        path: "divisions",
+                        element: <OrganizationDivisionsPage />,
+                      },
+                      {
+                        path: "sites",
+                        element: <OrganizationSitesPage />,
+                      },
+                      {
+                        path: "contacts",
+                        element: <OrganizationContactsPage />,
+                      },
+                    ],
+                  },
+                ],
+              },
+              // Tenant-wide directories, siblings rather than children. "Which
+              // manufacturing sites do we have in India?" spans the registry,
+              // and it is the question that made OrganizationSite and Contact
+              // aggregate roots — the same reasoning that put Registrations
+              // beside Products. Nesting them under /organizations would also
+              // collide with :organizationId.
+              {
+                path: "sites",
+                element: <SiteDirectoryPage />,
+              },
+              {
+                path: "contacts",
+                element: <ContactDirectoryPage />,
               },
               // Registrations are regulatory assets, not product work, so they
               // sit beside Products rather than beneath one. A registration has

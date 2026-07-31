@@ -1,4 +1,3 @@
-using RegOS.Organization.Application.Persistence;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.SharedKernel.Exceptions;
 
@@ -40,6 +39,7 @@ public sealed class UpdateOrganizationHandler
         // version to increment.
         organization.Rename(command.LegalName);
         organization.Reclassify(command.Type);
+        organization.DescribeAs(command.Acronym, command.NameNativeLanguage);
 
         await _repository.UpdateAsync(organization, cancellationToken);
     }

@@ -19,7 +19,7 @@ test.describe("Session refresh", () => {
     // failure, so it is declared rather than hidden.
     const errors = collectErrors(page, [EXPECTED_401]);
 
-    await page.goto("/platform/organizations");
+    await page.goto("/regulatory/organizations");
     await expect(page.getByTestId("organization-list")).toBeVisible();
 
     const before = await context.cookies();
@@ -53,12 +53,12 @@ test.describe("Session refresh", () => {
   }) => {
     const errors = collectErrors(page, [EXPECTED_401]);
 
-    await page.goto("/platform/organizations");
+    await page.goto("/regulatory/organizations");
     await expect(page.getByTestId("organization-list")).toBeVisible();
 
     await context.clearCookies();
 
-    await page.goto("/platform/organizations");
+    await page.goto("/regulatory/organizations");
 
     await expect(page).toHaveURL(/\/login$/);
 

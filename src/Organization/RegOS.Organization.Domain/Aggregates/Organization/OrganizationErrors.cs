@@ -16,4 +16,19 @@ public static class OrganizationErrors
 
     public const string NotFound =
         "Organization not found.";
+
+    public const string IdentifierSchemeRequired =
+        "An identifier must name the scheme that issued it.";
+
+    public const string IdentifierValueRequired =
+        "An identifier needs a value.";
+
+    public const string IdentifierValueTooLong =
+        "The identifier value is too long.";
+
+    public const string IdentifierSchemeAlreadyRecorded =
+        "This organization already has an identifier from that scheme.";
+
+    public const string IdentifierNotFound =
+        "This organization has no such identifier.";
 }

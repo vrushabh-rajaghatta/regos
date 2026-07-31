@@ -52,7 +52,7 @@ test.describe("Sign in", () => {
 
     await expect(page.getByText(DEV_EMAIL)).toBeVisible();
 
-    await page.goto("/platform/organizations");
+    await page.goto("/regulatory/organizations");
     await expect(page.getByTestId("organization-list")).toBeVisible();
 
     await page.goto("/regulatory/products");
@@ -143,7 +143,7 @@ test.describe("Sign in", () => {
     // has no session without asking (ADR-025).
     const errors = collectErrors(page, [EXPECTED_401]);
 
-    await page.goto("/platform/organizations");
+    await page.goto("/regulatory/organizations");
 
     await expect(page).toHaveURL(/\/login$/);
 
@@ -162,14 +162,14 @@ test.describe("Sign in", () => {
     // has no session without asking (ADR-025).
     const errors = collectErrors(page, [EXPECTED_401]);
 
-    await page.goto("/platform/organizations");
+    await page.goto("/regulatory/organizations");
     await expect(page).toHaveURL(/\/login$/);
 
     await page.getByLabel("Email Address").fill(DEV_EMAIL);
     await page.getByLabel("Password").fill(DEV_PASSWORD);
     await page.getByRole("button", { name: "Sign In", exact: true }).click();
 
-    await expect(page).toHaveURL(/\/platform\/organizations$/);
+    await expect(page).toHaveURL(/\/regulatory\/organizations$/);
 
     expect(errors()).toEqual([]);
   });
@@ -193,7 +193,7 @@ test.describe("Sign in", () => {
 
     await expect(page).toHaveURL(/\/login$/);
 
-    await page.goto("/platform/organizations");
+    await page.goto("/regulatory/organizations");
     await expect(page).toHaveURL(/\/login$/);
 
     expect(errors()).toEqual([]);

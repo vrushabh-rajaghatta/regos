@@ -8,7 +8,7 @@ public static class ListOrganizationsEndpoint
         this IEndpointRouteBuilder app)
     {
         app.MapGet(
-            "/organizations",
+            "/api/organizations",
             HandleAsync)
         .WithName("ListOrganizations")
         .WithSummary("List organizations")

@@ -2,6 +2,13 @@
 
 These standards apply across the entire RegOS platform.
 
+> **File and folder layout is not here.** Where a file goes and what it is
+> called is specified by
+> [engineering/slice-conventions.md](engineering/slice-conventions.md) and
+> enforced by `tests/Architecture/RegOS.Architecture.Tests`. This document
+> covers cross-cutting platform standards; that one covers the shape of a
+> vertical slice.
+
 ---
 
 ## ES-001

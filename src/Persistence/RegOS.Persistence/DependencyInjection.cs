@@ -7,6 +7,7 @@ using RegOS.Persistence.Initialization.Organization;
 using RegOS.Persistence.Initialization.Platform;
 using RegOS.Persistence.Initialization.Product;
 using RegOS.Persistence.Initialization.ReferenceData;
+using RegOS.Persistence.Initialization.ReferenceData.Organization;
 using RegOS.Persistence.Initialization.ReferenceData.Blueprint;
 
 namespace RegOS.Persistence;
@@ -29,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<IDataInitializer, ProductInitializer>();
         services.AddScoped<IDataInitializer, SubmissionTypeDataInitializer>();
         services.AddScoped<IDataInitializer, DocumentTypeDataInitializer>();
+        services.AddScoped<IDataInitializer, IdentifierSchemeDataInitializer>();
+        services.AddScoped<IDataInitializer, ContactRoleDataInitializer>();
         // After submission types and authorities: a template references both.
         services.AddScoped<IDataInitializer, RegulatoryTemplateDataInitializer>();
 

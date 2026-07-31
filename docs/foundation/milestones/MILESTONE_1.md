@@ -36,7 +36,9 @@ the plan had not accounted for.
 `POST /organizations/{id}/activate`, `POST /organizations/{id}/deactivate`.
 
 **UI:** `features/platform/organizations/` — directory, details page, create and
-edit dialogs, activate and deactivate confirmations.
+edit dialogs, activate and deactivate confirmations. (Moved to
+`features/regulatory/organizations/` in EPIC-016 S004; the path above is where
+this milestone left it.)
 
 **Tests at close:** 245 unit, 14 browser specs.
 

@@ -12,7 +12,11 @@ never changes meaning once assigned.
 2. **One decision per file.** No aggregate documents.
 3. **Append-only.** Edit an ADR to correct a broken reference or change its
    status — never to change what was decided.
-4. **New ADRs take the next free number.** Today that is **ADR-034**.
+4. **New ADRs take the next free number** — one more than the highest-numbered
+   file in this directory. Stated as a rule rather than as a number, because a
+   number written here goes stale every epic and this one had said 034 since
+   ADR-034 was written. `CLAUDE.md` also carries it, for the reader who has not
+   opened this directory.
 5. **Cite by number in code and commits.** `// ADR-009` in a source file is the
    reason the ADR must never be renumbered.
 
@@ -64,6 +68,11 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [031](ADR-031-tenant-isolation-by-query-filters.md) | Tenant isolation is enforced by global query filters | Accepted (amended by 032) | Current |
 | [032](ADR-032-organizations-are-tenant-owned.md) | Organizations are tenant-owned, not shared | Accepted | Current |
 | [033](ADR-033-three-roles-and-where-authority-lives.md) | Three roles, and where authority lives | Accepted | Current |
+| [034](ADR-034-regulatory-templates-are-versioned-shared-blueprints.md) | Regulatory templates are versioned blueprints, shared by default | Accepted | Current |
+| [035](ADR-035-submissions-bind-to-a-published-template-version.md) | A submission binds to a published template version | Accepted | Current |
+| [036](ADR-036-the-dossier-is-structure-placeholders-are-validation.md) | The dossier is structure; placeholders are validation | Accepted | Current |
+| [037](ADR-037-registrations-are-regulatory-assets-with-derived-visibility.md) | Registrations are regulatory assets, with derived visibility | Accepted | Current |
+| [038](ADR-038-organization-depth-roots-and-the-three-filter-shapes.md) | Sites, contacts and divisions are roots; tenant filtering has three shapes | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

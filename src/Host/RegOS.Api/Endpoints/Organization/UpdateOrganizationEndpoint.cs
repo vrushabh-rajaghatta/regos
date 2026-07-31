@@ -9,7 +9,7 @@ public static class UpdateOrganizationEndpoint
         this IEndpointRouteBuilder app)
     {
         app.MapPut(
-            "/organizations/{id:guid}",
+            "/api/organizations/{id:guid}",
             HandleAsync)
         .WithName("UpdateOrganization")
         .WithSummary("Update an organization")
@@ -28,7 +28,9 @@ public static class UpdateOrganizationEndpoint
             new UpdateOrganizationCommand(
                 new OrganizationId(id),
                 request.LegalName,
-                request.Type),
+                request.Type,
+                request.Acronym,
+                request.NameNativeLanguage),
             cancellationToken);
 
         return Results.NoContent();

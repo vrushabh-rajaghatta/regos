@@ -178,7 +178,7 @@ async function createProduct(unique: number): Promise<string> {
 }
 
 async function createApplication(productId: string): Promise<string> {
-  const organizations = await (await api("/organizations")).json();
+  const organizations = await (await api("/api/organizations")).json();
 
   const applicant = organizations.find(
     (o: { status: string }) => o.status === "Active",

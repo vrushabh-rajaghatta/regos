@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 
-import { expiryPhrase, needsAttention } from "./expiry";
+import { expiryPhrase, needsAttention } from "../utils/expiry";
 import { RegistrationStatusBadge } from "./RegistrationStatusBadge";
-import { useExpiringRegistrations } from "../hooks/useRegistrations";
+import { useExpiringRegistrations } from "../hooks/useExpiringRegistrations";
 
 /**
  * "Which registrations deserve attention today?"

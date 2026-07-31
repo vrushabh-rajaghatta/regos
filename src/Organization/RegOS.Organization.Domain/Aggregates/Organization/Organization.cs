@@ -1,3 +1,4 @@
+using RegOS.ReferenceData.Domain.Organization;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
@@ -8,6 +9,8 @@ public sealed class Organization : AggregateRoot<OrganizationId>
 {
     public const string TenantRequired =
         "An organization must belong to a tenant.";
+
+    private readonly List<OrganizationIdentifier> _identifiers = [];
 
     private Organization()
     {
@@ -27,11 +30,37 @@ public sealed class Organization : AggregateRoot<OrganizationId>
 
     public OrganizationStatus Status { get; private set; }
 
+    /// <summary>
+    /// The business date the current status took effect. Completes the
+    /// activation-toggle shape the other organizational entities carry —
+    /// leaving one of three dateless would read as an oversight rather than a
+    /// decision.
+    /// </summary>
+    public DateOnly StatusDate { get; private set; }
+
+    /// <summary>Trading name or short form — "Demo MAH", "MHRA".</summary>
+    public string? Acronym { get; private set; }
+
+    /// <summary>
+    /// The registered name in the local script, where it differs from the
+    /// romanised legal name.
+    /// </summary>
+    public string? NameNativeLanguage { get; private set; }
+
+    /// <summary>
+    /// Every registry identifier this company holds — DUNS, VAT, company
+    /// registration. See <see cref="OrganizationIdentifier"/> for why this
+    /// duplicates <c>SiteIdentifier</c> rather than sharing with it.
+    /// </summary>
+    public IReadOnlyCollection<OrganizationIdentifier> Identifiers
+        => _identifiers.AsReadOnly();
+
     public static Organization Create(
         OrganizationId id,
         TenantId tenantId,
         string legalName,
-        OrganizationType type)
+        OrganizationType type,
+        DateOnly? statusDate = null)
         => new()
         {
             Id = id,
@@ -39,14 +68,19 @@ public sealed class Organization : AggregateRoot<OrganizationId>
                 ?? throw new DomainException(TenantRequired),
             LegalName = NormalizeLegalName(legalName),
             Type = Validated(type),
-            Status = OrganizationStatus.Active
+            Status = OrganizationStatus.Active,
+            // Optional, unlike Site and Contact, because this factory predates
+            // the field and every existing caller is a UI action happening now.
+            // An importer states the real date.
+            StatusDate = statusDate ?? DateOnly.FromDateTime(DateTime.UtcNow)
         };
 
     public static Organization Create(
         TenantId tenantId,
         string legalName,
-        OrganizationType type)
-        => Create(OrganizationId.New(), tenantId, legalName, type);
+        OrganizationType type,
+        DateOnly? statusDate = null)
+        => Create(OrganizationId.New(), tenantId, legalName, type, statusDate);
 
     /// <summary>
     /// Corrects the registered legal name. Permitted while inactive: retiring an
@@ -66,6 +100,44 @@ public sealed class Organization : AggregateRoot<OrganizationId>
     /// </summary>
     public void Reclassify(OrganizationType type) => Type = Validated(type);
 
+    /// <summary>Records the company's short form and local-script name.</summary>
+    public void DescribeAs(string? acronym, string? nameNativeLanguage)
+    {
+        Acronym = string.IsNullOrWhiteSpace(acronym) ? null : acronym.Trim();
+
+        NameNativeLanguage = string.IsNullOrWhiteSpace(nameNativeLanguage)
+            ? null
+            : nameNativeLanguage.Trim();
+    }
+
+    /// <summary>
+    /// Records an identifier this company is known by in some registry. One per
+    /// scheme: a second VAT number would mean one of them is wrong.
+    /// </summary>
+    public OrganizationIdentifier AddIdentifier(
+        IdentifierSchemeId schemeId,
+        string value)
+    {
+        if (_identifiers.Any(x => x.SchemeId == schemeId))
+            throw new BusinessRuleViolationException(
+                OrganizationErrors.IdentifierSchemeAlreadyRecorded);
+
+        var identifier = new OrganizationIdentifier(
+            OrganizationIdentifierId.New(), schemeId, value);
+
+        _identifiers.Add(identifier);
+
+        return identifier;
+    }
+
+    public void RemoveIdentifier(OrganizationIdentifierId identifierId)
+    {
+        var identifier = _identifiers.FirstOrDefault(x => x.Id == identifierId)
+            ?? throw new NotFoundException(OrganizationErrors.IdentifierNotFound);
+
+        _identifiers.Remove(identifier);
+    }
+
     private static string NormalizeLegalName(string? legalName)
         => string.IsNullOrWhiteSpace(legalName)
             ? throw new DomainException(OrganizationErrors.LegalNameRequired)
@@ -84,7 +156,7 @@ public sealed class Organization : AggregateRoot<OrganizationId>
     /// work are untouched — deactivating says "do not start anything new with
     /// this", not "pretend it never existed".
     /// </summary>
-    public void Deactivate()
+    public void Deactivate(DateOnly? on = null)
     {
         // Valid request, business state forbids it: 409, not a silent no-op
         // (ADR-009). A caller deactivating twice has a stale view of the world
@@ -94,6 +166,7 @@ public sealed class Organization : AggregateRoot<OrganizationId>
                 OrganizationErrors.AlreadyInactive);
 
         Status = OrganizationStatus.Inactive;
+        StatusDate = on ?? DateOnly.FromDateTime(DateTime.UtcNow);
     }
 
     /// <summary>
@@ -101,12 +174,13 @@ public sealed class Organization : AggregateRoot<OrganizationId>
     /// <see cref="Deactivate"/>, and rejected the same way when there is no
     /// transition to make.
     /// </summary>
-    public void Activate()
+    public void Activate(DateOnly? on = null)
     {
         if (Status == OrganizationStatus.Active)
             throw new BusinessRuleViolationException(
                 OrganizationErrors.AlreadyActive);
 
         Status = OrganizationStatus.Active;
+        StatusDate = on ?? DateOnly.FromDateTime(DateTime.UtcNow);
     }
 }
