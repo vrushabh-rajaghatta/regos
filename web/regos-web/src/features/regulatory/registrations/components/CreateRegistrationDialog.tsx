@@ -16,7 +16,7 @@ import { useOrganizations } from "../../masterData/hooks/useOrganizations";
 import { useCreateRegistration } from "../hooks/useCreateRegistration";
 
 interface Props {
-  productId: string;
+  globalProductId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -28,7 +28,7 @@ interface Props {
  * rather than assuming today.
  */
 export function CreateRegistrationDialog({
-  productId,
+  globalProductId,
   open,
   onOpenChange,
 }: Props) {
@@ -41,7 +41,7 @@ export function CreateRegistrationDialog({
   const countries = useCountries();
   const authorities = useAuthorities();
   const organizations = useOrganizations();
-  const mutation = useCreateRegistration(productId);
+  const mutation = useCreateRegistration(globalProductId);
 
   // The server rejects an authority that does not belong to the country, so
   // the choice is narrowed here rather than offering one that cannot work.

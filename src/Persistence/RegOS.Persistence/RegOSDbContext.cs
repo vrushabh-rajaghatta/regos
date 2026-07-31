@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using RegOS.Product.Domain.Product;
 
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Primitives;
 
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using RegulatoryApplicationAggregate =
     RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 using CountryAggregate =
@@ -76,8 +76,8 @@ public sealed class RegOSDbContext : DbContext
             ? tenant.Value
             : null;
 
-    public DbSet<ProductAggregate> Products =>
-        Set<ProductAggregate>();
+    public DbSet<GlobalProduct> Products =>
+        Set<GlobalProduct>();
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
@@ -223,7 +223,7 @@ public sealed class RegOSDbContext : DbContext
         modelBuilder.Entity<UserAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
-        modelBuilder.Entity<ProductAggregate>().HasQueryFilter(
+        modelBuilder.Entity<GlobalProduct>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

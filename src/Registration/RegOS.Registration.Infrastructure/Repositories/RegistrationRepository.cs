@@ -47,11 +47,11 @@ public sealed class RegistrationRepository : IRegistrationRepository
     }
 
     public async Task<IReadOnlyList<RegistrationAggregate>> ListByProductAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CancellationToken cancellationToken)
     {
         return await _dbContext.Registrations
-            .Where(x => x.ProductId == productId)
+            .Where(x => x.GlobalProductId == globalProductId)
             .OrderBy(x => x.CreatedOn)
             .ToListAsync(cancellationToken);
     }

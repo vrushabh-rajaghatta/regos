@@ -3,8 +3,8 @@ import { useParams } from "react-router-dom";
 import { useProduct } from "../hooks/useProduct";
 
 export function ProductDetailsPage() {
-  const { productId } = useParams();
-  const { data, isLoading, error } = useProduct(productId!);
+  const { globalProductId } = useParams();
+  const { data, isLoading, error } = useProduct(globalProductId!);
 
   if (isLoading) {
     return <p>Loading product...</p>;

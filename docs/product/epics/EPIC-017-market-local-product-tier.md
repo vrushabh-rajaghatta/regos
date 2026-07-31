@@ -1,10 +1,10 @@
 # EPIC-017 — The market-local product tier
 
-**Status:** ⚪ Not Started · **Branch:** `epic/EPIC-017-market-local-product-tier` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress · **Branch:** `epic/EPIC-017-market-local-product-tier` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The structural unlock. RegOS's `Product` is a **global** identity; the regulatory world is **market-local**. This inserts the missing tier and hangs the two facts users ask for first — **what it's called there**, and **whether it's actually on sale**.
 
-> **Phase 1 below is settled.** **Phases 2–3 are a sketch**, written so this epic can be picked up months from now without re-deriving it — they are **not approved design**. Confirm, amend or replace them in the Phase-2 conversation when this epic is pulled into **Now**.
+> **Phases 1–2 are settled.** Phase 2 was reviewed against the code and approved on 2026-07-31 with **three amendments** — see *Phase 2 rulings* below. Phase 3 is the approved five-story slice.
 
 ---
 
@@ -66,7 +66,7 @@ Collapsing them would be cheap now and wrong at the first renewal.
 
 ---
 
-## Phase 2 — Domain design *(sketch — not approved)*
+## Phase 2 — Domain design
 
 ### The re-pointing table — **the core artifact of this epic**
 
@@ -107,7 +107,7 @@ Collapsing them would be cheap now and wrong at the first renewal.
 | `RiskOfSupply`, `RiskOfSupplyComment?` | RIM: bool + conditional text |
 | `Note?` | |
 
-### Decisions to settle (Phase 2, on pull-in)
+### Decisions (the sketch's six, as originally written)
 
 **1. Naming.** RegOS already has `Product`. Options: (a) `Product` stays, add `MedicinalProduct` below; (b) rename `Product` → `GlobalProduct` and add `MedicinalProduct`. *Lean (b)* — RIM's vocabulary is the ubiquitous language, and "Product" next to "MedicinalProduct" will confuse every future reader about which is which. (b) is a mechanical rename plus a migration, cheapest now and never cheaper.
 
@@ -120,6 +120,90 @@ Collapsing them would be cheap now and wrong at the first renewal.
 **5. Trade name uniqueness.** One per (medicinal product, language)? Or many? *Lean: one per language, enforced* — a market-local product with two simultaneous brand names in one language is a data error, unlike EPIC-005's deliberate multi-registration case. Assert the constraint with a test either way, per the EPIC-005 precedent.
 
 **6. Creating a registration must be able to create its medicinal product.** Otherwise every registration flow gains a mandatory two-step. *Lean: the create-registration handler resolves-or-creates the (product, country) medicinal product.* Keeps the user's one action one action.
+
+### Phase 2 rulings (approved 2026-07-31) — three amendments to the sketch
+
+The six decisions above were read against the code before approval. Four stand
+as written (2, 3, 4, 5). Two changed, and one measurement corrected a claim.
+
+**Amendment A — the rename is real work, and it is its own story.**
+
+The sketch called decision 1 *"a mechanical rename plus a migration, cheapest now
+and never cheaper"*. Measured before approving:
+
+| | Sites |
+|---|---|
+| `ProductId` in `src/` (excl. migrations) | **114** — only 16 inside the Product context |
+| `productId` in the frontend | **142** |
+| `productId` in browser specs | **30** |
+| bare `Product` type in `src/` | **165** |
+
+"Never cheaper" is true — every later epic compounds it. "Mechanical" is true.
+**"Small" was wrong**, and the sketch should not have implied it.
+
+Two things follow:
+
+1. **A bounded context is not an aggregate.** `RegOS.Product` is the correct
+   *context* name for a cluster holding both tiers, exactly as `RegOS.Organization`
+   already holds four aggregates. So the rename touches **`Product` →
+   `GlobalProduct` and `ProductId` → `GlobalProductId`, and nothing else** — not
+   the projects, not the namespaces, not `ProductCode`/`ProductName`/`ProductType`.
+2. **It ships as S000, its own commit, before the tier exists.** A
+   semantics-preserving diff is reviewable precisely because it is mechanical;
+   tangling it with the `Registration` re-pointing is what would make it
+   dangerous. A reviewer can verify "no behaviour changed" without filtering
+   domain logic out of the diff.
+
+**Amendment B — decision 6 is rejected. The medicinal product is explicit.**
+
+The sketch contradicted itself. These cannot both hold:
+
+> *Change-case analysis:* several medicinal products may exist per
+> (global product, country) — **no uniqueness constraint on the pair**.
+
+> *Decision 6:* the create-registration handler **resolves-or-creates** the
+> (product, country) medicinal product.
+
+Resolution needs the lookup to return exactly one. Without a uniqueness
+constraint the handler would be **choosing a business object on behalf of the
+user**, non-deterministically.
+
+The non-uniqueness is kept — it is the same reasoning approved in EPIC-005
+decision 4 (strengths, presentations, partial divestment). So
+`CreateRegistrationCommand` takes a **`MedicinalProductId`**. Pick-or-create
+lives in the UI, so the user's one action stays one action; the write model does
+not guess.
+
+The domain argument is the decisive one, and it is about **dependency
+direction**:
+
+- A medicinal product means *"we market, or intend to market, this product in
+  this jurisdiction."*
+- A registration means *"this authority granted us authorisation."*
+
+Those are different business events. A medicinal product can exist with **zero
+registrations for years** — dossier preparation, labelling, artwork, pricing and
+launch planning all precede authorisation. **The registration depends on the
+medicinal product, not the reverse**, so creating one as a side effect of filing
+the other is the wrong direction.
+
+**Amendment C — ADR-039 records what `Registration` is, deliberately.**
+
+The tier chain this epic builds is `GlobalProduct → MedicinalProduct →
+Registration`. As the model grows, `Registration` will start to resemble the
+*marketing authorisation itself* — the root that variations, renewals, sequences
+and authority interactions hang from.
+
+Nothing in this epic changes because of that; acting now would be premature.
+But **ADR-039 states that `Registration` is intentionally the authorisation root
+for now**, and that a separate `MarketingAuthorization` aggregate is considered
+unnecessary unless the domain reveals a clear distinction. A future contributor
+should read that as a deliberate simplification, not an oversight.
+
+**Rule-of-three note on decision 4.** `MarketStatus` is the **second**
+append-only status history, after `RegistrationStatusEntry`. That is not the
+extraction trigger. EPIC-006 brings authority-question, commitment, inspection
+and meeting statuses; **that** is where the shared pattern earns extraction.
 
 ### Change-case analysis
 
@@ -135,14 +219,19 @@ Collapsing them would be cheap now and wrong at the first renewal.
 
 ---
 
-## Phase 3 — Candidate stories *(sketch — re-slice on pull-in)*
+## Phase 3 — Stories
 
-| # | Story | Slice |
-|---|---|---|
-| **S001** | **The tier** — `MedicinalProduct` aggregate, the rename (if decision 1 goes that way), re-point `Registration.ProductId`, migration, existing tests re-pointed and green | domain → persistence → API → test |
-| **S002** | **Trade Name** — per language, on the medicinal product; surfaced wherever a registration is shown | full slice |
-| **S003** | **Market Status** — dated history + current value + launch date + risk of supply; *"is it actually on sale?"* | full slice |
-| **S004** | **Capstone** — portfolio views enriched (trade name + market status beside the licence), browser proof, ADR, retro | UI → test → docs |
+Approved 2026-07-31. Five stories — the sketch's four, with the rename lifted
+out of S001 into a zeroth so that no story mixes a mechanical diff with a
+semantic one.
+
+| # | Story | Slice | One conceptual purpose |
+|---|---|---|---|
+| **S000** | **The rename** — `Product` → `GlobalProduct`, `ProductId` → `GlobalProductId`, across backend, frontend and specs. Projects, namespaces and sibling types unchanged | mechanical | *nothing behaves differently* |
+| **S001** | **The tier** — `MedicinalProduct` aggregate, re-point `Registration` to it, migration, EPIC-005 tests re-pointed rather than rewritten | domain → persistence → API → test | *the tier exists and a licence is granted against it* |
+| **S002** | **Trade Name** — one per (medicinal product, language), enforced; surfaced wherever a registration is shown | full slice | *what it is called there* |
+| **S003** | **Market Status** — dated history + current value + launch date + risk of supply | full slice | *whether it is actually on sale* |
+| **S004** | **Capstone** — portfolio views enriched, browser proof, ADR-039, retro | UI → test → docs | *"what do we hold in Canada?" answered properly* |
 
 **ADR to write:** *The market-local product tier, and which tier each reference means* — next free number (expected **ADR-039**).
 

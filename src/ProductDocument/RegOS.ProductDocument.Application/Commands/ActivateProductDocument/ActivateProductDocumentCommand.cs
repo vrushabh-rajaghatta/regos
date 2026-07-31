@@ -9,5 +9,5 @@ namespace RegOS.ProductDocument.Application.Commands.ActivateProductDocument;
 /// keeping the nested route honest.
 /// </summary>
 public sealed record ActivateProductDocumentCommand(
-    ProductId ProductId,
+    GlobalProductId GlobalProductId,
     ProductDocumentId DocumentId);

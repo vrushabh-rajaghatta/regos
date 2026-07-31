@@ -14,7 +14,7 @@ namespace RegOS.Registration.Application.Queries.ListExpiringRegistrations;
 /// </param>
 public sealed record ExpiringRegistration(
     Guid RegistrationId,
-    Guid ProductId,
+    Guid GlobalProductId,
     string ProductName,
     Guid CountryId,
     string CountryName,

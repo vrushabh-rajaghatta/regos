@@ -19,18 +19,18 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function LifecycleActions({
-  productId,
+  globalProductId,
   documentId,
   status,
 }: {
-  productId: string;
+  globalProductId: string;
   documentId: string;
   status: string;
 }) {
   const [message, setMessage] = useState<string | null>(null);
 
-  const activate = useActivateProductDocument(productId, documentId);
-  const archive = useArchiveProductDocument(productId, documentId);
+  const activate = useActivateProductDocument(globalProductId, documentId);
+  const archive = useArchiveProductDocument(globalProductId, documentId);
 
   const isPending = activate.isPending || archive.isPending;
   const error = activate.error ?? archive.error;
@@ -87,13 +87,13 @@ function LifecycleActions({
 }
 
 export function DocumentOverviewPage() {
-  const { productId, documentId } = useParams();
+  const { globalProductId, documentId } = useParams();
 
   const {
     data: document,
     isLoading,
     error,
-  } = useProductDocument(productId!, documentId!);
+  } = useProductDocument(globalProductId!, documentId!);
 
   if (isLoading) {
     return (
@@ -157,7 +157,7 @@ export function DocumentOverviewPage() {
       </section>
 
       <LifecycleActions
-        productId={productId!}
+        globalProductId={globalProductId!}
         documentId={documentId!}
         status={document.status}
       />

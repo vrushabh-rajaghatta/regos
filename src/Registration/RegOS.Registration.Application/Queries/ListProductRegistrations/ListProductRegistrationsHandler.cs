@@ -27,12 +27,12 @@ public sealed class ListProductRegistrationsHandler
     /// product that was never there.
     /// </summary>
     public async Task<IReadOnlyList<RegistrationSummary>?> HandleAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CancellationToken cancellationToken)
     {
         var productExists = await _dbContext.Products
             .AsNoTracking()
-            .AnyAsync(x => x.Id == productId, cancellationToken);
+            .AnyAsync(x => x.Id == globalProductId, cancellationToken);
 
         if (!productExists)
             return null;
@@ -42,7 +42,7 @@ public sealed class ListProductRegistrationsHandler
         var rows = await (
             from registration in _dbContext.Set<RegistrationAggregate>()
                 .AsNoTracking()
-            where registration.ProductId == productId
+            where registration.GlobalProductId == globalProductId
             join country in _dbContext.Countries
                 on registration.CountryId equals country.Id
             join authority in _dbContext.Authorities

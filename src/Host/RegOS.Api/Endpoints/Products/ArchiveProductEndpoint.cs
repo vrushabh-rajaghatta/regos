@@ -24,7 +24,7 @@ public static class ArchiveProductEndpoint
         CancellationToken cancellationToken)
     {
         await handler.HandleAsync(
-            new ArchiveProductCommand(ProductId.From(id)), cancellationToken);
+            new ArchiveProductCommand(GlobalProductId.From(id)), cancellationToken);
 
         return Results.NoContent();
     }

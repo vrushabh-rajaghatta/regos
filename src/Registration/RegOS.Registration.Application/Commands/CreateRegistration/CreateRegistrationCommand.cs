@@ -16,7 +16,7 @@ namespace RegOS.Registration.Application.Commands.CreateRegistration;
 /// witnessed being filed.
 /// </param>
 public sealed record CreateRegistrationCommand(
-    ProductId ProductId,
+    GlobalProductId GlobalProductId,
     CountryId CountryId,
     AuthorityId AuthorityId,
     OrganizationId HolderOrganizationId,

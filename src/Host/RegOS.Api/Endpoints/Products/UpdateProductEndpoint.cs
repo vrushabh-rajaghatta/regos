@@ -26,7 +26,7 @@ public static class UpdateProductEndpoint
     {
         await handler.HandleAsync(
             new UpdateProductCommand(
-                ProductId.From(id), request.Name, request.Type),
+                GlobalProductId.From(id), request.Name, request.Type),
             cancellationToken);
 
         return Results.NoContent();

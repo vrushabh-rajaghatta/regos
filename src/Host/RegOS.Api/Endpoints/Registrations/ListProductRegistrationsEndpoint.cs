@@ -10,18 +10,18 @@ public static class ListProductRegistrationsEndpoint
     {
         // "Where is this product registered?" — half the portfolio question;
         // the other half is scoped by country.
-        app.MapGet("/api/products/{productId:guid}/registrations", HandleAsync);
+        app.MapGet("/api/products/{globalProductId:guid}/registrations", HandleAsync);
 
         return app;
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid productId,
+        Guid globalProductId,
         ListProductRegistrationsHandler handler,
         CancellationToken cancellationToken)
     {
         var registrations = await handler.HandleAsync(
-            new ProductId(productId),
+            new GlobalProductId(globalProductId),
             cancellationToken);
 
         return registrations is null

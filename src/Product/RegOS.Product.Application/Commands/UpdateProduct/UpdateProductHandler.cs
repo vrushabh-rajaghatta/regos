@@ -27,7 +27,7 @@ public sealed class UpdateProductHandler
         CancellationToken cancellationToken)
     {
         var product = await _repository.GetByIdAsync(
-            command.ProductId, cancellationToken);
+            command.GlobalProductId, cancellationToken);
 
         // A product in another tenant is reported as missing, never forbidden,
         // so the API does not reveal that it exists.

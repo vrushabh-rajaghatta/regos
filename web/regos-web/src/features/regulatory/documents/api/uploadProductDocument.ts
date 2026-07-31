@@ -11,7 +11,7 @@ export interface UploadProductDocumentResponse {
 }
 
 export async function uploadProductDocument(
-  productId: string,
+  globalProductId: string,
   request: UploadProductDocumentRequest
 ): Promise<UploadProductDocumentResponse> {
   const form = new FormData();
@@ -21,7 +21,7 @@ export async function uploadProductDocument(
 
   // No Content-Type header — the browser sets the multipart boundary.
   const response = await apiFetch(
-    buildUrl(`/api/products/${productId}/documents`),
+    buildUrl(`/api/products/${globalProductId}/documents`),
     {
       method: "POST",
       body: form,

@@ -4,9 +4,9 @@ import { useProductDocument } from "../hooks/useProductDocument";
 import { ProductDocumentStatusBadge } from "./ProductDocumentStatusBadge";
 
 export function DocumentWorkspaceHeader() {
-  const { productId, documentId } = useParams();
+  const { globalProductId, documentId } = useParams();
 
-  const { data: document } = useProductDocument(productId!, documentId!);
+  const { data: document } = useProductDocument(globalProductId!, documentId!);
 
   if (!document) {
     return null;
@@ -21,14 +21,14 @@ export function DocumentWorkspaceHeader() {
         </Link>
         <span className="mx-1">›</span>
         <Link
-          to={`/regulatory/products/${productId}`}
+          to={`/regulatory/products/${globalProductId}`}
           className="hover:underline"
         >
           {document.productName}
         </Link>
         <span className="mx-1">›</span>
         <Link
-          to={`/regulatory/products/${productId}/documents`}
+          to={`/regulatory/products/${globalProductId}/documents`}
           className="hover:underline"
         >
           Documents

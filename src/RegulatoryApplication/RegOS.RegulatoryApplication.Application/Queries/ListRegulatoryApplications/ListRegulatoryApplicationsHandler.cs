@@ -15,7 +15,7 @@ public sealed class ListRegulatoryApplicationsHandler
     }
 
     public async Task<ListRegulatoryApplicationsResult> HandleAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CancellationToken cancellationToken)
     {
         // Read model joins the application to its jurisdiction (country +
@@ -23,7 +23,7 @@ public sealed class ListRegulatoryApplicationsHandler
         // the ids; the names live in their owning capabilities.
         var rows = await (
             from application in _dbContext.RegulatoryApplications.AsNoTracking()
-            where application.ProductId == productId
+            where application.GlobalProductId == globalProductId
             join country in _dbContext.Countries
                 on application.CountryId equals country.Id
             join authority in _dbContext.Authorities

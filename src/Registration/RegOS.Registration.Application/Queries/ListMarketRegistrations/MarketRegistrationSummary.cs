@@ -13,7 +13,7 @@ namespace RegOS.Registration.Application.Queries.ListMarketRegistrations;
 /// </remarks>
 public sealed record MarketRegistrationSummary(
     Guid RegistrationId,
-    Guid ProductId,
+    Guid GlobalProductId,
     string ProductCode,
     string ProductName,
     Guid AuthorityId,

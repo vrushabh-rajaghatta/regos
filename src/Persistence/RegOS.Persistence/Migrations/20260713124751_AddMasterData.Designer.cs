@@ -80,7 +80,7 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Authorities", (string)null);
                 });
 
-            modelBuilder.Entity("RegOS.Product.Domain.Product.Product", b =>
+            modelBuilder.Entity("RegOS.Product.Domain.Product.GlobalProduct", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");

@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 import type { SubmissionSummary } from "../types/SubmissionSummary";
 
 interface SubmissionCardProps {
-  productId: string;
+  globalProductId: string;
   applicationId: string;
   submission: SubmissionSummary;
 }
 
 export function SubmissionCard({
-  productId,
+  globalProductId,
   applicationId,
   submission,
 }: SubmissionCardProps) {
@@ -17,7 +17,7 @@ export function SubmissionCard({
   // product -> application -> submission.
   return (
     <Link
-      to={`/regulatory/products/${productId}/applications/${applicationId}/submissions/${submission.id}`}
+      to={`/regulatory/products/${globalProductId}/applications/${applicationId}/submissions/${submission.id}`}
       className="block rounded-lg border p-4 transition-colors hover:bg-muted/50"
     >
       <div className="flex items-start justify-between gap-4">

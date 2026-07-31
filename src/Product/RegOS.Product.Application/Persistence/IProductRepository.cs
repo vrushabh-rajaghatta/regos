@@ -1,6 +1,5 @@
 using RegOS.Product.Domain.Product;
 
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 
 namespace RegOS.Product.Application.Persistence;
 
@@ -10,11 +9,11 @@ namespace RegOS.Product.Application.Persistence;
 /// </summary>
 public interface IProductRepository
 {
-    Task AddAsync(ProductAggregate product, CancellationToken cancellationToken);
+    Task AddAsync(GlobalProduct product, CancellationToken cancellationToken);
 
-    Task<ProductAggregate?> GetByIdAsync(
-        ProductId id,
+    Task<GlobalProduct?> GetByIdAsync(
+        GlobalProductId id,
         CancellationToken cancellationToken);
 
-    Task UpdateAsync(ProductAggregate product, CancellationToken cancellationToken);
+    Task UpdateAsync(GlobalProduct product, CancellationToken cancellationToken);
 }

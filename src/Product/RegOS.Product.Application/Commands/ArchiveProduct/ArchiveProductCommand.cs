@@ -6,4 +6,4 @@ namespace RegOS.Product.Application.Commands.ArchiveProduct;
 /// Retires a product from new work. Carries no payload - it is a business
 /// decision, not a property update.
 /// </summary>
-public sealed record ArchiveProductCommand(ProductId ProductId);
+public sealed record ArchiveProductCommand(GlobalProductId GlobalProductId);

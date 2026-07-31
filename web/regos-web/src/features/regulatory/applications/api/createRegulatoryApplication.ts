@@ -8,11 +8,11 @@ export interface CreateRegulatoryApplicationRequest {
 }
 
 export async function createRegulatoryApplication(
-  productId: string,
+  globalProductId: string,
   request: CreateRegulatoryApplicationRequest,
 ): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/api/products/${productId}/applications`),
+    buildUrl(`/api/products/${globalProductId}/applications`),
     {
       method: "POST",
       headers: {

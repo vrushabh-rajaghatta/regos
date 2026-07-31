@@ -11,14 +11,14 @@ public static class GetProductDocumentUsageEndpoint
         // Nested under the product document for route consistency; usage is
         // document-scoped, so the query keys off the document id.
         app.MapGet(
-            "/api/products/{productId:guid}/documents/{documentId:guid}/usage",
+            "/api/products/{globalProductId:guid}/documents/{documentId:guid}/usage",
             HandleAsync);
 
         return app;
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid productId,
+        Guid globalProductId,
         Guid documentId,
         ListProductDocumentUsageHandler handler,
         CancellationToken cancellationToken)

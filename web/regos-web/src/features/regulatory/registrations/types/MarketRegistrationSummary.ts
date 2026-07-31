@@ -7,7 +7,7 @@
  */
 export interface MarketRegistrationSummary {
   registrationId: string;
-  productId: string;
+  globalProductId: string;
   productCode: string;
   productName: string;
   authorityId: string;

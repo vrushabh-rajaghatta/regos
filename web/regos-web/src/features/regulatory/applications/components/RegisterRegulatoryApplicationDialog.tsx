@@ -8,13 +8,13 @@ import {
 import { RegisterRegulatoryApplicationForm } from "./RegisterRegulatoryApplicationForm";
 
 interface RegisterRegulatoryApplicationDialogProps {
-  productId: string;
+  globalProductId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function RegisterRegulatoryApplicationDialog({
-  productId,
+  globalProductId,
   open,
   onOpenChange,
 }: RegisterRegulatoryApplicationDialogProps) {
@@ -26,7 +26,7 @@ export function RegisterRegulatoryApplicationDialog({
         </DialogHeader>
 
         <RegisterRegulatoryApplicationForm
-          productId={productId}
+          globalProductId={globalProductId}
           onSuccess={() => onOpenChange(false)}
         />
       </DialogContent>

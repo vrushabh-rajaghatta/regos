@@ -25,10 +25,10 @@ test.describe("Registration portfolio", () => {
     const unique = Date.now();
 
     const productName = `Registration Product ${unique}`;
-    const productId = await createProduct(unique, productName);
+    const globalProductId = await createProduct(unique, productName);
 
     // --- 1. a product with nothing registered says so --------------------
-    await page.goto(`/regulatory/products/${productId}/registrations`);
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
 
     await expect(
       page.getByTestId("product-registrations-empty"),
@@ -86,7 +86,7 @@ test.describe("Registration portfolio", () => {
     ).toHaveCount(1);
 
     // The same registration reached from the product side is the same URL.
-    await page.goto(`/regulatory/products/${productId}/registrations`);
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
     await productRows.first().getByRole("link").click();
 
     expect(page.url()).toBe(canonical);

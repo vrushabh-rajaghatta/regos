@@ -9,13 +9,13 @@ namespace RegOS.Product.Domain.Product;
 /// answers "what product is this?", not "what regulatory state is it in".
 /// Applications, documents, registrations and markets live elsewhere.
 /// </summary>
-public sealed class Product : AggregateRoot<ProductId>
+public sealed class GlobalProduct : AggregateRoot<GlobalProductId>
 {
     // Parameterized private constructor, no parameterless one: EF binds by
     // parameter name, and this keeps every field non-nullable without
     // resorting to `= default!`. Same shape as the User aggregate.
-    private Product(
-        ProductId id,
+    private GlobalProduct(
+        GlobalProductId id,
         TenantId tenantId,
         ProductCode code,
         ProductName name,
@@ -51,13 +51,13 @@ public sealed class Product : AggregateRoot<ProductId>
 
     public ProductStatus Status { get; private set; }
 
-    public static Product Register(
+    public static GlobalProduct Register(
         TenantId tenantId,
         string? code,
         string? name,
         ProductType type)
         => new(
-            ProductId.New(),
+            GlobalProductId.New(),
             tenantId,
             ProductCode.Create(code),
             ProductName.Create(name),

@@ -10,7 +10,6 @@ using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Primitives;
 
 using RegistrationAggregate = RegOS.Registration.Domain.Aggregates.Registration.Registration;
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using CountryAggregate = RegOS.ReferenceData.Domain.Geography.Country.Country;
 using AuthorityAggregate = RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
 using OrganizationAggregate = RegOS.Organization.Domain.Aggregates.Organization.Organization;
@@ -39,10 +38,10 @@ public sealed class RegistrationConfiguration
                 value => new TenantId(value))
             .IsRequired();
 
-        builder.Property(x => x.ProductId)
+        builder.Property(x => x.GlobalProductId)
             .HasConversion(
                 id => id.Value,
-                value => new ProductId(value))
+                value => new GlobalProductId(value))
             .IsRequired();
 
         builder.Property(x => x.CountryId)
@@ -91,9 +90,9 @@ public sealed class RegistrationConfiguration
         // properties, but EF still models the relationships. All Restrict: a
         // product, market or holder referenced by an authorisation must never
         // be deleted out from under it.
-        builder.HasOne<ProductAggregate>()
+        builder.HasOne<GlobalProduct>()
             .WithMany()
-            .HasForeignKey(x => x.ProductId)
+            .HasForeignKey(x => x.GlobalProductId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<CountryAggregate>()
@@ -117,14 +116,14 @@ public sealed class RegistrationConfiguration
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(x => x.TenantId);
-        builder.HasIndex(x => x.ProductId);
+        builder.HasIndex(x => x.GlobalProductId);
         builder.HasIndex(x => x.OriginatingApplicationId);
 
         // The portfolio questions: "where is this product registered?" and
         // "what do we hold in this market?" (STORY-003).
         builder.HasIndex(x => new { x.CountryId, x.CurrentStatus });
 
-        // Deliberately NOT unique on (ProductId, CountryId): a product
+        // Deliberately NOT unique on (GlobalProductId, CountryId): a product
         // legitimately holds several authorisations in one market — different
         // strengths, presentations, or holders after a partial divestment. The
         // registration number is the business identity, not the jurisdiction.

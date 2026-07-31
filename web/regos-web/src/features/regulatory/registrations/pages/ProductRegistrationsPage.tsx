@@ -19,11 +19,11 @@ import { useProductRegistrations } from "../hooks/useProductRegistrations";
  * and it has one canonical URL whichever direction you arrive from.
  */
 export function ProductRegistrationsPage() {
-  const { productId } = useParams();
+  const { globalProductId } = useParams();
   const [creating, setCreating] = useState(false);
   const [status, setStatus] = useState("");
 
-  const { data, isLoading, error } = useProductRegistrations(productId!);
+  const { data, isLoading, error } = useProductRegistrations(globalProductId!);
 
   const rows = (data ?? []).filter(
     (row) => status === "" || row.status === status
@@ -124,7 +124,7 @@ export function ProductRegistrationsPage() {
       )}
 
       <CreateRegistrationDialog
-        productId={productId!}
+        globalProductId={globalProductId!}
         open={creating}
         onOpenChange={setCreating}
       />

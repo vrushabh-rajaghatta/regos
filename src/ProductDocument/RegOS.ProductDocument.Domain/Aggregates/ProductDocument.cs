@@ -18,14 +18,14 @@ public sealed class ProductDocument
     private ProductDocument(
         ProductDocumentId id,
         TenantId tenantId,
-        ProductId productId,
+        GlobalProductId globalProductId,
         DocumentTypeId documentTypeId,
         string name,
         DateTime createdOnUtc)
     {
         Id = id;
         TenantId = tenantId;
-        ProductId = productId;
+        GlobalProductId = globalProductId;
         DocumentTypeId = documentTypeId;
         Name = name;
         Status = ProductDocumentStatus.Draft;
@@ -39,7 +39,7 @@ public sealed class ProductDocument
     // document can never carry a different tenant than its product (ADR-031).
     public TenantId TenantId { get; }
 
-    public ProductId ProductId { get; }
+    public GlobalProductId GlobalProductId { get; }
 
     public DocumentTypeId DocumentTypeId { get; }
 
@@ -58,14 +58,14 @@ public sealed class ProductDocument
 
     public static ProductDocument Create(
         TenantId tenantId,
-        ProductId productId,
+        GlobalProductId globalProductId,
         DocumentTypeId documentTypeId,
         string name)
     {
         if (tenantId is null)
             throw new DomainException(ProductDocumentErrors.TenantRequired);
 
-        if (productId == default)
+        if (globalProductId == default)
             throw new DomainException(ProductDocumentErrors.ProductRequired);
 
         if (documentTypeId == default)
@@ -82,7 +82,7 @@ public sealed class ProductDocument
         return new ProductDocument(
             ProductDocumentId.New(),
             tenantId,
-            productId,
+            globalProductId,
             documentTypeId,
             trimmedName,
             DateTime.UtcNow);

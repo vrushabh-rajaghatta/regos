@@ -34,7 +34,7 @@ public sealed class ArchiveProductHandler
         CancellationToken cancellationToken)
     {
         var product = await _repository.GetByIdAsync(
-            command.ProductId, cancellationToken);
+            command.GlobalProductId, cancellationToken);
 
         if (product is null || product.TenantId != _tenantContext.TenantId)
             throw new NotFoundException(ProductCommandErrors.ProductNotFound);

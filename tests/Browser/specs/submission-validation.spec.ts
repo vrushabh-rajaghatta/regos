@@ -89,8 +89,8 @@ test.describe("Submission validation against the blueprint", () => {
       .toBeGreaterThan(0);
 
     // --- prerequisites, through the API -----------------------------------
-    const productId = await createProduct(unique);
-    const applicationId = await createApplication(productId);
+    const globalProductId = await createProduct(unique);
+    const applicationId = await createApplication(globalProductId);
     const submissionId = await createSubmission(applicationId, unique);
 
     // One active Product Document per requirement, each remembering the section
@@ -99,7 +99,7 @@ test.describe("Submission validation against the blueprint", () => {
     for (const requirement of requirements) {
       seeded.push({
         documentId: await uploadActiveDocument(
-          productId,
+          globalProductId,
           requirement.documentTypeId,
           unique,
         ),
@@ -108,7 +108,7 @@ test.describe("Submission validation against the blueprint", () => {
     }
 
     const validationUrl =
-      `/regulatory/products/${productId}/applications/${applicationId}` +
+      `/regulatory/products/${globalProductId}/applications/${applicationId}` +
       `/submissions/${submissionId}/validation`;
 
     // --- 1. an empty submission is blocked, and says exactly why -----------
@@ -153,7 +153,7 @@ test.describe("Submission validation against the blueprint", () => {
     // The attach dialog has no section picker until STORY-004, so this is the
     // unplaced path — and the spec asserts the new rule rather than avoiding it.
     await page.goto(
-      `/regulatory/products/${productId}/applications/${applicationId}` +
+      `/regulatory/products/${globalProductId}/applications/${applicationId}` +
         `/submissions/${submissionId}/documents`,
     );
 
@@ -207,7 +207,7 @@ test.describe("Submission validation against the blueprint", () => {
     // exists to provide, and the journey is only a proof of the architecture if
     // a user could actually walk it.
     await page.goto(
-      `/regulatory/products/${productId}/applications/${applicationId}` +
+      `/regulatory/products/${globalProductId}/applications/${applicationId}` +
         `/submissions/${submissionId}/content-plan`,
     );
 
@@ -291,7 +291,7 @@ test.describe("Submission validation against the blueprint", () => {
 
     // --- 5. and it publishes ----------------------------------------------
     await page.goto(
-      `/regulatory/products/${productId}/applications/${applicationId}` +
+      `/regulatory/products/${globalProductId}/applications/${applicationId}` +
         `/submissions/${submissionId}/publishing`,
     );
 
@@ -333,7 +333,7 @@ async function createProduct(unique: number): Promise<string> {
   return (await response.json()).id;
 }
 
-async function createApplication(productId: string): Promise<string> {
+async function createApplication(globalProductId: string): Promise<string> {
   const organizations = await (await api("/api/organizations")).json();
 
   // An active one specifically — other specs create and deactivate
@@ -345,7 +345,7 @@ async function createApplication(productId: string): Promise<string> {
 
   expect(applicant, "an active organization to apply as").toBeTruthy();
 
-  const response = await api(`/api/products/${productId}/applications`, {
+  const response = await api(`/api/products/${globalProductId}/applications`, {
     method: "POST",
     body: JSON.stringify({
       countryId: UNITED_STATES,
@@ -379,7 +379,7 @@ async function createSubmission(
 
 /** Uploads a PDF and activates it, so it can be attached to a dossier. */
 async function uploadActiveDocument(
-  productId: string,
+  globalProductId: string,
   documentTypeId: string,
   unique: number,
 ): Promise<string> {
@@ -394,7 +394,7 @@ async function uploadActiveDocument(
 
   // Raw fetch rather than the JSON helper: multipart needs fetch to set the
   // Content-Type itself, boundary and all.
-  const upload = await fetch(`${API_URL}/api/products/${productId}/documents`, {
+  const upload = await fetch(`${API_URL}/api/products/${globalProductId}/documents`, {
     method: "POST",
     body: form,
     headers: { Cookie: await sessionCookies() },
@@ -405,7 +405,7 @@ async function uploadActiveDocument(
   const documentId = (await upload.json()).id;
 
   const activate = await api(
-    `/api/products/${productId}/documents/${documentId}/activate`,
+    `/api/products/${globalProductId}/documents/${documentId}/activate`,
     { method: "POST" },
   );
 

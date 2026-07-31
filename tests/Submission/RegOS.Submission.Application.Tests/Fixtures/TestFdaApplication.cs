@@ -5,7 +5,6 @@ using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using RegulatoryApplicationAggregate =
     RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 
@@ -33,7 +32,7 @@ internal static class TestFdaApplication
     public static readonly AuthorityId Fda =
         new(Guid.Parse("20000000-0000-0000-0000-000000000001"));
 
-    public static async Task<(RegulatoryApplicationId AppId, ProductId ProductId)>
+    public static async Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
         EnsureAsync(RegOSDbContext ctx)
     {
         var existing = await FindAsync(ctx);
@@ -46,7 +45,7 @@ internal static class TestFdaApplication
         var organizationId = await ctx.Organizations
             .AsNoTracking().Select(x => x.Id).FirstAsync();
 
-        var product = ProductAggregate.Register(
+        var product = GlobalProduct.Register(
             TestTenant.Id, FixtureCode, "Blueprint Validation Product", ProductType.Drug);
 
         var application = RegulatoryApplicationAggregate.Create(
@@ -77,26 +76,26 @@ internal static class TestFdaApplication
         }
     }
 
-    private static async Task<(RegulatoryApplicationId, ProductId)?> FindAsync(
+    private static async Task<(RegulatoryApplicationId, GlobalProductId)?> FindAsync(
         RegOSDbContext ctx)
     {
         var code = ProductCode.Create(FixtureCode);
 
-        var productId = await ctx.Products
+        var globalProductId = await ctx.Products
             .AsNoTracking()
             .Where(x => x.Code == code)
             .Select(x => x.Id)
             .FirstOrDefaultAsync();
 
-        if (productId is null)
+        if (globalProductId is null)
             return null;
 
         var applicationId = await ctx.RegulatoryApplications
             .AsNoTracking()
-            .Where(x => x.ProductId == productId)
+            .Where(x => x.GlobalProductId == globalProductId)
             .Select(x => x.Id)
             .FirstOrDefaultAsync();
 
-        return applicationId == default ? null : (applicationId, productId);
+        return applicationId == default ? null : (applicationId, globalProductId);
     }
 }

@@ -36,7 +36,7 @@ public sealed class GetRegistrationHandler
         // Name is a value object; project the string it wraps.
         var product = await _dbContext.Products
             .AsNoTracking()
-            .Where(x => x.Id == registration.ProductId)
+            .Where(x => x.Id == registration.GlobalProductId)
             .Select(x => x.Name.Value)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -65,7 +65,7 @@ public sealed class GetRegistrationHandler
 
         return new RegistrationDetailDto(
             registration.Id.Value,
-            registration.ProductId.Value,
+            registration.GlobalProductId.Value,
             product ?? string.Empty,
             registration.CountryId.Value,
             country ?? string.Empty,

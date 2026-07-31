@@ -12,21 +12,21 @@ public static class CreateRegulatoryApplicationEndpoint
         this IEndpointRouteBuilder app)
     {
         app.MapPost(
-            "/api/products/{productId:guid}/applications",
+            "/api/products/{globalProductId:guid}/applications",
             HandleAsync);
 
         return app;
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid productId,
+        Guid globalProductId,
         CreateRegulatoryApplicationRequest request,
         CreateRegulatoryApplicationHandler handler,
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(
             new CreateRegulatoryApplicationCommand(
-                new ProductId(productId),
+                new GlobalProductId(globalProductId),
                 new CountryId(request.CountryId),
                 new AuthorityId(request.AuthorityId),
                 new OrganizationId(request.ApplicantOrganizationId),

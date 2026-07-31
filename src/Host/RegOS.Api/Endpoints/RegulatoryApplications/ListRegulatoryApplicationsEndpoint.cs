@@ -9,19 +9,19 @@ public static class ListRegulatoryApplicationsEndpoint
         this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet(
-            "/api/products/{productId:guid}/applications",
+            "/api/products/{globalProductId:guid}/applications",
             HandleAsync);
 
         return endpoints;
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid productId,
+        Guid globalProductId,
         ListRegulatoryApplicationsHandler handler,
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(
-            new ProductId(productId),
+            new GlobalProductId(globalProductId),
             cancellationToken);
 
         return Results.Ok(result.Applications);

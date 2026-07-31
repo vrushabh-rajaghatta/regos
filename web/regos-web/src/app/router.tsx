@@ -155,7 +155,7 @@ export const router = createBrowserRouter([
                   },
                   // Product Workspace — portfolio-level view.
                   {
-                    path: ":productId",
+                    path: ":globalProductId",
                     element: <ProductWorkspaceLayout />,
                     children: [
                       {
@@ -185,7 +185,7 @@ export const router = createBrowserRouter([
                   // product URL, but a full-screen sibling so its sidebar replaces
                   // the product sidebar (rather than rendering two sidebars).
                   {
-                    path: ":productId/applications/:applicationId",
+                    path: ":globalProductId/applications/:applicationId",
                     element: <ApplicationWorkspaceLayout />,
                     children: [
                       {
@@ -215,7 +215,7 @@ export const router = createBrowserRouter([
                   // sidebar. The URL preserves the full business hierarchy:
                   // product -> application -> submission.
                   {
-                    path: ":productId/applications/:applicationId/submissions/:submissionId",
+                    path: ":globalProductId/applications/:applicationId/submissions/:submissionId",
                     element: <SubmissionWorkspaceLayout />,
                     children: [
                       {
@@ -247,7 +247,7 @@ export const router = createBrowserRouter([
                   // Product Document Workspace — full-screen sibling under the
                   // product URL. Explicit sub-routes; index redirects to overview.
                   {
-                    path: ":productId/documents/:documentId",
+                    path: ":globalProductId/documents/:documentId",
                     element: <DocumentWorkspaceLayout />,
                     children: [
                       {

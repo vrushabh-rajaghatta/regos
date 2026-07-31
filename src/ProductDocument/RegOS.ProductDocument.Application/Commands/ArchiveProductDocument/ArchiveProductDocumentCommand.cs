@@ -9,5 +9,5 @@ namespace RegOS.ProductDocument.Application.Commands.ArchiveProductDocument;
 /// keeping the nested route honest.
 /// </summary>
 public sealed record ArchiveProductDocumentCommand(
-    ProductId ProductId,
+    GlobalProductId GlobalProductId,
     ProductDocumentId DocumentId);

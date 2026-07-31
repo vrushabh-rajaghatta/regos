@@ -8,7 +8,6 @@ using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.DocumentType;
 
 using ProductDocumentEntity = RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using DocumentTypeEntity = RegOS.ReferenceData.Domain.DocumentType.DocumentType;
 
 namespace RegOS.Persistence.Configurations.ProductDocument;
@@ -37,10 +36,10 @@ public sealed class ProductDocumentConfiguration
 
         builder.HasIndex(x => x.TenantId);
 
-        builder.Property(x => x.ProductId)
+        builder.Property(x => x.GlobalProductId)
             .HasConversion(
                 id => id.Value,
-                value => new ProductId(value))
+                value => new GlobalProductId(value))
             .IsRequired();
 
         builder.Property(x => x.DocumentTypeId)
@@ -75,9 +74,9 @@ public sealed class ProductDocumentConfiguration
 
         // Product (N:1) — a product owns its documents; deleting the product
         // removes them.
-        builder.HasOne<ProductAggregate>()
+        builder.HasOne<GlobalProduct>()
             .WithMany()
-            .HasForeignKey(x => x.ProductId)
+            .HasForeignKey(x => x.GlobalProductId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // DocumentType (N:1) — reference data is protected from deletion.
@@ -97,12 +96,12 @@ public sealed class ProductDocumentConfiguration
             .FindNavigation(nameof(ProductDocumentEntity.Versions))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
-        builder.HasIndex(x => x.ProductId);
+        builder.HasIndex(x => x.GlobalProductId);
         builder.HasIndex(x => x.DocumentTypeId);
         builder.HasIndex(x => x.Status);
 
         // Within a single product, document names are unique.
-        builder.HasIndex(x => new { x.ProductId, x.Name })
+        builder.HasIndex(x => new { x.GlobalProductId, x.Name })
             .IsUnique();
     }
 }

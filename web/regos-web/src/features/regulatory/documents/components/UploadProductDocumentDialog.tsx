@@ -8,13 +8,13 @@ import {
 import { UploadProductDocumentForm } from "./UploadProductDocumentForm";
 
 interface UploadProductDocumentDialogProps {
-  productId: string;
+  globalProductId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function UploadProductDocumentDialog({
-  productId,
+  globalProductId,
   open,
   onOpenChange,
 }: UploadProductDocumentDialogProps) {
@@ -26,7 +26,7 @@ export function UploadProductDocumentDialog({
         </DialogHeader>
 
         <UploadProductDocumentForm
-          productId={productId}
+          globalProductId={globalProductId}
           onSuccess={() => onOpenChange(false)}
         />
       </DialogContent>

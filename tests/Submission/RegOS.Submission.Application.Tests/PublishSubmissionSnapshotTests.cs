@@ -92,7 +92,7 @@ public sealed class PublishSubmissionSnapshotTests : IAsyncLifetime
         SeedSubmissionAsync(int count)
     {
         await using var ctx = New();
-        var (applicationId, productId) = await TestApplications.EnsureAsync(ctx);
+        var (applicationId, globalProductId) = await TestApplications.EnsureAsync(ctx);
 
         var submission = SubmissionAggregate.Create(TestTenant.Id, 
             applicationId, SeededSubmissionType, "Publish-Snapshot Sub " + Guid.NewGuid());
@@ -101,13 +101,13 @@ public sealed class PublishSubmissionSnapshotTests : IAsyncLifetime
         for (var i = 0; i < count; i++)
         {
             var doc = ProductDocumentAggregate.Create(TestTenant.Id, 
-                productId, SeededCer, "Publish-Snapshot Doc " + Guid.NewGuid());
+                globalProductId, SeededCer, "Publish-Snapshot Doc " + Guid.NewGuid());
             doc.AddInitialVersion(
                 originalFileName: "cer.pdf",
                 storedFileName: "v1.pdf",
                 contentType: "application/pdf",
                 fileSize: 1024,
-                storagePath: $"products/{productId.Value}/{doc.Id.Value}/v1.pdf",
+                storagePath: $"products/{globalProductId.Value}/{doc.Id.Value}/v1.pdf",
                 checksum: "sha256-x");
             doc.Activate();
             ctx.ProductDocuments.Add(doc);

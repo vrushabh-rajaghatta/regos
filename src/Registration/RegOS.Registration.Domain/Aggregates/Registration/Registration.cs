@@ -34,7 +34,7 @@ public sealed class Registration
     private Registration(
         RegistrationId id,
         TenantId tenantId,
-        ProductId productId,
+        GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
         OrganizationId holderOrganizationId,
@@ -43,7 +43,7 @@ public sealed class Registration
     {
         Id = id;
         TenantId = tenantId;
-        ProductId = productId;
+        GlobalProductId = globalProductId;
         CountryId = countryId;
         AuthorityId = authorityId;
         HolderOrganizationId = holderOrganizationId;
@@ -61,7 +61,7 @@ public sealed class Registration
     /// </summary>
     public TenantId TenantId { get; }
 
-    public ProductId ProductId { get; }
+    public GlobalProductId GlobalProductId { get; }
 
     public CountryId CountryId { get; }
 
@@ -113,7 +113,7 @@ public sealed class Registration
     /// </param>
     public static Registration Create(
         TenantId tenantId,
-        ProductId productId,
+        GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
         OrganizationId holderOrganizationId,
@@ -124,7 +124,7 @@ public sealed class Registration
         if (tenantId is null)
             throw new DomainException(RegistrationErrors.TenantRequired);
 
-        if (productId == default)
+        if (globalProductId == default)
             throw new DomainException(RegistrationErrors.ProductRequired);
 
         if (countryId == default)
@@ -143,7 +143,7 @@ public sealed class Registration
         var registration = new Registration(
             RegistrationId.New(),
             tenantId,
-            productId,
+            globalProductId,
             countryId,
             authorityId,
             holderOrganizationId,

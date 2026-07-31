@@ -25,7 +25,7 @@ namespace RegOS.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("RegOS.Product.Domain.Product.Product", b =>
+            modelBuilder.Entity("RegOS.Product.Domain.Product.GlobalProduct", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");

@@ -10,11 +10,11 @@ import { UploadProductDocumentDialog } from "../components/UploadProductDocument
 import { ProductDocumentStatusBadge } from "../components/ProductDocumentStatusBadge";
 
 export function ProductDocumentsListPage() {
-  const { productId } = useParams();
+  const { globalProductId } = useParams();
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data, isLoading, error } = useProductDocuments(productId!);
+  const { data, isLoading, error } = useProductDocuments(globalProductId!);
 
   return (
     <Page>
@@ -27,7 +27,7 @@ export function ProductDocumentsListPage() {
       />
 
       <UploadProductDocumentDialog
-        productId={productId!}
+        globalProductId={globalProductId!}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
       />
@@ -95,7 +95,7 @@ export function ProductDocumentsListPage() {
 
                   <td className="px-4 py-2">
                     <Link
-                      to={`/regulatory/products/${productId}/documents/${document.id}`}
+                      to={`/regulatory/products/${globalProductId}/documents/${document.id}`}
                       className="text-primary hover:underline"
                     >
                       Open

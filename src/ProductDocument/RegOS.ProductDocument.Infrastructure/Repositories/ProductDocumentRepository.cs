@@ -38,12 +38,12 @@ public sealed class ProductDocumentRepository : IProductDocumentRepository
     }
 
     public async Task<IReadOnlyList<ProductDocumentAggregate>> GetByProductAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CancellationToken cancellationToken)
     {
         return await _dbContext.ProductDocuments
             .Include(x => x.Versions)
-            .Where(x => x.ProductId == productId)
+            .Where(x => x.GlobalProductId == globalProductId)
             .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
     }

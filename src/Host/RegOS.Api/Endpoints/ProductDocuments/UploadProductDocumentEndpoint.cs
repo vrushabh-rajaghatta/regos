@@ -12,7 +12,7 @@ public static class UploadProductDocumentEndpoint
         this IEndpointRouteBuilder app)
     {
         app.MapPost(
-                "/api/products/{productId:guid}/documents",
+                "/api/products/{globalProductId:guid}/documents",
                 HandleAsync)
             // API upload consumed by our SPA; no browser antiforgery token.
             .DisableAntiforgery();
@@ -21,7 +21,7 @@ public static class UploadProductDocumentEndpoint
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid productId,
+        Guid globalProductId,
         IFormFile file,
         [FromForm] Guid documentTypeId,
         [FromForm] string name,
@@ -32,7 +32,7 @@ public static class UploadProductDocumentEndpoint
 
         var result = await handler.HandleAsync(
             new UploadProductDocumentCommand(
-                new ProductId(productId),
+                new GlobalProductId(globalProductId),
                 new DocumentTypeId(documentTypeId),
                 name,
                 file.FileName,
@@ -41,7 +41,7 @@ public static class UploadProductDocumentEndpoint
             cancellationToken);
 
         return Results.Created(
-            $"/api/products/{productId}/documents/{result.Id.Value}",
+            $"/api/products/{globalProductId}/documents/{result.Id.Value}",
             new UploadProductDocumentResponse(result.Id.Value));
     }
 }

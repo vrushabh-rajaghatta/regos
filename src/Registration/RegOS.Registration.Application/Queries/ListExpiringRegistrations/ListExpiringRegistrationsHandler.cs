@@ -39,13 +39,13 @@ public sealed class ListExpiringRegistrationsHandler
                 .AsNoTracking()
             where registration.ExpiresOn != null
             join product in _dbContext.Products
-                on registration.ProductId equals product.Id
+                on registration.GlobalProductId equals product.Id
             join country in _dbContext.Countries
                 on registration.CountryId equals country.Id
             select new
             {
                 registration.Id,
-                registration.ProductId,
+                registration.GlobalProductId,
                 ProductName = product.Name,
                 registration.CountryId,
                 CountryName = country.Name,
@@ -71,7 +71,7 @@ public sealed class ListExpiringRegistrationsHandler
             .ThenBy(x => x.Row.ProductName.Value)
             .Select(x => new ExpiringRegistration(
                 x.Row.Id.Value,
-                x.Row.ProductId.Value,
+                x.Row.GlobalProductId.Value,
                 x.Row.ProductName.Value,
                 x.Row.CountryId.Value,
                 x.Row.CountryName,

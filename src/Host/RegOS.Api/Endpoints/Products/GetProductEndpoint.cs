@@ -21,7 +21,7 @@ public static class GetProductEndpoint
         CancellationToken cancellationToken)
     {
         var response = await handler.HandleAsync(
-            new GetProductQuery(new ProductId(id)),
+            new GetProductQuery(new GlobalProductId(id)),
             cancellationToken);
 
         return Results.Ok(response);

@@ -34,15 +34,15 @@ public class ProductDocumentCreationTests
     [Fact]
     public void Create_SetsProvidedValues()
     {
-        var productId = new ProductId(Guid.NewGuid());
+        var globalProductId = new GlobalProductId(Guid.NewGuid());
         var documentTypeId = new DocumentTypeId(Guid.NewGuid());
 
         var document = ProductDocumentAggregate.Create(TenantId.New(), 
-            productId,
+            globalProductId,
             documentTypeId,
             "  Risk Management File  ");
 
-        document.ProductId.Should().Be(productId);
+        document.GlobalProductId.Should().Be(globalProductId);
         document.DocumentTypeId.Should().Be(documentTypeId);
         document.Name.Should().Be("Risk Management File");
         document.CreatedOnUtc.Should().NotBe(default);

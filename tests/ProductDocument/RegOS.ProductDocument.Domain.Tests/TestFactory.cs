@@ -11,7 +11,7 @@ internal static class TestFactory
 {
     public static ProductDocumentAggregate NewDocument() =>
         ProductDocumentAggregate.Create(TenantId.New(), 
-            new ProductId(Guid.NewGuid()),
+            new GlobalProductId(Guid.NewGuid()),
             new DocumentTypeId(Guid.NewGuid()),
             "Clinical Evaluation Report");
 

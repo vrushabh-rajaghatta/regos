@@ -1,8 +1,8 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
-export async function archiveProduct(productId: string): Promise<void> {
+export async function archiveProduct(globalProductId: string): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/api/products/${productId}/archive`),
+    buildUrl(`/api/products/${globalProductId}/archive`),
     { method: "POST" },
   );
 

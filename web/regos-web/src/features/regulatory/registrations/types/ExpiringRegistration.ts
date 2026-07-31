@@ -6,7 +6,7 @@
  */
 export interface ExpiringRegistration {
   registrationId: string;
-  productId: string;
+  globalProductId: string;
   productName: string;
   countryId: string;
   countryName: string;

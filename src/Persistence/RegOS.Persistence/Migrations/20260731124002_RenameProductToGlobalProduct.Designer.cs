@@ -12,8 +12,8 @@ using RegOS.Persistence;
 namespace RegOS.Persistence.Migrations
 {
     [DbContext(typeof(RegOSDbContext))]
-    [Migration("20260731093535_AddOrganizationSites")]
-    partial class AddOrganizationSites
+    [Migration("20260731124002_RenameProductToGlobalProduct")]
+    partial class RenameProductToGlobalProduct
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,18 +25,146 @@ namespace RegOS.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CountryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("OrganizationSiteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("StatusDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountryId");
+
+                    b.HasIndex("LastName");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("OrganizationSiteId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Contacts", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactEmail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<Guid?>("ContactId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId");
+
+                    b.ToTable("ContactEmails", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactPhone", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ContactId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId");
+
+                    b.ToTable("ContactPhones", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactRoleAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ContactId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("ContactId", "RoleId")
+                        .IsUnique();
+
+                    b.ToTable("ContactRoleAssignments", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Organization.Organization", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Acronym")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("LegalName")
                         .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
+                    b.Property<string>("NameNativeLanguage")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<DateOnly>("StatusDate")
+                        .HasColumnType("date");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -51,6 +179,67 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Organizations", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Organization.OrganizationIdentifier", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SchemeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SchemeId");
+
+                    b.HasIndex("OrganizationId", "SchemeId")
+                        .IsUnique();
+
+                    b.ToTable("OrganizationIdentifiers", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.OrganizationDivision.OrganizationDivision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Acronym")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("StatusDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("OrganizationDivisions", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", b =>
@@ -473,13 +662,13 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("DocumentTypeId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -491,13 +680,13 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("DocumentTypeId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("GlobalProductId");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("ProductId", "Name")
+                    b.HasIndex("GlobalProductId", "Name")
                         .IsUnique();
 
                     b.ToTable("ProductDocuments", (string)null);
@@ -814,6 +1003,36 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Countries", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Organization.ContactRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("ContactRoles", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.ReferenceData.Domain.Organization.IdentifierScheme", b =>
                 {
                     b.Property<Guid>("Id")
@@ -924,13 +1143,13 @@ namespace RegOS.Persistence.Migrations
                     b.Property<DateOnly?>("ExpiresOn")
                         .HasColumnType("date");
 
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("HolderOrganizationId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("OriginatingApplicationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("RegistrationNumber")
@@ -944,11 +1163,11 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("AuthorityId");
 
+                    b.HasIndex("GlobalProductId");
+
                     b.HasIndex("HolderOrganizationId");
 
                     b.HasIndex("OriginatingApplicationId");
-
-                    b.HasIndex("ProductId");
 
                     b.HasIndex("TenantId");
 
@@ -1008,13 +1227,13 @@ namespace RegOS.Persistence.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -1032,7 +1251,7 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("ProductId", "CountryId", "AuthorityId")
+                    b.HasIndex("GlobalProductId", "CountryId", "AuthorityId")
                         .IsUnique();
 
                     b.ToTable("RegulatoryApplications", (string)null);
@@ -1167,6 +1386,78 @@ namespace RegOS.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("SubmissionDocuments", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Geography.Country.Country", null)
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationSiteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactEmail", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Contact.Contact", null)
+                        .WithMany("Emails")
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactPhone", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Contact.Contact", null)
+                        .WithMany("Phones")
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.ContactRoleAssignment", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Contact.Contact", null)
+                        .WithMany("Roles")
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Organization.ContactRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Organization.OrganizationIdentifier", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
+                        .WithMany("Identifiers")
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Organization.IdentifierScheme", null)
+                        .WithMany()
+                        .HasForeignKey("SchemeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.OrganizationDivision.OrganizationDivision", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", b =>
@@ -1311,7 +1602,7 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
                         .WithMany()
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("GlobalProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1427,6 +1718,12 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("GlobalProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
                         .WithMany()
                         .HasForeignKey("HolderOrganizationId")
@@ -1437,12 +1734,6 @@ namespace RegOS.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("OriginatingApplicationId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.RegistrationStatusEntry", b =>
@@ -1476,7 +1767,7 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
                         .WithMany()
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("GlobalProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -1543,6 +1834,20 @@ namespace RegOS.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("TemplateSectionId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
+                {
+                    b.Navigation("Emails");
+
+                    b.Navigation("Phones");
+
+                    b.Navigation("Roles");
+                });
+
+            modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Organization.Organization", b =>
+                {
+                    b.Navigation("Identifiers");
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", b =>

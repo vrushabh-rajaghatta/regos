@@ -17,7 +17,7 @@ public interface IProductDocumentRepository
         CancellationToken cancellationToken);
 
     Task<IReadOnlyList<ProductDocumentAggregate>> GetByProductAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CancellationToken cancellationToken);
 
     Task UpdateAsync(

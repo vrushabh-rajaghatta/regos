@@ -18,6 +18,6 @@ public interface IRegistrationRepository
         CancellationToken cancellationToken);
 
     Task<IReadOnlyList<Registration>> ListByProductAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CancellationToken cancellationToken);
 }

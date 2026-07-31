@@ -52,7 +52,7 @@ export function RegistrationDetailPage() {
 
           <div className="flex flex-wrap gap-4 text-sm">
             <Link
-              to={`/regulatory/products/${data.productId}/registrations`}
+              to={`/regulatory/products/${data.globalProductId}/registrations`}
               className="text-primary hover:underline"
             >
               {data.productName}

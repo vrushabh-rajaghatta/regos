@@ -10,7 +10,7 @@ export interface RegistrationStatusEntry {
 
 export interface RegistrationDetail {
   id: string;
-  productId: string;
+  globalProductId: string;
   productName: string;
   countryId: string;
   countryName: string;

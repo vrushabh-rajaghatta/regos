@@ -607,7 +607,7 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("UserCredentials", (string)null);
                 });
 
-            modelBuilder.Entity("RegOS.Product.Domain.Product.Product", b =>
+            modelBuilder.Entity("RegOS.Product.Domain.Product.GlobalProduct", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -659,13 +659,13 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("DocumentTypeId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -677,13 +677,13 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("DocumentTypeId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("GlobalProductId");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("ProductId", "Name")
+                    b.HasIndex("GlobalProductId", "Name")
                         .IsUnique();
 
                     b.ToTable("ProductDocuments", (string)null);
@@ -1140,13 +1140,13 @@ namespace RegOS.Persistence.Migrations
                     b.Property<DateOnly?>("ExpiresOn")
                         .HasColumnType("date");
 
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("HolderOrganizationId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("OriginatingApplicationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("RegistrationNumber")
@@ -1160,11 +1160,11 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("AuthorityId");
 
+                    b.HasIndex("GlobalProductId");
+
                     b.HasIndex("HolderOrganizationId");
 
                     b.HasIndex("OriginatingApplicationId");
-
-                    b.HasIndex("ProductId");
 
                     b.HasIndex("TenantId");
 
@@ -1224,13 +1224,13 @@ namespace RegOS.Persistence.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -1248,7 +1248,7 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("ProductId", "CountryId", "AuthorityId")
+                    b.HasIndex("GlobalProductId", "CountryId", "AuthorityId")
                         .IsUnique();
 
                     b.ToTable("RegulatoryApplications", (string)null);
@@ -1597,9 +1597,9 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RegOS.Product.Domain.Product.Product", null)
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
                         .WithMany()
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("GlobalProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1715,6 +1715,12 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("GlobalProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
                         .WithMany()
                         .HasForeignKey("HolderOrganizationId")
@@ -1725,12 +1731,6 @@ namespace RegOS.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("OriginatingApplicationId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("RegOS.Product.Domain.Product.Product", null)
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.RegistrationStatusEntry", b =>
@@ -1762,9 +1762,9 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RegOS.Product.Domain.Product.Product", null)
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
                         .WithMany()
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("GlobalProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

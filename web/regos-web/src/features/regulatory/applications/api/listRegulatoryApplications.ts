@@ -2,10 +2,10 @@ import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { RegulatoryApplicationSummary } from "../types/RegulatoryApplicationSummary";
 
 export async function listRegulatoryApplications(
-  productId: string,
+  globalProductId: string,
 ): Promise<RegulatoryApplicationSummary[]> {
   const response = await apiFetch(
-    buildUrl(`/api/products/${productId}/applications`),
+    buildUrl(`/api/products/${globalProductId}/applications`),
   );
 
   if (!response.ok) {

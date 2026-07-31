@@ -10,11 +10,11 @@ import { RegisterRegulatoryApplicationDialog } from "../components/RegisterRegul
 import { RegulatoryApplicationCard } from "../components/RegulatoryApplicationCard";
 
 export function RegulatoryApplicationListPage() {
-  const { productId } = useParams();
+  const { globalProductId } = useParams();
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data, isLoading, error } = useRegulatoryApplications(productId!);
+  const { data, isLoading, error } = useRegulatoryApplications(globalProductId!);
 
   return (
     <Page>
@@ -27,7 +27,7 @@ export function RegulatoryApplicationListPage() {
       />
 
       <RegisterRegulatoryApplicationDialog
-        productId={productId!}
+        globalProductId={globalProductId!}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
       />
@@ -59,7 +59,7 @@ export function RegulatoryApplicationListPage() {
           {data.map((application) => (
             <RegulatoryApplicationCard
               key={application.id}
-              productId={productId!}
+              globalProductId={globalProductId!}
               application={application}
             />
           ))}

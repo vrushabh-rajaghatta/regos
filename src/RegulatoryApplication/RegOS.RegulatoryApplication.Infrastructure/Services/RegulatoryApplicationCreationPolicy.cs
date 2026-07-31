@@ -22,19 +22,19 @@ public sealed class RegulatoryApplicationCreationPolicy
     }
 
     public async Task EnsureCanCreateAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
         OrganizationId organizationId,
         CancellationToken cancellationToken)
     {
         // Rule 1 — Product exists. The product is ADDRESSED by the route
-        // (POST /api/products/{productId}/applications), so its absence is a
+        // (POST /api/products/{globalProductId}/applications), so its absence is a
         // 404 like any other missing resource — not a 400 about a bad value in
         // the body. The country, authority and organization below are
         // *referenced* values and stay 400.
         var productExists = await _dbContext.Products
-            .AnyAsync(x => x.Id == productId, cancellationToken);
+            .AnyAsync(x => x.Id == globalProductId, cancellationToken);
 
         if (!productExists)
             throw new NotFoundException(
@@ -79,7 +79,7 @@ public sealed class RegulatoryApplicationCreationPolicy
         // Rule 7 — No duplicate application for the same jurisdiction.
         var duplicateExists = await _dbContext.RegulatoryApplications
             .AnyAsync(
-                x => x.ProductId == productId
+                x => x.GlobalProductId == globalProductId
                     && x.CountryId == countryId
                     && x.AuthorityId == authorityId,
                 cancellationToken);

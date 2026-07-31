@@ -25,7 +25,7 @@ namespace RegOS.Registration.Application.Queries.GetRegistration;
 /// </param>
 public sealed record RegistrationDetailDto(
     Guid Id,
-    Guid ProductId,
+    Guid GlobalProductId,
     string ProductName,
     Guid CountryId,
     string CountryName,

@@ -5,16 +5,16 @@ import {
   type CreateRegulatoryApplicationRequest,
 } from "../api/createRegulatoryApplication";
 
-export function useCreateRegulatoryApplication(productId: string) {
+export function useCreateRegulatoryApplication(globalProductId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (request: CreateRegulatoryApplicationRequest) =>
-      createRegulatoryApplication(productId, request),
+      createRegulatoryApplication(globalProductId, request),
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["products", productId, "applications"],
+        queryKey: ["products", globalProductId, "applications"],
       });
     },
   });

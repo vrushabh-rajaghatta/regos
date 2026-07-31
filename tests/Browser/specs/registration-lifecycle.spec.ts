@@ -33,10 +33,10 @@ test.describe("Registration lifecycle", () => {
     const unique = Date.now();
 
     const productName = `Lifecycle Product ${unique}`;
-    const productId = await createProduct(unique, productName);
+    const globalProductId = await createProduct(unique, productName);
 
     // --- 1. record an intention ------------------------------------------
-    await page.goto(`/regulatory/products/${productId}/registrations`);
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
     await page.getByRole("button", { name: "New registration" }).click();
 
     await page.getByLabel("Market").selectOption({ label: "United States" });
@@ -95,7 +95,7 @@ test.describe("Registration lifecycle", () => {
       page.getByTestId("market-registration-row").filter({ hasText: productName }),
     ).toHaveCount(1);
 
-    await page.goto(`/regulatory/products/${productId}/registrations`);
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
     await expect(page.getByTestId("product-registration-row")).toHaveCount(1);
 
     // --- 6. suspended, then reinstated ------------------------------------

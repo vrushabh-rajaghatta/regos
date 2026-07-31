@@ -15,21 +15,21 @@ public static class CreateRegistrationEndpoint
         // Product-scoped, like applications: a registration is always *for* a
         // product, and the route says so.
         app.MapPost(
-            "/api/products/{productId:guid}/registrations",
+            "/api/products/{globalProductId:guid}/registrations",
             HandleAsync);
 
         return app;
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid productId,
+        Guid globalProductId,
         CreateRegistrationRequest request,
         CreateRegistrationHandler handler,
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(
             new CreateRegistrationCommand(
-                new ProductId(productId),
+                new GlobalProductId(globalProductId),
                 new CountryId(request.CountryId),
                 new AuthorityId(request.AuthorityId),
                 new OrganizationId(request.HolderOrganizationId),

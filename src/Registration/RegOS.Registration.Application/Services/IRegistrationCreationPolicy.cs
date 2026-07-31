@@ -26,7 +26,7 @@ namespace RegOS.Registration.Application.Services;
 public interface IRegistrationCreationPolicy
 {
     Task EnsureCanCreateAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
         OrganizationId holderOrganizationId,

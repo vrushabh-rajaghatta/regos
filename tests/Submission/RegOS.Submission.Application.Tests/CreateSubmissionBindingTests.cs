@@ -13,7 +13,6 @@ using RegOS.Submission.Application.Tests.Fixtures;
 using RegOS.Submission.Domain.Submission;
 using RegOS.Submission.Infrastructure.Repositories;
 
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using RegulatoryApplicationAggregate =
     RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;

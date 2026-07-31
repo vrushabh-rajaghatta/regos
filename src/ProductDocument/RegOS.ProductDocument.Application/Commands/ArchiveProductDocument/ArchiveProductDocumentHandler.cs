@@ -22,7 +22,7 @@ public sealed class ArchiveProductDocumentHandler
 
         // Not found — or found, but under a different product than the route
         // claims. Either way the addressed resource does not exist here.
-        if (document is null || document.ProductId != command.ProductId)
+        if (document is null || document.GlobalProductId != command.GlobalProductId)
             throw new NotFoundException(
                 ProductDocumentLifecycleErrors.DocumentDoesNotExist);
 

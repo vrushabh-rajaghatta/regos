@@ -2,12 +2,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { updateProduct, type UpdateProductRequest } from "../api/updateProduct";
 
-export function useUpdateProduct(productId: string) {
+export function useUpdateProduct(globalProductId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (request: UpdateProductRequest) =>
-      updateProduct(productId, request),
+      updateProduct(globalProductId, request),
 
     onSuccess: () => {
       // Both the detail view and the list show name and type.

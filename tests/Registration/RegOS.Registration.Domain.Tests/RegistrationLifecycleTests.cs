@@ -388,7 +388,7 @@ public class RegistrationLifecycleTests
     private static RegistrationAggregate New(DateOnly? occurredOn = null) =>
         RegistrationAggregate.Create(
             TenantId.New(),
-            ProductId.New(),
+            GlobalProductId.New(),
             new CountryId(Guid.NewGuid()),
             new AuthorityId(Guid.NewGuid()),
             new OrganizationId(Guid.NewGuid()),

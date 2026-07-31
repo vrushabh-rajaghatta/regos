@@ -11,11 +11,11 @@ export interface CreateRegistrationBody {
 }
 
 export async function createRegistration(
-  productId: string,
+  globalProductId: string,
   body: CreateRegistrationBody
 ): Promise<{ id: string }> {
   const response = await apiFetch(
-    buildUrl(`/api/products/${productId}/registrations`),
+    buildUrl(`/api/products/${globalProductId}/registrations`),
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

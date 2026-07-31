@@ -2,10 +2,10 @@ import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { RegistrationSummary } from "../types/RegistrationSummary";
 
 export async function listProductRegistrations(
-  productId: string
+  globalProductId: string
 ): Promise<RegistrationSummary[]> {
   const response = await apiFetch(
-    buildUrl(`/api/products/${productId}/registrations`)
+    buildUrl(`/api/products/${globalProductId}/registrations`)
   );
 
   if (!response.ok) {

@@ -5,7 +5,7 @@ public sealed record ProductDocumentDetailDto(
     string Name,
     string DocumentTypeName,
     string Status,
-    Guid ProductId,
+    Guid GlobalProductId,
     string ProductName,
     DateTime CreatedOnUtc,
     DocumentVersionDetailDto? CurrentVersion);

@@ -51,7 +51,7 @@ public sealed class ListMarketRegistrationsHandler
                 .AsNoTracking()
             where registration.CountryId == countryId
             join product in _dbContext.Products
-                on registration.ProductId equals product.Id
+                on registration.GlobalProductId equals product.Id
             join authority in _dbContext.Authorities
                 on registration.AuthorityId equals authority.Id
             join holder in _dbContext.Organizations
@@ -59,7 +59,7 @@ public sealed class ListMarketRegistrationsHandler
             select new
             {
                 registration.Id,
-                registration.ProductId,
+                registration.GlobalProductId,
                 ProductCode = product.Code,
                 ProductName = product.Name,
                 registration.AuthorityId,
@@ -83,7 +83,7 @@ public sealed class ListMarketRegistrationsHandler
 
                 return new MarketRegistrationSummary(
                     row.Id.Value,
-                    row.ProductId.Value,
+                    row.GlobalProductId.Value,
                     row.ProductCode.Value,
                     row.ProductName.Value,
                     row.AuthorityId.Value,

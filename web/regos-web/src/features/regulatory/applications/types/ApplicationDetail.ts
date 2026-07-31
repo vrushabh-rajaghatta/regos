@@ -1,7 +1,7 @@
 export interface ApplicationDetail {
   id: string;
   name: string;
-  productId: string;
+  globalProductId: string;
   countryId: string;
   countryName: string;
   authorityId: string;

@@ -22,7 +22,7 @@ public sealed class RegistrationCreationPolicy : IRegistrationCreationPolicy
     }
 
     public async Task EnsureCanCreateAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
         OrganizationId holderOrganizationId,
@@ -30,11 +30,11 @@ public sealed class RegistrationCreationPolicy : IRegistrationCreationPolicy
         CancellationToken cancellationToken)
     {
         // Rule 1 — Product exists. The product is ADDRESSED by the route
-        // (POST /api/products/{productId}/registrations), so its absence is a
+        // (POST /api/products/{globalProductId}/registrations), so its absence is a
         // 404 like any other missing resource. The country, authority and
         // organization below are *referenced* values and stay 400.
         var productExists = await _dbContext.Products
-            .AnyAsync(x => x.Id == productId, cancellationToken);
+            .AnyAsync(x => x.Id == globalProductId, cancellationToken);
 
         if (!productExists)
             throw new NotFoundException(
@@ -99,7 +99,7 @@ public sealed class RegistrationCreationPolicy : IRegistrationCreationPolicy
             throw new DomainException(
                 RegistrationRuleErrors.ApplicationDoesNotExist);
 
-        if (application.ProductId != productId)
+        if (application.GlobalProductId != globalProductId)
             throw new DomainException(
                 RegistrationRuleErrors.ApplicationNotForProduct);
     }

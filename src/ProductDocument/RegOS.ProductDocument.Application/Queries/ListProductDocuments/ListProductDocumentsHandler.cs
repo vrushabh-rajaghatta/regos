@@ -16,7 +16,7 @@ public sealed class ListProductDocumentsHandler
     }
 
     public async Task<IReadOnlyList<ProductDocumentSummary>> HandleAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CancellationToken cancellationToken)
     {
         // Lightweight summaries for the workspace list — the document type
@@ -24,7 +24,7 @@ public sealed class ListProductDocumentsHandler
         // whole version collection. Status is materialized then stringified.
         var rows = await (
             from document in _dbContext.ProductDocuments.AsNoTracking()
-            where document.ProductId == productId
+            where document.GlobalProductId == globalProductId
             join documentType in _dbContext.DocumentTypes
                 on document.DocumentTypeId equals documentType.Id
             orderby document.CreatedOnUtc descending

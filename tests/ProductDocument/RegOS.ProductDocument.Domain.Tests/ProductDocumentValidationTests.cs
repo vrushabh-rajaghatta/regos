@@ -14,10 +14,10 @@ namespace RegOS.ProductDocument.Domain.Tests;
 public class ProductDocumentValidationTests
 {
     private static ProductDocumentAggregate Create(
-        ProductId productId,
+        GlobalProductId globalProductId,
         DocumentTypeId documentTypeId,
         string name)
-        => ProductDocumentAggregate.Create(TenantId.New(), productId, documentTypeId, name);
+        => ProductDocumentAggregate.Create(TenantId.New(), globalProductId, documentTypeId, name);
 
     [Fact]
     public void Create_WithDefaultProductId_Throws()
@@ -35,7 +35,7 @@ public class ProductDocumentValidationTests
     public void Create_WithDefaultDocumentTypeId_Throws()
     {
         var act = () => Create(
-            new ProductId(Guid.NewGuid()),
+            new GlobalProductId(Guid.NewGuid()),
             default,
             "Label");
 
@@ -50,7 +50,7 @@ public class ProductDocumentValidationTests
     public void Create_WithBlankName_Throws(string? name)
     {
         var act = () => Create(
-            new ProductId(Guid.NewGuid()),
+            new GlobalProductId(Guid.NewGuid()),
             new DocumentTypeId(Guid.NewGuid()),
             name!);
 
@@ -64,7 +64,7 @@ public class ProductDocumentValidationTests
         var name = new string('a', ProductDocumentAggregate.NameMaxLength + 1);
 
         var act = () => Create(
-            new ProductId(Guid.NewGuid()),
+            new GlobalProductId(Guid.NewGuid()),
             new DocumentTypeId(Guid.NewGuid()),
             name);
 
