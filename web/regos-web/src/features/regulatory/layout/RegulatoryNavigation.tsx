@@ -5,6 +5,8 @@ const items = [
   "Registrations",
   "Submissions",
   "Organizations",
+  "Sites",
+  "Contacts",
   "Authorities",
   "Templates",
 ];

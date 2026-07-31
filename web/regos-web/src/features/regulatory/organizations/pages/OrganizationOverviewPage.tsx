@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { PageSection } from "@/shared/components/PageSection";
 
-import { OrganizationNotFoundError } from "../api/getOrganization";
 import { ActivateOrganizationDialog } from "../components/ActivateOrganizationDialog";
 import { DeactivateOrganizationDialog } from "../components/DeactivateOrganizationDialog";
 import { EditOrganizationDialog } from "../components/EditOrganizationDialog";
@@ -14,49 +13,24 @@ import { OrganizationStatusBadge } from "../components/OrganizationStatusBadge";
 import { useOrganization } from "../hooks/useOrganization";
 import { organizationTypeLabel } from "../types/OrganizationType";
 
-export function OrganizationDetailsPage() {
+/**
+ * Who this company is: the identity it carries and the registries that know it.
+ *
+ * Not-found and load errors are the workspace layout's job — by the time this
+ * renders, the organization exists.
+ */
+export function OrganizationOverviewPage() {
   const { organizationId } = useParams();
   const [editOpen, setEditOpen] = useState(false);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
   const [activateOpen, setActivateOpen] = useState(false);
 
-  const { data: organization, isPending, error } = useOrganization(
-    organizationId!,
-  );
+  const { data: organization } = useOrganization(organizationId!);
 
-  // Loading / Not found / Error / Success are all explicit, and a missing
-  // organization is distinguished from a failed request.
-  if (isPending) {
-    return (
-      <p data-testid="organization-loading">Loading organization...</p>
-    );
-  }
-
-  if (error instanceof OrganizationNotFoundError) {
-    return (
-      <div className="space-y-4">
-        <p data-testid="organization-not-found">
-          This organization does not exist.
-        </p>
-
-        <Link
-          to="/regulatory/organizations"
-          className="text-sm hover:underline"
-        >
-          Back to organizations
-        </Link>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <p data-testid="organization-error">Unable to load organization.</p>
-    );
-  }
+  if (!organization) return null;
 
   return (
-    <>
+    <div className="p-6">
       <PageHeader
         title={organization.legalName}
         description={organizationTypeLabel(organization.type)}
@@ -166,6 +140,6 @@ export function OrganizationDetailsPage() {
           />
         </PageSection>
       </div>
-    </>
+    </div>
   );
 }

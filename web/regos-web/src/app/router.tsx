@@ -27,8 +27,14 @@ import { DocumentUsagePage } from "@/features/regulatory/documents/pages/Documen
 import { DocumentHistoryPage } from "@/features/regulatory/documents/pages/DocumentHistoryPage";
 import { DocumentAiInsightsPage } from "@/features/regulatory/documents/pages/DocumentAiInsightsPage";
 import { PlatformLayout } from "@/features/platform/layout/PlatformLayout";
-import { OrganizationDetailsPage } from "@/features/regulatory/organizations/pages/OrganizationDetailsPage";
+import { OrganizationWorkspaceLayout } from "@/features/regulatory/organizations/layout/OrganizationWorkspaceLayout";
+import { OrganizationOverviewPage } from "@/features/regulatory/organizations/pages/OrganizationOverviewPage";
+import { OrganizationDivisionsPage } from "@/features/regulatory/organizations/pages/OrganizationDivisionsPage";
+import { OrganizationSitesPage } from "@/features/regulatory/organizations/pages/OrganizationSitesPage";
+import { OrganizationContactsPage } from "@/features/regulatory/organizations/pages/OrganizationContactsPage";
 import { OrganizationsPage } from "@/features/regulatory/organizations/pages/OrganizationsPage";
+import { SiteDirectoryPage } from "@/features/regulatory/organizations/pages/SiteDirectoryPage";
+import { ContactDirectoryPage } from "@/features/regulatory/organizations/pages/ContactDirectoryPage";
 import { TenantsPage } from "@/features/platform/tenants/pages/TenantsPage";
 import { PlatformIndexRedirect } from "@/features/platform/layout/PlatformIndexRedirect";
 import { UsersPage } from "@/features/platform/users/pages/UsersPage";
@@ -284,11 +290,47 @@ export const router = createBrowserRouter([
                     index: true,
                     element: <OrganizationsPage />,
                   },
+                  // Organization Workspace — the first whose subject is a
+                  // company rather than a product. Four angles on one party:
+                  // who it is, how it is organised, where it operates, who it
+                  // names.
                   {
                     path: ":organizationId",
-                    element: <OrganizationDetailsPage />,
+                    element: <OrganizationWorkspaceLayout />,
+                    children: [
+                      {
+                        index: true,
+                        element: <OrganizationOverviewPage />,
+                      },
+                      {
+                        path: "divisions",
+                        element: <OrganizationDivisionsPage />,
+                      },
+                      {
+                        path: "sites",
+                        element: <OrganizationSitesPage />,
+                      },
+                      {
+                        path: "contacts",
+                        element: <OrganizationContactsPage />,
+                      },
+                    ],
                   },
                 ],
+              },
+              // Tenant-wide directories, siblings rather than children. "Which
+              // manufacturing sites do we have in India?" spans the registry,
+              // and it is the question that made OrganizationSite and Contact
+              // aggregate roots — the same reasoning that put Registrations
+              // beside Products. Nesting them under /organizations would also
+              // collide with :organizationId.
+              {
+                path: "sites",
+                element: <SiteDirectoryPage />,
+              },
+              {
+                path: "contacts",
+                element: <ContactDirectoryPage />,
               },
               // Registrations are regulatory assets, not product work, so they
               // sit beside Products rather than beneath one. A registration has

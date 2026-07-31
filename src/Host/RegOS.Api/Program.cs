@@ -152,6 +152,7 @@ referenceData.MapListDocumentTypes();
 referenceData.MapListRegulatoryTemplates();
 referenceData.MapGetRegulatoryTemplate();
 referenceData.MapListIdentifierSchemes();
+referenceData.MapListContactRoles();
 
 var authentication = app.MapGroup("").WithTags("Authentication");
 authentication.MapLogin();

@@ -6,6 +6,7 @@ using RegOS.ReferenceData.Application.Queries.SubmissionTypes.ListSubmissionType
 using RegOS.ReferenceData.Application.Queries.DocumentTypes.ListDocumentTypes;
 using RegOS.ReferenceData.Application.Queries.Blueprint.ListRegulatoryTemplates;
 using RegOS.ReferenceData.Application.Queries.Blueprint.GetRegulatoryTemplate;
+using RegOS.ReferenceData.Application.Queries.Organization.ListContactRoles;
 using RegOS.ReferenceData.Application.Queries.Organization.ListIdentifierSchemes;
 
 namespace RegOS.ReferenceData.Application;
@@ -22,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<ListRegulatoryTemplatesHandler>();
         services.AddScoped<GetRegulatoryTemplateHandler>();
         services.AddScoped<ListIdentifierSchemesHandler>();
+        services.AddScoped<ListContactRolesHandler>();
 
         return services;
     }
