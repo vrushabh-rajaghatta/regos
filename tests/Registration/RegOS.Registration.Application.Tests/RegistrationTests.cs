@@ -6,6 +6,7 @@ using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
+using RegOS.Registration.Application.Commands.ChangeRegistrationStatus;
 using RegOS.Registration.Application.Commands.CreateRegistration;
 using RegOS.Registration.Application.Commands.RecordRegistrationApproval;
 using RegOS.Registration.Application.Queries.GetRegistration;
@@ -257,9 +258,12 @@ public sealed class RegistrationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var productId = await ProductAsync(ctx);
-        var id = await CreateAsync(ctx, productId);
 
-        // A grant from 2019, entered today: the history has to say both.
+        // A migrated authorisation: both entries carry their 2019 business
+        // dates, in the order they happened, while both are recorded today.
+        var id = await CreateAsync(
+            ctx, productId, occurredOn: new DateOnly(2019, 1, 15));
+
         var granted = new DateOnly(2019, 4, 12);
 
         await using var act = New();
@@ -304,6 +308,108 @@ public sealed class RegistrationTests : IAsyncLifetime
             .WithMessage(RegistrationRuleErrors.RegistrationDoesNotExist);
     }
 
+    // --- Lifecycle -----------------------------------------------------------
+
+    /// <summary>
+    /// The whole regulatory story of an authorisation, round-tripped through
+    /// Postgres: filed, assessed, granted, suspended, reinstated, surrendered.
+    /// The history is the record a regulator would read.
+    /// </summary>
+    [Fact]
+    public async Task AnEntireLifecycleIsPersistedAsOneChronologicalHistory()
+    {
+        await using var ctx = New();
+        var productId = await ProductAsync(ctx);
+        var id = await CreateAsync(
+            ctx, productId, occurredOn: new DateOnly(2020, 1, 10));
+
+        await ChangeAsync(id, RegistrationStatus.Submitted, new(2020, 3, 2));
+        await ChangeAsync(id, RegistrationStatus.UnderReview, new(2020, 4, 15));
+        await ApproveAsync(id, "NDA-556677", new(2021, 2, 8), new(2031, 2, 8));
+        await ChangeAsync(
+            id, RegistrationStatus.Suspended, new(2023, 9, 14),
+            "GMP non-compliance at the manufacturing site.");
+        await ChangeAsync(
+            id, RegistrationStatus.Approved, new(2024, 1, 30),
+            "Suspension lifted.");
+        await ChangeAsync(id, RegistrationStatus.Withdrawn, new(2025, 6, 1));
+
+        await using var check = New();
+        var registration = await check.Registrations
+            .AsNoTracking()
+            .Include(x => x.History)
+            .FirstAsync(x => x.Id == id);
+
+        registration.CurrentStatus.Should().Be(RegistrationStatus.Withdrawn);
+
+        registration.History
+            .OrderBy(entry => entry.OccurredOn)
+            .Select(entry => entry.Status)
+            .Should().Equal(
+                RegistrationStatus.Planned,
+                RegistrationStatus.Submitted,
+                RegistrationStatus.UnderReview,
+                RegistrationStatus.Approved,
+                RegistrationStatus.Suspended,
+                RegistrationStatus.Approved,
+                RegistrationStatus.Withdrawn);
+
+        // The grant survives everything that happened after it.
+        registration.RegistrationNumber.Should().Be("NDA-556677");
+        registration.ApprovedOn.Should().Be(new DateOnly(2021, 2, 8));
+    }
+
+    [Fact]
+    public async Task AForbiddenTransitionIsRefusedAndNothingIsWritten()
+    {
+        await using var ctx = New();
+        var productId = await ProductAsync(ctx);
+        var id = await CreateAsync(ctx, productId);
+
+        var suspend = async () =>
+            await ChangeAsync(id, RegistrationStatus.Suspended, Today);
+
+        await suspend.Should().ThrowAsync<BusinessRuleViolationException>()
+            .WithMessage(RegistrationErrors.TransitionNotPermitted(
+                RegistrationStatus.Planned, RegistrationStatus.Suspended));
+
+        await using var check = New();
+        var registration = await check.Registrations
+            .AsNoTracking()
+            .Include(x => x.History)
+            .FirstAsync(x => x.Id == id);
+
+        registration.CurrentStatus.Should().Be(RegistrationStatus.Planned);
+        registration.History.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task ATerminalRegistrationStaysWhereItIs()
+    {
+        await using var ctx = New();
+        var productId = await ProductAsync(ctx);
+        var id = await CreateAsync(ctx, productId);
+
+        await ChangeAsync(id, RegistrationStatus.Refused, Today);
+
+        var revive = async () =>
+            await ApproveAsync(id, "NDA-1", Today.AddDays(1));
+
+        await revive.Should().ThrowAsync<BusinessRuleViolationException>()
+            .WithMessage(RegistrationErrors.StatusIsTerminal(
+                RegistrationStatus.Refused));
+    }
+
+    [Fact]
+    public async Task ChangingStatusOnAMissingRegistrationIsNotFound()
+    {
+        var change = async () => await ChangeAsync(
+            RegistrationId.New(), RegistrationStatus.Submitted, Today);
+
+        await change.Should().ThrowAsync<NotFoundException>()
+            .WithMessage(RegistrationRuleErrors.RegistrationDoesNotExist);
+    }
+
     // --- Reading -------------------------------------------------------------
 
     [Fact]
@@ -323,6 +429,40 @@ public sealed class RegistrationTests : IAsyncLifetime
         detail.ProductName.Should().NotBeNullOrWhiteSpace();
         detail.Status.Should().Be(nameof(RegistrationStatus.Planned));
         detail.History.Should().ContainSingle();
+    }
+
+    /// <summary>
+    /// The read model asks the domain where a registration may go, so a client
+    /// offers exactly the choices the domain would accept instead of restating
+    /// the rules — and a terminal registration offers none.
+    /// </summary>
+    [Fact]
+    public async Task TheDetailViewOffersTheTransitionsTheDomainWouldAccept()
+    {
+        await using var ctx = New();
+        var productId = await ProductAsync(ctx);
+        var id = await CreateAsync(ctx, productId);
+
+        await using var planned = New();
+        var whilePlanned = await new GetRegistrationHandler(planned)
+            .HandleAsync(id, default);
+
+        whilePlanned!.AllowedNextStatuses.Should().BeEquivalentTo(
+        [
+            nameof(RegistrationStatus.Submitted),
+            nameof(RegistrationStatus.UnderReview),
+            nameof(RegistrationStatus.Approved),
+            nameof(RegistrationStatus.Refused),
+            nameof(RegistrationStatus.Withdrawn),
+        ]);
+
+        await ChangeAsync(id, RegistrationStatus.Refused, Today);
+
+        await using var refused = New();
+        var whenRefused = await new GetRegistrationHandler(refused)
+            .HandleAsync(id, default);
+
+        whenRefused!.AllowedNextStatuses.Should().BeEmpty();
     }
 
     [Fact]
@@ -373,7 +513,8 @@ public sealed class RegistrationTests : IAsyncLifetime
         ProductId productId,
         CountryId? countryId = null,
         OrganizationId? holderId = null,
-        RegulatoryApplicationId? applicationId = null)
+        RegulatoryApplicationId? applicationId = null,
+        DateOnly? occurredOn = null)
     {
         var handler = new CreateRegistrationHandler(
             new RegistrationCreationPolicy(ctx),
@@ -386,13 +527,47 @@ public sealed class RegistrationTests : IAsyncLifetime
                 countryId ?? UnitedStates,
                 Fda,
                 holderId ?? Holder,
-                Today,
+                occurredOn ?? Today,
                 applicationId),
             default);
 
         _registrationIds.Add(result.Id.Value);
 
         return result.Id;
+    }
+
+    /// <summary>
+    /// Each transition through its own context, the way a request would arrive —
+    /// so the lifecycle is exercised against persisted state rather than an
+    /// aggregate that never left memory.
+    /// </summary>
+    private static async Task ChangeAsync(
+        RegistrationId id,
+        RegistrationStatus status,
+        DateOnly occurredOn,
+        string? note = null)
+    {
+        await using var ctx = New();
+
+        await new ChangeRegistrationStatusHandler(new RegistrationRepository(ctx))
+            .HandleAsync(
+                new ChangeRegistrationStatusCommand(id, status, occurredOn, note),
+                default);
+    }
+
+    private static async Task ApproveAsync(
+        RegistrationId id,
+        string registrationNumber,
+        DateOnly approvedOn,
+        DateOnly? expiresOn = null)
+    {
+        await using var ctx = New();
+
+        await new RecordRegistrationApprovalHandler(new RegistrationRepository(ctx))
+            .HandleAsync(
+                new RecordRegistrationApprovalCommand(
+                    id, registrationNumber, approvedOn, expiresOn),
+                default);
     }
 
     private async Task<ProductId> ProductAsync(RegOSDbContext ctx)

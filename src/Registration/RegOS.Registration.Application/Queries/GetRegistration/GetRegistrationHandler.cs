@@ -86,6 +86,11 @@ public sealed class GetRegistrationHandler
                     entry.Status.ToString(),
                     entry.OccurredOn,
                     entry.RecordedOnUtc,
-                    entry.Note))]);
+                    entry.Note))],
+            // Asked of the domain, never restated here: one table decides what
+            // is legal, and the read model reports its answer.
+            [.. RegistrationLifecycle.From(registration.CurrentStatus)
+                .OrderBy(status => status)
+                .Select(status => status.ToString())]);
     }
 }

@@ -142,7 +142,7 @@ public class RegistrationTests
     [Fact]
     public void RecordingApprovalSetsTheNumberDatesAndStatus()
     {
-        var registration = New();
+        var registration = New(occurredOn: new DateOnly(2026, 1, 1));
         var approved = new DateOnly(2026, 3, 1);
         var expires = new DateOnly(2031, 3, 1);
 
@@ -159,10 +159,14 @@ public class RegistrationTests
     /// granted in 2019 and entered today must record 2019, and the clock is
     /// never consulted for a business date.
     /// </summary>
+    /// <remarks>
+    /// The complete migration story: both entries carry their 2019 business
+    /// dates, in the order they happened, while both were recorded today.
+    /// </remarks>
     [Fact]
     public void ApprovalUsesTheBusinessDateNotTheClock()
     {
-        var registration = New();
+        var registration = New(occurredOn: new DateOnly(2019, 1, 15));
         var granted = new DateOnly(2019, 4, 12);
 
         registration.RecordApproval("EU/1/19/1234", granted);
@@ -179,7 +183,7 @@ public class RegistrationTests
     [Fact]
     public void ApprovalAppendsToHistoryRatherThanReplacingIt()
     {
-        var registration = New();
+        var registration = New(occurredOn: new DateOnly(2026, 1, 1));
 
         registration.RecordApproval("NDA-1", new DateOnly(2026, 3, 1));
 
@@ -224,7 +228,7 @@ public class RegistrationTests
     [Fact]
     public void ExpiryOnTheApprovalDateIsAllowed()
     {
-        var registration = New();
+        var registration = New(occurredOn: new DateOnly(2026, 1, 1));
         var sameDay = new DateOnly(2026, 3, 1);
 
         var record = () => registration.RecordApproval("NDA-1", sameDay, sameDay);

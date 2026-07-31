@@ -9,9 +9,8 @@ namespace RegOS.Registration.Domain.Aggregates.Registration;
 /// happen</em> — what can be renewed, what a variation may be filed against.
 /// That is behaviour, and it belongs beside the behaviour.
 /// <para>
-/// Which of these are terminal, and which transitions the domain permits, is
-/// STORY-002's subject. STORY-001 only ever reaches <see cref="Planned"/> and
-/// <see cref="Approved"/>.
+/// Which of these may follow which — and which are terminal, and why — is
+/// declared in <see cref="RegistrationLifecycle"/>.
 /// </para>
 /// </remarks>
 public enum RegistrationStatus

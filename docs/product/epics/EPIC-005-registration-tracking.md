@@ -1,6 +1,6 @@
 # EPIC-005 — Registration tracking
 
-**Status:** 🟡 In Progress (1 of 4 stories shipped) · **Branch:** `epic/EPIC-005-registration-tracking` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress (2 of 4 stories shipped) · **Branch:** `epic/EPIC-005-registration-tracking` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The first capability about the world **after** a submission. EPIC-001–003 made RegOS able to prepare, validate and assemble a filing; this makes it able to say what that filing produced, and what the business holds today across every market.
 
@@ -102,7 +102,7 @@ Mirroring `RegulatoryApplication.ApplicantOrganizationId`. The platform keeps te
 | # | Story | Status |
 |---|---|---|
 | **STORY-001** | **The Registration aggregate** — create for a product in a market, record the grant (number + dates), optional application link; persistence, API, read model | 🟢 Complete |
-| **STORY-002** | **Lifecycle** — the transitions the domain permits, each dated, with an immutable history | ⚪ Not Started |
+| **STORY-002** | **Lifecycle** — the transitions the domain permits, each dated, with an immutable history | 🟢 Complete |
 | **STORY-003** | **Portfolio views** — *where is this product registered?* / *what do we hold in this market?* + the registration UI | ⚪ Not Started |
 | **STORY-004** | **Expiry & renewal visibility** (derived, no scheduler) + capstone browser proof + ADR-037 + retro | ⚪ Not Started |
 
@@ -130,3 +130,110 @@ A new bounded context, `src/Registration/`, mirroring the shape every other modu
 Planned   occurred 2019-01-15   recorded 2026-07-31   "Carried over from the legacy register."
 Approved  occurred 2019-04-12   recorded 2026-07-31   "Original approval."
 ```
+
+### STORY-002 — Lifecycle (shipped)
+
+Where the platform stops merely recording regulatory state and starts enforcing
+the rules that make that state meaningful. **No schema change** — the lifecycle
+is pure behaviour over STORY-001's two tables.
+
+**The governing principle (approved 2026-07-31):** *forbid transitions that make
+the record incoherent; permit transitions that are merely unusual.* RegOS must
+not encode one regulator's process as universal law.
+
+**The transition table** — declared as a matrix in `RegistrationLifecycle`, not
+as conditionals in the aggregate, so future capabilities arrive as edits to the
+table and the permitted graph stays exhaustively testable:
+
+| From | May become |
+|---|---|
+| `Planned` | `Submitted` · `UnderReview` · `Approved` · `Refused` · `Withdrawn` |
+| `Submitted` | `UnderReview` · `Approved` · `Refused` · `Withdrawn` |
+| `UnderReview` | `Approved` · `Refused` · `Withdrawn` |
+| `Approved` | `Suspended` · `Expired` · `Withdrawn` |
+| `Suspended` | **`Approved`** · `Expired` · `Withdrawn` |
+| `Refused` · `Expired` · `Withdrawn` | — |
+
+**Decisions (approved 2026-07-31):**
+
+1. **Forward jumps are permitted from every pre-decision state.** A migrated
+   authorisation granted in 2019 never passed through RegOS's `Submitted` or
+   `UnderReview`. Recording it as approved is not skipping steps — it is
+   faithfully recording that RegOS entered the story after those steps had
+   already happened. Historical import and operational workflow are the same
+   model, and a strict pipeline would break the very case STORY-001 was built
+   for.
+2. **`Suspended → Approved` is permitted.** Suspension is a reversible
+   operational state, not the destruction of the authorisation: the grant still
+   exists, it merely cannot be exercised. Refusing the lift would be the
+   surprising choice.
+3. **Three states are terminal, for three different reasons.** `Refused`
+   permanently — no authorisation ever existed, so there is nothing to suspend,
+   expire or surrender. `Expired` until renewal is modelled. `Withdrawn` until
+   restoration is modelled. **The latter two are deliberate boundaries of the
+   current domain, not assertions that all regulators prohibit those paths.**
+4. **Renewal is deferred to STORY-004.** A renewal keeps the status at `Approved`
+   and moves the validity dates — it changes *authorisation validity*, not
+   *status*. Deferring it preserves a clean invariant for this story: every
+   operation here changes status, and renewal would be the first that does not.
+5. **Corrections are out of scope entirely.** A status entered by mistake is a
+   data-quality problem wearing a lifecycle costume. Solving both with one
+   mechanism would mean opening transitions like `Withdrawn → Approved` whose
+   only purpose is undoing operator error. A future correction model can
+   introduce superseded entries and amended effective dates without weakening
+   the lifecycle.
+6. **`RecordApproval` keeps its own endpoint but routes through the same
+   validator.** Approval carries the registration number and validity dates —
+   a distinct business operation, not a status with extra fields. Internally it
+   passes the identical transition gate, so a refused registration cannot be
+   quietly approved by a different door.
+
+**Two invariants, tested directly:**
+
+- **Every transition updates `CurrentStatus` and appends exactly one immutable
+  history entry.** Asserted for all 18 permitted transitions by theory, not for
+  a chosen few — and all 46 forbidden pairs are asserted to change nothing.
+- **Business time only moves forward.** A status may not take effect before the
+  one it replaces; equal dates are allowed, because a migration routinely
+  produces two events on one day. Discovering an earlier event later is a
+  correction, which is a separate concept.
+
+**One guard the table alone could not express:** `ChangeStatus` cannot perform
+the *first* grant, because it has no way to supply the number and validity
+dates. Returning to `Approved` from `Suspended` is a lift, not a grant, and is
+allowed. So the first entry into `Approved` is always through the operation that
+establishes what approval means.
+
+**The read model asks the domain, never restates it.** The detail view carries
+`allowedNextStatuses` straight from the table, so a client offers exactly the
+choices the domain would accept — and a terminal registration offers none.
+
+**API:** `POST /registrations/{id}/status` — `{ status, occurredOn, note }`.
+
+**Behaviour change:** a `Refused` registration was previously approvable. It now
+returns 409. Nothing was ever granted, so there is nothing to grant.
+
+**Verified:** 735 backend tests green (94 new: 89 domain, 5 integration);
+`has-pending-model-changes` confirms no schema change; the full lifecycle
+exercised live on an isolated stack — the first grant refused through
+`/status` (409), `Planned → Suspended` refused (409), a backdated status refused
+(400), a second grant refused after the status moved on (409), and a terminal
+registration reporting no onward transitions:
+
+```
+Planned     occurred 2020-01-10   recorded 2026-07-31
+Submitted   occurred 2020-03-02   recorded 2026-07-31
+UnderReview occurred 2020-03-02   recorded 2026-07-31
+Approved    occurred 2021-02-08   recorded 2026-07-31   "Original approval."
+Suspended   occurred 2023-09-14   recorded 2026-07-31   "GMP non-compliance at the manufacturing site."
+Approved    occurred 2024-01-30   recorded 2026-07-31   "Suspension lifted."
+Withdrawn   occurred 2025-06-01   recorded 2026-07-31   "Surrendered on portfolio review."
+```
+
+The grant survives everything after it: `NDA-556677`, approved 2021-02-08,
+expiring 2031-02-08, on a registration now `Withdrawn`.
+
+**Five STORY-001 tests were corrected, not the rule.** They created a
+registration dated *today* and then approved it in *2019* — a history that was
+never coherent, and that only the chronology invariant made visible. Re-dated to
+tell the migration story properly.

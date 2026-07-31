@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using RegOS.Registration.Application.Commands.ChangeRegistrationStatus;
 using RegOS.Registration.Application.Commands.CreateRegistration;
 using RegOS.Registration.Application.Commands.RecordRegistrationApproval;
 using RegOS.Registration.Application.Queries.GetRegistration;
@@ -15,6 +16,8 @@ public static class DependencyInjection
         services.AddScoped<CreateRegistrationHandler>();
 
         services.AddScoped<RecordRegistrationApprovalHandler>();
+
+        services.AddScoped<ChangeRegistrationStatusHandler>();
 
         services.AddScoped<GetRegistrationHandler>();
 

@@ -209,6 +209,7 @@ submissions.MapGetSubmissionSnapshot();
 var registrations = app.MapGroup("").WithTags("Registrations");
 registrations.MapCreateRegistration();
 registrations.MapRecordRegistrationApproval();
+registrations.MapChangeRegistrationStatus();
 registrations.MapGetRegistration();
 registrations.MapListProductRegistrations();
 

@@ -188,12 +188,19 @@ public sealed class Registration
         if (approvedOn == default)
             throw new DomainException(RegistrationErrors.OccurredOnRequired);
 
-        if (CurrentStatus == RegistrationStatus.Approved)
+        // Once granted, always granted: a second grant would overwrite the
+        // number and validity of the first, and the history would no longer
+        // explain the registration a regulator is holding.
+        if (ApprovedOn is not null)
             throw new BusinessRuleViolationException(
                 RegistrationErrors.ApprovalAlreadyRecorded);
 
         if (expiresOn is { } expiry && expiry < approvedOn)
             throw new DomainException(RegistrationErrors.ExpiryBeforeApproval);
+
+        // The same table every other transition answers to — so a refused
+        // registration cannot be quietly approved by a different door.
+        EnsureCanBecome(RegistrationStatus.Approved, approvedOn);
 
         RegistrationNumber = registrationNumber.Trim();
         ApprovedOn = approvedOn;
@@ -202,6 +209,82 @@ public sealed class Registration
         Record(RegistrationStatus.Approved, approvedOn, note);
     }
 
+    /// <summary>
+    /// Moves the registration to <paramref name="target"/>, if
+    /// <see cref="RegistrationLifecycle"/> permits it from where it stands.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately cannot perform the <em>first</em> grant: that establishes
+    /// the registration number and validity dates, which this operation has no
+    /// way to supply — use <see cref="RecordApproval"/>. Returning to
+    /// <see cref="RegistrationStatus.Approved"/> from
+    /// <see cref="RegistrationStatus.Suspended"/> is a lift of the suspension,
+    /// not a new grant, and is allowed here.
+    /// <para>
+    /// This is not a correction mechanism. A status entered in error is a data
+    /// quality problem, and solving it here would mean opening transitions whose
+    /// only purpose is undoing operator error.
+    /// </para>
+    /// </remarks>
+    /// <param name="occurredOn">
+    /// The business date the new status took effect — never the clock, and never
+    /// earlier than the status it replaces.
+    /// </param>
+    public void ChangeStatus(
+        RegistrationStatus target,
+        DateOnly occurredOn,
+        string? note = null)
+    {
+        if (!Enum.IsDefined(target))
+            throw new DomainException(RegistrationErrors.StatusNotRecognised);
+
+        if (occurredOn == default)
+            throw new DomainException(RegistrationErrors.OccurredOnRequired);
+
+        if (target == RegistrationStatus.Approved && ApprovedOn is null)
+        {
+            throw new BusinessRuleViolationException(
+                RegistrationErrors.ApprovalMustBeRecordedAsAGrant);
+        }
+
+        EnsureCanBecome(target, occurredOn);
+
+        Record(target, occurredOn, note);
+    }
+
+    /// <summary>
+    /// The single gate every transition passes through, so that no route into a
+    /// status can bypass the lifecycle or the chronology of the record.
+    /// </summary>
+    private void EnsureCanBecome(RegistrationStatus target, DateOnly occurredOn)
+    {
+        if (target == CurrentStatus)
+            throw new BusinessRuleViolationException(
+                RegistrationErrors.AlreadyInStatus(target));
+
+        if (RegistrationLifecycle.IsTerminal(CurrentStatus))
+            throw new BusinessRuleViolationException(
+                RegistrationErrors.StatusIsTerminal(CurrentStatus));
+
+        if (!RegistrationLifecycle.Permits(CurrentStatus, target))
+            throw new BusinessRuleViolationException(
+                RegistrationErrors.TransitionNotPermitted(CurrentStatus, target));
+
+        // Business time only ever moves forward. Two events may share a date —
+        // migrations routinely produce that — but a status taking effect before
+        // the one it replaces would make the history unreadable. Discovering an
+        // earlier event later is a correction, which is a separate concept.
+        if (occurredOn < _history[^1].OccurredOn)
+            throw new DomainException(
+                RegistrationErrors.OccurredOnBeforePreviousEntry);
+    }
+
+    /// <summary>
+    /// The core invariant of the aggregate: <b>every transition updates
+    /// <see cref="CurrentStatus"/> and appends exactly one immutable history
+    /// entry.</b> Nothing else writes either, so current state and the record of
+    /// how it was reached can never disagree.
+    /// </summary>
     private void Record(
         RegistrationStatus status,
         DateOnly occurredOn,
