@@ -117,7 +117,7 @@ public sealed class OrganizationTests
 
         organization.Deactivate();
 
-        var act = organization.Deactivate;
+        var act = () => organization.Deactivate();
 
         act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(OrganizationErrors.AlreadyInactive);
@@ -141,7 +141,7 @@ public sealed class OrganizationTests
         // transition to make, so this is a conflict rather than a no-op.
         var organization = Active();
 
-        var act = organization.Activate;
+        var act = () => organization.Activate();
 
         act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(OrganizationErrors.AlreadyActive);

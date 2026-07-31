@@ -177,7 +177,7 @@ that justifies it.
 |---|---|---|
 | **STORY-001** | **`OrganizationSite`** — aggregate + `PostalAddress` value object + `IdentifierScheme` reference data + fail-closed tenant filter (and the stale `RegOSDbContext` remarks fix) + persistence + API + the country/type directory | 🟢 Complete |
 | **STORY-002** | **`Contact`** — aggregate + `ContactRole` reference data + emails/phones + tenant filter + directory by role | 🟢 Complete |
-| **STORY-003** | **`OrganizationDivision`** + deepen `Organization` (identifier, acronym, native name, status date) | ⚪ Not Started |
+| **STORY-003** | **`OrganizationDivision`** + deepen `Organization` (identifier, acronym, native name, status date) | 🟢 Complete |
 | **STORY-004** | **Capstone** — organization workspace (org → divisions → sites → contacts), browser proof, ADR-038, retro | ⚪ Not Started |
 
 **ADR to write:** *Organization sites and contacts are aggregate roots, and the
@@ -291,3 +291,87 @@ into `constants/` and `utils/`.
 the 10 architecture tests now all passing); migration `AddContacts` creates five
 tables with unique indexes on `(ContactId, RoleId)` and `(TenantId, Code)`;
 frontend typecheck, lint and build clean.
+
+### STORY-003 — Divisions and organization identity (shipped)
+
+**Decisions (approved 2026-07-31):**
+
+1. **`OrganizationDivision` is an aggregate root — justified by stable
+   independent identity, not by a cross-registry directory.** That is an honest
+   difference from sites and contacts, which each earned root status from a
+   query users actually ask. Nobody asks for a directory of every division. What
+   it has is the by-id reference: EPIC-006 will point an Application, a Licence
+   and an HA Meeting at *this division*. Making it a child would save one table
+   and one filter now and cost a migration of ids, foreign keys, APIs and
+   handlers later. **Recorded because the justification is weaker than its two
+   predecessors and a future reader should know that.**
+2. **`Organization` gains a `StatusDate`.** Not identity — consistency. Leaving
+   one of three activation toggles dateless would read as an oversight rather
+   than a decision. The date is **optional** here and required on a site or a
+   contact, because this factory predates the field and every existing caller is
+   a UI action happening now; omitting it records today.
+3. **`OrganizationIdentifier` duplicates `SiteIdentifier` deliberately.** The
+   **second** occurrence of scheme-plus-value, and the Rule of Three (ADR-018)
+   says wait: nobody knows yet whether the third consumer — likely EPIC-017 —
+   wants the same abstraction. Both types carry a comment naming the other and
+   the trigger. The cost is about forty lines and one table, which is what makes
+   waiting affordable.
+4. **Three identity attributes and no more** — identifiers, acronym, native
+   name. The RIM sketch lists sixteen; the aggregate answers *"who are we?"*, not
+   *"everything we have ever known about this company"*. `BusinessFunctions`
+   stays deferred.
+
+**No creation policy for divisions.** One existence check does not earn a class,
+and the third parallel policy in STORY-002 already tested the Rule of Three.
+
+**API:** `POST /api/organizations/{id}/divisions` ·
+`GET /api/organizations/{id}/divisions`.
+
+**Verified:** 848 backend tests green (15 new: 11 domain, 4 integration);
+migration `AddOrganizationDivisionsAndIdentity` adds two tables and four columns,
+with a unique index on `(OrganizationId, SchemeId)`; all ten architecture tests
+green — this story was written to the slice conventions rather than corrected
+into them.
+
+---
+
+## Handoff — STORY-004 starts in a fresh conversation
+
+**Where things stand.** Branch `epic/EPIC-016-organization-depth`, three commits
+ahead of `main`, nothing pushed. Backend complete for sites, contacts and
+divisions; **no UI exists for any of them.**
+
+**STORY-004 is the whole remaining scope:**
+
+- The organization workspace — organization → divisions → sites → contacts.
+  It is the first workspace whose left-hand nav is a *company* rather than a
+  product, so the layout is new rather than copied.
+- A frontend feature slice under `features/regulatory/organizations/` (or a new
+  `organizationDepth` slice — worth a moment's thought), built to **SC-101–105
+  from the start**: one file per API call, one per hook, zod schemas in
+  `validation/`, dialog and form split, no helpers in `components/`.
+- Browser proof: create organization → add division → add site → add contact →
+  find that site in the country-filtered directory. That is the epic's DoD
+  sentence, unchanged.
+- **ADR-038** — *Organization sites and contacts are aggregate roots, and the
+  three shapes of tenant filtering.* The three shapes are already written up in
+  `RegOSDbContext`'s remarks and in the Phase 2 rulings above; the ADR should
+  also record the division's weaker root justification and the deliberate
+  identifier duplication.
+- Epic retro.
+
+**Things the next session will need to know:**
+
+- The dev `regos` database is **three migrations ahead** of the founder's
+  running API (`AddOrganizationSites`, `AddContacts`,
+  `AddOrganizationDivisionsAndIdentity`), and carries four seeded identifier
+  schemes and six contact roles. The API needs a restart before any new UI
+  works against it.
+- Isolated verification uses a throwaway database plus API on 5301 and web on
+  5174, and **must** pass `--no-launch-profile` — otherwise `launchSettings.json`
+  overrides the URL and the API tries to bind the founder's port 5225.
+- The CORS widening in `Program.cs` for `localhost:5174` is temporary and must
+  be reverted before committing; check the `Program.cs` diff.
+- Before shipping UI, walk the states the committed browser spec does not cover
+  in a throwaway spec, then delete it. That practice found three real defects in
+  EPIC-005 STORY-003.

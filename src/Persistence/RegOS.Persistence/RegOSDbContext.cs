@@ -99,6 +99,10 @@ public sealed class RegOSDbContext : DbContext
         IdentifierSchemes =>
         Set<RegOS.ReferenceData.Domain.Organization.IdentifierScheme>();
 
+    public DbSet<RegOS.Organization.Domain.Aggregates.OrganizationDivision.OrganizationDivision>
+        OrganizationDivisions =>
+        Set<RegOS.Organization.Domain.Aggregates.OrganizationDivision.OrganizationDivision>();
+
     public DbSet<RegOS.Organization.Domain.Aggregates.Contact.Contact> Contacts =>
         Set<RegOS.Organization.Domain.Aggregates.Contact.Contact>();
 
@@ -189,7 +193,7 @@ public sealed class RegOSDbContext : DbContext
     /// <c>RegulatoryApplications</c>, <c>Submissions</c>,
     /// <c>SubmissionSnapshots</c>, <c>ProductDocuments</c>,
     /// <c>Registrations</c>, <c>Organizations</c>, <c>OrganizationSites</c>,
-    /// <c>Contacts</c>.</item>
+    /// <c>Contacts</c>, <c>OrganizationDivisions</c>.</item>
     /// <item><b>Shared plus extensible</b> — <c>TenantId == null || == CurrentTenant</c>.
     /// The platform ships a baseline the tenant may extend.
     /// <c>DocumentTypes</c>, <c>RegulatoryTemplates</c>, <c>ContactRoles</c>.</item>
@@ -204,7 +208,8 @@ public sealed class RegOSDbContext : DbContext
     /// id or token hash. Child entities (<c>SubmissionDocuments</c>,
     /// <c>DocumentVersions</c>, <c>SnapshotDocuments</c>,
     /// <c>RegistrationStatusHistory</c>, <c>SiteIdentifiers</c>,
-    /// <c>ContactRoleAssignments</c>, <c>ContactEmails</c>, <c>ContactPhones</c>)
+    /// <c>ContactRoleAssignments</c>, <c>ContactEmails</c>, <c>ContactPhones</c>,
+    /// <c>OrganizationIdentifiers</c>)
     /// are reachable
     /// only through a filtered root.
     /// <para>
@@ -257,6 +262,13 @@ public sealed class RegOSDbContext : DbContext
         // through the contact directory, so it carries its own filter for the
         // same reason a site does.
         modelBuilder.Entity<RegOS.Organization.Domain.Aggregates.Contact.Contact>()
+            .HasQueryFilter(
+                x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // A root by stable identity rather than by an immediate directory —
+        // EPIC-006 will reference *this division* by id. Same filter shape.
+        modelBuilder.Entity<
+            RegOS.Organization.Domain.Aggregates.OrganizationDivision.OrganizationDivision>()
             .HasQueryFilter(
                 x => CurrentTenant != null && x.TenantId == CurrentTenant);
 

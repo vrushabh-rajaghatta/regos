@@ -3,12 +3,14 @@ using Microsoft.Extensions.DependencyInjection;
 using RegOS.Organization.Application.Commands.ActivateOrganization;
 using RegOS.Organization.Application.Commands.CreateOrganization;
 using RegOS.Organization.Application.Commands.CreateContact;
+using RegOS.Organization.Application.Commands.CreateOrganizationDivision;
 using RegOS.Organization.Application.Commands.CreateOrganizationSite;
 using RegOS.Organization.Application.Commands.DeactivateOrganization;
 using RegOS.Organization.Application.Commands.UpdateOrganization;
 using RegOS.Organization.Application.Queries.Organizations.GetOrganization;
 using RegOS.Organization.Application.Queries.Organizations.ListOrganizations;
 using RegOS.Organization.Application.Queries.Contacts.ContactDirectory;
+using RegOS.Organization.Application.Queries.Divisions.ListOrganizationDivisions;
 using RegOS.Organization.Application.Queries.Contacts.GetContact;
 using RegOS.Organization.Application.Queries.Contacts.ListOrganizationContacts;
 using RegOS.Organization.Application.Queries.Sites.GetOrganizationSite;
@@ -38,6 +40,9 @@ public static class DependencyInjection
         services.AddScoped<GetContactHandler>();
         services.AddScoped<ListOrganizationContactsHandler>();
         services.AddScoped<ContactDirectoryHandler>();
+
+        services.AddScoped<CreateOrganizationDivisionHandler>();
+        services.AddScoped<ListOrganizationDivisionsHandler>();
 
         return services;
     }

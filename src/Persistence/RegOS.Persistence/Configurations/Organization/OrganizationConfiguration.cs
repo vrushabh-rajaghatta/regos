@@ -45,5 +45,23 @@ public sealed class OrganizationConfiguration
         builder.Property(x => x.Status)
             .HasConversion<int>()
             .IsRequired();
+
+        builder.Property(x => x.StatusDate)
+            .HasColumnType("date")
+            .IsRequired();
+
+        builder.Property(x => x.Acronym).HasMaxLength(50);
+
+        builder.Property(x => x.NameNativeLanguage).HasMaxLength(250);
+
+        // Ownership: organization (1) -> identifiers (N), shadow FK.
+        builder.HasMany(x => x.Identifiers)
+            .WithOne()
+            .HasForeignKey("OrganizationId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(OrganizationAggregate.Identifiers))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }
