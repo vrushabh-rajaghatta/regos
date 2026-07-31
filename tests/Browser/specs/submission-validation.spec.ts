@@ -182,7 +182,7 @@ test.describe("Submission validation against the blueprint", () => {
       fullPage: true,
     });
 
-    // --- 3. placing it is what satisfies the placeholder ------------------
+    // --- 3. placing it, in the dossier builder, is what satisfies it ------
     // The content plan says which document is unplaced, and of what type — the
     // read model doing the job it exists for.
     const plan = await (
@@ -192,9 +192,6 @@ test.describe("Submission validation against the blueprint", () => {
     expect(plan.unplacedDocuments).toHaveLength(1);
 
     const unplaced = plan.unplacedDocuments[0];
-    const itsSection = requirements.find(
-      (r) => r.documentTypeId === unplaced.documentTypeId,
-    )!.sectionId;
 
     // Its own placeholder is the one to watch — asserted by name rather than by
     // arithmetic, because placing a document may also satisfy a
@@ -206,12 +203,23 @@ test.describe("Submission validation against the blueprint", () => {
 
     await expect(itsPlaceholder).toBeVisible();
 
-    const placed = await api(
-      `/submissions/${submissionId}/documents/${unplaced.submissionDocumentId}/placement`,
-      { method: "PUT", body: JSON.stringify({ templateSectionId: itsSection }) },
+    // Through the Content Plan page, not the API: this is the gesture the epic
+    // exists to provide, and the journey is only a proof of the architecture if
+    // a user could actually walk it.
+    await page.goto(
+      `/regulatory/products/${productId}/applications/${applicationId}` +
+        `/submissions/${submissionId}/content-plan`,
     );
 
-    expect(placed.ok, "placing the attached document").toBeTruthy();
+    const gap = page
+      .getByTestId("content-plan-placeholder")
+      .filter({ hasText: unplaced.documentTypeName })
+      .first();
+
+    await gap.getByTestId("place-document").click();
+    await page.getByTestId("place-attached-document").first().click();
+
+    await expect(gap).toHaveAttribute("data-satisfied", "true");
 
     await page.goto(validationUrl);
     await expect(page.getByTestId("validation-status")).toBeVisible();

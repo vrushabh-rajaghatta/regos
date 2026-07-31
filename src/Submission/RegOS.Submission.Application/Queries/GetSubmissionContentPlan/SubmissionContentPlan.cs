@@ -21,8 +21,28 @@ public sealed record SubmissionContentPlan(
     Guid? BoundTemplateVersionId,
     string? TemplateName,
     int? VersionNumber,
+    ContentPlanProgress Progress,
     IReadOnlyList<ContentPlanSection> Sections,
     IReadOnlyList<ContentPlanDocument> UnplacedDocuments);
+
+/// <summary>
+/// How full the dossier is — "12 of 13 placeholders filled".
+/// </summary>
+/// <remarks>
+/// Derived here rather than counted by each client. It is a dossier semantic
+/// like satisfaction itself, and the whole point of this read model is that
+/// those live in one place: a UI that recomputes completeness is a second
+/// implementation of it, free to disagree.
+/// </remarks>
+/// <param name="Mandatory">
+/// The subset that decides publishability — optional placeholders are expressed
+/// by the blueprint but never block.
+/// </param>
+public sealed record ContentPlanProgress(
+    int Placeholders,
+    int Satisfied,
+    int Mandatory,
+    int MandatorySatisfied);
 
 /// <param name="AdditionalDocuments">
 /// Placed here, but satisfying no placeholder — a certificate's supporting

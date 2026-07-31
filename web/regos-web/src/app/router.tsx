@@ -15,6 +15,7 @@ import { ApplicationHistoryPage } from "@/features/regulatory/applications/pages
 import { SubmissionWorkspaceLayout } from "@/features/regulatory/submissions/layout/SubmissionWorkspaceLayout";
 import { SubmissionOverviewPage } from "@/features/regulatory/submissions/pages/SubmissionOverviewPage";
 import { SubmissionDocumentsPage } from "@/features/regulatory/submissions/pages/SubmissionDocumentsPage";
+import { SubmissionContentPlanPage } from "@/features/regulatory/submissions/pages/SubmissionContentPlanPage";
 import { SubmissionValidationPage } from "@/features/regulatory/submissions/pages/SubmissionValidationPage";
 import { SubmissionPublishingPage } from "@/features/regulatory/submissions/pages/SubmissionPublishingPage";
 import { SubmissionHistoryPage } from "@/features/regulatory/submissions/pages/SubmissionHistoryPage";
@@ -218,6 +219,10 @@ export const router = createBrowserRouter([
                       {
                         path: "documents",
                         element: <SubmissionDocumentsPage />,
+                      },
+                      {
+                        path: "content-plan",
+                        element: <SubmissionContentPlanPage />,
                       },
                       {
                         path: "validation",

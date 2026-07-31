@@ -1,6 +1,6 @@
 # EPIC-003 — Submission planning & content
 
-**Status:** 🟡 In Progress (3 of 4 stories shipped) · **Branch:** `epic/EPIC-003-submission-planning-and-content` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 Complete (4 stories shipped) · **Branch:** `epic/EPIC-003-submission-planning-and-content` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Give the dossier a **structure**. EPIC-002 made a submission answer *"do I have the right documents?"*; this epic makes it answer *"is each document in the right place?"* — and turns the blueprint's section tree into the working surface where a regulatory user builds the dossier.
 
@@ -102,7 +102,7 @@ Once coverage is placement-based, **attaching without placing satisfies nothing*
 | **STORY-001** | **Placement** — `SubmissionDocument.TemplateSectionId`, place/unplace through the aggregate, and the placeholder-shaped content-plan read model | 🟢 Complete | — |
 | **STORY-002** | **Placement-aware coverage** — match on (section, type); disclose unplaced documents | 🟢 Complete | ADR-035 trade-off: *coverage is by document type, not placement* |
 | **STORY-003** | **`SectionNotEmptyEvaluator`** + section-scoped `FileFormat` | 🟢 Complete | ADR-035 trade-off: *the validator advertises its own gaps* |
-| **STORY-004** | **Dossier builder UI** + gap view + capstone browser proof + ADR-036 + retro | ⚪ Not Started | — |
+| **STORY-004** | **Dossier builder UI** + gap view + capstone browser proof + ADR-036 + retro | 🟢 Complete | — |
 
 ### STORY-001 — Placement (shipped)
 
@@ -178,3 +178,72 @@ The story that tested whether EPIC-002's evaluator seam was real. It mostly was;
 **Cost, honestly:** one new evaluator, one registry entry, one additive context method, the planned lifting of `FileFormatEvaluator`'s deferral, and the registry cleanup. **Untouched:** the orchestrator, `SubmissionValidator`, `SubmissionValidationResult`, `BlueprintSeverityMapper`, `IBlueprintRuleEvaluator`, the rule loop, the disclosure mechanism, severity mapping, `IsValid`. The context helper needed the section tree, which STORY-002 already loads — so the orchestrator did not move.
 
 **Verified:** 606 backend tests green (24 new); 51/51 browser tests green against an isolated stack; CORS widening reverted and absent from the commit.
+
+### STORY-004 — The dossier builder (shipped)
+
+The capstone: the architecture the first three stories built, exposed as something a person can use.
+
+**Decisions (approved 2026-07-30):**
+
+1. **Click-to-place now; drag-and-drop is a later enhancement.** The capability being shipped is *placement*, not a gesture. A regulated tool needs a keyboard-accessible route regardless, so drag-and-drop would sit *on top of* the click flow rather than replace it — which makes the click flow the real interaction model either way. It also keeps the epic's most valuable browser test failing for the right reason: "placement is broken", not "the drag sequence synthesised differently today". When drag-and-drop arrives it will invoke the same placement command.
+2. **Content Plan is its own tab, beside Documents.** Documents is the dossier's **inventory** — what is attached. Content Plan is its **structure** — where each sits and what is still expected. Two questions, two pages.
+3. **The page composes two read models and interprets neither.** The tree, satisfaction, supporting content and progress come from `content-plan`; findings and publishability from `validation`. The page never maps validation issues back onto placeholders — that would mean parsing messages and rebuilding dossier semantics in React, free to disagree with the server.
+4. **Completion is computed server-side.** `ContentPlanProgress` — "12 of 13 placeholders filled", plus the mandatory subset that decides publishability. Counting in the browser would be a second implementation of completeness.
+5. **Placement is reversible where it happens.** Every placed document carries **Remove**, clearing its placement without detaching it. A misfiled document whose only route back is the API is a trap.
+
+**Attach-and-place is one call.** Filling an empty placeholder offers already-attached-but-unplaced documents first, then Product Documents — attached *and* placed in a single request, because "put this into 1.1 Forms" is one user action. The distinction is bookkeeping and stays out of the user's way.
+
+**Browser proof.** `submission-content-plan.spec.ts` owns the builder: the tree matches the blueprint's section count, every placeholder starts empty, filling one through the UI flips it to satisfied and advances the progress line, and **Remove** returns it to the unplaced panel still attached. A second test proves an unbound submission renders "no dossier template governs this submission" rather than an error. And `submission-validation.spec.ts` now places **through the dossier builder** instead of the API, so the epic's one end-to-end journey is genuinely walkable by a user:
+
+```
+create → attach (UI) → still incomplete + disclosed → open Content Plan
+       → place (UI) → placeholder satisfied → validate → publish
+```
+
+**Verified:** 606 backend tests green; 53/53 browser tests green against an isolated stack (2 new); web build clean; CORS widening reverted and absent from the commit.
+
+---
+
+## Retro
+
+### What the epic set out to do, and whether it did
+
+| Definition of Done | Outcome |
+|---|---|
+| Place a document into a section of the bound version; unplace again; never into another version's section | ✅ `PlaceDocument` / `ClearPlacement`, guarded by `SectionPlacementPolicy` (409 on a foreign section) |
+| `GET /content-plan` returns the tree with explicit placeholders, stable ids, expected type, mandatory flag, and what satisfies them | ✅ plus `additionalDocuments`, `unplacedDocuments` and `progress` |
+| Coverage evaluated by (section, document type) | ✅ the `.Distinct()` that *was* the ADR-035 limit is gone |
+| `SectionNotEmpty` and section-scoped `FileFormat` execute; the disclosure shrinks and disappears | ✅ and the disclosure mechanism was never touched |
+| Attached-but-unplaced reported as `Information`, never counted, never dropped | ✅ its own evaluator |
+| Browser proof of create → assign → gaps close → validate → publish | ✅ and the placement step is driven through the UI |
+| ADR written | ✅ [ADR-036](../../adr/ADR-036-the-dossier-is-structure-placeholders-are-validation.md) |
+
+### What went well
+
+- **The one-sentence model held all four stories.** *The dossier hierarchy is organisational; placeholders are a validation construct.* Every subsequent decision — placement targets sections, satisfaction is derived, supporting content is not a finding, exact vs subtree — fell out of it rather than being argued separately.
+- **STORY-003 did its job as an architectural proof.** Adding an evaluator moved nothing above the seam, and the exercise found the one thing that *did* contradict the extensibility claim (two evaluator lists), which was fixed in the same story rather than filed.
+- **The disclosure retired itself.** Engine capability rose, the `Information` line disappeared, and no disclosure code changed. That is the difference between a capability statement and a hard-coded caveat.
+- **Predicted failures, and only those.** Every story named in advance which existing tests would legitimately break. Each time the prediction was exact — a sign the semantic changes were well-contained rather than leaking.
+- **One nullable column carried the whole epic.**
+
+### What we would do differently
+
+- **The dev database drifted ahead of the running API twice.** Applying a migration for the integration tests leaves the founder's running process older than the schema. Harmless here (additive, nullable) but worth a convention: say so at the point it happens, every time.
+- **Two forward references to ADR-036 shipped before it existed** (in STORY-002 and STORY-003 comments). Fine within one branch, but a reader on an intermediate commit would find a dangling pointer. Next time either write the ADR in the story that first needs to cite it, or cite the epic.
+- **A test race of my own making.** STORY-002's browser step counted issues before the page finished loading and produced a confusing "expected 12, received 0". The existing steps had the wait; the new one didn't inherit it. Worth a house rule: every `page.goto` in this suite is followed by a wait for `validation-status` before any count.
+
+### Deferred, deliberately
+
+| Deferred | Trigger to revisit |
+|---|---|
+| **Multi-placement (eCTD leaf reuse)** | Publishing / eCTD export (EPIC-007), or a blueprint that needs it. Migration: one row per existing placement. |
+| **N/A with justification** | The first genuine submission-owned placeholder state — and the trigger to materialise `SubmissionPlaceholder`. |
+| **Cardinality (min/max copies)** | Requires blueprint authoring → EPIC-012. |
+| **Ad-hoc sections not in the template** | Same materialisation trigger. |
+| **Drag-and-drop** | UX polish; will call the same placement command. |
+| **Reordering within a section** | `DisplayOrder` is submission-wide; no user need yet. |
+| **Re-binding to a newer template version** | Unchanged from ADR-035 — still a policy question. |
+
+### What EPIC-003 leaves for the next epic
+
+A submission now has a **structure**, and every rule the seeded blueprints carry executes against it. EPIC-004 (sequences and lifecycle) inherits a dossier that knows where its contents are — which is the precondition for an eCTD sequence, since a sequence is a diff of placements between submissions.

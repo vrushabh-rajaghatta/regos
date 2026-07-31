@@ -57,6 +57,7 @@ public sealed class GetSubmissionContentPlanHandler
                 BoundTemplateVersionId: null,
                 TemplateName: null,
                 VersionNumber: null,
+                new ContentPlanProgress(0, 0, 0, 0),
                 Sections: [],
                 UnplacedDocuments: Ordered(documents.Values));
         }
@@ -73,6 +74,7 @@ public sealed class GetSubmissionContentPlanHandler
                 versionId.Value,
                 TemplateName: null,
                 VersionNumber: null,
+                new ContentPlanProgress(0, 0, 0, 0),
                 Sections: [],
                 UnplacedDocuments: Ordered(documents.Values));
         }
@@ -107,14 +109,25 @@ public sealed class GetSubmissionContentPlanHandler
                 documentTypeNames))
             .ToList();
 
+        var placeholders = roots.SelectMany(AllPlaceholders).ToList();
+
         return new SubmissionContentPlan(
             submission.Id.Value,
             versionId.Value,
             template.Name,
             version.VersionNumber,
+            new ContentPlanProgress(
+                placeholders.Count,
+                placeholders.Count(p => p.IsSatisfied),
+                placeholders.Count(p => p.IsMandatory),
+                placeholders.Count(p => p.IsMandatory && p.IsSatisfied)),
             roots,
             Ordered(documents.Values.Where(d => d.SectionId is null)));
     }
+
+    private static IEnumerable<ContentPlanPlaceholder> AllPlaceholders(
+        ContentPlanSection section) =>
+        section.Placeholders.Concat(section.Children.SelectMany(AllPlaceholders));
 
     private static ContentPlanSection BuildSection(
         TemplateSection section,

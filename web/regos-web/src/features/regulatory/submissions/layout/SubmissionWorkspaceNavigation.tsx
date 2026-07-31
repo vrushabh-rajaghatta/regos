@@ -15,8 +15,17 @@ export function SubmissionWorkspaceNavigation() {
         Overview
       </NavLink>
 
+      {/*
+        Documents is the dossier's inventory — what is attached. Content Plan is
+        its structure — where each of those sits, and what is still expected.
+        Two questions, so two pages.
+      */}
       <NavLink to="documents" className={linkClass}>
         Documents
+      </NavLink>
+
+      <NavLink to="content-plan" className={linkClass}>
+        Content Plan
       </NavLink>
 
       <NavLink to="validation" className={linkClass}>

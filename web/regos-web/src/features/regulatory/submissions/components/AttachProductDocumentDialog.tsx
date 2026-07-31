@@ -72,7 +72,8 @@ export function AttachProductDocumentDialog({
                 {data.map((doc) => {
                   const pending =
                     attach.isPending &&
-                    attach.variables === doc.productDocumentId;
+                    attach.variables?.productDocumentId ===
+                      doc.productDocumentId;
 
                   return (
                     <tr
@@ -99,7 +100,11 @@ export function AttachProductDocumentDialog({
                           size="sm"
                           variant="outline"
                           disabled={attach.isPending}
-                          onClick={() => attach.mutate(doc.productDocumentId)}
+                          onClick={() =>
+                            attach.mutate({
+                              productDocumentId: doc.productDocumentId,
+                            })
+                          }
                           data-testid="attach-document"
                         >
                           {pending ? "Attaching..." : "Attach"}
