@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.ProductDocument.Domain.IDs;
+using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.DocumentType;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
@@ -17,6 +18,13 @@ using RegOS.Submission.Infrastructure.Repositories;
 
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
+
+// Two ValidationSeverity enums, in two bounded contexts, that deliberately do
+// not share ordinals (ADR-035). Importing the blueprint namespace for section
+// types makes the bare name ambiguous — every use here means an *issue's*
+// severity, so say so rather than letting the compiler pick.
+using ValidationSeverity =
+    RegOS.Submission.Application.Validation.Models.ValidationSeverity;
 
 namespace RegOS.Submission.Application.Tests;
 
@@ -111,16 +119,49 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
             .Should().Contain(m => m.Contains("Cover Letter"));
     }
 
+    /// <summary>
+    /// Attachment is no longer completeness. This expectation changed
+    /// deliberately in EPIC-003: a document that sits nowhere in the dossier
+    /// satisfies no placeholder, however right its type. Placement is the unit
+    /// of completeness (ADR-036).
+    /// </summary>
     [Fact]
-    public async Task AttachingARequiredDocument_ClearsItsIssue()
+    public async Task AttachingWithoutPlacing_ClearsNothing_AndIsDisclosed()
     {
         await using var ctx = New();
         var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND partial");
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND unplaced");
 
         var before = await MissingCountAsync(ctx, submissionId);
 
         await AttachAsync(ctx, submissionId, productId, CoverLetter);
+
+        await using var act = New();
+        var after = await ValidatorFor(act).ValidateAsync(submissionId, default);
+
+        after.Issues
+            .Count(i => i.Code == SubmissionValidationCodes.RequiredDocumentMissing)
+            .Should().Be(before, "an unplaced document satisfies nothing");
+
+        // It is not ignored either — attaching something that counts for nothing
+        // and hearing nothing about it is how a dossier gets published with a
+        // document its author believed was included.
+        after.Issues.Should().ContainSingle(
+            i => i.Code == SubmissionValidationCodes.DocumentsNotPlaced)
+            .Which.Severity.Should().Be(ValidationSeverity.Information);
+    }
+
+    [Fact]
+    public async Task PlacingARequiredDocumentInItsSection_ClearsItsIssue()
+    {
+        await using var ctx = New();
+        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND placed");
+
+        var before = await MissingCountAsync(ctx, submissionId);
+        var section = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
+
+        await AttachAsync(ctx, submissionId, productId, CoverLetter, section);
 
         await using var act = New();
         var after = await ValidatorFor(act).ValidateAsync(submissionId, default);
@@ -132,6 +173,52 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         afterMissing.Should().HaveCount(before - 1);
         afterMissing.Select(i => i.Message)
             .Should().NotContain(m => m.Contains("Cover Letter"));
+
+        // Placed, so there is nothing to tidy.
+        after.Issues.Should().NotContain(
+            i => i.Code == SubmissionValidationCodes.DocumentsNotPlaced);
+    }
+
+    [Fact]
+    public async Task AMisplacedDocument_SatisfiesNothingAndIsNotCalledUnplaced()
+    {
+        await using var ctx = New();
+        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND misplaced");
+
+        var before = await MissingCountAsync(ctx, submissionId);
+        var expected = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
+        var elsewhere = await SectionOtherThanAsync(ctx, submissionId, expected);
+
+        await AttachAsync(ctx, submissionId, productId, CoverLetter, elsewhere);
+
+        await using var act = New();
+        var after = await ValidatorFor(act).ValidateAsync(submissionId, default);
+
+        after.Issues
+            .Count(i => i.Code == SubmissionValidationCodes.RequiredDocumentMissing)
+            .Should().Be(before);
+
+        // It is somewhere — legitimate supporting content in the section it was
+        // filed into — so the tidy-up disclosure does not apply to it.
+        after.Issues.Should().NotContain(
+            i => i.Code == SubmissionValidationCodes.DocumentsNotPlaced);
+    }
+
+    [Fact]
+    public async Task MissingDocumentIssues_NameTheSectionTheyAreExpectedIn()
+    {
+        await using var ctx = New();
+        var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND where");
+
+        var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
+
+        // "What" was never enough; now that placement decides the verdict,
+        // "where" is half the answer.
+        result.Issues
+            .Where(i => i.Code == SubmissionValidationCodes.RequiredDocumentMissing)
+            .Should().OnlyContain(i => i.Message.Contains(" is missing from "));
     }
 
     [Fact]
@@ -200,11 +287,13 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         await using var act = New();
         var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
 
-        // The rule came from the blueprint, and says so.
+        // The rule came from the blueprint, and says so. Scoped to this rule:
+        // the same blueprint carries SectionNotEmpty rules that also report
+        // through BlueprintRuleViolation, and this test is about format.
         var violation = result.Issues.Should().ContainSingle(
-            i => i.Code == SubmissionValidationCodes.BlueprintRuleViolation).Subject;
+            i => i.RuleCode == "FDA-IND-PDF").Subject;
 
-        violation.RuleCode.Should().Be("FDA-IND-PDF");
+        violation.Code.Should().Be(SubmissionValidationCodes.BlueprintRuleViolation);
         violation.Severity.Should().Be(ValidationSeverity.Error);
         violation.Message.Should().Contain("cover-letter.docx");
         result.IsValid.Should().BeFalse();
@@ -222,28 +311,89 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         await using var act = New();
         var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
 
-        result.Issues.Should().NotContain(
-            i => i.Code == SubmissionValidationCodes.BlueprintRuleViolation);
+        result.Issues.Should().NotContain(i => i.RuleCode == "FDA-IND-PDF");
     }
 
+    /// <summary>
+    /// The disclosure retires itself. EPIC-002 shipped with an
+    /// <c>Information</c> issue naming <c>SectionNotEmpty</c> as unexecutable;
+    /// now that every rule type the blueprint carries has an evaluator, it
+    /// disappears — without the disclosure mechanism being touched. That is what
+    /// makes it a statement about capability rather than a hard-coded caveat.
+    /// </summary>
     [Fact]
-    public async Task RuleTypesTheEngineCannotRunYet_AreDisclosed()
+    public async Task EveryRuleTypeTheSeededBlueprintCarries_IsNowExecuted()
+    {
+        await using var ctx = New();
+        var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND executed");
+
+        var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
+
+        result.Issues.Should().NotContain(
+            i => i.Code == SubmissionValidationCodes.BlueprintRulesNotEvaluated);
+    }
+
+    /// <summary>
+    /// And the mechanism still works. Proved by running the engine with no
+    /// evaluators at all rather than by relying on a permanently unimplemented
+    /// rule type: the invariant worth protecting is that the engine can
+    /// distinguish "could not evaluate" from "passed", whatever it ships with.
+    /// </summary>
+    [Fact]
+    public async Task RulesNoEvaluatorClaims_AreStillDisclosed()
     {
         await using var ctx = New();
         var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND disclosure");
 
-        var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
+        var engineWithNoEvaluators = new BlueprintValidationEvaluator(ctx, []);
+
+        var result = await new SubmissionValidator(
+                new SubmissionRepository(ctx), ctx, engineWithNoEvaluators)
+            .ValidateAsync(submissionId, default);
 
         var disclosure = result.Issues.Should().ContainSingle(
             i => i.Code == SubmissionValidationCodes.BlueprintRulesNotEvaluated)
             .Subject;
 
-        // A statement about this engine's capability — not a claim that those
+        // A statement about the engine's capability — not a claim that those
         // rules passed or failed, so it must not block.
         disclosure.Severity.Should().Be(ValidationSeverity.Information);
-        disclosure.UnevaluatedRuleTypes.Should().Contain("SectionNotEmpty");
+        disclosure.UnevaluatedRuleTypes
+            .Should().Contain(["FileFormat", "SectionNotEmpty"]);
         disclosure.Message.Should().NotContainAny("Error", "Warning");
+    }
+
+    /// <summary>
+    /// The rule EPIC-002 could only disclose, now doing regulatory work: an
+    /// empty Module 1.1 blocks an FDA IND, and the message says which section.
+    /// </summary>
+    [Fact]
+    public async Task AnEmptySectionViolatesTheBlueprintsSectionNotEmptyRule()
+    {
+        await using var ctx = New();
+        var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND empty section");
+
+        var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
+
+        var violation = result.Issues.Should().ContainSingle(
+            i => i.RuleCode == "FDA-IND-1.1-FORMS-NONEMPTY").Subject;
+
+        violation.Severity.Should().Be(ValidationSeverity.Error);
+        violation.Message.Should().Contain("1.1 Forms");
+
+        // The stability rules are graded Warning by the blueprint, so they
+        // report without blocking — severity comes from the data, not the code.
+        var stability = result.Issues
+            .Where(i => i.RuleCode is not null
+                && i.RuleCode.EndsWith("STABILITY-NONEMPTY"))
+            .ToList();
+
+        stability.Should().HaveCount(2);
+        stability.Should().OnlyContain(
+            i => i.Severity == ValidationSeverity.Warning);
     }
 
     // --- helpers -------------------------------------------------------------
@@ -278,11 +428,60 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         return result.Id;
     }
 
+    /// <summary>The section the blueprint expects a given document type in.</summary>
+    private static async Task<TemplateSectionId> SectionRequiringAsync(
+        RegOSDbContext ctx, SubmissionId submissionId, DocumentTypeId documentTypeId)
+    {
+        var version = await BoundVersionAsync(ctx, submissionId);
+
+        return version.RequiredDocuments
+            .First(r => r.DocumentTypeId == documentTypeId)
+            .SectionId;
+    }
+
+    /// <summary>
+    /// A section that expects nothing, so placing there cannot accidentally
+    /// satisfy some other placeholder and make the test lie.
+    /// </summary>
+    private static async Task<TemplateSectionId> SectionOtherThanAsync(
+        RegOSDbContext ctx, SubmissionId submissionId, TemplateSectionId exclude)
+    {
+        var version = await BoundVersionAsync(ctx, submissionId);
+        var expectant = version.RequiredDocuments
+            .Select(r => r.SectionId)
+            .ToHashSet();
+
+        return version.Sections
+            .First(s => s.Id != exclude && !expectant.Contains(s.Id))
+            .Id;
+    }
+
+    private static async Task<RegulatoryTemplateVersion> BoundVersionAsync(
+        RegOSDbContext ctx, SubmissionId submissionId)
+    {
+        var versionId = await ctx.Submissions
+            .AsNoTracking()
+            .Where(s => s.Id == submissionId)
+            .Select(s => s.BoundTemplateVersionId)
+            .SingleAsync();
+
+        var template = await ctx.RegulatoryTemplates
+            .AsNoTracking()
+            .Include(t => t.Versions)
+                .ThenInclude(v => v.Sections)
+            .Include(t => t.Versions)
+                .ThenInclude(v => v.RequiredDocuments)
+            .FirstAsync(t => t.Versions.Any(v => v.Id == versionId!.Value));
+
+        return template.Versions.First(v => v.Id == versionId!.Value);
+    }
+
     private async Task AttachAsync(
         RegOSDbContext ctx,
         SubmissionId submissionId,
         ProductId productId,
         DocumentTypeId documentTypeId,
+        TemplateSectionId? section = null,
         string originalFileName = "doc.pdf",
         string contentType = "application/pdf")
     {
@@ -306,7 +505,8 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
             .Include(s => s.Documents)
             .FirstAsync(s => s.Id == submissionId);
 
-        submission.AttachDocument(document.Id, document.CurrentVersionId!.Value);
+        submission.AttachDocument(
+            document.Id, document.CurrentVersionId!.Value, section);
 
         await ctx.SaveChangesAsync();
     }

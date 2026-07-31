@@ -26,6 +26,7 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 |---|---|---|---|
 | **EPIC-001** | **The Regulatory Data Dictionary** — complete Reference Data as the governed, standards-aligned controlled-vocabulary + dossier-blueprint backbone; seeded for FDA IND (CTD) + CA/AU/IN | 🟢 Complete | 8 stories; merged to `main` (PR #5) → `epics/EPIC-001-regulatory-data-dictionary.md` |
 | **EPIC-002** | **Submission validates against the blueprint** — bind a Submission to a published template version; metadata-driven validation engine; publishing gated on it | 🟢 Complete | 4 stories; [ADR-035](../adr/ADR-035-submissions-bind-to-a-published-template-version.md) → `epics/EPIC-002-submission-validates-against-blueprint.md` |
+| **EPIC-003** | **Submission planning & content** — place documents into the bound blueprint's sections; placeholder-shaped content plan / gap view (the dossier builder); placement-aware validation | 🟢 Complete | 4 stories; [ADR-036](../adr/ADR-036-the-dossier-is-structure-placeholders-are-validation.md) → `epics/EPIC-003-submission-planning-and-content.md` |
 
 ---
 
@@ -37,7 +38,6 @@ _Nothing in flight — pull the top of **Next**._
 
 | ID | Epic | Status | Depends on |
 |---|---|---|---|
-| **EPIC-003** | **Submission planning & content** — regulatory activities; instantiate template sections onto a submission; content plan / gap view (the drag-a-document-onto-a-placeholder dossier builder) | ⚪ Not Started | EPIC-001, 002 |
 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering; lifecycle beyond Draft/Published | ⚪ Not Started | EPIC-003 |
 | **EPIC-005** | **Registration tracking** — a product's registrations per market: status, license/approval numbers, key dates, renewals, variations (the RIM core) | ⚪ Not Started | EPIC-001 |
 

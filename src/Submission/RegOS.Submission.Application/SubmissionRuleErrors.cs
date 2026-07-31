@@ -35,4 +35,13 @@ public static class SubmissionRuleErrors
 
     public const string ProductDocumentHasNoCurrentVersion =
         "The Product Document has no current version to attach.";
+
+    // Placement (cross-context: the section lives in Reference Data)
+    public const string SubmissionHasNoBlueprintToPlaceInto =
+        "This submission is not bound to a blueprint, so its documents cannot "
+            + "be placed into sections.";
+
+    public const string TemplateSectionNotInBoundBlueprint =
+        "The section does not belong to the blueprint this submission is "
+            + "bound to.";
 }

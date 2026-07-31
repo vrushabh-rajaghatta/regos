@@ -192,6 +192,8 @@ submissions.MapListSubmissions();
 submissions.MapGetSubmission();
 submissions.MapAttachProductDocument();
 submissions.MapRemoveProductDocument();
+submissions.MapPlaceSubmissionDocument();
+submissions.MapGetSubmissionContentPlan();
 submissions.MapListSubmissionDocuments();
 submissions.MapListAttachableProductDocuments();
 submissions.MapValidateSubmission();

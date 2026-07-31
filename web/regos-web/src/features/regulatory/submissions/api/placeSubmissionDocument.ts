@@ -1,20 +1,25 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 /**
- * @param templateSectionId Where in the dossier the document lands. Omitted, it
- * is attached but unplaced — inventory, not completeness.
+ * Moves an already-attached document into a section of the dossier, or — with a
+ * null section — takes it out of the structure without detaching it.
+ *
+ * The request states the whole placement rather than a change to it, so sending
+ * it twice lands in the same place.
  */
-export async function attachProductDocument(
+export async function placeSubmissionDocument(
   submissionId: string,
-  productDocumentId: string,
-  templateSectionId?: string
+  submissionDocumentId: string,
+  templateSectionId: string | null
 ): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/submissions/${submissionId}/documents`),
+    buildUrl(
+      `/submissions/${submissionId}/documents/${submissionDocumentId}/placement`
+    ),
     {
-      method: "POST",
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productDocumentId, templateSectionId }),
+      body: JSON.stringify({ templateSectionId }),
     }
   );
 
@@ -33,5 +38,5 @@ async function extractErrorMessage(response: Response): Promise<string> {
     // Body was not JSON; fall through to the generic message.
   }
 
-  return "Failed to attach document.";
+  return "Failed to place the document.";
 }

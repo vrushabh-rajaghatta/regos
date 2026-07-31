@@ -12,42 +12,51 @@ import { test, api } from "./support";
  *
  * If this fails, a spec has mutated data it did not create. Fix the spec; do
  * not relax this assertion.
+ *
+ * Scope: only the organization the acting tenant can legitimately see. The
+ * three demo organizations are each seeded into their own tenant, and the
+ * development account belongs to Demo MAH Ltd. — so under the fail-closed
+ * query filters of ADR-031 the other two are correctly invisible to it. That
+ * absence is the isolation working, not data loss, and is asserted below
+ * rather than merely tolerated.
  */
-const SEEDED = [
-  {
-    id: "30000000-0000-0000-0000-000000000001",
-    legalName: "Demo Manufacturer Ltd.",
-    type: "Manufacturer",
-  },
-  {
-    id: "30000000-0000-0000-0000-000000000002",
-    legalName: "Demo Sponsor Ltd.",
-    type: "Sponsor",
-  },
-  {
-    id: "30000000-0000-0000-0000-000000000003",
-    legalName: "Demo MAH Ltd.",
-    type: "MarketingAuthorizationHolder",
-  },
+const DEMO_MAH = {
+  id: "30000000-0000-0000-0000-000000000003",
+  legalName: "Demo MAH Ltd.",
+  type: "MarketingAuthorizationHolder",
+};
+
+/** Seeded into their own tenants; unreachable from the development account. */
+const OTHER_TENANTS_ORGANIZATIONS = [
+  "30000000-0000-0000-0000-000000000001", // Demo Manufacturer Ltd.
+  "30000000-0000-0000-0000-000000000002", // Demo Sponsor Ltd.
 ];
 
 test.describe("Seed integrity", () => {
-  test("the demo organizations are untouched", async () => {
+  test("the acting tenant's demo organization is untouched", async () => {
     const organizations = await (await api("/organizations")).json();
 
-    for (const expected of SEEDED) {
-      const actual = organizations.find(
-        (organization: { id: string }) => organization.id === expected.id,
-      );
+    const actual = organizations.find(
+      (organization: { id: string }) => organization.id === DEMO_MAH.id,
+    );
 
-      expect(actual, `seeded organization ${expected.legalName} is missing`)
-        .toBeDefined();
+    expect(actual, `seeded organization ${DEMO_MAH.legalName} is missing`)
+      .toBeDefined();
 
-      expect(actual).toMatchObject({
-        legalName: expected.legalName,
-        type: expected.type,
-        status: "Active",
-      });
+    expect(actual).toMatchObject({
+      legalName: DEMO_MAH.legalName,
+      type: DEMO_MAH.type,
+      status: "Active",
+    });
+  });
+
+  test("organizations belonging to other tenants are not visible", async () => {
+    const organizations = await (await api("/organizations")).json();
+    const visible = organizations.map((o: { id: string }) => o.id);
+
+    for (const id of OTHER_TENANTS_ORGANIZATIONS) {
+      expect(visible, `${id} leaked across the tenant boundary`)
+        .not.toContain(id);
     }
   });
 });

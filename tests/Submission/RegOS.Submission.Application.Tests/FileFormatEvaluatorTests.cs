@@ -41,15 +41,17 @@ public class FileFormatEvaluatorTests
         new FileFormatEvaluator().CanEvaluate(rule).Should().BeFalse();
     }
 
+    /// <summary>
+    /// EPIC-002 refused section-scoped rules: "which documents belong to this
+    /// section?" needed placement, and placement did not exist. It does now
+    /// (EPIC-003), so the deferral is lifted.
+    /// </summary>
     [Fact]
-    public void DoesNotEvaluate_SectionScopedRules()
+    public void Evaluates_SectionScopedFileFormatRules()
     {
-        // "Which documents belong to this section?" needs placement, which does
-        // not exist yet — so the rule is disclosed as unevaluated, not applied
-        // to the whole dossier as if it were version-wide.
         var (_, rule) = Build(ValidationRuleType.FileFormat, "pdf", sectionScoped: true);
 
-        new FileFormatEvaluator().CanEvaluate(rule).Should().BeFalse();
+        new FileFormatEvaluator().CanEvaluate(rule).Should().BeTrue();
     }
 
     [Theory]
@@ -155,6 +157,64 @@ public class FileFormatEvaluatorTests
         result.Issues.Should().ContainSingle()
             .Which.Severity.Should().Be(IssueSeverity.Warning);
         result.IsValid.Should().BeTrue();
+    }
+
+    // --- section scope -------------------------------------------------------
+
+    /// <summary>
+    /// A section-scoped rule judges its own part of the dossier and nothing
+    /// else — including what is filed beneath it, which is what
+    /// <c>DocumentsIn</c> means by scope.
+    /// </summary>
+    [Fact]
+    public void ASectionScopedRule_JudgesItsSubtreeAndNothingElse()
+    {
+        var template = RegulatoryTemplate.Create(
+            "TEST_SCOPED",
+            "Scoped Test Template",
+            new AuthorityId(Guid.NewGuid()),
+            new SubmissionTypeId(Guid.NewGuid()),
+            "Test");
+
+        template.StartDraftVersion();
+
+        var module = template.AddSection("M1", "Administrative", null, 1);
+        var beneath = template.AddSection("1.1", "Forms", module.Id, 1);
+        var elsewhere = template.AddSection("M2", "Summaries", null, 2);
+
+        var rule = template.AddValidationRule(
+            "TEST-M1-PDF",
+            ValidationRuleType.FileFormat,
+            BlueprintSeverity.Error,
+            "Module 1 documents must be PDF.",
+            module.Id,
+            "pdf",
+            1);
+
+        var context = new BlueprintEvaluationContext(
+            template.Versions.Single(),
+            [
+                new AttachedDocument(AnyType, "in-subtree.docx", "x", beneath.Id),
+                new AttachedDocument(AnyType, "another-module.docx", "x", elsewhere.Id),
+                new AttachedDocument(AnyType, "unplaced.docx", "x"),
+            ],
+            new Dictionary<DocumentTypeId, string>());
+
+        var result = new SubmissionValidationResult();
+        new FileFormatEvaluator().Evaluate(rule, context, result);
+
+        result.Issues.Should().ContainSingle()
+            .Which.Message.Should().Contain("in-subtree.docx");
+    }
+
+    [Fact]
+    public void AVersionWideRule_StillJudgesUnplacedDocuments()
+    {
+        // Format does not depend on where a document sits, so a dossier-wide
+        // rule must not quietly stop covering documents that are unplaced.
+        var result = Evaluate("pdf", Doc("unplaced.docx", "x"));
+
+        result.Issues.Should().ContainSingle();
     }
 
     // --- helpers -------------------------------------------------------------
