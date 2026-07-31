@@ -49,7 +49,14 @@ export function CreateOrganizationForm({
   });
 
   async function onSubmit(values: CreateOrganizationFormValues) {
-    await mutation.mutateAsync(values);
+    try {
+      await mutation.mutateAsync(values);
+    } catch {
+      // A refusal is an outcome, not a crash — the server's reason is rendered
+      // from mutation.error below. The form keeps its values so the user can
+      // correct them.
+      return;
+    }
 
     reset();
 

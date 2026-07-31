@@ -46,7 +46,14 @@ export function AddOrganizationIdentifierForm({
   });
 
   async function onSubmit(values: AddOrganizationIdentifierFormValues) {
-    await mutation.mutateAsync(values);
+    try {
+      await mutation.mutateAsync(values);
+    } catch {
+      // A refusal is an outcome, not a crash — the server's reason is rendered
+      // from mutation.error below. Without this the rejection escapes
+      // handleSubmit and reaches the window as an unhandled page error.
+      return;
+    }
 
     onSuccess();
   }
@@ -91,12 +98,15 @@ export function AddOrganizationIdentifierForm({
           )}
         />
 
+        {/* "Identifier Value", not "Identifier": the dialog is already called
+            Record Identifier, and the domain's word for this half of the
+            scheme+value pair is Value. */}
         <Controller
           control={control}
           name="value"
           render={({ field }) => (
             <Field data-invalid={!!errors.value}>
-              <FieldLabel htmlFor="value">Identifier</FieldLabel>
+              <FieldLabel htmlFor="value">Identifier Value</FieldLabel>
 
               <Input id="value" placeholder="150483782" {...field} />
 

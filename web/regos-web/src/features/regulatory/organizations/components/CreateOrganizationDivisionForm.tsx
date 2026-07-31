@@ -38,11 +38,17 @@ export function CreateOrganizationDivisionForm({
   });
 
   async function onSubmit(values: CreateOrganizationDivisionFormValues) {
-    await mutation.mutateAsync({
-      name: values.name,
-      statusDate: values.statusDate,
-      acronym: values.acronym || null,
-    });
+    try {
+      await mutation.mutateAsync({
+        name: values.name,
+        statusDate: values.statusDate,
+        acronym: values.acronym || null,
+      });
+    } catch {
+      // A refusal is an outcome, not a crash — the server's reason is rendered
+      // from mutation.error below.
+      return;
+    }
 
     onSuccess();
   }

@@ -53,13 +53,19 @@ export function EditOrganizationForm({
   });
 
   async function onSubmit(values: UpdateOrganizationFormValues) {
-    // Empty means "not recorded", not "the empty string" — the server treats a
-    // null and a blank identically, and this keeps the round trip honest.
-    await mutation.mutateAsync({
-      ...values,
-      acronym: values.acronym || null,
-      nameNativeLanguage: values.nameNativeLanguage || null,
-    });
+    try {
+      // Empty means "not recorded", not "the empty string" — the server treats
+      // a null and a blank identically, and this keeps the round trip honest.
+      await mutation.mutateAsync({
+        ...values,
+        acronym: values.acronym || null,
+        nameNativeLanguage: values.nameNativeLanguage || null,
+      });
+    } catch {
+      // A refusal is an outcome, not a crash — the server's reason is rendered
+      // from mutation.error below.
+      return;
+    }
 
     onSuccess();
   }

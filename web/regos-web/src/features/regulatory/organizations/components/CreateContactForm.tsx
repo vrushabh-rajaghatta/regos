@@ -64,17 +64,23 @@ export function CreateContactForm({
   });
 
   async function onSubmit(values: CreateContactFormValues) {
-    await mutation.mutateAsync({
-      firstName: values.firstName,
-      lastName: values.lastName,
-      statusDate: values.statusDate,
-      title: values.title || null,
-      department: values.department || null,
-      organizationSiteId: values.organizationSiteId || null,
-      roleIds: values.roleId ? [values.roleId] : [],
-      emails: values.email ? [values.email] : [],
-      phones: values.phone ? [values.phone] : [],
-    });
+    try {
+      await mutation.mutateAsync({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        statusDate: values.statusDate,
+        title: values.title || null,
+        department: values.department || null,
+        organizationSiteId: values.organizationSiteId || null,
+        roleIds: values.roleId ? [values.roleId] : [],
+        emails: values.email ? [values.email] : [],
+        phones: values.phone ? [values.phone] : [],
+      });
+    } catch {
+      // A refusal is an outcome, not a crash — the server's reason is rendered
+      // from mutation.error below.
+      return;
+    }
 
     onSuccess();
   }

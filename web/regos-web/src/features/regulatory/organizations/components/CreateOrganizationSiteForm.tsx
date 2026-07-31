@@ -56,15 +56,21 @@ export function CreateOrganizationSiteForm({
   });
 
   async function onSubmit(values: CreateOrganizationSiteFormValues) {
-    await mutation.mutateAsync({
-      name: values.name,
-      type: values.type,
-      countryId: values.countryId,
-      statusDate: values.statusDate,
-      addressLine1: values.addressLine1 || null,
-      city: values.city || null,
-      postalCode: values.postalCode || null,
-    });
+    try {
+      await mutation.mutateAsync({
+        name: values.name,
+        type: values.type,
+        countryId: values.countryId,
+        statusDate: values.statusDate,
+        addressLine1: values.addressLine1 || null,
+        city: values.city || null,
+        postalCode: values.postalCode || null,
+      });
+    } catch {
+      // A refusal is an outcome, not a crash — the server's reason is rendered
+      // from mutation.error below.
+      return;
+    }
 
     onSuccess();
   }
