@@ -10,6 +10,7 @@ using RegOS.Registration.Application.Commands.ChangeRegistrationStatus;
 using RegOS.Registration.Application.Commands.CreateRegistration;
 using RegOS.Registration.Application.Commands.RecordRegistrationApproval;
 using RegOS.Registration.Application.Queries.GetRegistration;
+using RegOS.Registration.Application.Queries.ListExpiringRegistrations;
 using RegOS.Registration.Application.Queries.ListMarketRegistrations;
 using RegOS.Registration.Application.Queries.ListProductRegistrations;
 using RegOS.Registration.Application.Queries.ListRegistrationMarkets;
@@ -608,7 +609,164 @@ public sealed class RegistrationTests : IAsyncLifetime
         markets.Count.Should().BeLessThan(countries);
     }
 
+    // --- Attention -----------------------------------------------------------
+
+    /// <summary>
+    /// The third portfolio question — the only one that spans every market at
+    /// once. The set is objective: whose validity is still running, nearest
+    /// first. What counts as urgent is nobody's business here.
+    /// </summary>
+    [Fact]
+    public async Task TheExpiringListLeadsWithWhateverEndsSoonest()
+    {
+        await using var ctx = New();
+
+        var later = await GrantedAsync(ctx, "NDA-later", new DateOnly(2030, 1, 1));
+        var sooner = await GrantedAsync(ctx, "NDA-sooner", new DateOnly(2027, 1, 1));
+
+        await using var check = New();
+        var rows = await new ListExpiringRegistrationsHandler(check)
+            .HandleAsync(default);
+
+        var mine = rows
+            .Where(x => x.RegistrationId == later.Value
+                || x.RegistrationId == sooner.Value)
+            .ToList();
+
+        mine.Should().HaveCount(2);
+        mine[0].RegistrationId.Should().Be(sooner.Value);
+        mine[1].RegistrationId.Should().Be(later.Value);
+
+        mine[0].DaysUntilExpiry.Should().BeLessThan(mine[1].DaysUntilExpiry);
+        mine[0].ProductName.Should().NotBeNullOrWhiteSpace();
+        mine[0].CountryName.Should().NotBeNullOrWhiteSpace();
+    }
+
+    /// <summary>
+    /// A surrendered authorisation keeps the expiry date it was granted with,
+    /// but it has left the validity timeline — so it is not something to act on.
+    /// </summary>
+    [Fact]
+    public async Task ASurrenderedRegistrationLeavesTheExpiringList()
+    {
+        await using var ctx = New();
+        var id = await GrantedAsync(ctx, "NDA-gone", new DateOnly(2030, 1, 1));
+
+        await using var before = New();
+        var listed = await new ListExpiringRegistrationsHandler(before)
+            .HandleAsync(default);
+        listed.Should().Contain(x => x.RegistrationId == id.Value);
+
+        await ChangeAsync(id, RegistrationStatus.Withdrawn, new(2026, 6, 1));
+
+        await using var after = New();
+        var remaining = await new ListExpiringRegistrationsHandler(after)
+            .HandleAsync(default);
+
+        remaining.Should().NotContain(x => x.RegistrationId == id.Value);
+
+        // The date itself is untouched — it is history, not a countdown.
+        await using var check = New();
+        var detail = await new GetRegistrationHandler(check)
+            .HandleAsync(id, default);
+
+        detail!.ExpiresOn.Should().Be(new DateOnly(2030, 1, 1));
+        detail.HasRunningValidity.Should().BeFalse();
+        detail.DaysUntilExpiry.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Lapsed in the world, not yet recorded here — the strongest signal the
+    /// portfolio has, and it leads the list rather than being clamped away.
+    /// </summary>
+    [Fact]
+    public async Task AnAuthorisationPastItsExpiryReportsHowLongAgo()
+    {
+        await using var ctx = New();
+        var id = await GrantedAsync(ctx, "NDA-lapsed", new DateOnly(2021, 1, 1));
+
+        await using var check = New();
+        var rows = await new ListExpiringRegistrationsHandler(check)
+            .HandleAsync(default);
+
+        var row = rows.Should().ContainSingle(x => x.RegistrationId == id.Value)
+            .Subject;
+
+        row.DaysUntilExpiry.Should().BeNegative();
+        row.IsExpired.Should().BeTrue();
+
+        // Nearest first means the overdue ones come before anything future.
+        rows[0].DaysUntilExpiry.Should().BeLessThanOrEqualTo(
+            rows[^1].DaysUntilExpiry);
+    }
+
+    [Fact]
+    public async Task ARegistrationWithNoExpiryDateIsNotSomethingToActOn()
+    {
+        await using var ctx = New();
+        var productId = await ProductAsync(ctx);
+        var id = await CreateAsync(
+            ctx, productId, occurredOn: new DateOnly(2020, 1, 1));
+
+        // Granted with no validity period — real for authorisations that do not
+        // lapse.
+        await ApproveAsync(id, "NDA-perpetual", new DateOnly(2021, 1, 1));
+
+        await using var check = New();
+        var rows = await new ListExpiringRegistrationsHandler(check)
+            .HandleAsync(default);
+
+        rows.Should().NotContain(x => x.RegistrationId == id.Value);
+
+        var detail = await new GetRegistrationHandler(check)
+            .HandleAsync(id, default);
+
+        // Still on the timeline — it simply has no date to count towards.
+        detail!.HasRunningValidity.Should().BeTrue();
+        detail.DaysUntilExpiry.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ThePortfolioViewsCarryTheSameDerivedExpiry()
+    {
+        await using var ctx = New();
+        var productId = await ProductAsync(ctx);
+        var id = await CreateAsync(
+            ctx, productId, occurredOn: new DateOnly(2020, 1, 1));
+        await ApproveAsync(
+            id, "NDA-both", new DateOnly(2021, 1, 1), new DateOnly(2030, 1, 1));
+
+        await using var check = New();
+
+        var byProduct = (await new ListProductRegistrationsHandler(check)
+            .HandleAsync(productId, default))!.Single();
+
+        var byMarket = (await new ListMarketRegistrationsHandler(check)
+            .HandleAsync(UnitedStates, default))!
+            .Single(x => x.RegistrationId == id.Value);
+
+        byProduct.DaysUntilExpiry.Should().Be(byMarket.DaysUntilExpiry);
+        byProduct.DaysUntilExpiry.Should().BePositive();
+        byProduct.HasRunningValidity.Should().BeTrue();
+        byProduct.IsExpired.Should().BeFalse();
+    }
+
     // --- helpers -------------------------------------------------------------
+
+    /// <summary>A granted registration in the US market, with a validity period.</summary>
+    private async Task<RegistrationId> GrantedAsync(
+        RegOSDbContext ctx,
+        string registrationNumber,
+        DateOnly expiresOn)
+    {
+        var productId = await ProductAsync(ctx);
+        var id = await CreateAsync(
+            ctx, productId, occurredOn: new DateOnly(2020, 1, 1));
+
+        await ApproveAsync(id, registrationNumber, new DateOnly(2021, 1, 1), expiresOn);
+
+        return id;
+    }
 
     private async Task<RegistrationId> CreateAsync(
         RegOSDbContext ctx,

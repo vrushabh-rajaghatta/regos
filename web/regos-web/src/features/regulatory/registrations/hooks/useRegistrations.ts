@@ -4,6 +4,7 @@ import {
   changeRegistrationStatus,
   createRegistration,
   getRegistration,
+  listExpiringRegistrations,
   listMarketRegistrations,
   listProductRegistrations,
   listRegistrationMarkets,
@@ -33,6 +34,13 @@ export function useRegistrationMarkets() {
   return useQuery({
     queryKey: ["registrations", "markets"],
     queryFn: listRegistrationMarkets,
+  });
+}
+
+export function useExpiringRegistrations() {
+  return useQuery({
+    queryKey: ["registrations", "expiring"],
+    queryFn: listExpiringRegistrations,
   });
 }
 

@@ -214,6 +214,7 @@ registrations.MapGetRegistration();
 registrations.MapListProductRegistrations();
 registrations.MapListMarketRegistrations();
 registrations.MapListRegistrationMarkets();
+registrations.MapListExpiringRegistrations();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

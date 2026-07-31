@@ -4,6 +4,7 @@ using RegOS.Registration.Application.Commands.ChangeRegistrationStatus;
 using RegOS.Registration.Application.Commands.CreateRegistration;
 using RegOS.Registration.Application.Commands.RecordRegistrationApproval;
 using RegOS.Registration.Application.Queries.GetRegistration;
+using RegOS.Registration.Application.Queries.ListExpiringRegistrations;
 using RegOS.Registration.Application.Queries.ListMarketRegistrations;
 using RegOS.Registration.Application.Queries.ListProductRegistrations;
 using RegOS.Registration.Application.Queries.ListRegistrationMarkets;
@@ -28,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<ListMarketRegistrationsHandler>();
 
         services.AddScoped<ListRegistrationMarketsHandler>();
+
+        services.AddScoped<ListExpiringRegistrationsHandler>();
 
         return services;
     }

@@ -58,6 +58,11 @@ public sealed class GetRegistrationHandler
             .Select(x => x.LegalName)
             .FirstOrDefaultAsync(cancellationToken);
 
+        var expiry = ExpiryVisibility.For(
+            registration.CurrentStatus,
+            registration.ExpiresOn,
+            ExpiryVisibility.Today());
+
         return new RegistrationDetailDto(
             registration.Id.Value,
             registration.ProductId.Value,
@@ -91,6 +96,9 @@ public sealed class GetRegistrationHandler
             // is legal, and the read model reports its answer.
             [.. RegistrationLifecycle.From(registration.CurrentStatus)
                 .OrderBy(status => status)
-                .Select(status => status.ToString())]);
+                .Select(status => status.ToString())],
+            expiry.HasRunningValidity,
+            expiry.DaysUntilExpiry,
+            expiry.IsExpired);
     }
 }

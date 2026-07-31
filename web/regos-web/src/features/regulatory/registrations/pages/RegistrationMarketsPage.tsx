@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
+import { ExpiringRegistrations } from "../components/ExpiringRegistrations";
 import { useRegistrationMarkets } from "../hooks/useRegistrations";
 
 /**
@@ -21,6 +22,13 @@ export function RegistrationMarketsPage() {
         title="Registrations"
         description="The markets this organisation holds authorisations in."
       />
+
+      {/*
+        The portfolio's front door answers two questions: what needs looking at,
+        and where we hold things. Attention comes first because it is the one
+        with a deadline.
+      */}
+      <ExpiringRegistrations />
 
       {isLoading && <p className="text-muted-foreground">Loading markets...</p>}
 

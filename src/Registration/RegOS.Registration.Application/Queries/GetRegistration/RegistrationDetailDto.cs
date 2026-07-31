@@ -19,6 +19,10 @@ namespace RegOS.Registration.Application.Queries.GetRegistration;
 /// <c>Suspended</c> is an ordinary transition.
 /// </para>
 /// </param>
+/// <param name="DaysUntilExpiry">
+/// Derived on every read, never stored — see
+/// <see cref="RegOS.Registration.Application.Queries.ExpiryVisibility"/>.
+/// </param>
 public sealed record RegistrationDetailDto(
     Guid Id,
     Guid ProductId,
@@ -36,7 +40,10 @@ public sealed record RegistrationDetailDto(
     DateOnly? ExpiresOn,
     DateTime CreatedOn,
     IReadOnlyList<RegistrationStatusEntryDto> History,
-    IReadOnlyList<string> AllowedNextStatuses);
+    IReadOnlyList<string> AllowedNextStatuses,
+    bool HasRunningValidity,
+    int? DaysUntilExpiry,
+    bool IsExpired);
 
 /// <param name="OccurredOn">When it happened in the world.</param>
 /// <param name="RecordedOnUtc">When RegOS learned of it.</param>

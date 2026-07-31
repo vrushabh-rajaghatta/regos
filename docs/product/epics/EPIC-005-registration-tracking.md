@@ -1,6 +1,6 @@
 # EPIC-005 — Registration tracking
 
-**Status:** 🟡 In Progress (3 of 4 stories shipped) · **Branch:** `epic/EPIC-005-registration-tracking` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 Complete (4 of 4 stories shipped) · **Branch:** `epic/EPIC-005-registration-tracking` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The first capability about the world **after** a submission. EPIC-001–003 made RegOS able to prepare, validate and assemble a filing; this makes it able to say what that filing produced, and what the business holds today across every market.
 
@@ -104,7 +104,7 @@ Mirroring `RegulatoryApplication.ApplicantOrganizationId`. The platform keeps te
 | **STORY-001** | **The Registration aggregate** — create for a product in a market, record the grant (number + dates), optional application link; persistence, API, read model | 🟢 Complete |
 | **STORY-002** | **Lifecycle** — the transitions the domain permits, each dated, with an immutable history | 🟢 Complete |
 | **STORY-003** | **Portfolio views** — *where is this product registered?* / *what do we hold in this market?* + the registration UI | 🟢 Complete |
-| **STORY-004** | **Expiry & renewal visibility** (derived, no scheduler) + capstone browser proof + ADR-037 + retro | ⚪ Not Started |
+| **STORY-004** | **Expiry & renewal visibility** (derived, no scheduler) + capstone browser proof + ADR-037 + retro | 🟢 Complete |
 
 ### STORY-001 — The Registration aggregate (shipped)
 
@@ -297,3 +297,93 @@ under the market, and prove both routes reach the same URL.
 story: a rejected mutation escaped as an unhandled page error rather than being
 caught and rendered, and the shared status badge carried a `data-testid` that
 made "the status" mean every badge on the page at once. Both fixed at source.
+
+### STORY-004 — Expiry visibility (shipped)
+
+The third portfolio question — *which registrations deserve attention today?* —
+answered without a scheduler, a cache or a stored flag.
+
+**Decisions (approved 2026-07-31):**
+
+1. **`DaysUntilExpiry`, never `IsExpiringSoon`.** "Soon" is policy: ninety days
+   today, a hundred and eighty tomorrow, market-specific after that,
+   tenant-configurable eventually. The number never goes out of date; a
+   threshold does. The threshold lives in one frontend file
+   ([`expiry.ts`](../../../web/regos-web/src/features/regulatory/registrations/components/expiry.ts))
+   and nowhere else.
+2. **Null once the lifecycle has ended.** A surrendered authorisation keeps the
+   expiry date it was granted with, but it has left the validity timeline —
+   reporting a countdown for it would not be noise, it would be false. Decided
+   by `RegistrationLifecycle.IsTerminal`, so there is no second list of statuses
+   beside the transition table.
+3. **`HasRunningValidity`, so a null is self-explaining.** True with a null
+   countdown means no expiry date was recorded; false means it stopped
+   mattering. Two different facts that would otherwise look identical.
+4. **Negative values are kept.** An approved registration whose expiry passed
+   last month reports `-31` — *lapsed in the world, not yet recorded here*, the
+   strongest attention signal the portfolio has. Clamping to zero would discard
+   exactly the information worth surfacing.
+5. **`IsExpired` alongside it**, though derivable, so no client re-implements
+   the sign convention.
+6. **The attention set is objective**: registrations whose validity is still
+   running, nearest expiry first, **no threshold and no limit**. Ordering makes
+   it useful; prioritising is the reader's. A silent "top ten" would hide the
+   eleventh and read as completeness.
+
+**API:** `GET /api/registrations/expiring`.
+
+**Verified:** 753 backend tests green (14 new: 9 unit over the derivation, 5
+integration); **55 browser tests green**, including the capstone journey —
+planned → filed → assessed → granted → *needs attention* → suspended →
+reinstated → backdating refused → surrendered → off the attention list → seven
+history entries, every transition driven through the UI.
+
+---
+
+## Retro
+
+### What the epic set out to do, and whether it did
+
+| Definition of Done | Outcome |
+|---|---|
+| A registration can be created for a product in a market, with or without an originating application, and not for a country/authority that disagree | ✅ `RegistrationCreationPolicy`, seven rules, 400 on a mismatched authority |
+| Lifecycle transitions enforced by the domain, each dated, every one recorded in an immutable history | ✅ `RegistrationLifecycle` as a declarative table; all 18 permitted transitions and all 46 forbidden pairs asserted |
+| The licence number is the business identity; **no** uniqueness on (product, country) | ✅ and the *absence* of the index is asserted by a test, not merely omitted |
+| Both portfolio questions answerable through the API and the UI | ✅ two read models, two pages, one canonical registration URL |
+| Expiry proximity derived, never stored | ✅ and null once the lifecycle has ended, which is stricter than the DoD asked |
+| Browser proof: record an approval → see it in both portfolio views → change its status → see the history | ✅ the capstone journey, plus the attention list appearing and clearing |
+| ADR-037 written | ✅ [ADR-037](../../adr/ADR-037-registrations-are-regulatory-assets-with-derived-visibility.md) |
+
+### What went well
+
+- **Each story introduced exactly one concept and refused the next.** S1 the asset, S2 the lifecycle, S3 the workspace, S4 visibility. Renewal, corrections, notifications and analytics were all named and left — and each refusal made the next story simpler rather than harder.
+- **The chronology invariant found a bug in already-accepted tests.** Five STORY-001 tests planned a registration *today* and approved it in *2019*. Nobody had noticed, because nothing had ever asked whether a history was readable in business time. The tests were corrected, not the rule — and the best of them became a genuinely complete migration proof.
+- **The declarative transition table paid for itself immediately.** Exhaustive pairwise testing was possible only because the graph was data. Sixty-four assertions cost one theory each.
+- **The client ended up holding no regulatory logic at all.** `allowedNextStatuses` meant the UI never needed to know what a status permits; deriving the status filter from the rows on screen meant it never needed to know which statuses are terminal. The only threshold in the system is one constant in one frontend file.
+- **The derivation principle became explicit.** *Persist regulatory facts; derive regulatory interpretation.* It had been implicit since EPIC-002; ADR-037 names it, and it is now the default for new read models.
+
+### What we would do differently
+
+- **Exploratory verification should be routine, not occasional.** The committed S3 spec stops at `Planned` and passed while three real defects sat in code it never touched — an unhandled promise rejection, a `data-testid` on a reusable component, and an empty dialog shell during the close animation. All three were found by a throwaway spec written to walk the paths the committed one does not. **House rule: before shipping UI, drive every state the committed spec leaves uncovered, then delete the scratch spec.**
+- **`launchSettings.json` silently overrode `ASPNETCORE_URLS`.** The isolated API tried to bind the founder's port 5225 and only failed because it was already taken. `--no-launch-profile` is now mandatory for any isolated run — the near miss was luck, not design.
+- **Two non-component exports triggered the same lint rule twice** (`statusLabel`, then `expiry.ts`). The convention — helpers get their own file — should have been learned the first time rather than rediscovered.
+- **Test placement followed the layer, not the style, and that had to be corrected mid-story.** `ExpiryVisibilityTests` was written into the Domain test project for code that lives in Application. Worth stating: the project is named for the layer it tests, and a pure unit test in an integration project is fine.
+
+### Deferred, deliberately
+
+| Deferred | Trigger to revisit |
+|---|---|
+| **Renewal** | The first authorisation-validity story. It changes validity, not status, and would be the first operation to break "every operation changes status and appends one entry". |
+| **Restoration from `Withdrawn`** | A real regulator scenario. The state is terminal as a domain boundary, explicitly not as a claim about regulators. |
+| **Corrections** (a status entered in error) | Needs superseded history entries and amended effective dates — its own design. Today it requires a database intervention. |
+| **Renewal notifications** | EPIC-014. `/api/registrations/expiring` is the query a scheduler would read; nothing else is needed. |
+| **Pagination on the expiring list** | A portfolio that outgrows one response. The unlimited ordered set is the honest shape to paginate later. |
+| **Transfers between holders** | Real, naturally anchored on this aggregate, not needed to answer the epic's question. |
+| **IDMP depth beneath a registration** | EPIC-010. The absent (product, country) constraint already allows it. |
+
+### What EPIC-005 leaves for the next epic
+
+- **A second aggregate with append-only status history.** `RegistrationStatusEntry` is now the reference implementation of the pattern BACKLOG names as a rule: any aggregate with a status gets `OccurredOn` / `RecordedOnUtc` and a stored current value.
+- **A lifecycle table other aggregates can copy.** Submissions, applications and market status all have transitions currently expressed as conditionals.
+- **`allowedNextStatuses` as a contract shape.** Any aggregate with a lifecycle can expose its consequences the same way, and keep its graph private.
+- **An unresolved product-code question the market view exposed.** Answering *"what do we hold in Canada?"* currently shows a globally unique product code — the concern EPIC-017 exists to address, and the market view is where it first becomes visible to a user.

@@ -64,18 +64,29 @@ public sealed class ListProductRegistrationsHandler
                 registration.ExpiresOn,
             }).ToListAsync(cancellationToken);
 
+        var today = ExpiryVisibility.Today();
+
         return rows
-            .Select(row => new RegistrationSummary(
-                row.Id.Value,
-                row.CountryId.Value,
-                row.CountryName,
-                row.AuthorityId.Value,
-                row.AuthorityName,
-                row.HolderName,
-                row.RegistrationNumber,
-                row.CurrentStatus.ToString(),
-                row.ApprovedOn,
-                row.ExpiresOn))
+            .Select(row =>
+            {
+                var expiry = ExpiryVisibility.For(
+                    row.CurrentStatus, row.ExpiresOn, today);
+
+                return new RegistrationSummary(
+                    row.Id.Value,
+                    row.CountryId.Value,
+                    row.CountryName,
+                    row.AuthorityId.Value,
+                    row.AuthorityName,
+                    row.HolderName,
+                    row.RegistrationNumber,
+                    row.CurrentStatus.ToString(),
+                    row.ApprovedOn,
+                    row.ExpiresOn,
+                    expiry.HasRunningValidity,
+                    expiry.DaysUntilExpiry,
+                    expiry.IsExpired);
+            })
             .ToList();
     }
 }

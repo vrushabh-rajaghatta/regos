@@ -5,6 +5,7 @@ import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { useCountries } from "../../masterData/hooks/useCountries";
+import { RegistrationExpiry } from "../components/RegistrationExpiry";
 import { RegistrationStatusBadge } from "../components/RegistrationStatusBadge";
 import { RegistrationStatusFilter } from "../components/RegistrationStatusFilter";
 import { useMarketRegistrations } from "../hooks/useRegistrations";
@@ -114,11 +115,12 @@ export function MarketRegistrationsPage() {
                       <RegistrationStatusBadge status={row.status} />
                     </td>
                     <td className="px-4 py-2">
-                      {row.expiresOn ? (
-                        new Date(row.expiresOn).toLocaleDateString()
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
+                      <RegistrationExpiry
+                        expiresOn={row.expiresOn}
+                        daysUntilExpiry={row.daysUntilExpiry}
+                        hasRunningValidity={row.hasRunningValidity}
+                        isExpired={row.isExpired}
+                      />
                     </td>
                   </tr>
                 ))}

@@ -7,6 +7,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { PageSection } from "@/shared/components/PageSection";
 
 import { ChangeRegistrationStatusDialog } from "../components/ChangeRegistrationStatusDialog";
+import { RegistrationExpiry } from "../components/RegistrationExpiry";
 import { RegistrationHistoryTimeline } from "../components/RegistrationHistoryTimeline";
 import { RegistrationStatusBadge } from "../components/RegistrationStatusBadge";
 import { statusLabel } from "../components/statusLabel";
@@ -80,14 +81,17 @@ export function RegistrationDetailPage() {
                     : "—"
                 }
               />
-              <Fact
-                label="Expires"
-                value={
-                  data.expiresOn
-                    ? new Date(data.expiresOn).toLocaleDateString()
-                    : "—"
-                }
-              />
+              <div>
+                <dt className="text-xs text-muted-foreground">Expires</dt>
+                <dd className="mt-0.5 font-medium">
+                  <RegistrationExpiry
+                    expiresOn={data.expiresOn}
+                    daysUntilExpiry={data.daysUntilExpiry}
+                    hasRunningValidity={data.hasRunningValidity}
+                    isExpired={data.isExpired}
+                  />
+                </dd>
+              </div>
             </dl>
           </PageSection>
 

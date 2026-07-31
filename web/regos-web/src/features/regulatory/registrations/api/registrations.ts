@@ -1,5 +1,6 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
+import type { ExpiringRegistration } from "../types/ExpiringRegistration";
 import type { MarketRegistrationSummary } from "../types/MarketRegistrationSummary";
 import type { RegistrationDetail } from "../types/RegistrationDetail";
 import type { RegistrationMarket } from "../types/RegistrationMarket";
@@ -53,6 +54,18 @@ export async function listRegistrationMarkets(): Promise<RegistrationMarket[]> {
 
   if (!response.ok) {
     throw new Error("Unable to load the markets.");
+  }
+
+  return response.json();
+}
+
+export async function listExpiringRegistrations(): Promise<
+  ExpiringRegistration[]
+> {
+  const response = await apiFetch(buildUrl("/api/registrations/expiring"));
+
+  if (!response.ok) {
+    throw new Error("Unable to load expiring registrations.");
   }
 
   return response.json();

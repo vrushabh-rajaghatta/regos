@@ -22,4 +22,7 @@ public sealed record MarketRegistrationSummary(
     string? RegistrationNumber,
     string Status,
     DateOnly? ApprovedOn,
-    DateOnly? ExpiresOn);
+    DateOnly? ExpiresOn,
+    bool HasRunningValidity,
+    int? DaysUntilExpiry,
+    bool IsExpired);

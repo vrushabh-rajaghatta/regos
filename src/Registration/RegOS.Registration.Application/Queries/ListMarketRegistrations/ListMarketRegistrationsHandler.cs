@@ -71,21 +71,32 @@ public sealed class ListMarketRegistrationsHandler
                 registration.ExpiresOn,
             }).ToListAsync(cancellationToken);
 
+        var today = ExpiryVisibility.Today();
+
         return rows
             .OrderBy(row => Prominence(row.CurrentStatus))
             .ThenBy(row => row.ProductName.Value)
-            .Select(row => new MarketRegistrationSummary(
-                row.Id.Value,
-                row.ProductId.Value,
-                row.ProductCode.Value,
-                row.ProductName.Value,
-                row.AuthorityId.Value,
-                row.AuthorityName,
-                row.HolderName,
-                row.RegistrationNumber,
-                row.CurrentStatus.ToString(),
-                row.ApprovedOn,
-                row.ExpiresOn))
+            .Select(row =>
+            {
+                var expiry = ExpiryVisibility.For(
+                    row.CurrentStatus, row.ExpiresOn, today);
+
+                return new MarketRegistrationSummary(
+                    row.Id.Value,
+                    row.ProductId.Value,
+                    row.ProductCode.Value,
+                    row.ProductName.Value,
+                    row.AuthorityId.Value,
+                    row.AuthorityName,
+                    row.HolderName,
+                    row.RegistrationNumber,
+                    row.CurrentStatus.ToString(),
+                    row.ApprovedOn,
+                    row.ExpiresOn,
+                    expiry.HasRunningValidity,
+                    expiry.DaysUntilExpiry,
+                    expiry.IsExpired);
+            })
             .ToList();
     }
 
