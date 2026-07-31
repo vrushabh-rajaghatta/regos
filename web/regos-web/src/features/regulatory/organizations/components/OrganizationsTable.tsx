@@ -35,7 +35,7 @@ export function OrganizationsTable({
             >
               <td className="px-4 py-2.5 font-medium">
                 <Link
-                  to={`/platform/organizations/${organization.id}`}
+                  to={`/regulatory/organizations/${organization.id}`}
                   className="hover:underline"
                 >
                   {organization.legalName}

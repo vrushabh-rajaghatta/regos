@@ -341,6 +341,13 @@ into them.
 ahead of `main`, nothing pushed. Backend complete for sites, contacts and
 divisions; **no UI exists for any of them.**
 
+The working tree carries one uncommitted change: the division-prediction section
+of this handoff, agreed after S003 was declared complete. **It rides with
+S004's first commit — do not give it a commit of its own.** `ac28b7e` stays
+"S003 completed"; a documentation-only commit after a story closes is warranted
+only when the documentation was materially wrong about that story, and this is
+an enhancement to the transition between stories rather than a correction.
+
 **STORY-004 is the whole remaining scope:**
 
 - The organization workspace — organization → divisions → sites → contacts.
@@ -358,7 +365,42 @@ divisions; **no UI exists for any of them.**
   `RegOSDbContext`'s remarks and in the Phase 2 rulings above; the ADR should
   also record the division's weaker root justification and the deliberate
   identifier duplication.
-- Epic retro.
+- Epic retro — including the division question below.
+
+**The division root is a prediction, and the retro has to test it.**
+
+Sites and contacts earned root status from queries that ship in the same commits
+that created them: if the justification were wrong, the directory would come
+back empty and someone would notice. `OrganizationDivision` earned it from a
+reference **EPIC-006 has not made yet**. That is a falsifiable claim, not a
+principle, and nothing in the build fails if it turns out false.
+
+The retro asks one objective question — not *were divisions useful*, which is a
+matter of taste, but:
+
+> Did a later capability establish an independent, stable reference to
+> `OrganizationDivision`? If not, should it remain an aggregate root?
+
+If EPIC-006 lands without holding a division id, the honest move is to collapse
+divisions back into `Organization` rather than let the caveat harden into
+precedent by age alone.
+
+**This needs a new shape of `Revisit When` entry.** Every existing entry across
+the 26 ADRs that have one is *arrival-shaped* — "a second type is proposed", "a
+customer needs a cloned template", "a third member joins". Those fire when
+something shows up. A prediction decays when something **fails** to show up, and
+no arrival triggers a re-read. So ADR-038's entry must name the milestone that
+settles it:
+
+> *If EPIC-006 ships without any aggregate holding an `OrganizationDivisionId`,
+> the justification for this root did not materialise — collapse it or restate
+> the justification. Do not leave it standing on the original expectation.*
+
+The general rule, worth carrying past this epic: a decision supported by
+**current behaviour** gets proved with a test; a decision resting on an
+**expected future capability** gets its prediction recorded together with the
+milestone that will confirm or falsify it. That is what stops speculative design
+from becoming irreversible merely because time passed.
 
 **Things the next session will need to know:**
 

@@ -108,7 +108,9 @@ result.
 ✅ `IOrganizationRepository`, `OrganizationRepository`, DI wiring
 ✅ `CreateOrganization` command, handler and `POST /organizations`
 ✅ Organization type is validated against the defined values
-✅ `features/platform/organizations/` — list, create dialog, create form
+✅ `features/regulatory/organizations/` — list, create dialog, create form
+   (delivered under `features/platform/`; moved in EPIC-016 S004, because
+   ADR-030 made an organization a regulatory party rather than the tenant)
 ✅ `tests/Organization/RegOS.Organization.Domain.Tests` — 9 tests
 
 ❌ `Activate` / `Deactivate` exist on the aggregate but **no command, handler or

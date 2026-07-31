@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 
 import { test, api, collectErrors, EXPECTED_404 } from "./support";
 
-const LIST = "/platform/organizations";
+const LIST = "/regulatory/organizations";
 
 /** Seeds through the API so a spec does not depend on another feature's form. */
 async function seedOrganization(legalName: string, type = "Manufacturer") {
@@ -229,7 +229,7 @@ test.describe("Organization directory", () => {
     const errors = collectErrors(page, [EXPECTED_404]);
 
     await page.goto(
-      "/platform/organizations/11111111-1111-1111-1111-111111111111",
+      "/regulatory/organizations/11111111-1111-1111-1111-111111111111",
     );
 
     await expect(page.getByTestId("organization-not-found")).toBeVisible();

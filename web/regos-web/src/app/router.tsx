@@ -27,8 +27,8 @@ import { DocumentUsagePage } from "@/features/regulatory/documents/pages/Documen
 import { DocumentHistoryPage } from "@/features/regulatory/documents/pages/DocumentHistoryPage";
 import { DocumentAiInsightsPage } from "@/features/regulatory/documents/pages/DocumentAiInsightsPage";
 import { PlatformLayout } from "@/features/platform/layout/PlatformLayout";
-import { OrganizationDetailsPage } from "@/features/platform/organizations/pages/OrganizationDetailsPage";
-import { OrganizationsPage } from "@/features/platform/organizations/pages/OrganizationsPage";
+import { OrganizationDetailsPage } from "@/features/regulatory/organizations/pages/OrganizationDetailsPage";
+import { OrganizationsPage } from "@/features/regulatory/organizations/pages/OrganizationsPage";
 import { TenantsPage } from "@/features/platform/tenants/pages/TenantsPage";
 import { PlatformIndexRedirect } from "@/features/platform/layout/PlatformIndexRedirect";
 import { UsersPage } from "@/features/platform/users/pages/UsersPage";
@@ -112,14 +112,6 @@ export const router = createBrowserRouter([
               {
                 path: "tenants",
                 element: <TenantsPage />,
-              },
-              {
-                path: "organizations",
-                element: <OrganizationsPage />,
-              },
-              {
-                path: "organizations/:organizationId",
-                element: <OrganizationDetailsPage />,
               },
               {
                 path: "users",
@@ -277,6 +269,24 @@ export const router = createBrowserRouter([
                         element: <DocumentAiInsightsPage />,
                       },
                     ],
+                  },
+                ],
+              },
+              // Organizations are regulatory parties (ADR-030, ADR-032) — the
+              // sponsor, manufacturer or agent named on a submission — not
+              // platform administration. They lived under /platform until
+              // EPIC-016 S004, a leftover of the ADR-015 model where an
+              // organization *was* the tenant. Tenants and Users stayed behind.
+              {
+                path: "organizations",
+                children: [
+                  {
+                    index: true,
+                    element: <OrganizationsPage />,
+                  },
+                  {
+                    path: ":organizationId",
+                    element: <OrganizationDetailsPage />,
                   },
                 ],
               },

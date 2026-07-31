@@ -39,7 +39,7 @@ export function OrganizationDetailsPage() {
         </p>
 
         <Link
-          to="/platform/organizations"
+          to="/regulatory/organizations"
           className="text-sm hover:underline"
         >
           Back to organizations
@@ -62,7 +62,7 @@ export function OrganizationDetailsPage() {
         actions={
           <div className="flex items-center gap-3">
             <Link
-              to="/platform/organizations"
+              to="/regulatory/organizations"
               className="text-sm hover:underline"
             >
               Back
