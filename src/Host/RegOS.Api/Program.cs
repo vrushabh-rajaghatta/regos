@@ -31,6 +31,9 @@ using RegOS.Submission.Application;
 using RegOS.Submission.Infrastructure;
 using RegOS.ProductDocument.Application;
 using RegOS.ProductDocument.Infrastructure;
+using RegOS.Registration.Application;
+using RegOS.Registration.Infrastructure;
+using RegOS.Api.Endpoints.Registrations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,6 +102,9 @@ builder.Services.AddSubmissionInfrastructure();
 
 builder.Services.AddProductDocumentApplication();
 builder.Services.AddProductDocumentInfrastructure(builder.Configuration);
+
+builder.Services.AddRegistrationApplication();
+builder.Services.AddRegistrationInfrastructure();
 
 var app = builder.Build();
 
@@ -199,6 +205,12 @@ submissions.MapListAttachableProductDocuments();
 submissions.MapValidateSubmission();
 submissions.MapPublishSubmission();
 submissions.MapGetSubmissionSnapshot();
+
+var registrations = app.MapGroup("").WithTags("Registrations");
+registrations.MapCreateRegistration();
+registrations.MapRecordRegistrationApproval();
+registrations.MapGetRegistration();
+registrations.MapListProductRegistrations();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

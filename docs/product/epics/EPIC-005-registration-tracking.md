@@ -1,6 +1,6 @@
 # EPIC-005 — Registration tracking
 
-**Status:** 🟡 In Progress (Phase 1–2 approved; 0 of 4 stories shipped) · **Branch:** `epic/EPIC-005-registration-tracking` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress (1 of 4 stories shipped) · **Branch:** `epic/EPIC-005-registration-tracking` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The first capability about the world **after** a submission. EPIC-001–003 made RegOS able to prepare, validate and assemble a filing; this makes it able to say what that filing produced, and what the business holds today across every market.
 
@@ -101,7 +101,32 @@ Mirroring `RegulatoryApplication.ApplicantOrganizationId`. The platform keeps te
 
 | # | Story | Status |
 |---|---|---|
-| **STORY-001** | **The Registration aggregate** — create for a product in a market, record the grant (number + dates), optional application link; persistence, API, read model | ⚪ Not Started |
+| **STORY-001** | **The Registration aggregate** — create for a product in a market, record the grant (number + dates), optional application link; persistence, API, read model | 🟢 Complete |
 | **STORY-002** | **Lifecycle** — the transitions the domain permits, each dated, with an immutable history | ⚪ Not Started |
 | **STORY-003** | **Portfolio views** — *where is this product registered?* / *what do we hold in this market?* + the registration UI | ⚪ Not Started |
 | **STORY-004** | **Expiry & renewal visibility** (derived, no scheduler) + capstone browser proof + ADR-037 + retro | ⚪ Not Started |
+
+### STORY-001 — The Registration aggregate (shipped)
+
+A new bounded context, `src/Registration/`, mirroring the shape every other module uses: `Domain` / `Application` / `Infrastructure`, EF configuration in the central `Persistence` project, and a fail-closed tenant query filter (ADR-031).
+
+**Decisions (approved 2026-07-31):**
+
+1. **The status history arrives with the concept, not with the behaviour.** It looked like S002 material, but it is part of a registration's *identity and provenance* rather than its lifecycle: a record created today for an authorisation granted in 2019 cannot honestly exist without saying so. If history began at the first transition, every migrated record's story would start with a gap.
+2. **Every entry carries two dates.** `OccurredOn` (`DateOnly`) is when it happened in the world; `RecordedOnUtc` is when RegOS learned of it. They answer different regulatory questions, and storing one permanently destroys the ability to tell a late entry from a backdated one.
+3. **History entries are statuses, not a parallel event vocabulary.** The first entry *is* `Planned` rather than a `Created` event, so the history reads as one chronological sequence of the states held — one word for a thing rather than two.
+4. **`Create` then `RecordApproval`, never a privileged constructor.** Creation always begins at `Planned`; the only route to `Approved` is the method that enforces what approval means. An import is create-then-record, and the resulting history is honest: *recorded today, occurred 2019-04-12.* `RecordApproval` takes the **business date**, never the clock.
+5. **A parallel `RegistrationCreationPolicy`, not a shared validator.** It duplicates six reference-data checks from `IRegulatoryApplicationCreationPolicy`, and deliberately omits the seventh — *no duplicate per (product, country, authority)* — which is exactly the constraint this epic rejects. The two policies have already diverged on the rule that matters most, so extracting a common one would create a dependency between contexts meant to be independent, to save duplicating rules that are drifting apart. Noted in code: **a third occurrence triggers extraction, not a fourth.**
+
+**Append-only from day one.** `RegistrationStatusEntry` has no mutating behaviour at all — the aggregate adds entries and never edits or removes one. Current state lives on the registration; history records how it got there, and a regulated history that can be rewritten is not a history.
+
+**No unique index on (ProductId, CountryId)** — asserted by a test, not merely omitted, so a future reader sees it was a decision.
+
+**API:** `POST /api/products/{id}/registrations` · `POST /registrations/{id}/approval` · `GET /registrations/{id}` · `GET /api/products/{id}/registrations`.
+
+**Verified:** 641 backend tests green (35 new: 21 domain, 14 integration against the real seeded reference data); migration creates two tables with five `Restrict` foreign keys; the four endpoints exercised live on an isolated stack — including a second registration in the same market accepted (201), a mismatched authority/country rejected (400), a second approval refused (409), and the detail view showing the provenance split:
+
+```
+Planned   occurred 2019-01-15   recorded 2026-07-31   "Carried over from the legacy register."
+Approved  occurred 2019-04-12   recorded 2026-07-31   "Original approval."
+```
