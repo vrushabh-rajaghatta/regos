@@ -42,7 +42,7 @@ Three candidates, **planned to Phase 1 depth** (see [RIM alignment](#rim-alignme
 
 | ID | Epic | Status | Depends on |
 |---|---|---|---|
-| **EPIC-016** | **Organization depth** — sites, contacts, divisions; deepen Organization itself | ⚪ Not Started | — → [`epics/EPIC-016-organization-depth.md`](epics/EPIC-016-organization-depth.md) |
+| **EPIC-016** | **Organization depth** — sites, contacts, divisions; deepen Organization itself | ✅ **Complete** | ADR-038 · deactivation deferred with a reason → [`epics/EPIC-016-organization-depth.md`](epics/EPIC-016-organization-depth.md) |
 | **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier, + trade names and market status | ⚪ Not Started | — → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | ⚪ Not Started | EPIC-003 (placement makes a sequence a diff of placements, not an inference); S005 needs EPIC-016 → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
 

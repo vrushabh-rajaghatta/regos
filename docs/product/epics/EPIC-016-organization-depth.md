@@ -1,6 +1,6 @@
 # EPIC-016 — Organization depth: sites, contacts, divisions
 
-**Status:** 🟡 In Progress · **Branch:** `epic/EPIC-016-organization-depth` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** ✅ Complete · **Branch:** `epic/EPIC-016-organization-depth` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 RegOS knows *that* a partner exists. It does not know **where they operate** or **who to talk to**. This adds the two things almost every other regulatory object needs to point at.
 
@@ -417,3 +417,195 @@ from becoming irreversible merely because time passed.
 - Before shipping UI, walk the states the committed browser spec does not cover
   in a throwaway spec, then delete it. That practice found three real defects in
   EPIC-005 STORY-003.
+
+---
+
+### STORY-004 — The organization workspace (shipped)
+
+Five commits on `epic/EPIC-016-organization-depth`:
+
+| | |
+|---|---|
+| `f7aa498` | organizations move `platform` → `regulatory` |
+| `5a182fe` | organization routes retired onto `/api` |
+| `e1149c6` | S003's identity made reachable |
+| `76b555e` | the workspace, and the directories beside it |
+| `92970af` | browser proof, and the defect walking it found |
+
+**Two things the handoff did not know**, both found by reading the code before
+writing any:
+
+1. **The organization UI already existed** — under `features/platform/`, a
+   complete SC-101–105-compliant slice. Building a new one would have duplicated
+   it. Its location was a fossil of ADR-015 ("organization is the tenant"), which
+   ADR-030 superseded; the navigation had gone on teaching the abandoned model.
+2. **S003's identity work was unreachable.** `DescribeAs`, `AddIdentifier` and
+   `RemoveIdentifier` were called from tests and nowhere else, and
+   `OrganizationDetails` still returned four fields. Modelled, migrated,
+   persisted, and invisible.
+
+Both were brought to the founder as sign-off questions rather than absorbed
+silently, and both were approved: move it, and close the gap.
+
+**What shipped**
+
+```
+/regulatory/organizations/:id             Overview   — identity, identifiers
+/regulatory/organizations/:id/divisions   Divisions
+/regulatory/organizations/:id/sites       Sites
+/regulatory/organizations/:id/contacts    Contacts
+
+/regulatory/sites      tenant-wide, country + type filters
+/regulatory/contacts   tenant-wide, role filter
+```
+
+Plus the write surface the identity needed: `DescribeAs` through
+`UpdateOrganization`, dedicated add/withdraw identifier commands, and two
+reference-data endpoints the forms require.
+
+---
+
+## Retro
+
+### What the epic set out to do, and whether it did
+
+| Definition of Done | Outcome |
+|---|---|
+| A site can be created under an organization with a complete postal address bound to a seeded `Country`, and appears in a tenant-wide directory filterable by country and type | ✅ `SiteDirectory`, both filters optional, neither defaulted |
+| A contact can be created (optionally under a site), with roles, and appears in a tenant-wide directory filterable by role | ✅ `ContactDirectory` |
+| Sites and contacts are tenant-isolated by their own fail-closed filter, proven by a second tenant seeing none of them | ✅ asserted per aggregate, including divisions |
+| **Deactivating a site or contact retires it without hiding it** | ❌ **not shipped.** `Status` and `StatusDate` are modelled and persisted; no command reaches them. See below. |
+| Organization carries its RIM identity attributes | ✅ acronym, native name, status date, identifiers — **business functions deferred by Phase 2 ruling** |
+| Browser proof: create organization → add division → add site → add contact → find that site in the country-filtered directory | ✅ the capstone journey, in real Chrome |
+| ADR written for the aggregate-root call + tenant filtering | ✅ [ADR-038](../../adr/ADR-038-organization-depth-roots-and-the-three-filter-shapes.md) |
+
+Six of seven. The seventh is stated as unshipped rather than quietly rewritten,
+and is the honest MVP boundary discussed below.
+
+### What went well
+
+- **Root justification became an argument rather than a pattern.** Sites,
+  contacts and divisions are all roots and all for *different* reasons —
+  discoverability, discoverability, expected stable reference. Recording three
+  arguments that happen to agree is worth more than one rule covering them,
+  because the next entity has to re-run the reasoning rather than pattern-match.
+- **The three filter shapes got named.** RegOS had been using all three for
+  months without a vocabulary for them, so every new entity re-derived the
+  choice. It is now a question with three answers, stated where the filters live.
+- **The conventions acted as a ratchet, twice.** Two grandfathered exemptions
+  were retired while this context was open — four routes onto `/api` (SC-001) and
+  `IOrganizationRepository` into Domain (SC-002). Neither list grew, and
+  `ListIdentifierSchemes` got a query record rather than an exemption even though
+  it takes no parameters.
+- **Warts were recorded rather than smoothed.** The `StatusDate` asymmetry —
+  optional on `Organization`, required on `Site` and `Contact` — is documented
+  with its reason. Intentional inconsistency that states why is fine; accidental
+  inconsistency is not, and a reader can now tell which this is.
+
+### What we would do differently
+
+- **Success-path UI verification is insufficient for mutation flows.** This is
+  the sharper statement of a lesson EPIC-005 recorded too loosely as "walk the
+  uncovered states". Six forms in this slice awaited `mutateAsync` with no catch:
+  the server returned ProblemDetails correctly, the UI rendered the message
+  correctly, and the rejection *also* escaped `handleSubmit` to the window as an
+  unhandled page error. **A complete user experience over an incomplete control
+  flow** — which is exactly why nobody had noticed, since the visible half looked
+  right. Two of the six predate this epic entirely.
+  **House rule: every new mutation dialog is walked through at least one
+  realistic server rejection before it ships**, and the assertion covers the
+  whole outcome — no page error, dialog still open, nothing written — not just
+  the message.
+- **A domain test cannot tell you a capability is reachable.** S003's tests all
+  passed while nothing could write or read the fields they exercised, because
+  they constructed the aggregate directly. S004's identity tests go through the
+  handlers instead, and fail if the command stops calling `DescribeAs` or the
+  projection stops returning it. This is now the **second** occurrence — the
+  roadmap records `Activate`/`Deactivate` shipping unreachable in Milestone 1.
+  Two examples establish a pattern, not yet a rule; if EPIC-017 produces a third,
+  it earns a standing requirement that every backend-only capability be exercised
+  through its public surface before the epic closes.
+- **A hard-coded "next ADR number" went stale in two places.** `docs/adr/README.md`
+  still said 034. It now states the rule (one more than the highest-numbered
+  file) instead of a number, and the index — which stopped at 033 — carries
+  034–038.
+
+### The boundary we kept
+
+**Sites, contacts and divisions are create-and-read only.** No deactivate or
+update commands exist, so the workspace shows their status and does not offer to
+change it.
+
+This is deliberate and worth stating positively rather than as a shortfall. The
+UI says *"these things exist"*. It does not pretend *"everything about them is
+editable"*. Widening the epic to build four lifecycle commands would have been
+easy and would have made S004 about something other than composition. The
+workspace truthfully reflects the platform, which is the more valuable property
+at this stage.
+
+Deactivation arrives as its own story, with commands — not as UI bolted onto a
+gap.
+
+### The prediction this epic is carrying
+
+`OrganizationDivision` is an aggregate root because EPIC-006 is **expected** to
+hold stable references to it. Sites and contacts earned root status from queries
+that shipped in the same commit; divisions earned it from a reference that does
+not exist yet.
+
+That is a falsifiable claim, and nothing in the build fails if it turns out
+false. ADR-038 carries an **absence-shaped** `Revisit When` entry naming
+EPIC-006 as the milestone that settles it — every other entry in the ADR series
+fires when something *arrives*, and a prediction decays when something fails to
+arrive.
+
+The retro question when EPIC-006 closes is objective, not a matter of taste:
+
+> Did a later capability establish an independent, stable reference to
+> `OrganizationDivision`? If not, should it remain an aggregate root?
+
+If the answer is no, collapse it into `Organization` rather than let the caveat
+harden into precedent by age alone.
+
+### Deferred, deliberately
+
+| Deferred | Trigger to revisit |
+|---|---|
+| **Deactivate / update for sites, contacts, divisions** | The first story that needs to retire a closed plant or correct a misspelled name. It arrives with commands. |
+| **`BusinessFunctions` on an organization** | A consuming use case. Deferred by Phase 2 ruling; nothing reads it today. |
+| **Shared scheme-plus-value type** | The third consumer — likely EPIC-017's market-local tier. `SiteIdentifier` and `OrganizationIdentifier` both carry a breadcrumb naming the other. |
+| **Shared creation-policy base** | Two policies needing the same *non-trivial* rule, not merely a fifth policy appearing. |
+| **Tenant-authored identifier schemes** | A customer with a private internal scheme. Moves `IdentifierScheme` from filter shape 3 to shape 2. |
+| **Multiple roles/emails per contact in the UI** | Someone asking for a second. The aggregate already holds collections; the form offers one of each (ADR-018). |
+| **Site identifiers after creation** | A site has no add-identifier command; identifiers are recorded when the site is created. |
+
+### Operational notes for the next epic
+
+- **`--no-launch-profile` is mandatory** for any isolated API run.
+  `launchSettings.json` silently overrides `ASPNETCORE_URLS`, so without it the
+  isolated API tries to bind the founder's port 5225. This remains the single
+  most valuable operational note in this document — a future contributor has no
+  way to know it.
+- The isolated stack is a throwaway database plus API on 5301 and web on 5174.
+  The `localhost:5174` CORS entry in `Program.cs` is temporary; **check the
+  `Program.cs` diff before committing**. It was reverted here and the diff
+  verified empty.
+- Build after editing. A JSX comment placed in return position took the vite dev
+  server down and made three specs fail at once for reasons that looked like
+  application defects.
+
+### What EPIC-016 leaves for the next epic
+
+- **A decision procedure for new entities in this area**: does a user discover it
+  independently (root), which of three filter shapes, does anything branch on its
+  vocabulary (enum or reference data).
+- **A workspace shape that is now used twice** — products and organizations —
+  and is therefore a pattern rather than a one-off. A third would justify
+  extracting the layout.
+- **Two identifier collections awaiting a third**, with breadcrumbs in place.
+  EPIC-017 is the likely trigger and the likely first user of whatever comes out.
+- **A hypothesis worth watching**: across EPIC-005 and EPIC-016 the browser
+  proofs have functioned as *architecture validation* rather than acceptance
+  tests — checking that lifecycle ownership, capability reachability, mutation
+  error handling and domain terminology are experienced by a user the way the
+  code intends. Not formalised; noted for a third data point.
