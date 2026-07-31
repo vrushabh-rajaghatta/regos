@@ -107,6 +107,12 @@ RegulatoryApplication · Submission · Registration · ReferenceData.
   through UI. Flow is `docs/product/BACKLOG.md` → epic → story → PR.
 - **Use the ubiquitous language.** `Registration`, `Submission`,
   `RegulatoryApplication` — never `Record`, `Item`, `Data`.
+- **The domain's word and the screen's word may differ, and both are binding.**
+  `MedicinalProduct` is the aggregate; **"Market"** is what the UI calls it.
+  RIM's vocabulary keeps the model precise; the screen uses the word a
+  regulatory user would say out loud. Where they differ, record the pair in
+  [docs/domain-model/](docs/domain-model/) — and never let the screen's word
+  reach a type, or the type's word reach a label by default.
 - Generic folders (`Common`, `Shared`, `Helpers`, `Utils`, `Misc`) are
   prohibited in `src/` without an ADR (repository.md Standard 4).
 - New bounded context, new cross-context dependency, or a change to an accepted

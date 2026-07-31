@@ -2,6 +2,12 @@
 
 **Status:** 🟡 In Progress · **Branch:** `epic/EPIC-017-market-local-product-tier` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
+> **Vocabulary.** The aggregate is `MedicinalProduct`; the UI calls it a
+> **Market**. RIM's word keeps the model precise, the screen uses the word a
+> regulatory user says out loud. The pair is recorded in
+> [docs/domain-model/product.md](../../domain-model/product.md) and the rule in
+> [CLAUDE.md](../../../CLAUDE.md).
+
 The structural unlock. RegOS's `Product` is a **global** identity; the regulatory world is **market-local**. This inserts the missing tier and hangs the two facts users ask for first — **what it's called there**, and **whether it's actually on sale**.
 
 > **Phases 1–2 are settled.** Phase 2 was reviewed against the code and approved on 2026-07-31 with **three amendments** — see *Phase 2 rulings* below. Phase 3 is the approved five-story slice.
