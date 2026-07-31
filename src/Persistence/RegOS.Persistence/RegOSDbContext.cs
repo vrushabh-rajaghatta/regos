@@ -91,6 +91,14 @@ public sealed class RegOSDbContext : DbContext
     public DbSet<OrganizationAggregate> Organizations =>
         Set<OrganizationAggregate>();
 
+    public DbSet<RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite>
+        OrganizationSites =>
+        Set<RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite>();
+
+    public DbSet<RegOS.ReferenceData.Domain.Organization.IdentifierScheme>
+        IdentifierSchemes =>
+        Set<RegOS.ReferenceData.Domain.Organization.IdentifierScheme>();
+
     public DbSet<SubmissionTypeAggregate> SubmissionTypes =>
         Set<SubmissionTypeAggregate>();
 
@@ -166,14 +174,33 @@ public sealed class RegOSDbContext : DbContext
     /// rows".
     /// </para>
     /// <para>
-    /// Deliberately unfiltered, by tier (ADR-031): <c>Tenants</c> and
-    /// <c>Organizations</c> (global directories), <c>Countries</c>,
-    /// <c>Authorities</c>, <c>SubmissionTypes</c> (world facts), and the
-    /// person-scoped satellites (<c>UserCredentials</c>, <c>RefreshTokens</c>,
-    /// <c>Invitations</c>, <c>PasswordResets</c>, <c>Sessions</c>), which
-    /// carry no tenant and are reachable only by user id or token hash.
-    /// Child entities (<c>SubmissionDocuments</c>, <c>DocumentVersions</c>,
-    /// <c>SnapshotDocuments</c>) are reachable only through a filtered root.
+    /// Tenant filtering has <b>three shapes</b>, and choosing between them is
+    /// the decision every new entity faces:
+    /// <list type="number">
+    /// <item><b>Fail-closed tenant-owned</b> — <c>x.TenantId == CurrentTenant</c>.
+    /// The tenant owns the data. <c>Users</c>, <c>Products</c>,
+    /// <c>RegulatoryApplications</c>, <c>Submissions</c>,
+    /// <c>SubmissionSnapshots</c>, <c>ProductDocuments</c>,
+    /// <c>Registrations</c>, <c>Organizations</c>, <c>OrganizationSites</c>.</item>
+    /// <item><b>Shared plus extensible</b> — <c>TenantId == null || == CurrentTenant</c>.
+    /// The platform ships a baseline the tenant may extend.
+    /// <c>DocumentTypes</c>, <c>RegulatoryTemplates</c>.</item>
+    /// <item><b>Global world facts</b> — no filter. RegOS is describing an
+    /// external reality that does not differ by tenant. <c>Countries</c>,
+    /// <c>Authorities</c>, <c>SubmissionTypes</c>, <c>IdentifierSchemes</c>.</item>
+    /// </list>
+    /// Also unfiltered, for different reasons: <c>Tenants</c> (the platform
+    /// tier), and the person-scoped satellites (<c>UserCredentials</c>,
+    /// <c>RefreshTokens</c>, <c>Invitations</c>, <c>PasswordResets</c>,
+    /// <c>Sessions</c>), which carry no tenant and are reachable only by user
+    /// id or token hash. Child entities (<c>SubmissionDocuments</c>,
+    /// <c>DocumentVersions</c>, <c>SnapshotDocuments</c>,
+    /// <c>RegistrationStatusHistory</c>, <c>SiteIdentifiers</c>) are reachable
+    /// only through a filtered root.
+    /// <para>
+    /// <c>Organizations</c> was listed here as an unfiltered global directory
+    /// until ADR-032 made it tenant-owned; the list above is the corrected one.
+    /// </para>
     /// </para>
     /// </remarks>
     private void ApplyTenantFilters(ModelBuilder modelBuilder)
@@ -205,6 +232,16 @@ public sealed class RegOSDbContext : DbContext
         // since ADR-032.
         modelBuilder.Entity<OrganizationAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // A site is a ROOT, reachable directly through the tenant-wide
+        // directory rather than only through its organization — so it carries
+        // its own tenant and its own filter instead of inheriting the parent's.
+        // Site addresses are exactly the competitively sensitive data ADR-032
+        // was written for.
+        modelBuilder.Entity<
+            RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite>()
+            .HasQueryFilter(
+                x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // System types (null tenant) are visible to every authenticated
         // tenant; a tenant's own extensions only to that tenant.

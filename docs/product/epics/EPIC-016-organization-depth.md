@@ -1,10 +1,10 @@
 # EPIC-016 — Organization depth: sites, contacts, divisions
 
-**Status:** ⚪ Not Started · **Branch:** `epic/EPIC-016-organization-depth` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress · **Branch:** `epic/EPIC-016-organization-depth` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 RegOS knows *that* a partner exists. It does not know **where they operate** or **who to talk to**. This adds the two things almost every other regulatory object needs to point at.
 
-> **Phase 1 below is settled.** **Phases 2–3 are a sketch**, written so this epic can be picked up months from now without re-deriving it — they are **not approved design**. Confirm, amend or replace them in the Phase-2 conversation when this epic is pulled into **Now**. See [RIM alignment](../BACKLOG.md#rim-alignment) for why this epic is first.
+> **Phases 1–2 are settled** (Phase 2 approved 2026-07-31 — see *Phase 2 rulings* below, which amend the original sketch in three places). Phase 3 is the approved four-story slice. See [RIM alignment](../BACKLOG.md#rim-alignment) for why this epic is first.
 
 ---
 
@@ -64,7 +64,7 @@ It is also **structurally unambiguous** — pure addition to an existing bounded
 
 ---
 
-## Phase 2 — Domain design *(sketch — not approved)*
+## Phase 2 — Domain design
 
 ### Entities
 
@@ -104,11 +104,11 @@ It is also **structurally unambiguous** — pure addition to an existing bounded
 
 **`Organization` (deepened)** — add `NameNativeLanguage?`, `Acronym?`, `Identifier`, `BusinessFunctions`, `StatusDate`.
 
-### Decisions to settle (Phase 2, on pull-in)
+### Decisions (approved 2026-07-31)
 
-**1. Site, Contact and Division are aggregate roots, not children of `Organization`.** *Recommended.* Apply EPIC-005's own test — users do not only ask *"load Organization X and inspect its sites"*, they ask *"which manufacturing sites are in India?"*. More decisively, other aggregates reference them **by id** (License → approved sites, Ingredient → manufacturing source, Application → QP contacts), which is the aggregate-root signal. They also carry independent status lifecycles. As children they would force a lock on `Organization` for every site status change.
+**1. Site, Contact and Division are aggregate roots, not children of `Organization`.** Apply EPIC-005's own test — users do not only ask *"load Organization X and inspect its sites"*, they ask *"which manufacturing sites are in India?"*. More decisively, other aggregates reference them **by id** (License → approved sites, Ingredient → manufacturing source, Application → QP contacts), which is the aggregate-root signal. They also carry independent status lifecycles. As children they would force a lock on `Organization` for every site status change.
 
-**2. Each new root carries `TenantId` and its own fail-closed query filter.** *This is the ADR-worthy call.* Because they are **roots** — reachable directly, not only through a filtered parent — they do **not** inherit `Organization`'s filter the way `SubmissionDocument` or `DocumentVersion` inherit theirs. Site addresses and named contacts are exactly the competitively sensitive data ADR-032 was written for. Add all three to `ApplyTenantFilters` and assert the isolation with a test.
+**2. Each new root carries `TenantId` and its own fail-closed query filter.** *The ADR-worthy call — see the three shapes below.* Because they are **roots** — reachable directly, not only through a filtered parent — they do **not** inherit `Organization`'s filter the way `SubmissionDocument` or `DocumentVersion` inherit theirs. Site addresses and named contacts are exactly the competitively sensitive data ADR-032 was written for. Add all three to `ApplyTenantFilters` and assert the isolation with a test.
 
 **3. Reference rows vs enums.** Phase-2 guiding rule says *prefer reference rows for anything a regulator or customer might extend*. Suggested split: **`BusinessFunctions` and `ContactRole` → reference data** (customers will extend these); **`OrganizationSiteType` and status → closed enums** (they drive behaviour, the EPIC-005 `RegistrationStatus` argument). Settle explicitly — it decides whether EPIC-012 inherits authoring work.
 
@@ -132,14 +132,107 @@ It is also **structurally unambiguous** — pure addition to an existing bounded
 
 ---
 
-## Phase 3 — Candidate stories *(sketch — re-slice on pull-in)*
+### Phase 2 rulings (2026-07-31) — three amendments to the sketch
 
-| # | Story | Slice |
+**A. Tenant filtering has three shapes, not two.** The decision for a new entity
+is not *"filtered or not"* but *which of the three the codebase already uses*:
+
+| Shape | Filter | Used by |
 |---|---|---|
-| **S001** | **`OrganizationSite`** — aggregate + `PostalAddress` value object + tenant filter + persistence + API + site list under an organization | domain → persistence → API → UI → test |
-| **S002** | **Site directory** — tenant-wide sites filterable by country and type (the query that justifies the root) | API → UI → test |
-| **S003** | **`Contact`** — aggregate + roles + emails/phones + tenant filter + API + contact list, under an organization and under a site | full slice |
-| **S004** | **`OrganizationDivision`** + **deepen `Organization`** (identifier, acronym, native name, business functions, status date) | full slice |
-| **S005** | **Capstone** — organization workspace (org → divisions → sites → contacts), browser proof of the full journey, ADR, retro | UI → test → docs |
+| **Fail-closed tenant-owned** | `CurrentTenant != null && x.TenantId == CurrentTenant` | Product, Organization, Submission, SubmissionSnapshot, ProductDocument, Registration, User |
+| **Shared plus extensible** | `CurrentTenant != null && (x.TenantId == null \|\| x.TenantId == CurrentTenant)` | DocumentType, RegulatoryTemplate |
+| **Global world facts** | none | Country, Authority, SubmissionType |
 
-**ADR to write:** *Organization sites and contacts are aggregate roots with their own tenant filter* — next free number (expected **ADR-038**, after EPIC-005's ADR-037).
+`OrganizationSite`, `Contact` and `OrganizationDivision` take the **first**
+shape, and explicitly not the second: there is no such thing as a
+system-provided manufacturing site or a shared contact. Naming this is the point
+of the ADR — the shared-plus-extensible shape is the one a contributor would
+reach for by analogy with `DocumentType`, and it would be a category error here.
+
+**B. `BusinessFunctions` is deferred, not built.** It appears on three entities,
+is RIM "Multiple, controlled", and has **no consumer in this epic** — nothing
+queries by it and nothing branches on it. Building a reference table, three join
+tables, a seed list and APIs for a field that is only ever displayed is
+speculative completeness. It ships when a real query needs it, and is recorded
+in the ADR as a deliberate deferral rather than a gap. `ContactRole` earns its
+table today: *"who is the QP for this application?"* is in this epic's own
+outcome, and EPIC-006 needs a correspondence contact.
+
+**C. `IdentifierScheme` is reference data, not an enum.** An identifier scheme
+is *vocabulary*, not *behaviour* — the EPIC-005 test that made `RegistrationStatus`
+an enum (does it drive what may happen?) returns the opposite answer here.
+DUNS, FEI, EU ORG-ID and SPL are jurisdiction-specific, externally governed and
+occasionally extended; an enum would need a deployment to add one.
+
+**D. The site directory ships with the site.** The tenant-wide directory *is*
+the argument for making `OrganizationSite` a root, so it cannot arrive a story
+later — EPIC-005's lesson that an aggregate should arrive with the capability
+that justifies it.
+
+---
+
+## Phase 3 — Stories
+
+| # | Story | Status |
+|---|---|---|
+| **STORY-001** | **`OrganizationSite`** — aggregate + `PostalAddress` value object + `IdentifierScheme` reference data + fail-closed tenant filter (and the stale `RegOSDbContext` remarks fix) + persistence + API + the country/type directory | 🟢 Complete |
+| **STORY-002** | **`Contact`** — aggregate + `ContactRole` reference data + emails/phones + tenant filter + directory by role | ⚪ Not Started |
+| **STORY-003** | **`OrganizationDivision`** + deepen `Organization` (identifier, acronym, native name, status date) | ⚪ Not Started |
+| **STORY-004** | **Capstone** — organization workspace (org → divisions → sites → contacts), browser proof, ADR-038, retro | ⚪ Not Started |
+
+**ADR to write:** *Organization sites and contacts are aggregate roots, and the
+three shapes of tenant filtering* — **ADR-038**.
+
+### STORY-001 — `OrganizationSite` and the site directory (shipped)
+
+**Decisions (approved 2026-07-31):**
+
+1. **Status is an activation flag, so there is no history child.** Active/Inactive
+   answers *do we still use this place?* — current operability, the same concept
+   `Organization` and `Product` already carry without history. A `StatusDate` is
+   the proportionate answer where the date still matters. The backlog's
+   cross-cutting rule was **rewritten** to say *business lifecycles* rather than
+   *statuses*, so it now explains why `Registration` got history and a site did
+   not instead of leaving it to be inferred.
+2. **Only the country is required in an address.** An in-licensed asset arrives
+   as a manufacturer name and a country; refusing that would lose the fact
+   entirely (the ADR-035 principle). The country is required because it is the
+   only part the model *reasons* about — it is what the directory filters by.
+   `PostalAddress` is therefore a deliberately weak value object whose job is
+   encapsulation, not enforcement.
+3. **Identifiers are a collection from day one.** A US plant holds an FEI *and* a
+   DUNS number today; they are peers, not alternatives. One per scheme is an
+   aggregate invariant **and** a unique index on
+   `(OrganizationSiteId, SchemeId)` — the persistence model reinforcing the
+   domain model rather than merely storing it.
+4. **`IdentifierScheme` is a global world fact**, unfiltered like `Country` and
+   `Authority`: a DUNS number does not become a different scheme because one
+   tenant thinks about it differently. Migration path if a customer ever needs a
+   private internal scheme is recorded in the type: a nullable `TenantId` and one
+   filter, seeded rows keeping a null tenant.
+5. **`OrganizationSiteType` stays a closed enum** — only a *manufacturing* site
+   can be named on a licence as an approved manufacturer, so the vocabulary
+   participates in regulatory rules rather than merely being displayed. The exact
+   mirror of why `IdentifierScheme` is data.
+6. **The directory ships with the aggregate**, because it is the argument for the
+   aggregate being a root.
+
+**The stale `RegOSDbContext` remarks are corrected.** They listed `Organizations`
+as an unfiltered global directory — untrue since ADR-032, and contradicted by the
+filter 35 lines below. Replaced with the **three shapes** (fail-closed
+tenant-owned / shared-plus-extensible / global world facts), so the block now
+teaches the decision a new entity actually faces.
+
+**Structural change:** `Organization.Domain` now references
+`ReferenceData.Domain`. No cycle — `ReferenceData.Domain` depends only on
+SharedKernel, and `Registration.Domain` already does the same.
+
+**API:** `POST /organizations/{id}/sites` · `GET /organization-sites/{id}` ·
+`GET /organizations/{id}/sites` · `GET /organization-sites?countryId=&type=`.
+
+**Verified:** 790 backend tests green (37 new: 23 domain, 14 integration in a new
+`RegOS.Organization.Application.Tests` project); migration `AddOrganizationSites`
+creates three tables with the unique `(OrganizationSiteId, SchemeId)` index and
+`Restrict` FKs to Countries, Organizations and IdentifierSchemes. The isolation
+claim is proved directly: a second tenant finds the site neither by id, nor
+through the directory, nor through the detail read model.

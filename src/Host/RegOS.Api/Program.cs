@@ -3,6 +3,7 @@ using RegOS.Api.Endpoints.Applications;
 using RegOS.Api.Development;
 using RegOS.Api.Endpoints.Authentication;
 using RegOS.Api.Endpoints.Organization;
+using RegOS.Api.Endpoints.OrganizationSites;
 using RegOS.Api.Endpoints.Platform;
 using RegOS.Api.Endpoints.PlatformAdministration;
 using RegOS.Api.Endpoints.ProductDocuments;
@@ -167,6 +168,12 @@ organizations.MapDeactivateOrganization();
 organizations.MapGetOrganization();
 organizations.MapListOrganizations();
 organizations.MapUpdateOrganization();
+
+var organizationSites = app.MapGroup("").WithTags("Organization Sites");
+organizationSites.MapCreateOrganizationSite();
+organizationSites.MapGetOrganizationSite();
+organizationSites.MapListOrganizationSites();
+organizationSites.MapSiteDirectory();
 
 var platformAdministration = app.MapGroup("").WithTags("Platform Administration");
 platformAdministration.MapTenantAdministration();
