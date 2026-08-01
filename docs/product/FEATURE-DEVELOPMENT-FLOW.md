@@ -118,7 +118,21 @@ Output: `docs/product/epics/EPIC-XXX-<slug>.md`. Add a one-line entry to `docs/p
 
 ## Phase 2 — Design the domain (entities, columns, future-proofing)
 
-Before writing stories, design the data. For each entity:
+**Begin with the domain question, not the entity list.** Ask what the user is
+trying to answer or accomplish — *"what does a user ask that spans a
+correspondence, a meeting and an inspection?"* **"Nothing" is a valid outcome**,
+and usually the one that keeps the model smallest. Only once a question
+demonstrates the need for a new concept should that concept become a candidate
+entity. See [ADR-038](../adr/ADR-038-organization-depth-roots-and-the-three-filter-shapes.md)
+for the cost of beginning from a predicted root instead of a demonstrated query:
+*a root justified by a query that does not exist yet is a demo of an empty table.*
+
+The order is directional, which is why it matters. **A question can produce a
+hypothesis; a hypothesis can only go looking for confirmation.** *"Should there
+be an `X`?"* has already conceded the noun. Phase 2 still **ends** with entities
+and columns — it just does not start there.
+
+Then design the data. For each entity:
 
 1. **Entity + columns** — name, fields, types, ownership (global vs tenant-scoped — see ADR-030/031), identity (strongly-typed id), invariants.
 2. **Change-case analysis (required).** For each entity, ask *"what is likely to change about this in the next 1–3 years, and does the shape accommodate it without a breaking migration?"* Fill the table:
