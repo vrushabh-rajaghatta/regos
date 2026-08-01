@@ -1,11 +1,16 @@
+using RegOS.SharedKernel.Primitives;
+
 namespace RegOS.Submission.Domain.Snapshot;
 
-public readonly record struct SnapshotDocumentId(Guid Value)
+public sealed class SnapshotDocumentId : StronglyTypedId
 {
+    public SnapshotDocumentId(Guid value) : base(value)
+    {
+    }
+
     public static SnapshotDocumentId New() => new(Guid.NewGuid());
 
-    public override string ToString() => Value.ToString();
+    public static SnapshotDocumentId From(Guid value) => new(value);
 
-    public static implicit operator Guid(SnapshotDocumentId id)
-        => id.Value;
+    public static implicit operator Guid(SnapshotDocumentId id) => id.Value;
 }

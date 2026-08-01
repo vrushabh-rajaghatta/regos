@@ -49,12 +49,6 @@ public sealed class IdentityConventionTests
         "RequiredDocumentId",
         "ValidationRuleId",
 
-        // Submission
-        "SubmissionId",
-        "SubmissionDocumentId",
-        "SubmissionSnapshotId",
-        "SnapshotDocumentId",
-
         // Registration
         "RegistrationId",
         "RegistrationStatusEntryId",

@@ -2,14 +2,20 @@ using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
 
 namespace RegOS.Submission.Domain.Submission;
 
-public sealed class Submission
+public sealed class Submission : AggregateRoot<SubmissionId>
 {
     private readonly List<SubmissionDocument> _documents = [];
+
+    // EF materialisation only.
+    private Submission()
+    {
+    }
 
     private Submission(
         SubmissionId id,
@@ -30,16 +36,14 @@ public sealed class Submission
         CreatedOn = createdOn;
     }
 
-    public SubmissionId Id { get; }
-
     // The owning tenant. Handlers derive it from the parent application
     // rather than from the ambient context, so a submission can never carry
     // a different tenant than the application it belongs to (ADR-031).
-    public TenantId TenantId { get; }
+    public TenantId TenantId { get; private set; } = default!;
 
-    public RegulatoryApplicationId ApplicationId { get; }
+    public RegulatoryApplicationId ApplicationId { get; private set; }
 
-    public SubmissionTypeId SubmissionTypeId { get; }
+    public SubmissionTypeId SubmissionTypeId { get; private set; }
 
     // The published blueprint version this submission is judged against, pinned
     // at creation so a later template version never silently changes what a
@@ -48,11 +52,11 @@ public sealed class Submission
     // must never block creating a submission.
     public RegulatoryTemplateVersionId? BoundTemplateVersionId { get; private set; }
 
-    public string Title { get; private set; }
+    public string Title { get; private set; } = default!;
 
     public SubmissionStatus Status { get; private set; }
 
-    public DateTime CreatedOn { get; }
+    public DateTime CreatedOn { get; private set; }
 
     // Null while Draft; set when the submission is published. PublishedBy is
     // deferred until the project has a current-user identity to record.

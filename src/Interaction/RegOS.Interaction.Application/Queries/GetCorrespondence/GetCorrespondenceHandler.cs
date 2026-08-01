@@ -65,7 +65,7 @@ public sealed class GetCorrespondenceHandler
                     application != null ? application.Name : null,
                     application != null ? application.ApplicationNumber : null,
                     x.Correspondence.SubmissionId != null
-                        ? x.Correspondence.SubmissionId!.Value.Value
+                        ? x.Correspondence.SubmissionId!.Value
                         : null,
                     x.Correspondence.RegistrationId != null
                         ? x.Correspondence.RegistrationId!.Value.Value

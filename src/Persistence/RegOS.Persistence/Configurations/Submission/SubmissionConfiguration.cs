@@ -25,7 +25,7 @@ public sealed class SubmissionConfiguration
         builder.Property(x => x.Id)
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionId(value));
+                value => SubmissionId.From(value));
 
         builder.Property(x => x.ApplicationId)
             .HasConversion(

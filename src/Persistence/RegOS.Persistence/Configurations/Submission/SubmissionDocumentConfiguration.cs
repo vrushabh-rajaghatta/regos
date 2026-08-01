@@ -21,7 +21,7 @@ public sealed class SubmissionDocumentConfiguration
         builder.Property(x => x.Id)
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionDocumentId(value));
+                value => SubmissionDocumentId.From(value));
 
         builder.Property(x => x.ProductDocumentId)
             .HasConversion(
@@ -56,10 +56,18 @@ public sealed class SubmissionDocumentConfiguration
         // Declared with the aggregate's strongly-typed id (and its converter)
         // so it is compatible with Submission's primary key; the ownership
         // relationship binds to it in SubmissionConfiguration.
+        //
+        // IsRequired is load-bearing, not decoration. SubmissionId is a
+        // reference type (ES-020), so EF infers an *optional* shadow FK, and an
+        // optional FK turns "remove a child" into "null the FK" rather than
+        // "delete the row" — which the not-null column then rejects at
+        // SaveChanges. Under the old record-struct id the non-nullability came
+        // for free from the CLR type.
         builder.Property<SubmissionId>("SubmissionId")
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionId(value));
+                value => SubmissionId.From(value))
+            .IsRequired();
 
         // Reference to the immutable version. No navigation (we avoid
         // cross-aggregate navigation); the FK exists only to protect the

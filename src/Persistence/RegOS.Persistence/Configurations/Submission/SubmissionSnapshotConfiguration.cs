@@ -21,12 +21,12 @@ public sealed class SubmissionSnapshotConfiguration
         builder.Property(x => x.Id)
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionSnapshotId(value));
+                value => SubmissionSnapshotId.From(value));
 
         builder.Property(x => x.SubmissionId)
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionId(value))
+                value => SubmissionId.From(value))
             .IsRequired();
 
         // The owning tenant (ADR-031), copied from the submission at publish.

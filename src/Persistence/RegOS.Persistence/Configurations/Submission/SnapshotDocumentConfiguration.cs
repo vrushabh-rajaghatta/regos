@@ -20,7 +20,7 @@ public sealed class SnapshotDocumentConfiguration
         builder.Property(x => x.Id)
             .HasConversion(
                 id => id.Value,
-                value => new SnapshotDocumentId(value));
+                value => SnapshotDocumentId.From(value));
 
         builder.Property(x => x.DocumentVersionId)
             .HasConversion(
@@ -34,10 +34,15 @@ public sealed class SnapshotDocumentConfiguration
         // Shadow FK to the owning snapshot — the child holds no FK property.
         // Declared with the aggregate's strongly-typed id (and its converter) so
         // it is compatible with SubmissionSnapshot's primary key.
+        //
+        // IsRequired for the same reason as SubmissionDocuments': a reference
+        // type id makes the inferred shadow FK optional, and an optional FK
+        // severs instead of deleting.
         builder.Property<SubmissionSnapshotId>("SubmissionSnapshotId")
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionSnapshotId(value));
+                value => SubmissionSnapshotId.From(value))
+            .IsRequired();
 
         // Reference to the immutable version. No navigation; the FK exists only to
         // protect the referenced version from deletion while a published dossier

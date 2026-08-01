@@ -1,5 +1,6 @@
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
+using RegOS.SharedKernel.Abstractions;
 
 namespace RegOS.Submission.Domain.Submission;
 
@@ -14,8 +15,13 @@ namespace RegOS.Submission.Domain.Submission;
 /// file itself. Name, status, storage, and content are read through the
 /// referenced Product Document / version.
 /// </summary>
-public sealed class SubmissionDocument
+public sealed class SubmissionDocument : Entity<SubmissionDocumentId>
 {
+    // EF materialisation only.
+    private SubmissionDocument()
+    {
+    }
+
     // Only the Submission aggregate may create attachments.
     internal SubmissionDocument(
         SubmissionDocumentId id,
@@ -33,17 +39,15 @@ public sealed class SubmissionDocument
         TemplateSectionId = templateSectionId;
     }
 
-    public SubmissionDocumentId Id { get; }
-
-    public ProductDocumentId ProductDocumentId { get; }
+    public ProductDocumentId ProductDocumentId { get; private set; }
 
     // Pinned at attach time — the dossier stays immutable even if a newer
     // version of the document is uploaded later.
-    public DocumentVersionId DocumentVersionId { get; }
+    public DocumentVersionId DocumentVersionId { get; private set; }
 
-    public int DisplayOrder { get; }
+    public int DisplayOrder { get; private set; }
 
-    public DateTime AttachedAt { get; }
+    public DateTime AttachedAt { get; private set; }
 
     /// <summary>
     /// Where this document sits in the dossier: a section of the submission's

@@ -1,4 +1,5 @@
 using RegOS.ProductDocument.Domain.IDs;
+using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Submission.Domain.Snapshot;
@@ -15,8 +16,13 @@ namespace RegOS.Submission.Domain.Snapshot;
 /// legal record is "version 7 of this document," and the version is the
 /// immutable identity.
 /// </remarks>
-public sealed class SnapshotDocument
+public sealed class SnapshotDocument : Entity<SnapshotDocumentId>
 {
+    // EF materialisation only.
+    private SnapshotDocument()
+    {
+    }
+
     // Only the SubmissionSnapshot aggregate may create snapshot documents. The
     // entity owns its own invariants: it must reference a version, and its position
     // in the dossier must be a real (positive) order.
@@ -36,9 +42,7 @@ public sealed class SnapshotDocument
         DisplayOrder = displayOrder;
     }
 
-    public SnapshotDocumentId Id { get; }
+    public DocumentVersionId DocumentVersionId { get; private set; }
 
-    public DocumentVersionId DocumentVersionId { get; }
-
-    public int DisplayOrder { get; }
+    public int DisplayOrder { get; private set; }
 }

@@ -1,5 +1,6 @@
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.Submission.Domain.Submission;
+using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
 
@@ -22,9 +23,14 @@ namespace RegOS.Submission.Domain.Snapshot;
 /// It is created once, through <see cref="Create"/>, and never changes. There are
 /// no behaviors beyond creation: no add, remove, rename, or update.
 /// </remarks>
-public sealed class SubmissionSnapshot
+public sealed class SubmissionSnapshot : AggregateRoot<SubmissionSnapshotId>
 {
     private readonly List<SnapshotDocument> _documents = [];
+
+    // EF materialisation only.
+    private SubmissionSnapshot()
+    {
+    }
 
     private SubmissionSnapshot(
         SubmissionSnapshotId id,
@@ -36,14 +42,12 @@ public sealed class SubmissionSnapshot
         SubmissionId = submissionId;
     }
 
-    public SubmissionSnapshotId Id { get; }
-
     // The owning tenant, copied from the submission being snapshotted so the
     // two can never disagree (ADR-031).
-    public TenantId TenantId { get; }
+    public TenantId TenantId { get; private set; } = default!;
 
     // A snapshot always belongs to exactly one submission (Invariant 1).
-    public SubmissionId SubmissionId { get; }
+    public SubmissionId SubmissionId { get; private set; } = default!;
 
     // The frozen document manifest, in display order. Never exposed as mutable —
     // the snapshot cannot be modified after creation (Invariant 4).
@@ -72,7 +76,7 @@ public sealed class SubmissionSnapshot
         if (tenantId is null)
             throw new DomainException("A snapshot must belong to a tenant.");
 
-        if (submissionId == default)
+        if (submissionId is null)
             throw new DomainException("A snapshot must belong to a submission.");
 
         ArgumentNullException.ThrowIfNull(documents);
