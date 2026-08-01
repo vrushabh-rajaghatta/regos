@@ -10,6 +10,7 @@
   </Folder>
   <Folder Name="/src/Platform/">
     <Project Path="src/Platform/RegOS.Platform.Application/RegOS.Platform.Application.csproj" />
+    <Project Path="src/Platform/RegOS.Platform.Contracts/RegOS.Platform.Contracts.csproj" />
     <Project Path="src/Platform/RegOS.Platform.Domain/RegOS.Platform.Domain.csproj" />
     <Project Path="src/Platform/RegOS.Platform.Infrastructure/RegOS.Platform.Infrastructure.csproj" />
   </Folder>

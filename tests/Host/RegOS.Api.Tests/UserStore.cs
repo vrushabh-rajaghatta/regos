@@ -1,4 +1,5 @@
 using Npgsql;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Api.Tests;
 

@@ -3,6 +3,7 @@ using FluentAssertions;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Platform.Contracts;
 
 using UserCredentialAggregate =
     RegOS.Platform.Domain.Aggregates.UserCredential.UserCredential;

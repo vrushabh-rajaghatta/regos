@@ -497,10 +497,22 @@ constant. Action, Mode and Category wait for something to ask for them.
 Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
 **Phase 5 owes an outcome on every one, including the failures.**
 
-1. **The bitemporal extraction** (ADR-039 decision 6). Occurrences three through
-   six arrive here. *Write the first by hand; extract with real consumers
-   visible.* Falsified if, at S007, the extraction still is not obviously worth
-   doing.
+1. ~~**The bitemporal extraction** (ADR-039 decision 6).~~
+   **RESOLVED at S003 — measured, not extracted.** The conclusion, for ADR-041
+   to carry into the canon:
+
+   > **Structural similarity is not evidence of behavioural similarity.** The
+   > append-only histories converged in *shape* and diverged in *semantics*, and
+   > the measured maintenance cost lay in **EF configuration** rather than in
+   > domain behaviour.
+
+   ADR-039 decision 6 was not wrong; it was **looking at the wrong layer**. See
+   the S003 extraction review above for the numbers. Revisit at five
+   configurations, and extract only the configuration.
+
+   *Not recorded by editing ADR-039 — an accepted ADR is superseded, never
+   edited (CLAUDE.md). ADR-038's falsified prediction went into ADR-040 the same
+   way; this one goes into ADR-041 at S007.*
 2. **Identity over convenience facts** — *prefer storing canonical identity and
    projecting derived views over persisting convenience facts.* Four independent
    tests: due-date proximity, the commitment's authority, a question's days
@@ -600,7 +612,20 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
    "solves" it by adding response documents to the request. *Settle it in S003
    if answering a question turns out to need it, or leave it unbuilt.*
 
-7. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
+7. **The Rule of Three has a second half** *(new, S003 — candidate, not
+   promoted)*. ADR-018 says *duplicate twice, abstract on the third demonstrated
+   need*. S003 suggests a refinement: **three occurrences, then measure where
+   the maintenance cost actually lives** — because it is not always in the
+   thing that looks duplicated. Here it was configuration; elsewhere it could be
+   behaviour, or tests.
+
+   **Not promoted, on purpose.** It is one measurement, and ADR-018 is one of
+   the load-bearing decisions in this codebase. *What would promote it:* a
+   second extraction review, in EPIC-004 or later, where the measurement again
+   points somewhere other than the obvious duplicate. Raise it at the S007
+   retro; do not change ADR-018 mid-epic.
+
+8. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
    "status" of an object is really derived from related objects or dates, the
    object may be an event rather than a lifecycle.* `HaCorrespondence` is the
    first instance. **One example is not enough to promote it**; watch for a

@@ -4,6 +4,7 @@ using RegOS.Persistence;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
 using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
+using RegOS.Platform.Contracts;
 
 using RefreshTokenAggregate =
     RegOS.Platform.Domain.Aggregates.RefreshToken.RefreshToken;

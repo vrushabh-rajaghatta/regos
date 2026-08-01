@@ -3,6 +3,7 @@ using FluentAssertions;
 using RegOS.Platform.Domain.Aggregates.PasswordReset;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Platform.Contracts;
 
 using PasswordResetAggregate =
     RegOS.Platform.Domain.Aggregates.PasswordReset.PasswordReset;

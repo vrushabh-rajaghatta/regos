@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RegOS.Persistence;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Queries.GetUserById;
 

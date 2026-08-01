@@ -6,6 +6,7 @@ using RegOS.Platform.Domain.Aggregates.PasswordReset;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Commands.CompletePasswordReset;
 

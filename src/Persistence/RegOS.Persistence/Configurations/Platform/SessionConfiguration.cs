@@ -6,6 +6,7 @@ using RegOS.Platform.Domain.Aggregates.User;
 
 using SessionAggregate = RegOS.Platform.Domain.Aggregates.Session.Session;
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Persistence.Configurations.Platform;
 

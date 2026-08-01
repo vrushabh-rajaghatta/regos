@@ -1,6 +1,7 @@
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.ValueObjects;
 using RegOS.SharedKernel.Primitives;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Services;
 

@@ -10,6 +10,7 @@ using RegOS.Platform.Domain.ValueObjects;
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.Platform.Application.Tests.Fakes;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Tests.Queries.GetUserById;
 

@@ -1,6 +1,7 @@
 using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.RefreshToken;
 using RegOS.Platform.Domain.Aggregates.Session;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Queries.GetSessions;
 

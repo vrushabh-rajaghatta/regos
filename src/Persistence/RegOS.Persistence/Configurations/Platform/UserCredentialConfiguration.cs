@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RegOS.Platform.Domain.Aggregates.User;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using RegOS.Platform.Contracts;
 using UserCredentialAggregate =
     RegOS.Platform.Domain.Aggregates.UserCredential.UserCredential;
 

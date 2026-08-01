@@ -7,6 +7,7 @@ using RegOS.Platform.Domain.Aggregates.User;
 using InvitationAggregate =
     RegOS.Platform.Domain.Aggregates.Invitation.Invitation;
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Persistence.Configurations.Platform;
 

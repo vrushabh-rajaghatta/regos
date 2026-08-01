@@ -1,4 +1,5 @@
 using RegOS.Platform.Domain.Aggregates.User;
+using RegOS.Platform.Contracts;
 
 using UserCredentialAggregate =
     RegOS.Platform.Domain.Aggregates.UserCredential.UserCredential;
