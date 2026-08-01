@@ -31,19 +31,19 @@ import {
 } from "../validation/registerRegulatoryApplicationSchema";
 
 interface Props {
-  productId: string;
+  globalProductId: string;
   onSuccess: () => void;
 }
 
 export function RegisterRegulatoryApplicationForm({
-  productId,
+  globalProductId,
   onSuccess,
 }: Props) {
   const countriesQuery = useCountries();
   const authoritiesQuery = useAuthorities();
   const organizationsQuery = useOrganizations();
 
-  const mutation = useCreateRegulatoryApplication(productId);
+  const mutation = useCreateRegulatoryApplication(globalProductId);
 
   const {
     control,

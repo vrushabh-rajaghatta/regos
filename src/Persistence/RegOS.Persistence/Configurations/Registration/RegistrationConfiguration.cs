@@ -3,15 +3,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
-using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Registration.Domain.Aggregates.Registration;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Primitives;
 
 using RegistrationAggregate = RegOS.Registration.Domain.Aggregates.Registration.Registration;
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
-using CountryAggregate = RegOS.ReferenceData.Domain.Geography.Country.Country;
 using AuthorityAggregate = RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
 using OrganizationAggregate = RegOS.Organization.Domain.Aggregates.Organization.Organization;
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
@@ -39,16 +36,10 @@ public sealed class RegistrationConfiguration
                 value => new TenantId(value))
             .IsRequired();
 
-        builder.Property(x => x.ProductId)
+        builder.Property(x => x.MedicinalProductId)
             .HasConversion(
                 id => id.Value,
-                value => new ProductId(value))
-            .IsRequired();
-
-        builder.Property(x => x.CountryId)
-            .HasConversion(
-                id => id.Value,
-                value => new CountryId(value))
+                value => new MedicinalProductId(value))
             .IsRequired();
 
         builder.Property(x => x.AuthorityId)
@@ -89,16 +80,15 @@ public sealed class RegistrationConfiguration
 
         // Cross-aggregate foreign keys. The domain exposes no navigation
         // properties, but EF still models the relationships. All Restrict: a
-        // product, market or holder referenced by an authorisation must never
-        // be deleted out from under it.
-        builder.HasOne<ProductAggregate>()
+        // market presence, authority or holder referenced by an authorisation
+        // must never be deleted out from under it.
+        //
+        // There is no FK to Products or Countries any more. Both are reached
+        // through the medicinal product, which is the whole point — a database
+        // that cannot store a registration disagreeing with its own market.
+        builder.HasOne<MedicinalProduct>()
             .WithMany()
-            .HasForeignKey(x => x.ProductId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne<CountryAggregate>()
-            .WithMany()
-            .HasForeignKey(x => x.CountryId)
+            .HasForeignKey(x => x.MedicinalProductId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<AuthorityAggregate>()
@@ -117,17 +107,18 @@ public sealed class RegistrationConfiguration
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(x => x.TenantId);
-        builder.HasIndex(x => x.ProductId);
         builder.HasIndex(x => x.OriginatingApplicationId);
 
-        // The portfolio questions: "where is this product registered?" and
-        // "what do we hold in this market?" (STORY-003).
-        builder.HasIndex(x => new { x.CountryId, x.CurrentStatus });
+        // Both portfolio questions — "where is this product registered?" and
+        // "what do we hold in this market?" — now enter through the medicinal
+        // product, so this is the index they share. The status is kept on it
+        // because the market view leads with live authorisations.
+        builder.HasIndex(x => new { x.MedicinalProductId, x.CurrentStatus });
 
-        // Deliberately NOT unique on (ProductId, CountryId): a product
-        // legitimately holds several authorisations in one market — different
-        // strengths, presentations, or holders after a partial divestment. The
-        // registration number is the business identity, not the jurisdiction.
+        // Deliberately NOT unique on MedicinalProductId: a market-local product
+        // legitimately holds several authorisations — different strengths,
+        // presentations, or holders after a partial divestment. The
+        // registration number is the business identity, not the market.
 
         // Ownership: Registration (1) -> status history (N). The child holds no
         // FK property, so EF uses a shadow "RegistrationId".

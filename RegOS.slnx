@@ -62,6 +62,7 @@
     <Project Path="tests/Organization/RegOS.Organization.Application.Tests/RegOS.Organization.Application.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Product/">
+    <Project Path="tests/Product/RegOS.Product.Application.Tests/RegOS.Product.Application.Tests.csproj" />
     <Project Path="tests/Product/RegOS.Product.Domain.Tests/RegOS.Product.Domain.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/ReferenceData/">

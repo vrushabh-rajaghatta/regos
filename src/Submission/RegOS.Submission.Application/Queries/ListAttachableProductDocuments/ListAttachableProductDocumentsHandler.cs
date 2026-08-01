@@ -41,7 +41,7 @@ public sealed class ListAttachableProductDocumentsHandler
         if (application is null)
             return null;
 
-        var productId = application.ProductId;
+        var globalProductId = application.GlobalProductId;
 
         // Documents already in this submission's dossier — excluded so the
         // picker never offers a duplicate.
@@ -52,7 +52,7 @@ public sealed class ListAttachableProductDocumentsHandler
 
         var rows = await (
             from document in _dbContext.ProductDocuments.AsNoTracking()
-            where document.ProductId == productId
+            where document.GlobalProductId == globalProductId
                 && document.Status == ProductDocumentStatus.Active
                 && !attachedDocumentIds.Contains(document.Id)
             join documentType in _dbContext.DocumentTypes

@@ -17,7 +17,7 @@ public sealed class GetProductDocumentHandler
     }
 
     public async Task<ProductDocumentDetailDto?> HandleAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         ProductDocumentId documentId,
         CancellationToken cancellationToken)
     {
@@ -25,18 +25,18 @@ public sealed class GetProductDocumentHandler
         // document can only be viewed under its owning product.
         var row = await (
             from document in _dbContext.ProductDocuments.AsNoTracking()
-            where document.Id == documentId && document.ProductId == productId
+            where document.Id == documentId && document.GlobalProductId == globalProductId
             join documentType in _dbContext.DocumentTypes
                 on document.DocumentTypeId equals documentType.Id
             join product in _dbContext.Products
-                on document.ProductId equals product.Id
+                on document.GlobalProductId equals product.Id
             select new
             {
                 document.Id,
                 document.Name,
                 DocumentTypeName = documentType.Name,
                 document.Status,
-                document.ProductId,
+                document.GlobalProductId,
                 ProductName = product.Name,
                 document.CreatedOnUtc,
                 document.CurrentVersionId,
@@ -61,7 +61,7 @@ public sealed class GetProductDocumentHandler
             row.Name,
             row.DocumentTypeName,
             row.Status.ToString(),
-            row.ProductId.Value,
+            row.GlobalProductId.Value,
             row.ProductName.Value,
             row.CreatedOnUtc,
             currentVersion);

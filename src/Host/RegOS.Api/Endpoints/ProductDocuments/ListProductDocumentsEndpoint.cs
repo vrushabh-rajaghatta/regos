@@ -9,19 +9,19 @@ public static class ListProductDocumentsEndpoint
         this IEndpointRouteBuilder app)
     {
         app.MapGet(
-            "/api/products/{productId:guid}/documents",
+            "/api/products/{globalProductId:guid}/documents",
             HandleAsync);
 
         return app;
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid productId,
+        Guid globalProductId,
         ListProductDocumentsHandler handler,
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(
-            new ProductId(productId),
+            new GlobalProductId(globalProductId),
             cancellationToken);
 
         return Results.Ok(result);

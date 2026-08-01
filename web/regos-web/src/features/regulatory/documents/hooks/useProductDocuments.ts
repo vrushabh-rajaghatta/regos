@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import { listProductDocuments } from "../api/listProductDocuments";
 
-export function useProductDocuments(productId: string) {
+export function useProductDocuments(globalProductId: string) {
   return useQuery({
-    queryKey: ["products", productId, "documents"],
-    queryFn: () => listProductDocuments(productId),
-    enabled: !!productId,
+    queryKey: ["products", globalProductId, "documents"],
+    queryFn: () => listProductDocuments(globalProductId),
+    enabled: !!globalProductId,
   });
 }

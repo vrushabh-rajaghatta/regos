@@ -27,14 +27,14 @@ import {
 } from "../validation/createSubmissionSchema";
 
 interface Props {
-  productId: string;
+  globalProductId: string;
   applicationId: string;
   authorityId: string;
   onSuccess: () => void;
 }
 
 export function CreateSubmissionForm({
-  productId,
+  globalProductId,
   applicationId,
   authorityId,
   onSuccess,
@@ -82,7 +82,7 @@ export function CreateSubmissionForm({
     // Standard creation flow: take the user straight into the workspace of
     // the entity they just created (product -> application -> submission).
     navigate(
-      `/regulatory/products/${productId}/applications/${applicationId}/submissions/${id}`
+      `/regulatory/products/${globalProductId}/applications/${applicationId}/submissions/${id}`
     );
   }
 

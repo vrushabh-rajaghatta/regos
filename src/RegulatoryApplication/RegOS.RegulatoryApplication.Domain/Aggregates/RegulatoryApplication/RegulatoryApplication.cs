@@ -19,7 +19,7 @@ public sealed class RegulatoryApplication
     private RegulatoryApplication(
         RegulatoryApplicationId id,
         TenantId tenantId,
-        ProductId productId,
+        GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
         OrganizationId applicantOrganizationId,
@@ -28,7 +28,7 @@ public sealed class RegulatoryApplication
     {
         Id = id;
         TenantId = tenantId;
-        ProductId = productId;
+        GlobalProductId = globalProductId;
         CountryId = countryId;
         AuthorityId = authorityId;
         ApplicantOrganizationId = applicantOrganizationId;
@@ -47,7 +47,7 @@ public sealed class RegulatoryApplication
     /// </summary>
     public TenantId TenantId { get; }
 
-    public ProductId ProductId { get; }
+    public GlobalProductId GlobalProductId { get; }
 
     public CountryId CountryId { get; private set; }
 
@@ -65,7 +65,7 @@ public sealed class RegulatoryApplication
 
     public static RegulatoryApplication Create(
         TenantId tenantId,
-        ProductId productId,
+        GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
         OrganizationId applicantOrganizationId,
@@ -74,7 +74,7 @@ public sealed class RegulatoryApplication
         if (tenantId is null)
             throw new DomainException(TenantRequired);
 
-        if (productId == default)
+        if (globalProductId == default)
             throw new DomainException(ProductRequired);
 
         if (countryId == default)
@@ -92,7 +92,7 @@ public sealed class RegulatoryApplication
         return new RegulatoryApplication(
             RegulatoryApplicationId.New(),
             tenantId,
-            productId,
+            globalProductId,
             countryId,
             authorityId,
             applicantOrganizationId,

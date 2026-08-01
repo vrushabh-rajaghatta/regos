@@ -43,12 +43,12 @@ test.describe("Submission content plan", () => {
       (d: Requirement) => d.isMandatory,
     );
 
-    const productId = await createProduct(unique);
-    const applicationId = await createApplication(productId);
+    const globalProductId = await createProduct(unique);
+    const applicationId = await createApplication(globalProductId);
     const submissionId = await createSubmission(applicationId, unique);
 
     const contentPlanUrl =
-      `/regulatory/products/${productId}/applications/${applicationId}` +
+      `/regulatory/products/${globalProductId}/applications/${applicationId}` +
       `/submissions/${submissionId}/content-plan`;
 
     // --- 1. an empty dossier still has a shape ----------------------------
@@ -73,7 +73,7 @@ test.describe("Submission content plan", () => {
     // --- 2. filling one, through the UI -----------------------------------
     const target = requirements[0];
     const documentId = await uploadActiveDocument(
-      productId,
+      globalProductId,
       target.documentTypeId,
       unique,
     );
@@ -129,8 +129,8 @@ test.describe("Submission content plan", () => {
     // A device type under the same authority: no blueprint targets it.
     const FDA_510K = "40000000-0000-0000-0000-000000000001";
 
-    const productId = await createProduct(unique);
-    const applicationId = await createApplication(productId);
+    const globalProductId = await createProduct(unique);
+    const applicationId = await createApplication(globalProductId);
     const submissionId = await createSubmission(
       applicationId,
       unique,
@@ -138,7 +138,7 @@ test.describe("Submission content plan", () => {
     );
 
     await page.goto(
-      `/regulatory/products/${productId}/applications/${applicationId}` +
+      `/regulatory/products/${globalProductId}/applications/${applicationId}` +
         `/submissions/${submissionId}/content-plan`,
     );
 
@@ -177,7 +177,7 @@ async function createProduct(unique: number): Promise<string> {
   return (await response.json()).id;
 }
 
-async function createApplication(productId: string): Promise<string> {
+async function createApplication(globalProductId: string): Promise<string> {
   const organizations = await (await api("/api/organizations")).json();
 
   const applicant = organizations.find(
@@ -186,7 +186,7 @@ async function createApplication(productId: string): Promise<string> {
 
   expect(applicant, "an active organization to apply as").toBeTruthy();
 
-  const response = await api(`/api/products/${productId}/applications`, {
+  const response = await api(`/api/products/${globalProductId}/applications`, {
     method: "POST",
     body: JSON.stringify({
       countryId: UNITED_STATES,
@@ -220,7 +220,7 @@ async function createSubmission(
 }
 
 async function uploadActiveDocument(
-  productId: string,
+  globalProductId: string,
   documentTypeId: string,
   unique: number,
 ): Promise<string> {
@@ -235,7 +235,7 @@ async function uploadActiveDocument(
 
   // Raw fetch rather than the JSON helper: multipart needs fetch to set the
   // Content-Type itself, boundary and all.
-  const upload = await fetch(`${API_URL}/api/products/${productId}/documents`, {
+  const upload = await fetch(`${API_URL}/api/products/${globalProductId}/documents`, {
     method: "POST",
     body: form,
     headers: { Cookie: await sessionCookies() },
@@ -246,7 +246,7 @@ async function uploadActiveDocument(
   const documentId = (await upload.json()).id;
 
   const activate = await api(
-    `/api/products/${productId}/documents/${documentId}/activate`,
+    `/api/products/${globalProductId}/documents/${documentId}/activate`,
     { method: "POST" },
   );
 

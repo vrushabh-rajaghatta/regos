@@ -3,12 +3,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createRegistration } from "../api/createRegistration";
 import type { CreateRegistrationBody } from "../api/createRegistration";
 
-export function useCreateRegistration(productId: string) {
+export function useCreateRegistration(medicinalProductId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (body: CreateRegistrationBody) =>
-      createRegistration(productId, body),
+      createRegistration(medicinalProductId, body),
 
     onSuccess: () => {
       // A new registration changes both portfolio axes and the market index —

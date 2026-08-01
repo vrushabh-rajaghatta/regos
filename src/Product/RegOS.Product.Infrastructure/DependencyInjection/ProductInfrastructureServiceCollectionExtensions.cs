@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
-using RegOS.Product.Application.Persistence;
 using RegOS.Product.Application.Services;
+using RegOS.Product.Domain.Product;
 using RegOS.Product.Infrastructure.Persistence;
 using RegOS.Product.Infrastructure.Services;
 
@@ -14,6 +14,10 @@ public static class ProductInfrastructureServiceCollectionExtensions
     {
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IProductPolicy, ProductPolicy>();
+
+        services.AddScoped<
+            IMedicinalProductRepository, MedicinalProductRepository>();
+        services.AddScoped<IMedicinalProductPolicy, MedicinalProductPolicy>();
 
         return services;
     }

@@ -33,13 +33,22 @@ test.describe("Registration lifecycle", () => {
     const unique = Date.now();
 
     const productName = `Lifecycle Product ${unique}`;
-    const productId = await createProduct(unique, productName);
+    const globalProductId = await createProduct(unique, productName);
 
-    // --- 1. record an intention ------------------------------------------
-    await page.goto(`/regulatory/products/${productId}/registrations`);
-    await page.getByRole("button", { name: "New registration" }).click();
+    // --- 1. enter the market, then record an intention in it -------------
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
 
-    await page.getByLabel("Market").selectOption({ label: "United States" });
+    await page.getByRole("button", { name: "Add market" }).click();
+    await page.getByLabel("Country").selectOption({ label: "United States" });
+    await page.getByLabel("Present since").fill("2019-06-01");
+    await page.getByRole("button", { name: "Add" }).click();
+
+    await page
+      .getByTestId("product-market-row")
+      .first()
+      .getByRole("button", { name: "New registration" })
+      .click();
+
     await page.getByLabel("Authority").selectOption({ index: 1 });
     await page.getByLabel("Authorisation holder").selectOption({ index: 1 });
     await page.getByLabel("Planned on").fill("2020-01-10");
@@ -95,7 +104,7 @@ test.describe("Registration lifecycle", () => {
       page.getByTestId("market-registration-row").filter({ hasText: productName }),
     ).toHaveCount(1);
 
-    await page.goto(`/regulatory/products/${productId}/registrations`);
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
     await expect(page.getByTestId("product-registration-row")).toHaveCount(1);
 
     // --- 6. suspended, then reinstated ------------------------------------

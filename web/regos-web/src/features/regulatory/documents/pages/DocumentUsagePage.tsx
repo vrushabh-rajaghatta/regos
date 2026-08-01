@@ -3,10 +3,10 @@ import { Link, useParams } from "react-router-dom";
 import { useProductDocumentUsage } from "../hooks/useProductDocumentUsage";
 
 export function DocumentUsagePage() {
-  const { productId, documentId } = useParams();
+  const { globalProductId, documentId } = useParams();
 
   const { data, isLoading, error } = useProductDocumentUsage(
-    productId!,
+    globalProductId!,
     documentId!
   );
 
@@ -70,7 +70,7 @@ export function DocumentUsagePage() {
                   </td>
                   <td className="px-4 py-2 text-right">
                     <Link
-                      to={`/regulatory/products/${productId}/applications/${usage.applicationId}/submissions/${usage.submissionId}`}
+                      to={`/regulatory/products/${globalProductId}/applications/${usage.applicationId}/submissions/${usage.submissionId}`}
                       className="text-primary hover:underline"
                     >
                       Open

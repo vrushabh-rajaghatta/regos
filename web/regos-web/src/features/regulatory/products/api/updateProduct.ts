@@ -6,10 +6,10 @@ export interface UpdateProductRequest {
 }
 
 export async function updateProduct(
-  productId: string,
+  globalProductId: string,
   request: UpdateProductRequest,
 ): Promise<void> {
-  const response = await apiFetch(buildUrl(`/api/products/${productId}`), {
+  const response = await apiFetch(buildUrl(`/api/products/${globalProductId}`), {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

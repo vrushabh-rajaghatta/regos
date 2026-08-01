@@ -9,7 +9,6 @@ using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Primitives;
 
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using CountryAggregate = RegOS.ReferenceData.Domain.Geography.Country.Country;
 using AuthorityAggregate = RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
 using OrganizationAggregate = RegOS.Organization.Domain.Aggregates.Organization.Organization;
@@ -31,10 +30,10 @@ public sealed class RegulatoryApplicationConfiguration
                 id => id.Value,
                 value => new RegulatoryApplicationId(value));
 
-        builder.Property(x => x.ProductId)
+        builder.Property(x => x.GlobalProductId)
             .HasConversion(
                 id => id.Value,
-                value => new ProductId(value))
+                value => new GlobalProductId(value))
             .IsRequired();
 
         builder.Property(x => x.CountryId)
@@ -72,9 +71,9 @@ public sealed class RegulatoryApplicationConfiguration
 
         // Cross-aggregate foreign keys. The domain exposes no navigation
         // properties, but EF still models the relationships.
-        builder.HasOne<ProductAggregate>()
+        builder.HasOne<GlobalProduct>()
             .WithMany()
-            .HasForeignKey(x => x.ProductId)
+            .HasForeignKey(x => x.GlobalProductId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<CountryAggregate>()
@@ -112,7 +111,7 @@ public sealed class RegulatoryApplicationConfiguration
         // of defense; the application layer enforces this too.
         builder.HasIndex(x => new
         {
-            x.ProductId,
+            x.GlobalProductId,
             x.CountryId,
             x.AuthorityId
         })

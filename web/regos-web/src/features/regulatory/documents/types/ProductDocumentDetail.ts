@@ -11,7 +11,7 @@ export interface ProductDocumentDetail {
   name: string;
   documentTypeName: string;
   status: string;
-  productId: string;
+  globalProductId: string;
   productName: string;
   createdOnUtc: string;
   currentVersion: DocumentVersionDetail | null;

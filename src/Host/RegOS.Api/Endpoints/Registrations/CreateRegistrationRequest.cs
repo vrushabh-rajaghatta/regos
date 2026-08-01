@@ -9,7 +9,6 @@ namespace RegOS.Api.Endpoints.Registrations;
 /// witnessed being filed.
 /// </param>
 public sealed record CreateRegistrationRequest(
-    Guid CountryId,
     Guid AuthorityId,
     Guid HolderOrganizationId,
     DateOnly OccurredOn,

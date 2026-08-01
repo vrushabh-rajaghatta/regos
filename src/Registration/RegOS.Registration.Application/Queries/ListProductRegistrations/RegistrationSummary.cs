@@ -10,6 +10,7 @@ namespace RegOS.Registration.Application.Queries.ListProductRegistrations;
 /// </param>
 public sealed record RegistrationSummary(
     Guid RegistrationId,
+    Guid MedicinalProductId,
     Guid CountryId,
     string CountryName,
     Guid AuthorityId,

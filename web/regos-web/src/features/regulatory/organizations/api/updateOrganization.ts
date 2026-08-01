@@ -1,7 +1,7 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import type { UpdateOrganizationRequest } from "../types/UpdateOrganizationRequest";
-import { detailOf } from "./problemDetail";
+import { detailOf } from "@/shared/api/problemDetail";
 
 export async function updateOrganization(
   id: string,

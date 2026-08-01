@@ -71,7 +71,7 @@ public sealed class AttachProductDocumentHandler
             throw new DomainException(
                 SubmissionRuleErrors.ProductDocumentNotInSameProduct);
 
-        if (productDocument.ProductId != application.ProductId)
+        if (productDocument.GlobalProductId != application.GlobalProductId)
             throw new DomainException(
                 SubmissionRuleErrors.ProductDocumentNotInSameProduct);
 

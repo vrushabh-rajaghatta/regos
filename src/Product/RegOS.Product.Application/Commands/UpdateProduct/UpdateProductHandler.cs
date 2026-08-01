@@ -1,4 +1,4 @@
-using RegOS.Product.Application.Persistence;
+using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 
@@ -27,7 +27,7 @@ public sealed class UpdateProductHandler
         CancellationToken cancellationToken)
     {
         var product = await _repository.GetByIdAsync(
-            command.ProductId, cancellationToken);
+            command.GlobalProductId, cancellationToken);
 
         // A product in another tenant is reported as missing, never forbidden,
         // so the API does not reveal that it exists.

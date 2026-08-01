@@ -51,16 +51,16 @@ public class ProductDocumentPersistenceTests
     [Fact]
     public async Task Saves_reloads_and_cascade_deletes_a_document_with_its_version()
     {
-        ProductId productId;
+        GlobalProductId globalProductId;
         ProductDocumentId documentId;
 
         // --- Save: new document + initial version, via the repository. ---
         await using (var ctx = NewContext())
         {
-            productId = await ctx.Products.Select(p => p.Id).FirstAsync();
+            globalProductId = await ctx.Products.Select(p => p.Id).FirstAsync();
 
             var document = ProductDocumentAggregate.Create(TestTenant, 
-                productId,
+                globalProductId,
                 SeededCer,
                 "Persistence Verify " + Guid.NewGuid());
 
@@ -85,7 +85,7 @@ public class ProductDocumentPersistenceTests
             var reloaded = await repository.GetByIdAsync(documentId, default);
 
             reloaded.Should().NotBeNull();
-            reloaded!.ProductId.Should().Be(productId);
+            reloaded!.GlobalProductId.Should().Be(globalProductId);
             reloaded.DocumentTypeId.Should().Be(SeededCer);
             reloaded.Status.Should().Be(ProductDocumentStatus.Draft);
 

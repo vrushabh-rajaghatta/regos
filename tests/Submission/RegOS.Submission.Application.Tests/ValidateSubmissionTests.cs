@@ -77,24 +77,24 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
 
     // --- Seeding helpers -----------------------------------------------------
 
-    private static async Task<(RegulatoryApplicationId AppId, ProductId ProductId)>
+    private static async Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
         FirstApplicationAsync(RegOSDbContext ctx)
     {
         return await TestApplications.EnsureAsync(ctx);
     }
 
     private async Task<ProductDocumentAggregate> SeedActiveDocumentAsync(
-        RegOSDbContext ctx, ProductId productId)
+        RegOSDbContext ctx, GlobalProductId globalProductId)
     {
         var doc = ProductDocumentAggregate.Create(TestTenant.Id, 
-            productId, SeededCer, "Validation Doc " + Guid.NewGuid());
+            globalProductId, SeededCer, "Validation Doc " + Guid.NewGuid());
 
         doc.AddInitialVersion(
             originalFileName: "cer.pdf",
             storedFileName: "v1.pdf",
             contentType: "application/pdf",
             fileSize: 1024,
-            storagePath: $"products/{productId.Value}/{doc.Id.Value}/v1.pdf",
+            storagePath: $"products/{globalProductId.Value}/{doc.Id.Value}/v1.pdf",
             checksum: "sha256-x");
         doc.Activate();
 
@@ -148,8 +148,8 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
         SubmissionId submissionId;
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
-            var doc = await SeedActiveDocumentAsync(ctx, productId);
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
+            var doc = await SeedActiveDocumentAsync(ctx, globalProductId);
             submissionId = await SeedSubmissionAsync(ctx, appId, doc, publish: false);
         }
 
@@ -184,8 +184,8 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
         SubmissionId submissionId;
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
-            var doc = await SeedActiveDocumentAsync(ctx, productId);
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
+            var doc = await SeedActiveDocumentAsync(ctx, globalProductId);
             // Otherwise valid (has a document) so only the published rule can fire.
             submissionId = await SeedSubmissionAsync(ctx, appId, doc, publish: true);
         }

@@ -4,20 +4,26 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Primitives;
 
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 
 namespace RegOS.Persistence.Configurations.Product;
 
-public sealed class ProductConfiguration : IEntityTypeConfiguration<ProductAggregate>
+public sealed class ProductConfiguration : IEntityTypeConfiguration<GlobalProduct>
 {
-    public void Configure(EntityTypeBuilder<ProductAggregate> builder)
+    public void Configure(EntityTypeBuilder<GlobalProduct> builder)
     {
+        // Still "Products", not "GlobalProducts". EPIC-017 S000 renamed the
+        // aggregate and its id; the table keeps its name because renaming it
+        // buys nothing a reader needs — the tier is unambiguous from the type —
+        // and would cost a second rename when the sibling MedicinalProducts
+        // table arrives. Stated here so it reads as a decision rather than a
+        // miss. The ProductId columns *did* follow, because a column that
+        // disagrees with its property is a silent trap.
         builder.ToTable("Products");
 
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Id)
-            .HasConversion(id => id.Value, value => new ProductId(value))
+            .HasConversion(id => id.Value, value => new GlobalProductId(value))
             .ValueGeneratedNever();
 
         builder.Property(x => x.TenantId)

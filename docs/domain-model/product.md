@@ -8,9 +8,9 @@ Owner: Architecture Review Board
 
 Status: Approved
 
-Version: 1.0
+Version: 1.1
 
-Last Reviewed: 2026-07-09
+Last Reviewed: 2026-07-31
 
 Related Documents:
 
@@ -19,6 +19,54 @@ Related Documents:
 Related ADRs:
 
 - ADR-0002
+
+---
+
+# The two tiers
+
+Since EPIC-017, the Product context holds **two** aggregates, and every
+statement below about "a Product" means the **global** one unless it says
+otherwise.
+
+| Tier | Aggregate | Answers |
+| --- | --- | --- |
+| Global | `GlobalProduct` | *What product is this?* — one identity for the whole world |
+| Market-local | `MedicinalProduct` | *What is this product, here?* — one jurisdiction |
+
+The dependency runs one way and only one way:
+
+```
+GlobalProduct → MedicinalProduct → Registration
+```
+
+A `Registration` names **only** a `MedicinalProduct`. It carries neither the
+global product nor the country, because both are the medicinal product's facts
+and a second copy could disagree with them.
+
+Several medicinal products may exist for one (global product, country) pair —
+presentations, strengths, the two halves of a partial divestment — so nothing
+enforces uniqueness on the pair, and nothing resolves-or-creates one on a
+caller's behalf.
+
+---
+
+# Vocabulary — domain word and screen word
+
+They differ here on purpose, and both are binding.
+
+| Domain (code, ADRs, this document) | UI (navigation, labels, headings) |
+| --- | --- |
+| `MedicinalProduct` | **Market** |
+| `GlobalProduct` | **Product** |
+| `Registration` | **Registration** / *market authorisation* in prose |
+
+RIM's `Medicinal Product` keeps the model precise and is what a future
+contributor will search for. **"Market"** is what a regulatory user says out
+loud — *"we're in Canada"* — and it is what the screens show: a product page
+lists its **Markets**, and an authorisation is recorded against one.
+
+The screen's word must never reach a type, and the type's word must never reach
+a label without a reason to prefer it.
 
 ---
 
@@ -92,9 +140,17 @@ The exact lifecycle states will be defined during implementation.
 
 ## Value Objects
 
-### ProductId
+### GlobalProductId
 
-Represents the immutable identity of a Product.
+Represents the immutable identity of a global Product. Named `ProductId` until
+EPIC-017 S000, which renamed the type so the two tiers could not be confused.
+The `Products` **table** deliberately kept its name.
+
+### MedicinalProductId
+
+Represents the immutable identity of a market-local product. Explicit on
+`CreateRegistrationCommand`: a registration names the medicinal product it is
+granted over, and never a (product, country) pair to be resolved.
 
 ### ProductName
 
@@ -187,4 +243,5 @@ Planned capabilities include:
 
 | Version | Date       | Summary                       |
 | ------- | ---------- | ----------------------------- |
+| 1.1     | 2026-07-31 | EPIC-017: the two tiers, the `GlobalProduct`/`MedicinalProduct` split, and the domain-word/screen-word pair. |
 | 1.0     | 2026-07-09 | Initial Product domain model. |

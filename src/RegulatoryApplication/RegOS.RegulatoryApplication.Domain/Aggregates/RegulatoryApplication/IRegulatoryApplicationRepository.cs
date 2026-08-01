@@ -13,6 +13,6 @@ public interface IRegulatoryApplicationRepository
         CancellationToken cancellationToken);
 
     Task<IReadOnlyList<RegulatoryApplication>> ListByProductAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CancellationToken cancellationToken);
 }

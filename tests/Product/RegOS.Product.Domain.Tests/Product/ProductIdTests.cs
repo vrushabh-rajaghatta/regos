@@ -11,7 +11,7 @@ public sealed class ProductIdTests
     [Fact]
     public void Rejects_an_empty_guid()
     {
-        var act = () => new ProductId(Guid.Empty);
+        var act = () => new GlobalProductId(Guid.Empty);
 
         // A DomainException, not an ArgumentException: an all-zero guid comes
         // from the caller, so it is a 400 rather than a 500.
@@ -23,7 +23,7 @@ public sealed class ProductIdTests
     {
         var value = Guid.NewGuid();
 
-        ProductId.From(value).Should().Be(ProductId.From(value));
+        GlobalProductId.From(value).Should().Be(GlobalProductId.From(value));
     }
 
     [Fact]
@@ -31,13 +31,13 @@ public sealed class ProductIdTests
     {
         var value = Guid.NewGuid();
 
-        ProductId.From(value).Equals(TenantId.From(value))
+        GlobalProductId.From(value).Equals(TenantId.From(value))
             .Should().BeFalse();
     }
 
     [Fact]
     public void New_produces_distinct_ids()
     {
-        ProductId.New().Should().NotBe(ProductId.New());
+        GlobalProductId.New().Should().NotBe(GlobalProductId.New());
     }
 }

@@ -90,6 +90,10 @@ Writes go through the repository. Reads use `RegOSDbContext` directly with
 **Reference:** [Registration/IRegistrationRepository.cs](../../src/Registration/RegOS.Registration.Domain/Aggregates/Registration/IRegistrationRepository.cs) ·
 **Test:** `PersistenceConventionTests`
 
+> **No exemptions remain.** The last grandfathered entry, `IProductRepository`,
+> was retired in EPIC-017 S001 — opportunistically, while that slice was already
+> adding a sibling interface to the same context.
+
 ---
 
 ## SC-003 — A query folder holds a query record
@@ -328,4 +332,5 @@ follow the left-hand form.
 
 | Version | Date | Summary |
 |---|---|---|
+| 1.1 | 2026-07-31 | SC-002's grandfathered list emptied (EPIC-017 S001). |
 | 1.0 | 2026-07-31 | Initial version. Five backend rules put under test; five frontend rules documented. |

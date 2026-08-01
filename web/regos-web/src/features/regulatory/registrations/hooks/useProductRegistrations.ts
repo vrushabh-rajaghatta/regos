@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import { listProductRegistrations } from "../api/listProductRegistrations";
 
-export function useProductRegistrations(productId: string) {
+export function useProductRegistrations(globalProductId: string) {
   return useQuery({
-    queryKey: ["registrations", "product", productId],
-    queryFn: () => listProductRegistrations(productId),
-    enabled: !!productId,
+    queryKey: ["registrations", "product", globalProductId],
+    queryFn: () => listProductRegistrations(globalProductId),
+    enabled: !!globalProductId,
   });
 }

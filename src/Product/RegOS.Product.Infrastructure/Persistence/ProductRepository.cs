@@ -1,10 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
-using RegOS.Product.Application.Persistence;
 using RegOS.Product.Domain.Product;
 
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 
 namespace RegOS.Product.Infrastructure.Persistence;
 
@@ -24,7 +22,7 @@ public sealed class ProductRepository : IProductRepository
     }
 
     public async Task AddAsync(
-        ProductAggregate product,
+        GlobalProduct product,
         CancellationToken cancellationToken)
     {
         await _dbContext.Products.AddAsync(product, cancellationToken);
@@ -32,15 +30,15 @@ public sealed class ProductRepository : IProductRepository
     }
 
     public async Task UpdateAsync(
-        ProductAggregate product,
+        GlobalProduct product,
         CancellationToken cancellationToken)
     {
         _dbContext.Products.Update(product);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<ProductAggregate?> GetByIdAsync(
-        ProductId id,
+    public async Task<GlobalProduct?> GetByIdAsync(
+        GlobalProductId id,
         CancellationToken cancellationToken)
         => await _dbContext.Products
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);

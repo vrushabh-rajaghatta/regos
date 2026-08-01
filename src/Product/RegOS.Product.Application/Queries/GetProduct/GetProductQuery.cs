@@ -2,4 +2,4 @@ using RegOS.Product.Domain.Product;
 
 namespace RegOS.Product.Application.Queries.GetProduct;
 
-public sealed record GetProductQuery(ProductId Id);
+public sealed record GetProductQuery(GlobalProductId Id);

@@ -89,24 +89,24 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
 
     // --- Seeding helpers -----------------------------------------------------
 
-    private static async Task<(RegulatoryApplicationId AppId, ProductId ProductId)>
+    private static async Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
         FirstApplicationAsync(RegOSDbContext ctx)
     {
         return await TestApplications.EnsureAsync(ctx);
     }
 
     private async Task<ProductDocumentAggregate> SeedActiveDocumentAsync(
-        RegOSDbContext ctx, ProductId productId)
+        RegOSDbContext ctx, GlobalProductId globalProductId)
     {
         var doc = ProductDocumentAggregate.Create(TestTenant.Id, 
-            productId, SeededCer, "Publish Doc " + Guid.NewGuid());
+            globalProductId, SeededCer, "Publish Doc " + Guid.NewGuid());
 
         doc.AddInitialVersion(
             originalFileName: "cer.pdf",
             storedFileName: "v1.pdf",
             contentType: "application/pdf",
             fileSize: 1024,
-            storagePath: $"products/{productId.Value}/{doc.Id.Value}/v1.pdf",
+            storagePath: $"products/{globalProductId.Value}/{doc.Id.Value}/v1.pdf",
             checksum: "sha256-x");
         doc.Activate();
 
@@ -177,8 +177,8 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
         SubmissionId submissionId;
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
-            var doc = await SeedActiveDocumentAsync(ctx, productId);
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
+            var doc = await SeedActiveDocumentAsync(ctx, globalProductId);
             submissionId = await SeedSubmissionAsync(ctx, appId, doc);
         }
 
@@ -206,8 +206,8 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
         SubmissionId submissionId;
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
-            var doc = await SeedActiveDocumentAsync(ctx, productId);
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
+            var doc = await SeedActiveDocumentAsync(ctx, globalProductId);
             submissionId = await SeedSubmissionAsync(ctx, appId, doc);
         }
 
@@ -239,12 +239,12 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
         ProductDocumentId secondDocId;
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
-            var doc = await SeedActiveDocumentAsync(ctx, productId);
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
+            var doc = await SeedActiveDocumentAsync(ctx, globalProductId);
             submissionId = await SeedSubmissionAsync(ctx, appId, doc);
 
             // A second, attachable document for the post-publish attempt.
-            secondDocId = (await SeedActiveDocumentAsync(ctx, productId)).Id;
+            secondDocId = (await SeedActiveDocumentAsync(ctx, globalProductId)).Id;
         }
 
         await using (var ctx = New())

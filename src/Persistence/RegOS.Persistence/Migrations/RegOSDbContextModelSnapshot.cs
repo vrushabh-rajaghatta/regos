@@ -607,7 +607,7 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("UserCredentials", (string)null);
                 });
 
-            modelBuilder.Entity("RegOS.Product.Domain.Product.Product", b =>
+            modelBuilder.Entity("RegOS.Product.Domain.Product.GlobalProduct", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -645,6 +645,98 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Products", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.Product.Domain.Product.MarketStatusEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MedicinalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly>("OccurredOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("RecordedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicinalProductId");
+
+                    b.HasIndex("MedicinalProductId", "OccurredOn");
+
+                    b.ToTable("MarketStatusHistory", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.MedicinalProduct", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CountryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CurrentMarketStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateOnly>("StatusDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("CountryId", "CurrentMarketStatus");
+
+                    b.HasIndex("GlobalProductId", "CountryId");
+
+                    b.ToTable("MedicinalProducts", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.TradeName", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<Guid>("MedicinalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicinalProductId", "Language")
+                        .IsUnique();
+
+                    b.ToTable("TradeNames", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.ProductDocument.Domain.Aggregates.ProductDocument", b =>
                 {
                     b.Property<Guid>("Id")
@@ -659,13 +751,13 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("DocumentTypeId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -677,13 +769,13 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("DocumentTypeId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("GlobalProductId");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("ProductId", "Name")
+                    b.HasIndex("GlobalProductId", "Name")
                         .IsUnique();
 
                     b.ToTable("ProductDocuments", (string)null);
@@ -1128,9 +1220,6 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("AuthorityId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CountryId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
@@ -1143,10 +1232,10 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("HolderOrganizationId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("OriginatingApplicationId")
+                    b.Property<Guid>("MedicinalProductId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ProductId")
+                    b.Property<Guid?>("OriginatingApplicationId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("RegistrationNumber")
@@ -1164,11 +1253,9 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("OriginatingApplicationId");
 
-                    b.HasIndex("ProductId");
-
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("CountryId", "CurrentStatus");
+                    b.HasIndex("MedicinalProductId", "CurrentStatus");
 
                     b.ToTable("Registrations", (string)null);
                 });
@@ -1224,13 +1311,13 @@ namespace RegOS.Persistence.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -1248,7 +1335,7 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("ProductId", "CountryId", "AuthorityId")
+                    b.HasIndex("GlobalProductId", "CountryId", "AuthorityId")
                         .IsUnique();
 
                     b.ToTable("RegulatoryApplications", (string)null);
@@ -1589,6 +1676,39 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RegOS.Product.Domain.Product.MarketStatusEntry", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany("MarketStatusHistory")
+                        .HasForeignKey("MedicinalProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.MedicinalProduct", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Geography.Country.Country", null)
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("GlobalProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.TradeName", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany("TradeNames")
+                        .HasForeignKey("MedicinalProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RegOS.ProductDocument.Domain.Aggregates.ProductDocument", b =>
                 {
                     b.HasOne("RegOS.ReferenceData.Domain.DocumentType.DocumentType", null)
@@ -1597,9 +1717,9 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RegOS.Product.Domain.Product.Product", null)
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
                         .WithMany()
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("GlobalProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1709,15 +1829,15 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RegOS.ReferenceData.Domain.Geography.Country.Country", null)
-                        .WithMany()
-                        .HasForeignKey("CountryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
                         .WithMany()
                         .HasForeignKey("HolderOrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("MedicinalProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1725,12 +1845,6 @@ namespace RegOS.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("OriginatingApplicationId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("RegOS.Product.Domain.Product.Product", null)
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.RegistrationStatusEntry", b =>
@@ -1762,9 +1876,9 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RegOS.Product.Domain.Product.Product", null)
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
                         .WithMany()
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("GlobalProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -1850,6 +1964,13 @@ namespace RegOS.Persistence.Migrations
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", b =>
                 {
                     b.Navigation("Identifiers");
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.MedicinalProduct", b =>
+                {
+                    b.Navigation("MarketStatusHistory");
+
+                    b.Navigation("TradeNames");
                 });
 
             modelBuilder.Entity("RegOS.ProductDocument.Domain.Aggregates.ProductDocument", b =>

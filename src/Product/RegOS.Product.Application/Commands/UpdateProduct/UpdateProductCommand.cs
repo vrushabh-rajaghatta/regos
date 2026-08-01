@@ -12,6 +12,6 @@ namespace RegOS.Product.Application.Commands.UpdateProduct;
 /// for a user rather than a status field on an update.
 /// </remarks>
 public sealed record UpdateProductCommand(
-    ProductId ProductId,
+    GlobalProductId GlobalProductId,
     string? Name,
     ProductType Type);

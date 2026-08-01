@@ -2,11 +2,11 @@ import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { DocumentUsageItem } from "../types/DocumentUsageItem";
 
 export async function getProductDocumentUsage(
-  productId: string,
+  globalProductId: string,
   documentId: string
 ): Promise<DocumentUsageItem[]> {
   const response = await apiFetch(
-    buildUrl(`/api/products/${productId}/documents/${documentId}/usage`)
+    buildUrl(`/api/products/${globalProductId}/documents/${documentId}/usage`)
   );
 
   if (!response.ok) {

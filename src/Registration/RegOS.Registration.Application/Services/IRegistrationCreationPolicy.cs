@@ -1,6 +1,5 @@
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
-using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
@@ -22,12 +21,17 @@ namespace RegOS.Registration.Application.Services;
 /// Two occurrences is not a pattern. If a third context needs these checks,
 /// that is the point to extract — not before.
 /// </para>
+/// <para>
+/// The country is no longer a parameter. It is the medicinal product's fact,
+/// and this policy reads it from there — which is also what makes "the
+/// authority must belong to the country" checkable at all now that the caller
+/// cannot state a country of its own (EPIC-017 S001).
+/// </para>
 /// </remarks>
 public interface IRegistrationCreationPolicy
 {
     Task EnsureCanCreateAsync(
-        ProductId productId,
-        CountryId countryId,
+        MedicinalProductId medicinalProductId,
         AuthorityId authorityId,
         OrganizationId holderOrganizationId,
         RegulatoryApplicationId? originatingApplicationId,

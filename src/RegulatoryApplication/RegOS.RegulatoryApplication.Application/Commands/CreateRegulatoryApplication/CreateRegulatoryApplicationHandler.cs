@@ -26,7 +26,7 @@ public sealed class CreateRegulatoryApplicationHandler
         CancellationToken cancellationToken)
     {
         await _creationPolicy.EnsureCanCreateAsync(
-            command.ProductId,
+            command.GlobalProductId,
             command.CountryId,
             command.AuthorityId,
             command.ApplicantOrganizationId,
@@ -38,7 +38,7 @@ public sealed class CreateRegulatoryApplicationHandler
         // whole point of ADR-030.
         var regulatoryApplication = RegulatoryApplicationAggregate.Create(
             _tenantContext.TenantId,
-            command.ProductId,
+            command.GlobalProductId,
             command.CountryId,
             command.AuthorityId,
             command.ApplicantOrganizationId,

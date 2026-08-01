@@ -1,5 +1,5 @@
 using RegOS.Product.Application.Commands.UpdateProduct;
-using RegOS.Product.Application.Persistence;
+using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 
@@ -34,7 +34,7 @@ public sealed class ArchiveProductHandler
         CancellationToken cancellationToken)
     {
         var product = await _repository.GetByIdAsync(
-            command.ProductId, cancellationToken);
+            command.GlobalProductId, cancellationToken);
 
         if (product is null || product.TenantId != _tenantContext.TenantId)
             throw new NotFoundException(ProductCommandErrors.ProductNotFound);

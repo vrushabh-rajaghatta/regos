@@ -38,11 +38,11 @@ public sealed class RegulatoryApplicationRepository
     }
 
     public async Task<IReadOnlyList<RegulatoryApplicationAggregate>> ListByProductAsync(
-        ProductId productId,
+        GlobalProductId globalProductId,
         CancellationToken cancellationToken)
     {
         return await _dbContext.RegulatoryApplications
-            .Where(x => x.ProductId == productId)
+            .Where(x => x.GlobalProductId == globalProductId)
             .OrderBy(x => x.Name)
             .ToListAsync(cancellationToken);
     }

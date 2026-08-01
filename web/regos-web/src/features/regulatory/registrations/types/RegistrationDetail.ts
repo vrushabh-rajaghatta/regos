@@ -10,7 +10,9 @@ export interface RegistrationStatusEntry {
 
 export interface RegistrationDetail {
   id: string;
-  productId: string;
+  /** The market this licence was granted over — the tier, not the country. */
+  medicinalProductId: string;
+  globalProductId: string;
   productName: string;
   countryId: string;
   countryName: string;

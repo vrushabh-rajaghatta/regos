@@ -11,21 +11,21 @@ public static class ArchiveProductDocumentEndpoint
     {
         // Lifecycle transition — an action verb, not a generic PUT/PATCH.
         app.MapPost(
-            "/api/products/{productId:guid}/documents/{documentId:guid}/archive",
+            "/api/products/{globalProductId:guid}/documents/{documentId:guid}/archive",
             HandleAsync);
 
         return app;
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid productId,
+        Guid globalProductId,
         Guid documentId,
         ArchiveProductDocumentHandler handler,
         CancellationToken cancellationToken)
     {
         await handler.HandleAsync(
             new ArchiveProductDocumentCommand(
-                new ProductId(productId),
+                new GlobalProductId(globalProductId),
                 new ProductDocumentId(documentId)),
             cancellationToken);
 

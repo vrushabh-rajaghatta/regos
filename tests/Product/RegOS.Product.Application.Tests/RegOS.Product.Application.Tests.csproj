@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Product\RegOS.Product.Application\RegOS.Product.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Product\RegOS.Product.Infrastructure\RegOS.Product.Infrastructure.csproj" />
+    <!-- Test-only, and only so one test can prove a NEGATIVE: that retiring a
+         market record leaves the registrations beneath it untouched. The
+         Product context itself never references Registration, which is the
+         dependency direction this epic exists to establish. -->
+    <ProjectReference Include="..\..\..\src\Registration\RegOS.Registration.Infrastructure\RegOS.Registration.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

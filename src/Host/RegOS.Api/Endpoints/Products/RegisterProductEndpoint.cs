@@ -17,13 +17,13 @@ public static class RegisterProductEndpoint
         RegisterProductHandler handler,
         CancellationToken cancellationToken)
     {
-        var productId = await handler.HandleAsync(
+        var globalProductId = await handler.HandleAsync(
             new RegisterProductCommand(
                 request.Code, request.Name, request.Type),
             cancellationToken);
 
         return Results.Created(
-            $"/api/products/{productId.Value}",
-            new RegisterProductResponse(productId.Value));
+            $"/api/products/{globalProductId.Value}",
+            new RegisterProductResponse(globalProductId.Value));
     }
 }

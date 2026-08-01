@@ -4,17 +4,17 @@ import type { RegulatoryApplicationSummary } from "../types/RegulatoryApplicatio
 import { ApplicationStatusBadge } from "./ApplicationStatusBadge";
 
 interface RegulatoryApplicationCardProps {
-  productId: string;
+  globalProductId: string;
   application: RegulatoryApplicationSummary;
 }
 
 export function RegulatoryApplicationCard({
-  productId,
+  globalProductId,
   application,
 }: RegulatoryApplicationCardProps) {
   return (
     <Link
-      to={`/regulatory/products/${productId}/applications/${application.id}`}
+      to={`/regulatory/products/${globalProductId}/applications/${application.id}`}
       className="block rounded-lg border p-4 transition-colors hover:bg-muted/50"
     >
       <div className="flex items-start justify-between gap-4">

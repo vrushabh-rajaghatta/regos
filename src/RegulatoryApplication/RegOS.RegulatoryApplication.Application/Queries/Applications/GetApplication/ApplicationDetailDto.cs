@@ -3,7 +3,7 @@ namespace RegOS.RegulatoryApplication.Application.Queries.Applications.GetApplic
 public sealed record ApplicationDetailDto(
     Guid Id,
     string Name,
-    Guid ProductId,
+    Guid GlobalProductId,
     Guid CountryId,
     string CountryName,
     Guid AuthorityId,

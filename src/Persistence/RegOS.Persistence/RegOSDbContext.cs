@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using RegOS.Product.Domain.Product;
 
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Primitives;
 
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 using RegulatoryApplicationAggregate =
     RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 using CountryAggregate =
@@ -76,8 +76,16 @@ public sealed class RegOSDbContext : DbContext
             ? tenant.Value
             : null;
 
-    public DbSet<ProductAggregate> Products =>
-        Set<ProductAggregate>();
+    public DbSet<GlobalProduct> Products =>
+        Set<GlobalProduct>();
+
+    /// <summary>
+    /// The market-local tier: a product in one jurisdiction. Named
+    /// <c>MedicinalProducts</c>, not <c>Products</c> — the two tiers are
+    /// different aggregates in the same context.
+    /// </summary>
+    public DbSet<MedicinalProduct> MedicinalProducts =>
+        Set<MedicinalProduct>();
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
@@ -190,6 +198,7 @@ public sealed class RegOSDbContext : DbContext
     /// <list type="number">
     /// <item><b>Fail-closed tenant-owned</b> — <c>x.TenantId == CurrentTenant</c>.
     /// The tenant owns the data. <c>Users</c>, <c>Products</c>,
+    /// <c>MedicinalProducts</c>,
     /// <c>RegulatoryApplications</c>, <c>Submissions</c>,
     /// <c>SubmissionSnapshots</c>, <c>ProductDocuments</c>,
     /// <c>Registrations</c>, <c>Organizations</c>, <c>OrganizationSites</c>,
@@ -223,7 +232,14 @@ public sealed class RegOSDbContext : DbContext
         modelBuilder.Entity<UserAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
-        modelBuilder.Entity<ProductAggregate>().HasQueryFilter(
+        modelBuilder.Entity<GlobalProduct>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // The market-local tier carries its own tenant rather than inheriting
+        // the global product's: it is a root, loaded and queried directly, and
+        // a filter that reached through a parent would not apply to the
+        // registration joins that are its hottest path.
+        modelBuilder.Entity<MedicinalProduct>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

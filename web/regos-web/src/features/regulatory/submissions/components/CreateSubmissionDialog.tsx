@@ -8,7 +8,7 @@ import {
 import { CreateSubmissionForm } from "./CreateSubmissionForm";
 
 interface CreateSubmissionDialogProps {
-  productId: string;
+  globalProductId: string;
   applicationId: string;
   authorityId: string;
   open: boolean;
@@ -16,7 +16,7 @@ interface CreateSubmissionDialogProps {
 }
 
 export function CreateSubmissionDialog({
-  productId,
+  globalProductId,
   applicationId,
   authorityId,
   open,
@@ -30,7 +30,7 @@ export function CreateSubmissionDialog({
         </DialogHeader>
 
         <CreateSubmissionForm
-          productId={productId}
+          globalProductId={globalProductId}
           applicationId={applicationId}
           authorityId={authorityId}
           onSuccess={() => onOpenChange(false)}

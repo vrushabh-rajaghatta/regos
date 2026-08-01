@@ -17,7 +17,7 @@ public class RegulatoryApplicationLifecycleTests
 {
     private static RegulatoryApplicationAggregate NewDraft() =>
         RegulatoryApplicationAggregate.Create(TenantId.New(), 
-            new ProductId(Guid.NewGuid()),
+            new GlobalProductId(Guid.NewGuid()),
             new CountryId(Guid.NewGuid()),
             new AuthorityId(Guid.NewGuid()),
             new OrganizationId(Guid.NewGuid()),

@@ -4,7 +4,7 @@ using RegOS.ReferenceData.Domain.DocumentType;
 namespace RegOS.ProductDocument.Application.Commands.UploadProductDocument;
 
 public sealed record UploadProductDocumentCommand(
-    ProductId ProductId,
+    GlobalProductId GlobalProductId,
     DocumentTypeId DocumentTypeId,
     string Name,
     string OriginalFileName,

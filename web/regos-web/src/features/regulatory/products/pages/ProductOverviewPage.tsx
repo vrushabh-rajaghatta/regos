@@ -13,11 +13,11 @@ import { EditProductDialog } from "../components/EditProductDialog";
 import { useProduct } from "../hooks/useProduct";
 
 export function ProductOverviewPage() {
-  const { productId } = useParams();
+  const { globalProductId } = useParams();
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
 
-  const { data: product, isPending, error } = useProduct(productId!);
+  const { data: product, isPending, error } = useProduct(globalProductId!);
 
   // Loading / Not found / Error / Success — all four states are explicit, and
   // a missing product is distinguished from a failed request.

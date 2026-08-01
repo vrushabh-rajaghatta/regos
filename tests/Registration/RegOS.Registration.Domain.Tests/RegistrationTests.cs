@@ -23,8 +23,7 @@ public class RegistrationTests
         string? note = null) =>
         RegistrationAggregate.Create(
             TenantId.New(),
-            ProductId.New(),
-            new CountryId(Guid.NewGuid()),
+            MedicinalProductId.New(),
             new AuthorityId(Guid.NewGuid()),
             new OrganizationId(Guid.NewGuid()),
             occurredOn ?? Today,
@@ -108,18 +107,17 @@ public class RegistrationTests
     }
 
     [Fact]
-    public void AProductIsRequired()
+    public void AMedicinalProductIsRequired()
     {
         var create = () => RegistrationAggregate.Create(
             TenantId.New(),
-            default,
-            new CountryId(Guid.NewGuid()),
+            (MedicinalProductId)null!,
             new AuthorityId(Guid.NewGuid()),
             new OrganizationId(Guid.NewGuid()),
             Today);
 
         create.Should().Throw<DomainException>()
-            .WithMessage(RegistrationErrors.ProductRequired);
+            .WithMessage(RegistrationErrors.MedicinalProductRequired);
     }
 
     [Fact]
@@ -127,8 +125,7 @@ public class RegistrationTests
     {
         var create = () => RegistrationAggregate.Create(
             TenantId.New(),
-            ProductId.New(),
-            new CountryId(Guid.NewGuid()),
+            MedicinalProductId.New(),
             new AuthorityId(Guid.NewGuid()),
             default,
             Today);

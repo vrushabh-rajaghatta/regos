@@ -118,7 +118,7 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
-            modelBuilder.Entity("RegOS.Product.Domain.Product.Product", b =>
+            modelBuilder.Entity("RegOS.Product.Domain.Product.GlobalProduct", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
@@ -537,7 +537,7 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RegOS.Product.Domain.Product.Product", null)
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -599,7 +599,7 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RegOS.Product.Domain.Product.Product", null)
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)

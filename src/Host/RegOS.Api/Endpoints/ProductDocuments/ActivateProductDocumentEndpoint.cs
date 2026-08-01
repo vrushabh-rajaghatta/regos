@@ -11,21 +11,21 @@ public static class ActivateProductDocumentEndpoint
     {
         // Lifecycle transition — an action verb, not a generic PUT/PATCH.
         app.MapPost(
-            "/api/products/{productId:guid}/documents/{documentId:guid}/activate",
+            "/api/products/{globalProductId:guid}/documents/{documentId:guid}/activate",
             HandleAsync);
 
         return app;
     }
 
     private static async Task<IResult> HandleAsync(
-        Guid productId,
+        Guid globalProductId,
         Guid documentId,
         ActivateProductDocumentHandler handler,
         CancellationToken cancellationToken)
     {
         await handler.HandleAsync(
             new ActivateProductDocumentCommand(
-                new ProductId(productId),
+                new GlobalProductId(globalProductId),
                 new ProductDocumentId(documentId)),
             cancellationToken);
 

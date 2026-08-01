@@ -1,9 +1,7 @@
-using RegOS.Product.Application.Persistence;
 using RegOS.Product.Application.Services;
 using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Abstractions;
 
-using ProductAggregate = RegOS.Product.Domain.Product.Product;
 
 namespace RegOS.Product.Application.Commands.RegisterProduct;
 
@@ -23,7 +21,7 @@ public sealed class RegisterProductHandler
         _tenantContext = tenantContext;
     }
 
-    public async Task<ProductId> HandleAsync(
+    public async Task<GlobalProductId> HandleAsync(
         RegisterProductCommand command,
         CancellationToken cancellationToken)
     {
@@ -37,7 +35,7 @@ public sealed class RegisterProductHandler
             tenantId, code, cancellationToken);
 
         // The aggregate owns the invariants; the handler never reimplements them.
-        var product = ProductAggregate.Register(
+        var product = GlobalProduct.Register(
             tenantId, code.Value, command.Name, command.Type);
 
         await _repository.AddAsync(product, cancellationToken);

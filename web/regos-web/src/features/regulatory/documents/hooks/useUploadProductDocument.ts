@@ -5,16 +5,16 @@ import {
   type UploadProductDocumentRequest,
 } from "../api/uploadProductDocument";
 
-export function useUploadProductDocument(productId: string) {
+export function useUploadProductDocument(globalProductId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (request: UploadProductDocumentRequest) =>
-      uploadProductDocument(productId, request),
+      uploadProductDocument(globalProductId, request),
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["products", productId, "documents"],
+        queryKey: ["products", globalProductId, "documents"],
       });
     },
   });

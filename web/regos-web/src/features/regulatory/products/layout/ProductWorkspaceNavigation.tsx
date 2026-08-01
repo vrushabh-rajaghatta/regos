@@ -1,7 +1,7 @@
 import { NavLink, useParams } from "react-router-dom";
 
 export function ProductWorkspaceNavigation() {
-  const { productId } = useParams();
+  const { globalProductId } = useParams();
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `block rounded-md px-3 py-2 text-sm ${
@@ -16,28 +16,28 @@ export function ProductWorkspaceNavigation() {
     <nav className="space-y-1 p-4">
       <NavLink
         end
-        to={`/regulatory/products/${productId}`}
+        to={`/regulatory/products/${globalProductId}`}
         className={linkClass}
       >
         Overview
       </NavLink>
 
       <NavLink
-        to={`/regulatory/products/${productId}/applications`}
+        to={`/regulatory/products/${globalProductId}/applications`}
         className={linkClass}
       >
         Applications
       </NavLink>
 
       <NavLink
-        to={`/regulatory/products/${productId}/documents`}
+        to={`/regulatory/products/${globalProductId}/documents`}
         className={linkClass}
       >
         Documents
       </NavLink>
 
       <NavLink
-        to={`/regulatory/products/${productId}/registrations`}
+        to={`/regulatory/products/${globalProductId}/registrations`}
         className={linkClass}
       >
         Registrations

@@ -46,7 +46,7 @@ public sealed class UploadProductDocumentHandler
         // so the two can never disagree (ADR-031).
         var productTenantId = await _dbContext.Products
             .AsNoTracking()
-            .Where(p => p.Id == command.ProductId)
+            .Where(p => p.Id == command.GlobalProductId)
             .Select(p => p.TenantId)
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -72,7 +72,7 @@ public sealed class UploadProductDocumentHandler
         // Create the aggregate first so we have its id for the storage path.
         var document = ProductDocumentAggregate.Create(
             productTenantId,
-            command.ProductId,
+            command.GlobalProductId,
             command.DocumentTypeId,
             command.Name);
 
@@ -81,7 +81,7 @@ public sealed class UploadProductDocumentHandler
         var extension = Path.GetExtension(command.OriginalFileName);
         var storedFileName = $"v1{extension}";
         var relativePath =
-            $"products/{command.ProductId.Value}/{document.Id.Value}/{storedFileName}";
+            $"products/{command.GlobalProductId.Value}/{document.Id.Value}/{storedFileName}";
 
         var checksum = Convert.ToHexString(SHA256.HashData(bytes))
             .ToLowerInvariant();

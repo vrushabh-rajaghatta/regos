@@ -11,12 +11,20 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 import { useAuthorities } from "../../masterData/hooks/useAuthorities";
-import { useCountries } from "../../masterData/hooks/useCountries";
 import { useOrganizations } from "../../masterData/hooks/useOrganizations";
 import { useCreateRegistration } from "../hooks/useCreateRegistration";
 
+/**
+ * Takes the three facts it needs rather than a whole market, so both the
+ * summary row and the market's own page can open it without either having to
+ * hold the shape the other one loaded.
+ */
 interface Props {
-  productId: string;
+  market: {
+    medicinalProductId: string;
+    countryId: string;
+    countryName: string;
+  };
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -26,28 +34,31 @@ interface Props {
  * authorisation granted in 2019 is created with its 2019 date and then has its
  * grant recorded — which is why this form asks when it entered its first status
  * rather than assuming today.
+ *
+ * It no longer asks for a market. The market is the medicinal product this
+ * licence is being granted over, chosen before the dialog opened, and there is
+ * no longer any way to state one that disagrees with it.
  */
 export function CreateRegistrationDialog({
-  productId,
+  market,
   open,
   onOpenChange,
 }: Props) {
-  const [countryId, setCountryId] = useState("");
   const [authorityId, setAuthorityId] = useState("");
   const [holderOrganizationId, setHolderOrganizationId] = useState("");
   const [occurredOn, setOccurredOn] = useState("");
   const [note, setNote] = useState("");
 
-  const countries = useCountries();
   const authorities = useAuthorities();
   const organizations = useOrganizations();
-  const mutation = useCreateRegistration(productId);
+  const mutation = useCreateRegistration(market.medicinalProductId);
 
-  // The server rejects an authority that does not belong to the country, so
-  // the choice is narrowed here rather than offering one that cannot work.
+  // The server rejects an authority that does not regulate the market's
+  // country, so the choice is narrowed here rather than offering one that
+  // cannot work. The country comes from the market, not from a field.
   const authoritiesInCountry = useMemo(
-    () => (authorities.data ?? []).filter((a) => a.countryId === countryId),
-    [authorities.data, countryId]
+    () => (authorities.data ?? []).filter((a) => a.countryId === market.countryId),
+    [authorities.data, market.countryId]
   );
 
   const activeHolders = useMemo(
@@ -60,7 +71,6 @@ export function CreateRegistrationDialog({
 
     try {
       await mutation.mutateAsync({
-        countryId,
         authorityId,
         holderOrganizationId,
         occurredOn,
@@ -72,7 +82,6 @@ export function CreateRegistrationDialog({
       return;
     }
 
-    setCountryId("");
     setAuthorityId("");
     setHolderOrganizationId("");
     setOccurredOn("");
@@ -84,46 +93,20 @@ export function CreateRegistrationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New registration</DialogTitle>
+          <DialogTitle>New registration in {market.countryName}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4">
-          <Field>
-            <FieldLabel htmlFor="countryId">Market</FieldLabel>
-            <select
-              id="countryId"
-              required
-              value={countryId}
-              onChange={(event) => {
-                setCountryId(event.target.value);
-                setAuthorityId("");
-              }}
-              className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-            >
-              <option value="">Select a country</option>
-              {(countries.data ?? []).map((country) => (
-                <option key={country.id} value={country.id}>
-                  {country.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-
           <Field>
             <FieldLabel htmlFor="authorityId">Authority</FieldLabel>
             <select
               id="authorityId"
               required
-              disabled={countryId === ""}
               value={authorityId}
               onChange={(event) => setAuthorityId(event.target.value)}
               className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
             >
-              <option value="">
-                {countryId === ""
-                  ? "Select a country first"
-                  : "Select an authority"}
-              </option>
+              <option value="">Select an authority</option>
               {authoritiesInCountry.map((authority) => (
                 <option key={authority.id} value={authority.id}>
                   {authority.name}

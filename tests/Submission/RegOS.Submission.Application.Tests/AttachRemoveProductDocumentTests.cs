@@ -77,24 +77,24 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
 
     // --- Seeding helpers -----------------------------------------------------
 
-    private static async Task<(RegulatoryApplicationId AppId, ProductId ProductId)>
+    private static async Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
         FirstApplicationAsync(RegOSDbContext ctx)
     {
         return await TestApplications.EnsureAsync(ctx);
     }
 
     private async Task<ProductDocumentAggregate> SeedDocumentAsync(
-        RegOSDbContext ctx, ProductId productId, bool activate)
+        RegOSDbContext ctx, GlobalProductId globalProductId, bool activate)
     {
         var doc = ProductDocumentAggregate.Create(TestTenant.Id, 
-            productId, SeededCer, "19.3 Doc " + Guid.NewGuid());
+            globalProductId, SeededCer, "19.3 Doc " + Guid.NewGuid());
 
         doc.AddInitialVersion(
             originalFileName: "cer.pdf",
             storedFileName: "v1.pdf",
             contentType: "application/pdf",
             fileSize: 1024,
-            storagePath: $"products/{productId.Value}/{doc.Id.Value}/v1.pdf",
+            storagePath: $"products/{globalProductId.Value}/{doc.Id.Value}/v1.pdf",
             checksum: "sha256-x");
 
         if (activate)
@@ -129,8 +129,8 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
 
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
-            var doc = await SeedDocumentAsync(ctx, productId, activate: true);
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
+            var doc = await SeedDocumentAsync(ctx, globalProductId, activate: true);
             var sub = await SeedSubmissionAsync(ctx, appId);
 
             submissionId = sub.Id;
@@ -200,9 +200,9 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
 
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
             // Draft — never activated.
-            documentId = (await SeedDocumentAsync(ctx, productId, activate: false)).Id;
+            documentId = (await SeedDocumentAsync(ctx, globalProductId, activate: false)).Id;
             submissionId = (await SeedSubmissionAsync(ctx, appId)).Id;
         }
 
@@ -226,11 +226,11 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
 
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
 
             // A different product than the submission's application owns.
             var otherProductId = await ctx.Products
-                .Where(p => p.Id != productId)
+                .Where(p => p.Id != globalProductId)
                 .Select(p => p.Id)
                 .FirstAsync();
 
@@ -274,8 +274,8 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
 
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
-            documentId = (await SeedDocumentAsync(ctx, productId, activate: true)).Id;
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
+            documentId = (await SeedDocumentAsync(ctx, globalProductId, activate: true)).Id;
             submissionId = (await SeedSubmissionAsync(ctx, appId)).Id;
         }
 
@@ -313,8 +313,8 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
 
         await using (var ctx = New())
         {
-            var (appId, productId) = await FirstApplicationAsync(ctx);
-            documentId = (await SeedDocumentAsync(ctx, productId, activate: true)).Id;
+            var (appId, globalProductId) = await FirstApplicationAsync(ctx);
+            documentId = (await SeedDocumentAsync(ctx, globalProductId, activate: true)).Id;
             submissionId = (await SeedSubmissionAsync(ctx, appId)).Id;
         }
 

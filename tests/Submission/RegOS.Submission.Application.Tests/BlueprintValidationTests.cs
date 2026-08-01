@@ -129,12 +129,12 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     public async Task AttachingWithoutPlacing_ClearsNothing_AndIsDisclosed()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND unplaced");
 
         var before = await MissingCountAsync(ctx, submissionId);
 
-        await AttachAsync(ctx, submissionId, productId, CoverLetter);
+        await AttachAsync(ctx, submissionId, globalProductId, CoverLetter);
 
         await using var act = New();
         var after = await ValidatorFor(act).ValidateAsync(submissionId, default);
@@ -155,13 +155,13 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     public async Task PlacingARequiredDocumentInItsSection_ClearsItsIssue()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND placed");
 
         var before = await MissingCountAsync(ctx, submissionId);
         var section = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
 
-        await AttachAsync(ctx, submissionId, productId, CoverLetter, section);
+        await AttachAsync(ctx, submissionId, globalProductId, CoverLetter, section);
 
         await using var act = New();
         var after = await ValidatorFor(act).ValidateAsync(submissionId, default);
@@ -183,14 +183,14 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     public async Task AMisplacedDocument_SatisfiesNothingAndIsNotCalledUnplaced()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND misplaced");
 
         var before = await MissingCountAsync(ctx, submissionId);
         var expected = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
         var elsewhere = await SectionOtherThanAsync(ctx, submissionId, expected);
 
-        await AttachAsync(ctx, submissionId, productId, CoverLetter, elsewhere);
+        await AttachAsync(ctx, submissionId, globalProductId, CoverLetter, elsewhere);
 
         await using var act = New();
         var after = await ValidatorFor(act).ValidateAsync(submissionId, default);
@@ -225,11 +225,11 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     public async Task UnboundSubmission_IsReportedButNotBlocked()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
 
         // A device type under the same authority: no blueprint targets it.
         var submissionId = await CreateAsync(ctx, appId, Fda510k, "510(k) unbound");
-        await AttachAsync(ctx, submissionId, productId, CoverLetter);
+        await AttachAsync(ctx, submissionId, globalProductId, CoverLetter);
 
         await using var act = New();
         var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
@@ -276,11 +276,11 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     public async Task NonPdfDocument_ViolatesTheBlueprintsFormatRule()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND format");
 
         await AttachAsync(
-            ctx, submissionId, productId, CoverLetter,
+            ctx, submissionId, globalProductId, CoverLetter,
             originalFileName: "cover-letter.docx",
             contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 
@@ -303,10 +303,10 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     public async Task PdfDocuments_SatisfyTheFormatRule()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND format ok");
 
-        await AttachAsync(ctx, submissionId, productId, CoverLetter);
+        await AttachAsync(ctx, submissionId, globalProductId, CoverLetter);
 
         await using var act = New();
         var result = await ValidatorFor(act).ValidateAsync(submissionId, default);
@@ -479,21 +479,21 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     private async Task AttachAsync(
         RegOSDbContext ctx,
         SubmissionId submissionId,
-        ProductId productId,
+        GlobalProductId globalProductId,
         DocumentTypeId documentTypeId,
         TemplateSectionId? section = null,
         string originalFileName = "doc.pdf",
         string contentType = "application/pdf")
     {
         var document = ProductDocumentAggregate.Create(
-            TestTenant.Id, productId, documentTypeId, "Blueprint Doc " + Guid.NewGuid());
+            TestTenant.Id, globalProductId, documentTypeId, "Blueprint Doc " + Guid.NewGuid());
 
         document.AddInitialVersion(
             originalFileName: originalFileName,
             storedFileName: "v1.pdf",
             contentType: contentType,
             fileSize: 1024,
-            storagePath: $"products/{productId.Value}/{document.Id.Value}/v1.pdf",
+            storagePath: $"products/{globalProductId.Value}/{document.Id.Value}/v1.pdf",
             checksum: "sha256-x");
         document.Activate();
 

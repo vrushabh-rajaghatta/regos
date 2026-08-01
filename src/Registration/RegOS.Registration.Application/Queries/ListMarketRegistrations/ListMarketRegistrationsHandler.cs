@@ -49,9 +49,11 @@ public sealed class ListMarketRegistrationsHandler
         var rows = await (
             from registration in _dbContext.Set<RegistrationAggregate>()
                 .AsNoTracking()
-            where registration.CountryId == countryId
+            join market in _dbContext.MedicinalProducts
+                on registration.MedicinalProductId equals market.Id
+            where market.CountryId == countryId
             join product in _dbContext.Products
-                on registration.ProductId equals product.Id
+                on market.GlobalProductId equals product.Id
             join authority in _dbContext.Authorities
                 on registration.AuthorityId equals authority.Id
             join holder in _dbContext.Organizations
@@ -59,9 +61,29 @@ public sealed class ListMarketRegistrationsHandler
             select new
             {
                 registration.Id,
-                registration.ProductId,
+                MedicinalProductId = market.Id,
+                market.GlobalProductId,
                 ProductCode = product.Code,
                 ProductName = product.Name,
+                // The three facts the tier contributes to the answer. This is
+                // the Registration context reading Product — the first read in
+                // that direction, and deliberate: writes remain owned, reads
+                // compose (ADR-039 principle 7).
+                TradeNames = market.TradeNames
+                    .OrderBy(name => name.Name)
+                    .Select(name => name.Name)
+                    .ToList(),
+                market.CurrentMarketStatus,
+                Launches = market.MarketStatusHistory
+                    .Where(entry =>
+                        entry.Status == RegOS.Product.Domain.Product.MarketStatus.Launched)
+                    .Select(entry => new
+                    {
+                        entry.OccurredOn,
+                        entry.RecordedOnUtc,
+                    })
+                    .ToList(),
+                MarketStatusOfRecord = market.Status,
                 registration.AuthorityId,
                 AuthorityName = authority.Name,
                 HolderName = holder.LegalName,
@@ -83,9 +105,21 @@ public sealed class ListMarketRegistrationsHandler
 
                 return new MarketRegistrationSummary(
                     row.Id.Value,
-                    row.ProductId.Value,
+                    row.MedicinalProductId.Value,
+                    row.GlobalProductId.Value,
                     row.ProductCode.Value,
                     row.ProductName.Value,
+                    row.TradeNames,
+                    row.CurrentMarketStatus.ToString(),
+                    // Derived here exactly as it is on the market's own page:
+                    // the first launch in business time, never stored.
+                    row.Launches
+                        .OrderBy(launch => launch.OccurredOn)
+                        .ThenBy(launch => launch.RecordedOnUtc)
+                        .Select(launch => (DateOnly?)launch.OccurredOn)
+                        .FirstOrDefault(),
+                    row.MarketStatusOfRecord
+                        == RegOS.Product.Domain.Product.MedicinalProductStatus.Inactive,
                     row.AuthorityId.Value,
                     row.AuthorityName,
                     row.HolderName,

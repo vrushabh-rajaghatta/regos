@@ -1,12 +1,12 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export async function activateProductDocument(
-  productId: string,
+  globalProductId: string,
   documentId: string
 ): Promise<void> {
   const response = await apiFetch(
     buildUrl(
-      `/api/products/${productId}/documents/${documentId}/activate`
+      `/api/products/${globalProductId}/documents/${documentId}/activate`
     ),
     { method: "POST" }
   );

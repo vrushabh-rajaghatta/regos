@@ -27,15 +27,15 @@ import {
 } from "../validation/uploadProductDocumentSchema";
 
 interface Props {
-  productId: string;
+  globalProductId: string;
   onSuccess: () => void;
 }
 
-export function UploadProductDocumentForm({ productId, onSuccess }: Props) {
+export function UploadProductDocumentForm({ globalProductId, onSuccess }: Props) {
   const navigate = useNavigate();
 
   const documentTypesQuery = useDocumentTypes();
-  const mutation = useUploadProductDocument(productId);
+  const mutation = useUploadProductDocument(globalProductId);
 
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -82,7 +82,7 @@ export function UploadProductDocumentForm({ productId, onSuccess }: Props) {
 
     // Uploading is how a document is created — take the user straight into
     // the new document's workspace.
-    navigate(`/regulatory/products/${productId}/documents/${id}`);
+    navigate(`/regulatory/products/${globalProductId}/documents/${id}`);
   }
 
   return (

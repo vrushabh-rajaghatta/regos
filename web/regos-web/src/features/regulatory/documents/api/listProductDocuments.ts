@@ -2,10 +2,10 @@ import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import type { ProductDocumentSummary } from "../types/ProductDocumentSummary";
 
 export async function listProductDocuments(
-  productId: string
+  globalProductId: string
 ): Promise<ProductDocumentSummary[]> {
   const response = await apiFetch(
-    buildUrl(`/api/products/${productId}/documents`)
+    buildUrl(`/api/products/${globalProductId}/documents`)
   );
 
   if (!response.ok) {

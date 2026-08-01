@@ -51,6 +51,7 @@ import { RequireAuth } from "@/features/auth/components/RequireAuth";
 import { TemplateListPage } from "@/features/regulatory/templates/pages/TemplateListPage";
 import { TemplateDetailPage } from "@/features/regulatory/templates/pages/TemplateDetailPage";
 import { ProductRegistrationsPage } from "@/features/regulatory/registrations/pages/ProductRegistrationsPage";
+import { MedicinalProductPage } from "@/features/regulatory/medicinalProducts/pages/MedicinalProductPage";
 import { RegistrationMarketsPage } from "@/features/regulatory/registrations/pages/RegistrationMarketsPage";
 import { MarketRegistrationsPage } from "@/features/regulatory/registrations/pages/MarketRegistrationsPage";
 import { RegistrationDetailPage } from "@/features/regulatory/registrations/pages/RegistrationDetailPage";
@@ -155,7 +156,7 @@ export const router = createBrowserRouter([
                   },
                   // Product Workspace — portfolio-level view.
                   {
-                    path: ":productId",
+                    path: ":globalProductId",
                     element: <ProductWorkspaceLayout />,
                     children: [
                       {
@@ -179,13 +180,21 @@ export const router = createBrowserRouter([
                         path: "registrations",
                         element: <ProductRegistrationsPage />,
                       },
+                      // One market, as its own working surface (EPIC-017 S004).
+                      // Nested inside the product workspace rather than beside
+                      // it: a market is always read in the context of the
+                      // product it localises, and the sidebar should stay.
+                      {
+                        path: "markets/:medicinalProductId",
+                        element: <MedicinalProductPage />,
+                      },
                     ],
                   },
                   // Application Workspace — execution-level view. Nested under the
                   // product URL, but a full-screen sibling so its sidebar replaces
                   // the product sidebar (rather than rendering two sidebars).
                   {
-                    path: ":productId/applications/:applicationId",
+                    path: ":globalProductId/applications/:applicationId",
                     element: <ApplicationWorkspaceLayout />,
                     children: [
                       {
@@ -215,7 +224,7 @@ export const router = createBrowserRouter([
                   // sidebar. The URL preserves the full business hierarchy:
                   // product -> application -> submission.
                   {
-                    path: ":productId/applications/:applicationId/submissions/:submissionId",
+                    path: ":globalProductId/applications/:applicationId/submissions/:submissionId",
                     element: <SubmissionWorkspaceLayout />,
                     children: [
                       {
@@ -247,7 +256,7 @@ export const router = createBrowserRouter([
                   // Product Document Workspace — full-screen sibling under the
                   // product URL. Explicit sub-routes; index redirects to overview.
                   {
-                    path: ":productId/documents/:documentId",
+                    path: ":globalProductId/documents/:documentId",
                     element: <DocumentWorkspaceLayout />,
                     children: [
                       {

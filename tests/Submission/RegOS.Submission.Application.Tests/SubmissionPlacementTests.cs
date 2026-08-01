@@ -90,12 +90,12 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task AttachingIntoASectionOfTheBoundBlueprint_PlacesTheDocument()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND place");
         var section = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
 
         var attachmentId = await AttachAsync(
-            ctx, submissionId, productId, CoverLetter, section);
+            ctx, submissionId, globalProductId, CoverLetter, section);
 
         await using var check = New();
         var placement = await PlacementOfAsync(check, submissionId, attachmentId);
@@ -107,12 +107,12 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task AttachingIntoASectionOfAnotherBlueprint_IsRejected()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND foreign");
         var foreign = await SectionOfAnotherVersionAsync(ctx, submissionId);
 
         var attach = async () => await AttachAsync(
-            ctx, submissionId, productId, CoverLetter, foreign);
+            ctx, submissionId, globalProductId, CoverLetter, foreign);
 
         await attach.Should().ThrowAsync<BusinessRuleViolationException>()
             .WithMessage(SubmissionRuleErrors.TemplateSectionNotInBoundBlueprint);
@@ -133,12 +133,12 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task PlacingOnASubmissionWithNoBlueprint_IsRejected()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
 
         // A device type under the same authority — no blueprint targets it.
         var submissionId = await CreateAsync(ctx, appId, Fda510k, "510(k) place");
         var attachmentId = await AttachAsync(
-            ctx, submissionId, productId, CoverLetter);
+            ctx, submissionId, globalProductId, CoverLetter);
 
         // Any section at all: there is no structure to place into.
         var anySection = await AnySectionAsync(ctx);
@@ -155,11 +155,11 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task PlacingMovesAnAlreadyPlacedDocument()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND move");
         var origin = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
         var attachmentId = await AttachAsync(
-            ctx, submissionId, productId, CoverLetter, origin);
+            ctx, submissionId, globalProductId, CoverLetter, origin);
 
         var destination = await SectionOtherThanAsync(ctx, submissionId, origin);
 
@@ -176,11 +176,11 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task ClearingAPlacementLeavesTheDocumentAttached()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND clear");
         var section = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
         var attachmentId = await AttachAsync(
-            ctx, submissionId, productId, CoverLetter, section);
+            ctx, submissionId, globalProductId, CoverLetter, section);
 
         await using var act = New();
         await PlaceAsync(act, submissionId, attachmentId, section: null);
@@ -198,11 +198,11 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task APlaceholderIsSatisfiedByTheRightTypeInItsOwnSection()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND satisfy");
         var section = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
 
-        await AttachAsync(ctx, submissionId, productId, CoverLetter, section);
+        await AttachAsync(ctx, submissionId, globalProductId, CoverLetter, section);
 
         await using var check = New();
         var plan = await PlanAsync(check, submissionId);
@@ -225,12 +225,12 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task TheRightTypeInTheWrongSectionSatisfiesNothing()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND misplaced");
         var expected = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
         var elsewhere = await SectionOtherThanAsync(ctx, submissionId, expected);
 
-        await AttachAsync(ctx, submissionId, productId, CoverLetter, elsewhere);
+        await AttachAsync(ctx, submissionId, globalProductId, CoverLetter, elsewhere);
 
         await using var check = New();
         var plan = await PlanAsync(check, submissionId);
@@ -250,10 +250,10 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task AnAttachedButUnplacedDocumentIsListedSeparately()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND unplaced");
 
-        await AttachAsync(ctx, submissionId, productId, CoverLetter);
+        await AttachAsync(ctx, submissionId, globalProductId, CoverLetter);
 
         await using var check = New();
         var plan = await PlanAsync(check, submissionId);
@@ -292,10 +292,10 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task ASubmissionWithNoBlueprintGetsAnEmptyStructure()
     {
         await using var ctx = New();
-        var (appId, productId) = await TestFdaApplication.EnsureAsync(ctx);
+        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
         var submissionId = await CreateAsync(ctx, appId, Fda510k, "510(k) plan");
 
-        await AttachAsync(ctx, submissionId, productId, CoverLetter);
+        await AttachAsync(ctx, submissionId, globalProductId, CoverLetter);
 
         await using var check = New();
         var plan = await PlanAsync(check, submissionId);
@@ -449,19 +449,19 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     private async Task<SubmissionDocumentId> AttachAsync(
         RegOSDbContext ctx,
         SubmissionId submissionId,
-        ProductId productId,
+        GlobalProductId globalProductId,
         DocumentTypeId documentTypeId,
         TemplateSectionId? section = null)
     {
         var document = ProductDocumentAggregate.Create(
-            TestTenant.Id, productId, documentTypeId, "Placement Doc " + Guid.NewGuid());
+            TestTenant.Id, globalProductId, documentTypeId, "Placement Doc " + Guid.NewGuid());
 
         document.AddInitialVersion(
             originalFileName: "doc.pdf",
             storedFileName: "v1.pdf",
             contentType: "application/pdf",
             fileSize: 1024,
-            storagePath: $"products/{productId.Value}/{document.Id.Value}/v1.pdf",
+            storagePath: $"products/{globalProductId.Value}/{document.Id.Value}/v1.pdf",
             checksum: "sha256-x");
         document.Activate();
 

@@ -9,7 +9,7 @@ import { CreateSubmissionDialog } from "@/features/regulatory/submissions/compon
 import { useApplication } from "../hooks/useApplication";
 
 export function ApplicationSubmissionsPage() {
-  const { productId, applicationId } = useParams();
+  const { globalProductId, applicationId } = useParams();
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -31,7 +31,7 @@ export function ApplicationSubmissionsPage() {
 
       {application && (
         <CreateSubmissionDialog
-          productId={productId!}
+          globalProductId={globalProductId!}
           applicationId={applicationId!}
           authorityId={application.authorityId}
           open={dialogOpen}
@@ -70,7 +70,7 @@ export function ApplicationSubmissionsPage() {
           {data.map((submission) => (
             <SubmissionCard
               key={submission.id}
-              productId={productId!}
+              globalProductId={globalProductId!}
               applicationId={applicationId!}
               submission={submission}
             />

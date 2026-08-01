@@ -46,3 +46,18 @@ Each was learned from a check that reported the wrong answer:
    the data changed — once asserting "no products are archived", once picking
    the first search result for a product that later got archived. If a spec
    needs a product, it registers one.
+
+5. **Walk every new mutation dialog through at least one real server refusal.**
+   Success-path verification is not enough for a mutation flow. Six forms
+   shipped rendering the server's message correctly *and* letting the rejection
+   escape to the window as an unhandled promise — the UI looked right, and only
+   `collectErrors` saw the other half. If a form has no plausible business
+   refusal, exercise a structural one and say in the spec why that is the
+   refusal available.
+
+6. **Duplicate accessible names are wording defects first, test defects
+   second.** Fix the words, not the selector.
+
+   It happened a third time in EPIC-017 S005, so this is now a written
+   guideline rather than a convention here:
+   **[docs/engineering/accessible-names.md](../../docs/engineering/accessible-names.md)**.

@@ -51,7 +51,7 @@ components.
 Read in this order when the question is "how should this work":
 
 1. **[docs/adr/](docs/adr/)** — the single immutable decision series, ADR-001
-   onward. Next number is **ADR-039**. Never edit an accepted ADR; supersede it.
+   onward. Next number is **ADR-040**. Never edit an accepted ADR; supersede it.
 2. **[docs/engineering/slice-conventions.md](docs/engineering/slice-conventions.md)** — mechanical file/folder rules.
 3. **[docs/engineering/implementation-standards.md](docs/engineering/implementation-standards.md)** — principles behind them.
 4. **[docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md)** — cross-cutting platform standards (ES-001…).
@@ -107,6 +107,12 @@ RegulatoryApplication · Submission · Registration · ReferenceData.
   through UI. Flow is `docs/product/BACKLOG.md` → epic → story → PR.
 - **Use the ubiquitous language.** `Registration`, `Submission`,
   `RegulatoryApplication` — never `Record`, `Item`, `Data`.
+- **The domain's word and the screen's word may differ, and both are binding.**
+  `MedicinalProduct` is the aggregate; **"Market"** is what the UI calls it.
+  RIM's vocabulary keeps the model precise; the screen uses the word a
+  regulatory user would say out loud. Where they differ, record the pair in
+  [docs/domain-model/](docs/domain-model/) — and never let the screen's word
+  reach a type, or the type's word reach a label by default.
 - Generic folders (`Common`, `Shared`, `Helpers`, `Utils`, `Misc`) are
   prohibited in `src/` without an ADR (repository.md Standard 4).
 - New bounded context, new cross-context dependency, or a change to an accepted

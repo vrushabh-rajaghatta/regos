@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
-using RegOS.Product.Domain.Product;
 using RegOS.Registration.Domain.Aggregates.Registration;
 
 using RegistrationAggregate = RegOS.Registration.Domain.Aggregates.Registration.Registration;
@@ -44,15 +43,5 @@ public sealed class RegistrationRepository : IRegistrationRepository
         CancellationToken cancellationToken)
     {
         await _dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<RegistrationAggregate>> ListByProductAsync(
-        ProductId productId,
-        CancellationToken cancellationToken)
-    {
-        return await _dbContext.Registrations
-            .Where(x => x.ProductId == productId)
-            .OrderBy(x => x.CreatedOn)
-            .ToListAsync(cancellationToken);
     }
 }

@@ -1,8 +1,7 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
-import { detailOf } from "./problemDetail";
+import { detailOf } from "@/shared/api/problemDetail";
 
 export interface CreateRegistrationBody {
-  countryId: string;
   authorityId: string;
   holderOrganizationId: string;
   occurredOn: string;
@@ -10,12 +9,17 @@ export interface CreateRegistrationBody {
   note?: string | null;
 }
 
+/**
+ * Addressed by the medicinal product, not the global one: a licence is granted
+ * over a product in a market. The country is not in the body because it is not
+ * the caller's to state — it belongs to the market being registered in.
+ */
 export async function createRegistration(
-  productId: string,
+  medicinalProductId: string,
   body: CreateRegistrationBody
 ): Promise<{ id: string }> {
   const response = await apiFetch(
-    buildUrl(`/api/products/${productId}/registrations`),
+    buildUrl(`/api/medicinal-products/${medicinalProductId}/registrations`),
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
