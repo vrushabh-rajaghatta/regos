@@ -558,10 +558,16 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
    stronger claim than noticing the misfit, because it is repeatable.
    **Second evidence, S001a: it removed the temptation to widen `Organization`.**
    Stated precisely, and more falsifiable than *"produced better design"*:
-   **the revised Phase 2 has now removed architecture twice.** Once a field
-   (`OrganizationDivisionId`), once an enum member (`OrganizationType.Authority`)
-   — both of which an entity-first phase would have reached for, because the
-   entities already existed.
+   **the revised Phase 2 has now removed architecture three times, in two
+   different kinds.** S001 removed *relationships* — a field
+   (`OrganizationDivisionId`) and an enum member (`OrganizationType.Authority`),
+   both of which an entity-first phase would have reached for because the
+   entities already existed. **S002 removed a *type*:** the user questions
+   produced no versioning, no lifecycle and no reuse, so
+   `CorrespondenceDocument` was never born and `ProductDocument` was not copied
+   by analogy. *Sometimes it removes relationships; sometimes it removes types.
+   Both are reductions in architecture, which is easier to explain — and to
+   falsify — than "produced better design".*
    *Two stories are not a verdict; EPIC-006 keeps exercising it. But it has
    crossed from untested proposal to demonstrated value.*
 

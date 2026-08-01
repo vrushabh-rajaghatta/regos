@@ -37,7 +37,7 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 | ID | Epic | Status | Notes |
 |---|---|---|---|
-| **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | 🟡 **In Progress** | Phases 1–3 settled 2026-08-01; **7 stories**, S001 next → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
+| **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | 🟡 **In Progress** | Phases 1–3 settled 2026-08-01; **8 stories**, S001·S001a·S002 done, S003 next → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
 
 Phase 2 opened on the domain question rather than the entity list, and
 **falsified** its own central hypothesis: the spanning question (an activity
@@ -88,7 +88,7 @@ nine forms still carry the EPIC-016 mutation defect (see the EPIC-017 retro).
 | **EPIC-012** | **Reference-data authoring & governance** — data-steward CRUD, change control, tenant-authored/cloned templates & document types | ⚪ Not Started | deferred write-side from EPIC-001; grows with every vocabulary EPIC-006/010/018 add |
 | **EPIC-013** | **Audit & activity history** — cross-cutting audit trail (`LastModifiedOn` was deferred to here) | ⚪ Not Started | see the status-history rule below — most of this should never reach here |
 | **EPIC-014** | **Notifications** — email & in-app | ⚪ Not Started | EPIC-005 (expiry), 006 (due dates), 020 (slipping steps) all defer their "tell someone" half to here |
-| **EPIC-015** | **Production readiness & security** — rate limiting (SEC-001), email delivery, token-table cleanup jobs | ⚪ Not Started | |
+| **EPIC-015** | **Production readiness & security** — rate limiting (SEC-001), email delivery, token-table cleanup jobs, **a CI job proving a clean clone builds** | ⚪ Not Started | The clean-clone check is carried debt from EPIC-006 S002: an unanchored `storage/` in `.gitignore` kept `IFileStorage.cs` and `LocalFileStorage.cs` out of the repository entirely. Local builds passed; a fresh clone did not build, and nothing said so. The rule is fixed — the **class** of defect is not. |
 
 ---
 
