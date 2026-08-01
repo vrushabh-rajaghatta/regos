@@ -32,6 +32,8 @@ using CorrespondenceTypeAggregate =
     RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType;
 using AuthorityDivisionAggregate =
     RegOS.ReferenceData.Domain.Regulatory.Authority.AuthorityDivision;
+using CommitmentAggregate =
+    RegOS.Interaction.Domain.Commitments.Commitment;
 using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
 using TenantAggregate =
@@ -154,6 +156,12 @@ public sealed class RegOSDbContext : DbContext
     /// </summary>
     public DbSet<AuthorityDivisionAggregate> AuthorityDivisions =>
         Set<AuthorityDivisionAggregate>();
+
+    /// <summary>
+    /// What we promised an authority. Tenant-owned and fail-closed.
+    /// </summary>
+    public DbSet<CommitmentAggregate> Commitments =>
+        Set<CommitmentAggregate>();
 
     public DbSet<RegistrationAggregate> Registrations =>
         Set<RegistrationAggregate>();
@@ -283,6 +291,9 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<HaCorrespondenceAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<CommitmentAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // Platform-seeded, tenant-augmentable: the second of ADR-038's three

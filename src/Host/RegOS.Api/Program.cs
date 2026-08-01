@@ -39,6 +39,7 @@ using RegOS.Interaction.Application;
 using RegOS.Interaction.Infrastructure;
 using RegOS.Registration.Application;
 using RegOS.Registration.Infrastructure;
+using RegOS.Api.Endpoints.Commitments;
 using RegOS.Api.Endpoints.Correspondence;
 using RegOS.Api.Endpoints.Registrations;
 
@@ -268,6 +269,13 @@ correspondence.MapRemoveCorrespondenceContent();
 correspondence.MapRaiseQuestion();
 correspondence.MapRespondToQuestion();
 correspondence.MapResolveQuestion();
+correspondence.MapAssignQuestion();
+
+var commitments = app.MapGroup("").WithTags("Commitments");
+commitments.MapGiveCommitment();
+commitments.MapListCommitments();
+commitments.MapChangeCommitmentStatus();
+commitments.MapListDueWork();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

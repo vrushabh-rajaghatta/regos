@@ -1,3 +1,4 @@
+using RegOS.Platform.Contracts;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.ReferenceData.Domain.Regulatory.Correspondence;
 using RegOS.Registration.Domain.Aggregates.Registration;
@@ -319,6 +320,9 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
         DateOnly occurredOn,
         string? note = null)
         => Question(questionId).Resolve(occurredOn, note);
+
+    public void AssignQuestion(HaQuestionId questionId, UserId? ownerUserId)
+        => Question(questionId).AssignTo(ownerUserId);
 
     public void AmendQuestion(
         HaQuestionId questionId,

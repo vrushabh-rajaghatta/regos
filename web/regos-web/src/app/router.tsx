@@ -32,6 +32,7 @@ import { OrganizationOverviewPage } from "@/features/regulatory/organizations/pa
 import { OrganizationDivisionsPage } from "@/features/regulatory/organizations/pages/OrganizationDivisionsPage";
 import { OrganizationSitesPage } from "@/features/regulatory/organizations/pages/OrganizationSitesPage";
 import { OrganizationContactsPage } from "@/features/regulatory/organizations/pages/OrganizationContactsPage";
+import { DueWorkPage } from "@/features/regulatory/dueWork/pages/DueWorkPage";
 import { CorrespondencePage } from "@/features/regulatory/correspondence/pages/CorrespondencePage";
 import { CorrespondenceDetailPage } from "@/features/regulatory/correspondence/pages/CorrespondenceDetailPage";
 import { OrganizationsPage } from "@/features/regulatory/organizations/pages/OrganizationsPage";
@@ -298,6 +299,13 @@ export const router = createBrowserRouter([
               // and Organizations rather than a child of an application: the
               // question "what came in this week?" precedes knowing which
               // application a letter was about.
+              // The epic's headline screen, and a sibling of everything else
+              // under /regulatory: "what do I work on today?" is not a question
+              // about one aggregate.
+              {
+                path: "due-work",
+                element: <DueWorkPage />,
+              },
               {
                 path: "correspondence",
                 children: [

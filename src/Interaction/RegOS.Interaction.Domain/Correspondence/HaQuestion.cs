@@ -1,3 +1,4 @@
+using RegOS.Platform.Contracts;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Interaction.Domain.Correspondence;
@@ -22,14 +23,12 @@ namespace RegOS.Interaction.Domain.Correspondence;
 /// never one word.
 /// </para>
 /// <para>
-/// <b>No owner yet, and its absence is a decision.</b> The owner of a question
-/// is one of <em>our</em> people — a <c>UserId</c>, never a <c>Contact</c>,
-/// which is a person at another company or at an authority. But no regulatory
-/// context references <c>Platform.Domain</c> today; eight have kept that
-/// boundary, and <c>Contact</c>'s own remarks warn against dragging Platform
-/// identity into the regulatory domain. Making that edge is an architectural
-/// decision, not a field, so it waits for S004 where <em>"who is answering
-/// this?"</em> is actually read.
+/// <b>The owner is one of <em>our</em> people</b> — a <c>UserId</c>, never a
+/// <c>Contact</c>, which is a person at another company or at an authority. It
+/// arrived in S004 through <c>Platform.Contracts</c> rather than a reference to
+/// <c>Platform.Domain</c> (ADR-041): the regulatory context holds the identity
+/// and can never navigate to a user. Nullable, because an unassigned question
+/// is the normal state of a letter that has just arrived.
 /// </para>
 /// </remarks>
 public sealed class HaQuestion
@@ -81,6 +80,9 @@ public sealed class HaQuestion
 
     /// <summary>Our internal target. Not the letter's regulatory deadline.</summary>
     public DateOnly? TargetResponseOn { get; private set; }
+
+    /// <summary>Who is answering it. One of ours (ADR-041), or nobody yet.</summary>
+    public UserId? OwnerUserId { get; private set; }
 
     public string? ResponseText { get; private set; }
 
@@ -134,6 +136,8 @@ public sealed class HaQuestion
 
         Append(HaQuestionStatus.Resolved, occurredOn, note);
     }
+
+    internal void AssignTo(UserId? ownerUserId) => OwnerUserId = ownerUserId;
 
     internal void Amend(string number, string text, DateOnly? targetResponseOn)
     {

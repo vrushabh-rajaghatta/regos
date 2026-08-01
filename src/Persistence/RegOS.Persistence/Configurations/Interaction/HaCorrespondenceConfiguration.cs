@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.Interaction.Domain.Correspondence;
+using RegOS.Platform.Contracts;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.ReferenceData.Domain.Regulatory.Correspondence;
 using RegOS.Registration.Domain.Aggregates.Registration;
@@ -171,6 +172,10 @@ public sealed class HaCorrespondenceConfiguration
 
             question.Property(x => x.TargetResponseOn);
 
+            // Held, never navigated to (ADR-041). No foreign key.
+            question.Property(x => x.OwnerUserId)
+                .HasConversion(id => id!.Value, value => UserId.From(value));
+
             question.Property(x => x.ResponseText)
                 .HasMaxLength(HaQuestion.ResponseMaxLength);
 
@@ -181,6 +186,7 @@ public sealed class HaCorrespondenceConfiguration
             question.Ignore(x => x.RespondedOn);
 
             question.HasIndex("HaCorrespondenceId");
+            question.HasIndex(x => new { x.CurrentStatus, x.TargetResponseOn });
 
             question.OwnsMany(x => x.History, entry =>
             {

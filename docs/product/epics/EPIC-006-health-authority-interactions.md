@@ -1,6 +1,6 @@
 # EPIC-006 — Health-authority interactions
 
-**Status:** 🟡 In Progress — S001, S001a, S002, S003 done; S004 next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress — S001…S004 done; S005 next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Everything that passes between the sponsor and the authority **after** a filing — letters, questions, meetings, commitments, inspections. In headcount terms this is what a regulatory affairs team actually does all day, and today it lives in inboxes and spreadsheets.
 
@@ -526,6 +526,21 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
    one kind is not five independent confirmations. *Do not promote this at the
    S007 retro unless at least one instance comes from somewhere else entirely.*
    The restraint applied to the other hypotheses applies to this one.
+
+   **S004 is that instance, and it arrived unprompted.** Designing an
+   operational dashboard rather than a history, the first instinct was to store
+   `Commitment.GivenOn` — it is a fact someone told us. It is also exactly
+   `history[0].OccurredOn`, so it was derived instead. **The first occurrence
+   outside dates, ownership and projections**, in operational planning, and
+   nobody had to point it out. Qualitatively different evidence — *still not
+   promoted*, because the epic is not finished and the S007 retro is where this
+   gets decided.
+
+   S004 added a second kind of instance too: **`overdue` is not a status.** A
+   commitment we did not do is `Open` and past its date. Whether that lateness
+   matters is the authority's judgement, recorded in a letter — *persist the
+   facts you own; derive the interpretations you can; do not persist someone
+   else's judgement.*
 3. ~~**ADR-038's division prediction.** `OrganizationDivisionId` gets its first
    holder in S001, or that root's justification never materialised.~~
    **RESOLVED 2026-08-01 — falsified, before S001 was written.**
@@ -696,7 +711,7 @@ The `S000` the sketch called for is gone — Phase 2 settled the vocabularies.
 | **S001a** | **Who at the authority** — `AuthorityDivision` under `Authority`; correspondence gains the division that actually sent it | full slice |
 | **S002** | ✅ **The letter's content** — attachments; `IFileStorage` moves to `src/Storage`; decision 0 built | full slice |
 | **S003** | ✅ **The questions inside it** — `HaQuestion` with owner, due date, response and the epic's first dated history, rendered on the correspondence page | full slice |
-| **S004** | **What we promised** — `Commitment` from a question or standalone, dated history, its own page, **and the "what's due" view** | full slice |
+| **S004** | ✅ **What we promised** — `Commitment` from a question or standalone, dated history, its own page, **and the "what's due" view** | full slice |
 | **S005** | **Meetings** — request → grant → hold → minutes and outcome; the one transition table | full slice |
 | **S006** | **Inspections** — anchored to an `OrganizationSite`, dated history | full slice |
 | **S007** | **Capstone** — the application activity timeline (the falsified supertype, as a read model), narrative browser proof, ADR-040, retro | UI → test → docs |

@@ -446,3 +446,122 @@ async function attachFile(
 
   return (await response.json()).id;
 }
+
+test.describe("What's due", () => {
+  test("a letter is work until its questions exist, then the questions are", async ({
+    page,
+  }) => {
+    const errors = collectErrors(page);
+    const unique = Date.now();
+    const subject = `Decomposition ${unique}`;
+
+    // The rule this story exists to express: correspondence remains actionable
+    // until its work has been decomposed. Nothing marks a letter as hidden —
+    // the read simply stops counting it as work.
+    const correspondenceId = await recordLetterDue(subject, "2026-04-30");
+
+    await page.goto("/regulatory/due-work");
+    await expect(page.getByRole("link", { name: subject })).toBeVisible();
+
+    // Decompose it.
+    const raised = await api(
+      `/api/correspondence/${correspondenceId}/questions`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          number: "1",
+          text: `Justify the assay ${unique}`,
+          targetResponseOn: "2026-04-15",
+        }),
+      }
+    );
+    expect(raised.status).toBe(201);
+
+    await page.reload();
+
+    // The letter is no longer work; its question is.
+    await expect(page.getByRole("link", { name: subject })).toHaveCount(0);
+    await expect(
+      page.getByText(`1. Justify the assay ${unique}`)
+    ).toBeVisible();
+
+    expect(errors()).toEqual([]);
+  });
+
+  test("a commitment is owed until fulfilled or waived, and never fails", async ({
+    page,
+  }) => {
+    const errors = collectErrors(page);
+    const unique = Date.now();
+    const title = `Five-year stability data ${unique}`;
+
+    const authorities = await (await api("/master-data/authorities")).json();
+
+    const given = await api("/api/commitments", {
+      method: "POST",
+      body: JSON.stringify({
+        authorityId: authorities[0].id,
+        title,
+        givenOn: "2024-06-01",
+        dueOn: "2020-01-01",
+      }),
+    });
+    expect(given.status).toBe(201);
+    const commitmentId = (await given.json()).id;
+
+    await page.goto("/regulatory/due-work");
+
+    // Overdue by years, and the word "overdue" appears nowhere in the domain —
+    // it is this page reading a date against today. Scoped to this
+    // commitment's own row: other specs leave overdue work on the same screen,
+    // which is itself a small proof that the view is tenant-wide.
+    const row = page.getByTestId("due-work-row").filter({ hasText: title });
+    await expect(row).toBeVisible();
+    await expect(row.getByText(/overdue by/)).toBeVisible();
+
+    // There is no way to mark it failed. Only we can fulfil it, only they can
+    // waive it.
+    const failed = await api(`/api/commitments/${commitmentId}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status: "Failed", occurredOn: "2026-01-01" }),
+    });
+    expect(failed.status).toBe(400);
+
+    const waived = await api(`/api/commitments/${commitmentId}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status: "Waived", occurredOn: "2026-01-01" }),
+    });
+    expect(waived.status).toBe(204);
+
+    await page.reload();
+    await expect(page.getByText(title)).toHaveCount(0);
+
+    expect(errors()).toEqual([]);
+  });
+});
+
+async function recordLetterDue(
+  subject: string,
+  responseDueOn: string
+): Promise<string> {
+  const authorities = await (await api("/master-data/authorities")).json();
+  const types = await (
+    await api("/api/master-data/correspondence-types")
+  ).json();
+
+  const response = await api("/api/correspondence", {
+    method: "POST",
+    body: JSON.stringify({
+      authorityId: authorities[0].id,
+      correspondenceTypeId: types[0].id,
+      direction: "Inbound",
+      subject,
+      occurredOn: "2026-03-01",
+      responseDueOn,
+    }),
+  });
+
+  expect(response.status).toBe(201);
+
+  return (await response.json()).id;
+}
