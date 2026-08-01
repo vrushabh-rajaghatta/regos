@@ -262,6 +262,9 @@ var correspondence = app.MapGroup("").WithTags("Correspondence");
 correspondence.MapRecordCorrespondence();
 correspondence.MapListCorrespondence();
 correspondence.MapGetCorrespondence();
+correspondence.MapAttachCorrespondenceContent();
+correspondence.MapDownloadCorrespondenceContent();
+correspondence.MapRemoveCorrespondenceContent();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

@@ -50,6 +50,9 @@
     <Project Path="src/Interaction/RegOS.Interaction.Domain/RegOS.Interaction.Domain.csproj" />
     <Project Path="src/Interaction/RegOS.Interaction.Infrastructure/RegOS.Interaction.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Storage/">
+    <Project Path="src/Storage/RegOS.Storage/RegOS.Storage.csproj" />
+  </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/RegOS.SharedKernel/RegOS.SharedKernel.csproj" />
   </Folder>

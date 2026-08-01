@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Storage\RegOS.Storage\RegOS.Storage.csproj" />
     <ProjectReference Include="..\RegOS.ProductDocument.Domain\RegOS.ProductDocument.Domain.csproj" />
     <ProjectReference Include="..\..\Persistence\RegOS.Persistence\RegOS.Persistence.csproj" />
   </ItemGroup>

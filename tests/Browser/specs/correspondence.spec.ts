@@ -1,6 +1,13 @@
 import { expect } from "@playwright/test";
 
-import { test, api, collectErrors, EXPECTED_400 } from "./support";
+import {
+  test,
+  api,
+  collectErrors,
+  sessionCookies,
+  API_URL,
+  EXPECTED_400,
+} from "./support";
 
 /**
  * **EPIC-006 S001 — a letter, filed where it belongs.**
@@ -232,3 +239,122 @@ test.describe("Authority divisions", () => {
     ).toBe(true);
   });
 });
+
+test.describe("Correspondence content", () => {
+  test("content is attached, downloaded under its own name, removed — and the letter survives", async ({
+    page,
+  }) => {
+    const errors = collectErrors(page);
+    const unique = Date.now();
+    const subject = `Deficiency letter ${unique}`;
+    const fileName = `FDA-DL-${unique}.txt`;
+
+    // Deliberately asymmetric, and the point is the second half. Attaching and
+    // downloading is CRUD; what matters is that REMOVING the content leaves the
+    // correspondence intact — the record is the letter, the file is its content.
+    const correspondenceId = await recordLetter(subject);
+    await page.goto(`/regulatory/correspondence/${correspondenceId}`);
+
+    await expect(page.getByTestId("correspondence-content-empty")).toBeVisible();
+
+    // --- attach ----------------------------------------------------------
+    await page
+      .getByLabel("Choose a file to attach")
+      .setInputFiles({
+        name: fileName,
+        mimeType: "text/plain",
+        buffer: Buffer.from("The agency requires further information."),
+      });
+
+    await expect(page.getByRole("link", { name: fileName })).toBeVisible();
+
+    // --- download, under the name it arrived with -------------------------
+    const download = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("link", { name: fileName }).click(),
+    ]).then(([d]) => d);
+
+    expect(download.suggestedFilename()).toBe(fileName);
+
+    // --- remove, and the letter is untouched -----------------------------
+    await page.getByRole("button", { name: "Remove" }).click();
+
+    await expect(page.getByTestId("correspondence-content-empty")).toBeVisible();
+
+    // The business record survives its content being wrong and corrected.
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
+    await expect(page.getByText("Not stated")).toBeVisible();
+
+    // --- and content can be attached again -------------------------------
+    await page
+      .getByLabel("Choose a file to attach")
+      .setInputFiles({
+        name: `replacement-${unique}.txt`,
+        mimeType: "text/plain",
+        buffer: Buffer.from("The corrected letter."),
+      });
+
+    await expect(
+      page.getByRole("link", { name: `replacement-${unique}.txt` })
+    ).toBeVisible();
+
+    expect(errors()).toEqual([]);
+  });
+
+  test("an attachment id from another letter cannot delete this one's file", async () => {
+    // The aggregate owns the check, so an id that exists but belongs elsewhere
+    // is a 404 rather than a deletion.
+    const first = await recordLetter(`First ${Date.now()}`);
+    const second = await recordLetter(`Second ${Date.now()}`);
+
+    const attachmentId = await attachFile(first, "first.txt");
+
+    const response = await api(
+      `/api/correspondence/${second}/content/${attachmentId}`,
+      { method: "DELETE" }
+    );
+
+    expect(response.status).toBe(404);
+  });
+});
+
+async function recordLetter(subject: string): Promise<string> {
+  const authorities = await (await api("/master-data/authorities")).json();
+  const types = await (
+    await api("/api/master-data/correspondence-types")
+  ).json();
+
+  const response = await api("/api/correspondence", {
+    method: "POST",
+    body: JSON.stringify({
+      authorityId: authorities[0].id,
+      correspondenceTypeId: types[0].id,
+      direction: "Inbound",
+      subject,
+      occurredOn: "2026-03-01",
+    }),
+  });
+
+  expect(response.status).toBe(201);
+
+  return (await response.json()).id;
+}
+
+async function attachFile(
+  correspondenceId: string,
+  fileName: string
+): Promise<string> {
+  const form = new FormData();
+  form.append("file", new Blob(["content"], { type: "text/plain" }), fileName);
+
+  // Not the shared `api()` helper: it forces Content-Type: application/json,
+  // and multipart needs fetch to set its own boundary.
+  const response = await fetch(
+    `${API_URL}/api/correspondence/${correspondenceId}/content`,
+    { method: "POST", body: form, headers: { Cookie: await sessionCookies() } }
+  );
+
+  expect(response.status).toBe(201);
+
+  return (await response.json()).id;
+}

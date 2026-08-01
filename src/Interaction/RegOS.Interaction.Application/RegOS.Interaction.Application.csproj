@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\RegOS.Interaction.Domain\RegOS.Interaction.Domain.csproj" />
     <ProjectReference Include="..\..\Persistence\RegOS.Persistence\RegOS.Persistence.csproj" />
+    <ProjectReference Include="..\..\Storage\RegOS.Storage\RegOS.Storage.csproj" />
   </ItemGroup>
 
   <ItemGroup>

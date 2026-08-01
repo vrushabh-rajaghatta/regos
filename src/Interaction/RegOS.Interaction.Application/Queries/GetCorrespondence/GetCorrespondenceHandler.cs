@@ -68,7 +68,16 @@ public sealed class GetCorrespondenceHandler
                         : null,
                     x.Correspondence.RegistrationId != null
                         ? x.Correspondence.RegistrationId!.Value.Value
-                        : null))
+                        : null,
+                    x.Correspondence.Attachments
+                        .OrderBy(a => a.UploadedOnUtc)
+                        .Select(a => new CorrespondenceAttachmentSummary(
+                            a.Id.Value,
+                            a.OriginalFileName,
+                            a.ContentType,
+                            a.FileSizeBytes,
+                            a.UploadedOnUtc))
+                        .ToList()))
             .SingleOrDefaultAsync(cancellationToken);
 
         // Absent, or invisible to this caller — the tenant filter makes those

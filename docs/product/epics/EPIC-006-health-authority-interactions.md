@@ -1,6 +1,6 @@
 # EPIC-006 — Health-authority interactions
 
-**Status:** 🟡 In Progress — S001 done, S001a next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress — S001, S001a, S002 done; S003 next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Everything that passes between the sponsor and the authority **after** a filing — letters, questions, meetings, commitments, inspections. In headcount terms this is what a regulatory affairs team actually does all day, and today it lives in inboxes and spreadsheets.
 
@@ -556,10 +556,45 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
    The question *"what does a user need to file, find and understand a letter?"*
    never produced it. **The process caught it, not the designer** — which is a
    stronger claim than noticing the misfit, because it is repeatable.
-   *One story is not a verdict; EPIC-006 keeps exercising it. But it has crossed
-   from untested proposal to demonstrated value.*
+   **Second evidence, S001a: it removed the temptation to widen `Organization`.**
+   Stated precisely, and more falsifiable than *"produced better design"*:
+   **the revised Phase 2 has now removed architecture twice.** Once a field
+   (`OrganizationDivisionId`), once an enum member (`OrganizationType.Authority`)
+   — both of which an entity-first phase would have reached for, because the
+   entities already existed.
+   *Two stories are not a verdict; EPIC-006 keeps exercising it. But it has
+   crossed from untested proposal to demonstrated value.*
 
-5. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
+5. **Resolve identity before governance** — *once the identity of a concept is
+   clear, its governance model often follows from it rather than being an
+   independent decision.* **Deliberately not promoted**, and recorded here only
+   as accumulating evidence.
+
+   | Story | The question | What identity settled |
+   |---|---|---|
+   | EPIC-017 S002 | *what is a trade name?* | no `Language` aggregate — a **value object** sufficed |
+   | EPIC-006 S001 | *what is correspondence?* | don't widen `ProductDocument` — an **aggregate** boundary |
+   | EPIC-006 S001a | *what is an authority division?* | platform-seeded, tenant-augmentable — **reference data** |
+
+   **Three occurrences, across three different concept categories**, which is
+   the independence the other hypotheses were held to. It is *not* promoted
+   because the process itself is under test (hypothesis 4) and changing the
+   flow again before the retro would be exactly the self-refinement that
+   document warns against. **What would promote it:** a fourth occurrence in
+   S002 or later, in this epic's retro rather than mid-flight. **What would
+   falsify it:** a story where governance has to be settled first and identity
+   genuinely cannot be resolved without it.
+
+6. **Threading is a relationship between correspondence records, not between
+   correspondence and attachments** *(new, S002)*. Our reply to an information
+   request is itself correspondence, `Direction = Outbound`, with its own
+   content — so the model already expresses it and what is missing is only the
+   *link* (`InReplyToId`). **Deliberately not built:** it is a threading
+   question, not a content one. Recorded in this shape so nobody later
+   "solves" it by adding response documents to the request. *Settle it in S003
+   if answering a question turns out to need it, or leave it unbuilt.*
+
+7. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
    "status" of an object is really derived from related objects or dates, the
    object may be an event rather than a lifecycle.* `HaCorrespondence` is the
    first instance. **One example is not enough to promote it**; watch for a
@@ -580,7 +615,7 @@ The `S000` the sketch called for is gone — Phase 2 settled the vocabularies.
 |---|---|---|
 | **S001** | ✅ **A letter, filed where it belongs** — the `Interaction` context, `HaCorrespondence` with direction, type, authority and nullable anchors; a list and its own page. **ADR-040.** | full slice |
 | **S001a** | **Who at the authority** — `AuthorityDivision` under `Authority`; correspondence gains the division that actually sent it | full slice |
-| **S002** | **The letter's content** — attachments; `IFileStorage` moves to `src/Storage`; decision 0 built | full slice |
+| **S002** | ✅ **The letter's content** — attachments; `IFileStorage` moves to `src/Storage`; decision 0 built | full slice |
 | **S003** | **The questions inside it** — `HaQuestion` with owner, due date, response and the epic's first dated history, rendered on the correspondence page | full slice |
 | **S004** | **What we promised** — `Commitment` from a question or standalone, dated history, its own page, **and the "what's due" view** | full slice |
 | **S005** | **Meetings** — request → grant → hold → minutes and outcome; the one transition table | full slice |

@@ -1,3 +1,11 @@
+export interface CorrespondenceAttachmentSummary {
+  attachmentId: string;
+  originalFileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  uploadedOnUtc: string;
+}
+
 export interface CorrespondenceDetail {
   correspondenceId: string;
   direction: string;
@@ -17,4 +25,5 @@ export interface CorrespondenceDetail {
   regulatoryApplicationNumber: string | null;
   submissionId: string | null;
   registrationId: string | null;
+  attachments: CorrespondenceAttachmentSummary[];
 }

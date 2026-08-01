@@ -27,4 +27,13 @@ public sealed record CorrespondenceDetail(
     string? RegulatoryApplicationName,
     string? RegulatoryApplicationNumber,
     Guid? SubmissionId,
-    Guid? RegistrationId);
+    Guid? RegistrationId,
+    IReadOnlyList<CorrespondenceAttachmentSummary> Attachments);
+
+/// <summary>One attached file, as the page lists it.</summary>
+public sealed record CorrespondenceAttachmentSummary(
+    Guid AttachmentId,
+    string OriginalFileName,
+    string ContentType,
+    long FileSizeBytes,
+    DateTime UploadedOnUtc);

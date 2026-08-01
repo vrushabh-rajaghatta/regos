@@ -45,6 +45,8 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
     public const int SubjectMaxLength = 300;
     public const int ReferenceMaxLength = 100;
 
+    private readonly List<CorrespondenceAttachment> _attachments = [];
+
     // Parameterized private constructor and no parameterless one — EF binds by
     // parameter name, which keeps every non-optional field non-nullable.
     private HaCorrespondence(
@@ -123,6 +125,13 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
 
     /// <summary>When RegOS learned of it.</summary>
     public DateTime RecordedOnUtc { get; }
+
+    /// <summary>
+    /// The letter's own content. Never exposed mutably — attaching and
+    /// removing stay inside the aggregate.
+    /// </summary>
+    public IReadOnlyCollection<CorrespondenceAttachment> Attachments
+        => _attachments.AsReadOnly();
 
     public static HaCorrespondence Record(
         TenantId tenantId,
@@ -215,6 +224,44 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
         RegulatoryApplicationId = regulatoryApplicationId;
         SubmissionId = submissionId;
         RegistrationId = registrationId;
+    }
+
+    /// <summary>
+    /// Records content that has already been written to storage. The bytes are
+    /// the application layer's problem; what the aggregate owns is that a file
+    /// belongs to this letter and to no other.
+    /// </summary>
+    public CorrespondenceAttachment AttachContent(
+        string originalFileName,
+        string contentType,
+        long fileSizeBytes,
+        string storagePath)
+    {
+        var attachment = new CorrespondenceAttachment(
+            CorrespondenceAttachmentId.New(),
+            originalFileName,
+            contentType,
+            fileSizeBytes,
+            storagePath,
+            DateTime.UtcNow);
+
+        _attachments.Add(attachment);
+
+        return attachment;
+    }
+
+    /// <summary>
+    /// Detaches content. The correspondence itself is untouched — removing the
+    /// wrong PDF is a correction to the record's content, not to the record.
+    /// </summary>
+    public CorrespondenceAttachment RemoveContent(CorrespondenceAttachmentId attachmentId)
+    {
+        var attachment = _attachments.SingleOrDefault(x => x.Id == attachmentId)
+            ?? throw new NotFoundException(HaCorrespondenceErrors.AttachmentNotFound);
+
+        _attachments.Remove(attachment);
+
+        return attachment;
     }
 
     private static string Validated(string subject)

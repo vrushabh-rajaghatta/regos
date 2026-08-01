@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
+import { CorrespondenceContent } from "../components/CorrespondenceContent";
 import { ResponseDue } from "../components/ResponseDue";
 import { directionLabel } from "../constants/correspondenceDirections";
 import { useCorrespondence } from "../hooks/useCorrespondence";
@@ -11,8 +12,8 @@ import { useCorrespondence } from "../hooks/useCorrespondence";
  * One letter, and everything currently known about it.
  *
  * There is no status here, and there is not meant to be: a letter that has been
- * received does not change (ADR-040 decision 4). Questions (S003) and
- * attachments (S002) attach to this page as they arrive.
+ * received does not change (ADR-040 decision 4). Its content arrived in S002;
+ * questions attach in S003.
  */
 export function CorrespondenceDetailPage() {
   const { correspondenceId } = useParams();
@@ -138,6 +139,11 @@ export function CorrespondenceDetailPage() {
           </div>
         </dl>
       </div>
+
+      <CorrespondenceContent
+        correspondenceId={letter.correspondenceId}
+        attachments={letter.attachments}
+      />
     </Page>
   );
 }

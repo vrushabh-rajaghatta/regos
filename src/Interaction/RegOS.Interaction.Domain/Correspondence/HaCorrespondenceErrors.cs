@@ -20,6 +20,24 @@ public static class HaCorrespondenceErrors
     public static readonly string ReferenceTooLong =
         $"An authority reference cannot exceed {HaCorrespondence.ReferenceMaxLength} characters.";
 
+    public const string FileNameRequired =
+        "A file name is required.";
+
+    public static readonly string FileNameTooLong =
+        $"A file name cannot exceed {CorrespondenceAttachment.FileNameMaxLength} characters.";
+
+    public const string ContentTypeRequired =
+        "A content type is required.";
+
+    public const string StoragePathRequired =
+        "A storage path is required.";
+
+    public const string FileEmpty =
+        "An empty file cannot be attached.";
+
+    public const string AttachmentNotFound =
+        "That attachment is not on this correspondence.";
+
     // The one chronology rule. Who owes the response is derived from the
     // direction, not enforced here: an inbound letter is one we must answer,
     // and an outbound one may still carry a date the authority has committed to

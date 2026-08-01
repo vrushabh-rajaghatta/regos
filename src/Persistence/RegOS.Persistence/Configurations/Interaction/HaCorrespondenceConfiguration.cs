@@ -105,6 +105,44 @@ public sealed class HaCorrespondenceConfiguration
             .HasForeignKey(x => x.CorrespondenceTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Owned by the letter: loaded with it, saved with it, deleted with it.
+        builder.OwnsMany(x => x.Attachments, attachment =>
+        {
+            attachment.ToTable("CorrespondenceAttachments");
+
+            attachment.WithOwner().HasForeignKey("HaCorrespondenceId");
+
+            attachment.HasKey(x => x.Id);
+
+            attachment.Property(x => x.Id)
+                .HasColumnName("Id")
+                .HasConversion(
+                    id => id.Value,
+                    value => CorrespondenceAttachmentId.From(value));
+
+            attachment.Property(x => x.OriginalFileName)
+                .HasMaxLength(CorrespondenceAttachment.FileNameMaxLength)
+                .IsRequired();
+
+            attachment.Property(x => x.ContentType)
+                .HasMaxLength(255)
+                .IsRequired();
+
+            attachment.Property(x => x.FileSizeBytes)
+                .IsRequired();
+
+            attachment.Property(x => x.StoragePath)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            attachment.Property(x => x.UploadedOnUtc)
+                .IsRequired();
+
+            attachment.HasIndex("HaCorrespondenceId");
+        });
+
+        builder.Navigation(x => x.Attachments).AutoInclude();
+
         builder.HasOne<AuthorityDivision>()
             .WithMany()
             .HasForeignKey(x => x.AuthorityDivisionId)

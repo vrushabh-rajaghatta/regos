@@ -168,6 +168,77 @@ public sealed class HaCorrespondenceTests
     }
 
     [Fact]
+    public void ContentIsAttachedToTheLetterAndBelongsToNoOtherOne()
+    {
+        var letter = Record();
+
+        var attachment = letter.AttachContent(
+            "FDA-IR-2019-06-14.pdf",
+            "application/pdf",
+            2048,
+            "correspondence/x/y");
+
+        letter.Attachments.Should().ContainSingle();
+        attachment.OriginalFileName.Should().Be("FDA-IR-2019-06-14.pdf");
+
+        // No version number and no status: an inbound letter arrives once, and
+        // nobody drafts, activates and archives a letter the FDA sent them.
+        attachment.GetType()
+            .GetProperties()
+            .Select(x => x.Name)
+            .Should()
+            .NotContain(name =>
+                name.Contains("Version", StringComparison.Ordinal)
+                || name.Contains("Status", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void RemovingContentLeavesTheCorrespondenceItself()
+    {
+        var letter = Record();
+        var attachment = letter.AttachContent("a.pdf", "application/pdf", 10, "p");
+
+        var subjectBefore = letter.Subject;
+        var occurredBefore = letter.OccurredOn;
+
+        var removed = letter.RemoveContent(attachment.Id);
+
+        removed.StoragePath.Should().Be("p");
+        letter.Attachments.Should().BeEmpty();
+
+        // The record is the letter; the file is its content. Detaching the
+        // wrong PDF corrects the content, never the record.
+        letter.Subject.Should().Be(subjectBefore);
+        letter.OccurredOn.Should().Be(occurredBefore);
+    }
+
+    [Fact]
+    public void AnAttachmentFromAnotherLetterCannotBeRemovedFromThisOne()
+    {
+        var ours = Record();
+        var theirs = Record();
+        var theirAttachment = theirs.AttachContent("a.pdf", "application/pdf", 10, "p");
+
+        var act = () => ours.RemoveContent(theirAttachment.Id);
+
+        // Otherwise an id from another letter would delete a file that is not
+        // ours to delete.
+        act.Should().Throw<NotFoundException>()
+            .WithMessage(HaCorrespondenceErrors.AttachmentNotFound);
+    }
+
+    [Fact]
+    public void AnEmptyFileIsRefused()
+    {
+        var letter = Record();
+
+        var act = () => letter.AttachContent("a.pdf", "application/pdf", 0, "p");
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(HaCorrespondenceErrors.FileEmpty);
+    }
+
+    [Fact]
     public void ALetterCanBeFiledAgainstNothing()
     {
         var letter = Record();

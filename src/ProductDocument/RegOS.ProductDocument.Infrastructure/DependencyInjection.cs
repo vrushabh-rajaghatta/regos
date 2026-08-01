@@ -1,10 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-using RegOS.ProductDocument.Application.Storage;
+using RegOS.Storage;
 using RegOS.ProductDocument.Domain.Repositories;
 using RegOS.ProductDocument.Infrastructure.Repositories;
-using RegOS.ProductDocument.Infrastructure.Storage;
 
 namespace RegOS.ProductDocument.Infrastructure;
 

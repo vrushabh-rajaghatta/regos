@@ -85,8 +85,14 @@ build/
 *.tmp
 *.temp
 
-# Local document storage (uploaded files — kept out of version control)
-storage/
+# Local document storage (uploaded files — kept out of version control).
+# ANCHORED DELIBERATELY. The unanchored form `storage/` matched every source
+# folder named Storage — on a case-insensitive filesystem too — and silently
+# kept IFileStorage.cs and LocalFileStorage.cs out of the repository entirely
+# from EPIC-?? until EPIC-006 S002. A fresh clone did not build. Keep the
+# leading slash; the upload root is configured as Storage:RootPath = "storage",
+# relative to the API's content root.
+/src/Host/RegOS.Api/storage/
 # Browser verification (tests/Browser)
 tests/Browser/node_modules/
 tests/Browser/test-results/

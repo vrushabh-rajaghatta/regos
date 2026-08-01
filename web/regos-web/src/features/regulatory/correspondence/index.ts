@@ -2,6 +2,7 @@ export { CorrespondencePage } from "./pages/CorrespondencePage";
 export { CorrespondenceDetailPage } from "./pages/CorrespondenceDetailPage";
 export { RecordCorrespondenceDialog } from "./components/RecordCorrespondenceDialog";
 export { ResponseDue } from "./components/ResponseDue";
+export { CorrespondenceContent } from "./components/CorrespondenceContent";
 export { useCorrespondenceList } from "./hooks/useCorrespondenceList";
 export { useCorrespondence } from "./hooks/useCorrespondence";
 export type { Correspondence } from "./types/Correspondence";
