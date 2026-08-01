@@ -146,7 +146,7 @@ public class SubmissionPlacementTests
         var submission = NewDraft();
         var (doc, version) = NewRef();
         var attachment = submission.AttachDocument(doc, version);
-        submission.Publish(DateTimeOffset.UtcNow);
+        submission.Publish(0, null, DateTimeOffset.UtcNow);
 
         var place = () => submission.PlaceDocument(
             attachment.Id, TemplateSectionId.New());
@@ -190,7 +190,7 @@ public class SubmissionPlacementTests
         var (doc, version) = NewRef();
         var attachment = submission.AttachDocument(
             doc, version, TemplateSectionId.New());
-        submission.Publish(DateTimeOffset.UtcNow);
+        submission.Publish(0, null, DateTimeOffset.UtcNow);
 
         var clear = () => submission.ClearPlacement(attachment.Id);
 

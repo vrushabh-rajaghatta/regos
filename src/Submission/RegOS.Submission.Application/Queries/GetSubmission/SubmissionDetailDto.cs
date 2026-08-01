@@ -11,7 +11,14 @@ public sealed record SubmissionDetailDto(
     DateTime CreatedOn,
     // The blueprint this submission is judged against, pinned at creation.
     // Null when no published template governs its submission type.
-    BoundTemplateDto? BoundTemplate);
+    BoundTemplateDto? BoundTemplate,
+    // What this was filed as. Null while a draft (ADR-044 decision 4).
+    int? SequenceNumber,
+    // What it *would* be filed as if published now — MAX(published) + 1 in this
+    // application. A projection, stored nowhere, and deliberately distinct from
+    // SequenceNumber: one is a fact, the other an expectation. Sent for
+    // published submissions too, and simply not shown.
+    int NextSequenceNumber);
 
 /// <summary>
 /// The published template version a submission is bound to, carrying the names

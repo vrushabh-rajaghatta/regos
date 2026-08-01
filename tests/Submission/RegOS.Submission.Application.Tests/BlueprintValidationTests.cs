@@ -15,6 +15,7 @@ using RegOS.Submission.Application.Validation;
 using RegOS.Submission.Application.Validation.Models;
 using RegOS.Submission.Domain.Submission;
 using RegOS.Submission.Infrastructure.Repositories;
+using RegOS.Submission.Infrastructure.Services;
 
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
@@ -253,6 +254,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
 
         var handler = new PublishSubmissionHandler(
             ValidatorFor(ctx),
+            new SubmissionNumberingPolicy(ctx),
             new SubmissionRepository(ctx),
             new SubmissionSnapshotRepository(ctx));
 

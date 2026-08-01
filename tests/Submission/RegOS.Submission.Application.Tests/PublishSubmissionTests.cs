@@ -13,6 +13,7 @@ using RegOS.Submission.Application.Commands.PublishSubmission;
 using RegOS.Submission.Application.Validation;
 using RegOS.Submission.Domain.Submission;
 using RegOS.Submission.Infrastructure.Repositories;
+using RegOS.Submission.Infrastructure.Services;
 
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
@@ -92,7 +93,7 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
     private static async Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
         FirstApplicationAsync(RegOSDbContext ctx)
     {
-        return await TestApplications.EnsureAsync(ctx);
+        return await TestApplications.EnsureAsync(ctx, "TEST-PUBLISHSUBMISSION");
     }
 
     private async Task<ProductDocumentAggregate> SeedActiveDocumentAsync(
@@ -135,6 +136,7 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
     private static PublishSubmissionHandler PublishHandlerFor(RegOSDbContext ctx) =>
         new(
             new SubmissionValidator(new SubmissionRepository(ctx), ctx),
+            new SubmissionNumberingPolicy(ctx),
             new SubmissionRepository(ctx),
             new SubmissionSnapshotRepository(ctx));
 

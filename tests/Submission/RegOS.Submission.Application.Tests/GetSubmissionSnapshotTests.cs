@@ -11,6 +11,7 @@ using RegOS.Submission.Application.Queries.GetSubmissionSnapshot;
 using RegOS.Submission.Application.Validation;
 using RegOS.Submission.Domain.Submission;
 using RegOS.Submission.Infrastructure.Repositories;
+using RegOS.Submission.Infrastructure.Services;
 
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
@@ -86,7 +87,7 @@ public sealed class GetSubmissionSnapshotTests : IAsyncLifetime
     private async Task<(SubmissionId Id, List<Guid> Versions)> SeedDraftAsync(int count)
     {
         await using var ctx = New();
-        var (applicationId, globalProductId) = await TestApplications.EnsureAsync(ctx);
+        var (applicationId, globalProductId) = await TestApplications.EnsureAsync(ctx, "TEST-GETSUBMISSIONSNAPSHOT");
 
         var submission = SubmissionAggregate.Create(TestTenant.Id, 
             applicationId, SeededSubmissionType, "Snapshot Query Sub " + Guid.NewGuid());
@@ -123,6 +124,7 @@ public sealed class GetSubmissionSnapshotTests : IAsyncLifetime
         await using var ctx = New();
         var handler = new PublishSubmissionHandler(
             new SubmissionValidator(new SubmissionRepository(ctx), ctx),
+            new SubmissionNumberingPolicy(ctx),
             new SubmissionRepository(ctx),
             new SubmissionSnapshotRepository(ctx));
         await handler.HandleAsync(new PublishSubmissionCommand(submissionId), default);
@@ -156,6 +158,7 @@ public sealed class GetSubmissionSnapshotTests : IAsyncLifetime
         {
             await new PublishSubmissionHandler(
                 new SubmissionValidator(new SubmissionRepository(ctx), ctx),
+                new SubmissionNumberingPolicy(ctx),
                 new SubmissionRepository(ctx),
                 new SubmissionSnapshotRepository(ctx))
                 .HandleAsync(new PublishSubmissionCommand(submissionId), default);

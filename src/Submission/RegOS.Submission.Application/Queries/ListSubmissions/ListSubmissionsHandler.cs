@@ -34,6 +34,7 @@ public sealed class ListSubmissionsHandler
                 submission.Status,
                 SubmissionTypeName = submissionType.Name,
                 submission.CreatedOn,
+                submission.SequenceNumber,
             }).ToListAsync(cancellationToken);
 
         return rows
@@ -42,7 +43,8 @@ public sealed class ListSubmissionsHandler
                 row.Title,
                 row.Status.ToString(),
                 row.SubmissionTypeName,
-                row.CreatedOn))
+                row.CreatedOn,
+                row.SequenceNumber))
             .ToList();
     }
 }

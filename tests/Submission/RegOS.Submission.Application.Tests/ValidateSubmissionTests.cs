@@ -80,7 +80,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
     private static async Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
         FirstApplicationAsync(RegOSDbContext ctx)
     {
-        return await TestApplications.EnsureAsync(ctx);
+        return await TestApplications.EnsureAsync(ctx, "TEST-VALIDATESUBMISSION");
     }
 
     private async Task<ProductDocumentAggregate> SeedActiveDocumentAsync(
@@ -116,7 +116,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
             sub.AttachDocument(document.Id, document.CurrentVersionId!.Value);
 
         if (publish)
-            sub.Publish(DateTimeOffset.UtcNow);
+            sub.Publish(0, null, DateTimeOffset.UtcNow);
 
         ctx.Submissions.Add(sub);
         await ctx.SaveChangesAsync();

@@ -253,6 +253,7 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
 | **5** | Regulatory evidence | **`Append` is unexercised** in FDA practice — enum value, no derivation. | a seeded blueprint or real sequence that uses it | EPIC-007 |
 | **6** | Regulatory evidence | **`modified-file` is publication metadata** — frozen, not recoverable later. | it proves derivable post hoc from data we already keep | EPIC-007 |
 | **7** | Regulatory evidence | **Lifecycle belongs to the placement**, not the document. | a real sequence where one document carries one operation across two sections | EPIC-007 |
+| **8** | Architecture | ~~**The filtered unique index plus bounded retry is sufficient** for concurrent publishes.~~ | the concurrent-publish test failing within a bounded retry count | ~~S001~~ **RESOLVED — falsified**, see the S001 note below |
 
 **Why 4–7 are carried rather than settled now:**
 
@@ -315,7 +316,7 @@ early; ship the inert data late.**
 
 | # | Story | Slice |
 |---|---|---|
-| **S001** | **A submission is a sequence** — `SequenceNumber`, domain-assigned, application-scoped, concurrency-proven, with the publish-order invariant; *"Sequence 0003"* on screen and the vocabulary pair in `docs/domain-model/`. **ADR-044.** Folds in the four ADR-043 id conversions. | domain → persistence → API → UI → test |
+| **S001** | ✅ **A submission is a sequence** — `SequenceNumber`, assigned at publish, application-scoped, contiguity enforced in the aggregate; *"Sequence 0003"* on screen and the vocabulary pair in [docs/domain-model/submission.md](../../domain-model/submission.md). **ADR-044.** Folds in the four ADR-043 id conversions. | domain → persistence → API → UI → test |
 | **S002** | **What changed since last time** — the placement diff, operation computed at publish and frozen, the replace pointer; first sequence is all-`New`, asserted. **Resolves hypothesis 2 — the snapshot grows or goes. ADR-045.** | full slice |
 | **S003** | **The lifecycle we own** — the states beyond `Draft`/`Published`, dated history per the cross-cutting status rule, permitted transitions. **Resolves hypothesis 3** by trying to express the authority's side as correspondence. | full slice |
 | **S004** | **Submission identity** — format, DTD versions (ICH/Regional/STF), gateway format, sub-type, submission countries | full slice |
@@ -351,3 +352,73 @@ touches one of those forms, in which case fix it there and say so.
 **Sequencing note (historical, from the sketch):** this epic and EPIC-017 were
 genuinely independent, and EPIC-017 ran first. S005's EPIC-016 dependency is
 satisfied.
+
+---
+
+## S001 — what it settled, and the hypothesis it falsified *(2026-08-02)*
+
+### Assignment at publish, not at creation — and why the precedent was a mirage
+
+The sketch justified domain-assigned numbering by citing `ProductDocument` and
+`RegulatoryTemplate`. Both do `_versions.Max(...) + 1` **inside the aggregate,
+over an owned collection**, which is safe because the collection loads with the
+root and optimistic concurrency protects it. `Submission` is a root; its siblings
+are not in its aggregate. **The precedent is superficially true and structurally
+false**, so neither option inherited it and the question was genuinely open.
+
+Publish-time assignment won on four counts, of which the first is the one that
+mattered: it makes *number order is transmission order* a **tautology instead of
+a rule**. Also no gaps from abandoned drafts, a draft that asserts only what is
+true, and a diff base for S002 that is simply `SequenceNumber - 1`.
+
+### Hypothesis 8 — *the unique index plus bounded retry is sufficient*. **Falsified, twice over.**
+
+**First, at implementation.** A retry needs to unwind an aggregate mutation that
+EF is already holding: by the time the index rejects the write, `Publish` has run
+and `Status` is no longer `Draft`, so the operation cannot simply be repeated.
+Every way to fix that from the application layer costs either a domain method for
+a state with no business meaning, or a unit-of-work reset this codebase does not
+have — **an ADR-016 change to serve a retry**. So S001 shipped without one: a
+collision is a third 409, `SequenceNumberTakenException`, saying *try again*.
+
+**Then, on the numbers.** The 100-way test was widened to a `[Theory]` across
+contention levels, because the interesting question was never the stress case
+but *where between two and a hundred the design stops being adequate*:
+
+| Simultaneous publishes, one application | Got through |
+|---|---|
+| 2 | **50 %** |
+| 5 | 20 % |
+| 20 | 5–10 % |
+| 100 | 16–18 % *(measured, not committed — see below)* |
+
+**The invariant held perfectly at every level** — distinct numbers, an unbroken
+run from 0000, no duplicates. The index does exactly its job. But *two at once
+loses one of them*, and that is the realistic case, not the stress case. The
+index alone is a correctness mechanism, not a concurrency answer.
+
+> **The named fallback is now owed evidence-backed consideration:**
+> `pg_advisory_xact_lock(applicationId)` serialises rather than collides. It
+> costs explicit transaction control — a concept this codebase does not yet have
+> — and closes a same-submission double-publish window that the gate would
+> otherwise widen. **That is a design conversation, not a fix**, so it is raised
+> rather than built.
+
+The committed test stops at 20. A hundred concurrent `DbContext`s exhaust a
+local Postgres's `max_connections` while the rest of the suite runs — **the
+fixture runs out before the design does**, which makes that case flaky rather
+than stronger. It was measured, it agreed with the trend, and the finding was
+already complete at two.
+
+### Discovered while building
+
+- **A reference-type id makes an EF shadow foreign key optional**, and an
+  optional FK severs the relationship instead of deleting the orphan. Caught by
+  an existing test, not by review, during the ADR-043 conversion. Both shadow FKs
+  are now explicitly `IsRequired` with the reason inline.
+- **One shared fixture application across parallel test classes became a test
+  isolation defect** the moment numbering existed — the classes were sharing a
+  numbering space and contending on the index for reasons unrelated to what they
+  assert. Harmless before this story; wrong after it.
+- **S001 added exactly one DIA attribute** — *Submission Number*. Everything else
+  in the story is invariant, policy, index, screens and the id conversion.

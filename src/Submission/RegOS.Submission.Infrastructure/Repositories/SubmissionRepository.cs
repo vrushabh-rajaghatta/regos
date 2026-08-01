@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
+using Npgsql;
+
 using RegOS.Persistence;
 using RegOS.Submission.Domain.Submission;
 
@@ -9,6 +11,15 @@ namespace RegOS.Submission.Infrastructure.Repositories;
 
 public sealed class SubmissionRepository : ISubmissionRepository
 {
+    /// <summary>
+    /// The unique index that makes two submissions in one application unable to
+    /// share a sequence number. Named here because this is the one place that
+    /// must recognise it; see <see cref="Translate"/>.
+    /// </summary>
+    private const string SequenceIndex = "IX_Submissions_ApplicationId_SequenceNumber";
+
+    private const string UniqueViolation = "23505";
+
     private readonly RegOSDbContext _dbContext;
 
     public SubmissionRepository(RegOSDbContext dbContext)
@@ -39,6 +50,30 @@ public sealed class SubmissionRepository : ISubmissionRepository
         SubmissionAggregate submission,
         CancellationToken cancellationToken)
     {
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsSequenceCollision(ex))
+        {
+            throw new SequenceNumberTakenException();
+        }
     }
+
+    /// <summary>
+    /// Turns one Postgres error into something the application can act on.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately narrow — a single SQLSTATE against a single named index.
+    /// Every other unique violation stays a <see cref="DbUpdateException"/>,
+    /// because a submission colliding on, say, display order is a defect rather
+    /// than a race worth retrying. Knowing an index name is the sort of thing a
+    /// repository is allowed to know; the layers above it are not.
+    /// </remarks>
+    private static bool IsSequenceCollision(DbUpdateException exception)
+        => exception.InnerException is PostgresException
+        {
+            SqlState: UniqueViolation,
+            ConstraintName: SequenceIndex
+        };
 }

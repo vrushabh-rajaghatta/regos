@@ -65,6 +65,9 @@ public sealed class SubmissionConfiguration
         builder.Property(x => x.PublishedAt)
             .HasColumnType("timestamp with time zone");
 
+        // What this was filed as. Null until published (ADR-044 decision 4).
+        builder.Property(x => x.SequenceNumber);
+
         // Cross-aggregate foreign keys. The domain exposes no navigation
         // properties, but EF still models the relationships.
         //
@@ -107,6 +110,17 @@ public sealed class SubmissionConfiguration
         builder.HasIndex(x => x.ApplicationId);
         builder.HasIndex(x => x.SubmissionTypeId);
         builder.HasIndex(x => x.BoundTemplateVersionId);
+
+        // Two submissions in one application can never be filed under the same
+        // sequence number. This is the *authority* on that, not the numbering
+        // policy: the policy reads a number that a concurrent publish may take
+        // before the reader saves, and only the index can arbitrate that race
+        // (ADR-044 decision 6). SubmissionRepository translates its violation.
+        //
+        // Filtered, because unlimited drafts legitimately share "no number".
+        builder.HasIndex(x => new { x.ApplicationId, x.SequenceNumber })
+            .IsUnique()
+            .HasFilter("\"SequenceNumber\" IS NOT NULL");
 
         // Ownership: Submission (1) -> SubmissionDocuments (N). The child has
         // no FK property, so EF uses a shadow "SubmissionId". Deleting a

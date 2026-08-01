@@ -40,4 +40,12 @@ public static class SubmissionErrors
 
     public const string PublishedAtRequired =
         "A publication timestamp is required to publish a submission.";
+
+    // Sequence numbering (ADR-044)
+    public const string SequenceNumberNotNegative =
+        "A sequence number cannot be negative.";
+
+    public const string SequenceNumberNotContiguous =
+        "A sequence must follow the previously published one — the first "
+        + "sequence in an application is 0000.";
 }

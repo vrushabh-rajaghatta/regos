@@ -62,6 +62,21 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     // deferred until the project has a current-user identity to record.
     public DateTimeOffset? PublishedAt { get; private set; }
 
+    /// <summary>
+    /// What this submission was filed as — sequence <c>0000</c>, <c>0001</c>, …
+    /// within its application. **Null means never transmitted** (ADR-044
+    /// decision 4).
+    /// </summary>
+    /// <remarks>
+    /// Assigned at publish rather than at creation, so number order <em>is</em>
+    /// transmission order by construction: nothing can publish out of order, so
+    /// a later sequence's diff base can never be silently rewritten. It also
+    /// means an abandoned draft leaks no number, and a draft never claims a
+    /// number it does not yet have — the "will publish as next sequence 0004"
+    /// a user sees is derived from <c>MAX(published) + 1</c> and stored nowhere.
+    /// </remarks>
+    public int? SequenceNumber { get; private set; }
+
     // Never expose a mutable collection — the document set is only ever
     // changed through the aggregate's own behaviors.
     public IReadOnlyCollection<SubmissionDocument> Documents
@@ -233,22 +248,67 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     }
 
     /// <summary>
-    /// Draft -> Published. Freezes the dossier's document set. Publishing makes
-    /// the submission immutable; transmission to the authority is a separate,
-    /// later step.
+    /// Draft -> Published, under a sequence number. Freezes the dossier's
+    /// document set and fixes what this submission was filed as. Publishing
+    /// makes the submission immutable; transmission to the authority is a
+    /// separate, later step.
     /// </summary>
-    public void Publish(DateTimeOffset publishedAt)
+    /// <param name="sequenceNumber">
+    /// What to file this as. **Accepted, never chosen** — the aggregate supplies
+    /// no number of its own, exactly as it reads no clock. A normal publish gets
+    /// it from the numbering policy; an import supplies the number that was
+    /// really filed (ADR-044 decision 5).
+    /// </param>
+    /// <param name="previousPublishedSequenceNumber">
+    /// The highest sequence number already published in this submission's
+    /// application, or null when this is the first.
+    /// </param>
+    /// <remarks>
+    /// <b>The contiguity rule lives here, and its limit is worth knowing.</b>
+    /// A Submission is a root; its siblings are outside its consistency
+    /// boundary, so it cannot verify that the previous sequence exists — the
+    /// same wall <see cref="PlaceDocument"/> documents for template sections.
+    /// A caller that misreports <paramref name="previousPublishedSequenceNumber"/>
+    /// gets through.
+    /// <para>
+    /// What makes this sound is the division of labour (ADR-044 decision 6): the
+    /// unique index on (application, sequence) makes <em>duplicates</em>
+    /// impossible whatever the caller does, and this rule gives <em>gaps</em> one
+    /// home that a domain test can reach — rather than a convention every future
+    /// handler has to remember.
+    /// </para>
+    /// <para>
+    /// <b>Import arrives as a sibling entry point with its own name</b>, sharing
+    /// a private implementation — never an <c>isImport</c> flag here. A record
+    /// that already existed before RegOS is not the same business event as one
+    /// we filed, and the audit history will need to tell them apart.
+    /// </para>
+    /// </remarks>
+    public void Publish(
+        int sequenceNumber,
+        int? previousPublishedSequenceNumber,
+        DateTimeOffset publishedAt)
     {
         // The application supplies the timestamp — the aggregate never reads the
         // clock, keeping Publish deterministic and testable.
         if (publishedAt == default)
             throw new DomainException(SubmissionErrors.PublishedAtRequired);
 
+        if (sequenceNumber < 0)
+            throw new DomainException(SubmissionErrors.SequenceNumberNotNegative);
+
         if (Status != SubmissionStatus.Draft)
             throw new BusinessRuleViolationException(
                 SubmissionErrors.SubmissionNotDraft);
 
+        // Numbering starts at 0000, so the first sequence in an application has
+        // no predecessor and must be exactly zero.
+        if (sequenceNumber != (previousPublishedSequenceNumber ?? -1) + 1)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.SequenceNumberNotContiguous);
+
         Status = SubmissionStatus.Published;
+        SequenceNumber = sequenceNumber;
         PublishedAt = publishedAt;
     }
 }

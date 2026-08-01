@@ -41,10 +41,21 @@ public sealed class GetSubmissionHandler
                 submission.Status,
                 submission.CreatedOn,
                 submission.BoundTemplateVersionId,
+                submission.SequenceNumber,
             }).SingleOrDefaultAsync(cancellationToken);
 
         if (row is null)
             return null;
+
+        // The expectation, not the fact — derived here and stored nowhere, so a
+        // draft never carries a number it has not been filed under (ADR-044
+        // decision 4). Two drafts in one application both read the same next
+        // number, which is true: whichever publishes first takes it.
+        var highestPublished = await _dbContext.Submissions
+            .AsNoTracking()
+            .Where(x => x.ApplicationId == row.ApplicationId
+                        && x.SequenceNumber != null)
+            .MaxAsync(x => (int?)x.SequenceNumber, cancellationToken);
 
         return new SubmissionDetailDto(
             row.Id.Value,
@@ -56,7 +67,9 @@ public sealed class GetSubmissionHandler
             row.Status.ToString(),
             row.CreatedOn,
             await LoadBoundTemplateAsync(
-                row.BoundTemplateVersionId, cancellationToken));
+                row.BoundTemplateVersionId, cancellationToken),
+            row.SequenceNumber,
+            (highestPublished ?? -1) + 1);
     }
 
     /// <summary>
