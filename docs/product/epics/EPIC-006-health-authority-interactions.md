@@ -1,6 +1,6 @@
 # EPIC-006 — Health-authority interactions
 
-**Status:** 🟡 In Progress — S001…S006 done; S007 capstone next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 **Complete** — 8 stories, ADR-040/041/042 · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Everything that passes between the sponsor and the authority **after** a filing — letters, questions, meetings, commitments, inspections. In headcount terms this is what a regulatory affairs team actually does all day, and today it lives in inboxes and spreadsheets.
 
@@ -777,7 +777,7 @@ The `S000` the sketch called for is gone — Phase 2 settled the vocabularies.
 | **S004** | ✅ **What we promised** — `Commitment` from a question or standalone, dated history, its own page, **and the "what's due" view** | full slice |
 | **S005** | ✅ **Meetings** — request → grant → hold → minutes and outcome; the one transition table | full slice |
 | **S006** | ✅ **Inspections** — anchored to an `OrganizationSite`, dated history | full slice |
-| **S007** | **Capstone** — the application activity timeline (the falsified supertype, as a read model), narrative browser proof, ADR-040, retro | UI → test → docs |
+| **S007** | ✅ **Capstone** — the application activity timeline (the falsified supertype, as a read model), narrative browser proof, ADR-040, retro | UI → test → docs |
 
 **Not split into 006a/006b.** The pull toward a split was the supertype question,
 and Phase 2 answered it. Four additive greenfield aggregates are far cheaper than
@@ -800,3 +800,81 @@ hypothesis outcomes and the retro observations, the way ADR-039 was staged.
 > authority division** first, **who may define one** second. Answer the domain
 > question before the governance question; seeded-only may well be sufficient
 > until EPIC-012.
+
+---
+
+## Phase 5 — Retro *(2026-08-01)*
+
+**What shipped.** Eight stories, three ADRs (040, 041, 042), six aggregates in a
+new bounded context, one infrastructure module, and one repository defect fixed
+that had kept two source files out of version control entirely.
+
+`976 backend tests · 84 browser specs · architecture 10/10`
+
+### The register, resolved
+
+Ordered **discarded first**, deliberately. *A disproved hypothesis is successful
+engineering* — three of the four most valuable results in this epic were things
+that turned out not to be true, and a reader should meet those before the
+confirmations.
+
+| Hypothesis | Evidence | Outcome | Action |
+|---|---|---|---|
+| **An `AuthorityInteraction` supertype** — correspondence, meeting and inspection are three kinds of one thing | Phase 2: the spanning question (an activity timeline) is real, but ADR-039 principle 7 answers it with a read model | **Falsified** | **Discard.** Four roots and one child. |
+| **The append-only history extraction** (ADR-039 decision 6) | Measured at three (S003) and again at six (S005): the entry is ~30 lines, the chronology rule is **one line**, and the five configurations are **not one shape**. Tests never converged. | **Falsified** | **Discard** — refused, not deferred. Reopening needs new evidence, not another occurrence. |
+| **ADR-038's division prediction** — EPIC-006 would hold an `OrganizationDivisionId` | S001: the division on a letter is the *authority's*; `OrganizationDivision` hangs off a tenant-owned commercial `Organization` | **Falsified** | **Discard.** `AuthorityDivision` under `Authority` instead (S001a). |
+| **The revised Phase 2 process** — beginning with the domain question changes outcomes | S001 removed a field and an enum member; S001a prevented an ownership model; S002 prevented a type; S003 prevented an extraction; S004 prevented a business status; S006 confirmed a forecast | **Confirmed** | **Promote** — already in the flow; the retro records the evidence. |
+| **Objects that generate work vs objects that conclude** | Correspondence (leaves the due view once decomposed), `HaMeeting`, `Inspection`. **Predicted for inspections before S006 was written and confirmed by it** — the only entry used as a forecast rather than a label. | **Confirmed** | **Record** in ADR-042 decision 1. One epic, so not promoted to the flow. |
+| **Resolve identity before governance** | EPIC-017 S002 (value object), S001 (aggregate), S001a (reference data) — three concept categories | **Confirmed** | **Record.** Not promoted: the process itself was under test, and changing the flow mid-epic is what that document warns against. |
+| **Identity over convenience facts** | Six instances, but five are dates/ownership/projections. **`Commitment.GivenOn` is the exception** — written as a stored field while designing a dashboard, then removed because it was already `history[0].OccurredOn`. A *discovered* occurrence, not an applied one. | **Inconclusive** | **Record.** One independent instance is not a principle. |
+| **The Rule of Three has a second half** — *measure where the cost lives* | One extraction review, which found the cost was not where either prediction said | **Inconclusive** | **Record.** ADR-018 is load-bearing; changing it needs a second review pointing somewhere unexpected. |
+| **Event, not lifecycle** | `HaCorrespondence` only | **Inconclusive** | **Record.** One instance. |
+| **Threading is a relationship between correspondence records** | Never needed. S003 answered questions without it. | **Inconclusive** | **Record.** Unbuilt, and the wording stops someone "solving" it with response documents. |
+
+### The meta-observation
+
+| Question | Answer |
+|---|---|
+| Did the revised Phase 2 process materially change the architecture? | **Yes.** It prevented an incorrect dependency (S001), an incorrect ownership model (S001a), two speculative abstractions (Phase 2's supertype and S002's `CorrespondenceDocument`), one premature extraction (S003/S005), and one business status (S004's `Failed`). Each is traceable to a story. |
+
+Recorded as evidence, not as a claim about the process's future. **EPIC-020 is
+the first epic that will begin after it has been fully exercised.**
+
+### What the change-case analysis got right and wrong
+
+**Right.** The nullable `ProcessStepId` seam was *not* added — Phase 2 chose to
+model it only when EPIC-020 arrives, and nothing has needed it. Reference data
+for classifications was right for `CorrespondenceType` and wrong for the other
+ten, which were never built.
+
+**Wrong.** Phase 2 predicted five dated histories; correspondence turned out to
+have no status at all, so there were four in this epic and six in the codebase.
+And Phase 2 listed attendees and materials as in-scope; both were deferred on
+the grounds that they answer different questions than the epic asks.
+
+### Carried forward
+
+- **Six legacy-form ids.** ES-020 (added to CLAUDE.md mid-epic) closes
+  `readonly record struct <X>Id` to new code. The four `*StatusEntryId`s plus
+  `CorrespondenceTypeId` and `AuthorityDivisionId` use it, matching the
+  neighbours they were written beside. Not caught by the architecture tests.
+  **Mechanical to convert; do it opportunistically, not in a sweep.**
+- **The nine-form mutation defect** from EPIC-016, still queued as a maintenance
+  epic.
+- **A clean-clone CI check** → EPIC-015, from S002's `.gitignore` defect. The
+  rule is fixed; the *class* of defect is not.
+- **`Platform.Contracts` must not reach a third type** (ADR-041) — two is a
+  contract, three is a second kernel.
+- **A fourth independent business origin for commitments** reopens ADR-040
+  decision 3 (ADR-042 decision 2).
+
+### The cadence that worked, twice
+
+EPIC-017 arrived at **vocabulary → identity → local concepts → business history
+→ operability → working surface → projection**. EPIC-006 ran the same shape and
+added one step at the front that mattered more than the rest:
+
+> **Open every story on the user's question, never the entity list.**
+
+Six of the eight stories produced a *smaller* model than the entity-first
+version would have. That is the finding EPIC-020 should inherit.

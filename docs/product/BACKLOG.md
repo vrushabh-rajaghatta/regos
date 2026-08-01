@@ -27,6 +27,7 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | **EPIC-001** | **The Regulatory Data Dictionary** — complete Reference Data as the governed, standards-aligned controlled-vocabulary + dossier-blueprint backbone; seeded for FDA IND (CTD) + CA/AU/IN | 🟢 Complete | 8 stories; merged to `main` (PR #5) → `epics/EPIC-001-regulatory-data-dictionary.md` |
 | **EPIC-002** | **Submission validates against the blueprint** — bind a Submission to a published template version; metadata-driven validation engine; publishing gated on it | 🟢 Complete | 4 stories; [ADR-035](../adr/ADR-035-submissions-bind-to-a-published-template-version.md) → `epics/EPIC-002-submission-validates-against-blueprint.md` |
 | **EPIC-003** | **Submission planning & content** — place documents into the bound blueprint's sections; placeholder-shaped content plan / gap view (the dossier builder); placement-aware validation | 🟢 Complete | 4 stories; [ADR-036](../adr/ADR-036-the-dossier-is-structure-placeholders-are-validation.md) → `epics/EPIC-003-submission-planning-and-content.md` |
+| **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | 🟢 Complete | 8 stories; [ADR-040](../adr/ADR-040-the-health-authority-interaction-context.md) · [ADR-041](../adr/ADR-041-platform-contracts-and-the-identity-that-crosses.md) · [ADR-042](../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
 | **EPIC-005** | **Registration tracking** — what the business *holds*: a product's market authorisations, their status over time, licence numbers and key dates (the RIM core) | 🟢 Complete | 4 stories; [ADR-037](../adr/ADR-037-registrations-are-regulatory-assets-with-derived-visibility.md) → `epics/EPIC-005-registration-tracking.md` |
 | **EPIC-016** | **Organization depth** — sites, contacts, divisions; deepen Organization itself | 🟢 Complete | [ADR-038](../adr/ADR-038-organization-depth-roots-and-the-three-filter-shapes.md) · deactivation deferred with a reason → [`epics/EPIC-016-organization-depth.md`](epics/EPIC-016-organization-depth.md) |
 | **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier (**"Markets"** in the UI), + trade names and market status | 🟢 Complete | 7 stories, 7/7 DoD; [ADR-039](../adr/ADR-039-the-market-local-product-tier.md) → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
@@ -35,15 +36,14 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-| ID | Epic | Status | Notes |
-|---|---|---|---|
-| **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | 🟡 **In Progress** | Phases 1–3 settled 2026-08-01; **8 stories**, S001…S006 done, S007 capstone next → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
+*Nothing in flight.* **EPIC-006 is complete** — 8 stories, [ADR-040](../adr/ADR-040-the-health-authority-interaction-context.md) · [ADR-041](../adr/ADR-041-platform-contracts-and-the-identity-that-crosses.md) · [ADR-042](../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md). The **maintenance epic** (nine forms carrying the EPIC-016 mutation defect) is next, then **EPIC-004**.
 
-Phase 2 opened on the domain question rather than the entity list, and
-**falsified** its own central hypothesis: the spanning question (an activity
-timeline) is real, but it is a read model, not an aggregate. Four roots and one
-child, no supertype. A small **maintenance epic** is queued behind this one:
-nine forms still carry the EPIC-016 mutation defect (see the EPIC-017 retro).
+Its Phase 2 opened on the domain question rather than the entity list and
+**falsified its own central hypothesis** — the spanning question is real, but it
+is a read model, not an aggregate. Across eight stories the process prevented an
+incorrect dependency, an incorrect ownership model, two speculative
+abstractions, one premature extraction and one business status from entering the
+model; the retro records each with the story it came from.
 
 ## Next
 
