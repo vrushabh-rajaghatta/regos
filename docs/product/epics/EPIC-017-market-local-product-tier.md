@@ -642,8 +642,18 @@ Not observations about EPIC-017 — principles the next epics inherit.
 4. **Model the demonstrated business concept.** Introduce the smallest
    abstraction the domain currently requires — `LanguageCode` rather than a
    governed `Language` reference model — and record what would falsify that.
+5. **A cross-aggregate rule belongs with the lifecycle it depends on.**
+   > *The more a rule depends on another aggregate's semantics, the more clearly
+   > it belongs with that aggregate.*
+   >
+   > Apply it whenever a rule is tempted across a boundary — *"can I archive a
+   > product if…", "can I delete a site if…", "can I retire a label if…"*. If
+   > answering requires understanding another aggregate's **business lifecycle**
+   > — not merely whether rows exist, but which of their states count — the rule
+   > belongs in orchestration or in that other aggregate. It came out of S003a,
+   > where *"has registrations"* turned out not to be the invariant anyone meant.
 
-Expected to guide **EPIC-006** (principle 3), **EPIC-010** and **EPIC-018**
-(principles 1 and 4), and **EPIC-020**.
+Expected to guide **EPIC-006** (principles 3 and 5), **EPIC-010** and
+**EPIC-018** (principles 1 and 4), and **EPIC-020**.
 
 **Sequencing note:** this epic and **EPIC-004** are genuinely independent — sequences live inside `Submission` and never touch `ProductId`; this never touches submission internals. Neither makes the other harder. Order is a **value call**: this one completes an epic already in flight (EPIC-005); EPIC-004 completes nothing in flight but may be what a customer is waiting on.
