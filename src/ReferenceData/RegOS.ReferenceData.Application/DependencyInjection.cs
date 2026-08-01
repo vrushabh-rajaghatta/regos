@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.ReferenceData.Application.Queries.Geography.ListCountries;
 using RegOS.ReferenceData.Application.Queries.Regulatory.ListAuthorities;
+using RegOS.ReferenceData.Application.Queries.Regulatory.ListAuthorityDivisions;
 using RegOS.ReferenceData.Application.Queries.Regulatory.ListCorrespondenceTypes;
 using RegOS.ReferenceData.Application.Queries.SubmissionTypes.ListSubmissionTypes;
 using RegOS.ReferenceData.Application.Queries.DocumentTypes.ListDocumentTypes;
@@ -21,6 +22,8 @@ public static class DependencyInjection
         services.AddScoped<ListAuthoritiesHandler>();
 
         services.AddScoped<ListCorrespondenceTypesHandler>();
+
+        services.AddScoped<ListAuthorityDivisionsHandler>();
         services.AddScoped<ListSubmissionTypesHandler>();
         services.AddScoped<ListDocumentTypesHandler>();
         services.AddScoped<ListRegulatoryTemplatesHandler>();

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 
 import { useAuthorities } from "../../masterData/hooks/useAuthorities";
 import { CORRESPONDENCE_DIRECTIONS } from "../constants/correspondenceDirections";
+import { useAuthorityDivisions } from "../hooks/useAuthorityDivisions";
 import { useCorrespondenceTypes } from "../hooks/useCorrespondenceTypes";
 import { useRecordCorrespondence } from "../hooks/useRecordCorrespondence";
 import {
@@ -50,8 +51,14 @@ export function RecordCorrespondenceForm({
       occurredOn: "",
       responseDueOn: "",
       authorityReference: "",
+      authorityDivisionId: "",
     },
   });
+
+  // useWatch, not watch(): the memoisation-safe API. The division list depends
+  // on the chosen authority, because a division only means anything inside one.
+  const selectedAuthorityId = useWatch({ control, name: "authorityId" });
+  const divisions = useAuthorityDivisions(selectedAuthorityId ?? "");
 
   async function onSubmit(values: RecordCorrespondenceFormValues) {
     try {
@@ -63,6 +70,7 @@ export function RecordCorrespondenceForm({
         occurredOn: values.occurredOn,
         responseDueOn: values.responseDueOn || null,
         authorityReference: values.authorityReference || null,
+        authorityDivisionId: values.authorityDivisionId || null,
       });
     } catch {
       // A refusal is an outcome, not a crash. The server's reason renders
@@ -101,6 +109,41 @@ export function RecordCorrespondenceForm({
 
               {errors.authorityId && (
                 <FieldError>{errors.authorityId.message}</FieldError>
+              )}
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="authorityDivisionId"
+          render={({ field }) => (
+            <Field data-invalid={!!errors.authorityDivisionId}>
+              <FieldLabel htmlFor="correspondenceAuthorityDivisionId">
+                Division (optional)
+              </FieldLabel>
+
+              <select
+                id="correspondenceAuthorityDivisionId"
+                className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                disabled={!selectedAuthorityId}
+                {...field}
+              >
+                <option value="">
+                  {selectedAuthorityId
+                    ? "Not stated on the letter"
+                    : "Choose an authority first"}
+                </option>
+                {(divisions.data ?? []).map((division) => (
+                  <option key={division.id} value={division.id}>
+                    {division.name}
+                    {division.isTenantDefined ? " (added by us)" : ""}
+                  </option>
+                ))}
+              </select>
+
+              {errors.authorityDivisionId && (
+                <FieldError>{errors.authorityDivisionId.message}</FieldError>
               )}
             </Field>
           )}

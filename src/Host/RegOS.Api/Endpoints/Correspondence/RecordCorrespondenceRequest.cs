@@ -18,6 +18,7 @@ public sealed record RecordCorrespondenceRequest(
     string Direction,
     string Subject,
     DateOnly OccurredOn,
+    Guid? AuthorityDivisionId = null,
     DateOnly? ResponseDueOn = null,
     string? AuthorityReference = null,
     Guid? RegulatoryApplicationId = null,

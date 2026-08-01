@@ -34,6 +34,8 @@ public static class DependencyInjection
         services.AddScoped<IDataInitializer, ContactRoleDataInitializer>();
         // Global, authority-independent — order relative to the others is free.
         services.AddScoped<IDataInitializer, CorrespondenceTypeDataInitializer>();
+        // After GeographyAndRegulatoryInitializer: divisions reference authorities.
+        services.AddScoped<IDataInitializer, AuthorityDivisionDataInitializer>();
         // After submission types and authorities: a template references both.
         services.AddScoped<IDataInitializer, RegulatoryTemplateDataInitializer>();
 

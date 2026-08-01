@@ -34,6 +34,8 @@ export const recordCorrespondenceSchema = z.object({
     .max(100, "A reference cannot exceed 100 characters.")
     .optional(),
 
+  authorityDivisionId: z.string().optional(),
+
   regulatoryApplicationId: z.string().optional(),
 });
 

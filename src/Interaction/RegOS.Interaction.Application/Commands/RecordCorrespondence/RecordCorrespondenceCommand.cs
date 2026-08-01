@@ -14,6 +14,7 @@ namespace RegOS.Interaction.Application.Commands.RecordCorrespondence;
 public sealed record RecordCorrespondenceCommand(
     AuthorityId AuthorityId,
     CorrespondenceTypeId CorrespondenceTypeId,
+    AuthorityDivisionId? AuthorityDivisionId,
     CorrespondenceDirection Direction,
     string Subject,
     DateOnly OccurredOn,

@@ -21,6 +21,8 @@ public sealed record CorrespondenceDetail(
     string AuthorityName,
     Guid CorrespondenceTypeId,
     string CorrespondenceTypeName,
+    Guid? AuthorityDivisionId,
+    string? AuthorityDivisionName,
     Guid? RegulatoryApplicationId,
     string? RegulatoryApplicationName,
     string? RegulatoryApplicationNumber,

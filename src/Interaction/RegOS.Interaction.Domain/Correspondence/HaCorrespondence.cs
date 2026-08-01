@@ -28,16 +28,16 @@ namespace RegOS.Interaction.Domain.Correspondence;
 /// an anchor would push users to invent one.
 /// </para>
 /// <para>
-/// <b>There is no division or contact here yet, and its absence is a finding.</b>
-/// The division that sends a letter is the <em>authority's</em>, and
+/// <b>The division here is the <em>authority's</em>, not ours.</b>
 /// <c>OrganizationDivision</c> hangs off a tenant-owned <c>Organization</c>
-/// whose types are all commercial — there is no way to express "FDA" as one.
-/// Widening that enum would create a second FDA that can disagree with the
-/// reference-data one, which ADR-039 decision 1 forbids. EPIC-006 S001a
-/// introduces authority-side structure under <see cref="Authority"/>; until
-/// then this carries no field rather than a misleading one, and ADR-038's
-/// prediction that EPIC-006 would hold an <c>OrganizationDivisionId</c> is
-/// recorded as falsified.
+/// whose types are all commercial — there is no way to express "FDA" as one,
+/// and widening that enum would create a second FDA able to disagree with the
+/// reference-data one (ADR-039 decision 1). S001 therefore carried no division
+/// at all rather than a misleading one, and S001a introduced
+/// <see cref="AuthorityDivision"/> under <see cref="Authority"/>. ADR-038's
+/// prediction that EPIC-006 would hold an <c>OrganizationDivisionId</c> stands
+/// recorded as falsified. Nullable, because the division is often simply not
+/// stated on a letter and a required field would make users guess.
 /// </para>
 /// </remarks>
 public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
@@ -52,6 +52,7 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
         TenantId tenantId,
         AuthorityId authorityId,
         CorrespondenceTypeId correspondenceTypeId,
+        AuthorityDivisionId? authorityDivisionId,
         CorrespondenceDirection direction,
         string subject,
         DateOnly occurredOn,
@@ -66,6 +67,7 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
         TenantId = tenantId;
         AuthorityId = authorityId;
         CorrespondenceTypeId = correspondenceTypeId;
+        AuthorityDivisionId = authorityDivisionId;
         Direction = direction;
         Subject = subject;
         OccurredOn = occurredOn;
@@ -84,6 +86,13 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
     public AuthorityId AuthorityId { get; }
 
     public CorrespondenceTypeId CorrespondenceTypeId { get; private set; }
+
+    /// <summary>
+    /// The authority unit that sent or received it, when the letter says. That
+    /// it belongs to <see cref="AuthorityId"/> is a cross-aggregate rule and
+    /// lives in the creation policy — this aggregate cannot see another's rows.
+    /// </summary>
+    public AuthorityDivisionId? AuthorityDivisionId { get; private set; }
 
     public CorrespondenceDirection Direction { get; }
 
@@ -119,6 +128,7 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
         TenantId tenantId,
         AuthorityId authorityId,
         CorrespondenceTypeId correspondenceTypeId,
+        AuthorityDivisionId? authorityDivisionId,
         CorrespondenceDirection direction,
         string subject,
         DateOnly occurredOn,
@@ -148,6 +158,7 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
             tenantId,
             authorityId,
             correspondenceTypeId,
+            authorityDivisionId,
             direction,
             trimmedSubject,
             occurredOn,
@@ -167,6 +178,7 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
     /// </summary>
     public void Amend(
         CorrespondenceTypeId correspondenceTypeId,
+        AuthorityDivisionId? authorityDivisionId,
         string subject,
         DateOnly occurredOn,
         DateOnly? responseDueOn,
@@ -182,6 +194,7 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
             throw new DomainException(HaCorrespondenceErrors.ResponseDueBeforeOccurred);
 
         CorrespondenceTypeId = correspondenceTypeId;
+        AuthorityDivisionId = authorityDivisionId;
         Subject = trimmedSubject;
         OccurredOn = occurredOn;
         ResponseDueOn = responseDueOn;

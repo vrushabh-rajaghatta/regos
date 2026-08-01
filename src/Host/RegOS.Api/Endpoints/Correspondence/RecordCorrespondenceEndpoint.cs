@@ -38,6 +38,9 @@ public static class RecordCorrespondenceEndpoint
             new RecordCorrespondenceCommand(
                 new AuthorityId(request.AuthorityId),
                 new CorrespondenceTypeId(request.CorrespondenceTypeId),
+                request.AuthorityDivisionId is { } divisionId
+                    ? new AuthorityDivisionId(divisionId)
+                    : null,
                 direction,
                 request.Subject,
                 request.OccurredOn,

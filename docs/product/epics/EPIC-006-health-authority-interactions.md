@@ -505,7 +505,15 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
    projecting derived views over persisting convenience facts.* Four independent
    tests: due-date proximity, the commitment's authority, a question's days
    overdue, and the correspondence anchor. Confirmed only if the epic lands there
-   **without being told to**. Earns a place in ADR-040 if so.
+   **without being told to**. Earns a place in ADR-041 if so.
+
+   **Sharpened after S001, and against itself.** S001 produced a fifth instance
+   — *who owes a response* derived from direction rather than stored. But every
+   occurrence so far involves **dates, ownership, responsibility or
+   projections**, which are closely related to one another. Five instances of
+   one kind is not five independent confirmations. *Do not promote this at the
+   S007 retro unless at least one instance comes from somewhere else entirely.*
+   The restraint applied to the other hypotheses applies to this one.
 3. ~~**ADR-038's division prediction.** `OrganizationDivisionId` gets its first
    holder in S001, or that root's justification never materialised.~~
    **RESOLVED 2026-08-01 — falsified, before S001 was written.**
@@ -539,7 +547,19 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
    needs to file, find and understand a letter. Had it started from the entity
    list, `OrganizationDivisionId` would have been wired in *because it already
    existed*.
-4. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
+4. **The revised Phase 2 itself** — *beginning with the domain question rather
+   than the entity list changes outcomes, not merely discussions.*
+   **First evidence, S001: it prevented an incorrect architectural dependency.**
+   `OrganizationDivision` already existed and its own doc comment named this
+   epic as its justification; an entity-first Phase 2 would have wired
+   `OrganizationDivisionId` onto `HaCorrespondence` on that invitation alone.
+   The question *"what does a user need to file, find and understand a letter?"*
+   never produced it. **The process caught it, not the designer** — which is a
+   stronger claim than noticing the misfit, because it is repeatable.
+   *One story is not a verdict; EPIC-006 keeps exercising it. But it has crossed
+   from untested proposal to demonstrated value.*
+
+5. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
    "status" of an object is really derived from related objects or dates, the
    object may be an event rather than a lifecycle.* `HaCorrespondence` is the
    first instance. **One example is not enough to promote it**; watch for a

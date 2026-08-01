@@ -23,6 +23,7 @@ public sealed class HaCorrespondencePolicy : IHaCorrespondencePolicy
     public async Task EnsureCanRecordAsync(
         AuthorityId authorityId,
         CorrespondenceTypeId correspondenceTypeId,
+        AuthorityDivisionId? authorityDivisionId,
         RegulatoryApplicationId? regulatoryApplicationId,
         SubmissionId? submissionId,
         RegistrationId? registrationId,
@@ -41,6 +42,22 @@ public sealed class HaCorrespondencePolicy : IHaCorrespondencePolicy
 
         if (!typeExists)
             throw new NotFoundException("The correspondence type was not found.");
+
+        // The relationship check, not an existence check: a division that
+        // exists but belongs to another authority is the interesting failure,
+        // and it is the one a user actually makes.
+        if (authorityDivisionId is { } divisionId)
+        {
+            var belongsToAuthority = await _dbContext.AuthorityDivisions
+                .AsNoTracking()
+                .AnyAsync(
+                    x => x.Id == divisionId && x.AuthorityId == authorityId,
+                    cancellationToken);
+
+            if (!belongsToAuthority)
+                throw new BusinessRuleViolationException(
+                    "That division does not belong to the selected health authority.");
+        }
 
         // Each anchor is checked only when given. An unfiled letter is valid;
         // a letter filed against something the caller cannot see is not.

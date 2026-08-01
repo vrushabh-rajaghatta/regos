@@ -27,6 +27,7 @@ public sealed class RecordCorrespondenceHandler
         await _policy.EnsureCanRecordAsync(
             command.AuthorityId,
             command.CorrespondenceTypeId,
+            command.AuthorityDivisionId,
             command.RegulatoryApplicationId,
             command.SubmissionId,
             command.RegistrationId,
@@ -36,6 +37,7 @@ public sealed class RecordCorrespondenceHandler
             _tenantContext.TenantId,
             command.AuthorityId,
             command.CorrespondenceTypeId,
+            command.AuthorityDivisionId,
             command.Direction,
             command.Subject,
             command.OccurredOn,

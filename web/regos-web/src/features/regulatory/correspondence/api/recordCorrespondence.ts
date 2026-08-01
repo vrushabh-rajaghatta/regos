@@ -9,6 +9,7 @@ export interface RecordCorrespondenceBody {
   occurredOn: string;
   responseDueOn?: string | null;
   authorityReference?: string | null;
+  authorityDivisionId?: string | null;
   regulatoryApplicationId?: string | null;
 }
 

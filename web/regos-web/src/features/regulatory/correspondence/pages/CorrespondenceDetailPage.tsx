@@ -72,6 +72,15 @@ export function CorrespondenceDetailPage() {
           </div>
 
           <div>
+            {/* The authority's division, not ours. Often simply not stated on
+                the letter, which is a fact rather than missing data. */}
+            <dt className="text-sm text-muted-foreground">Division</dt>
+            <dd className="font-medium">
+              {letter.authorityDivisionName ?? "Not stated"}
+            </dd>
+          </div>
+
+          <div>
             <dt className="text-sm text-muted-foreground">Received or sent</dt>
             <dd className="font-medium">{directionLabel(letter.direction)}</dd>
           </div>

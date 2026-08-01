@@ -30,6 +30,8 @@ using HaCorrespondenceAggregate =
     RegOS.Interaction.Domain.Correspondence.HaCorrespondence;
 using CorrespondenceTypeAggregate =
     RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType;
+using AuthorityDivisionAggregate =
+    RegOS.ReferenceData.Domain.Regulatory.Authority.AuthorityDivision;
 using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
 using TenantAggregate =
@@ -144,6 +146,14 @@ public sealed class RegOSDbContext : DbContext
     /// </summary>
     public DbSet<CorrespondenceTypeAggregate> CorrespondenceTypes =>
         Set<CorrespondenceTypeAggregate>();
+
+    /// <summary>
+    /// Units inside a health authority. Platform-seeded, tenant-augmentable —
+    /// RegOS has no authoritative source for the world's authority divisions,
+    /// so a tenant records the ones it actually deals with.
+    /// </summary>
+    public DbSet<AuthorityDivisionAggregate> AuthorityDivisions =>
+        Set<AuthorityDivisionAggregate>();
 
     public DbSet<RegistrationAggregate> Registrations =>
         Set<RegistrationAggregate>();
@@ -274,6 +284,15 @@ public sealed class RegOSDbContext : DbContext
 
         modelBuilder.Entity<HaCorrespondenceAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // Platform-seeded, tenant-augmentable: the second of ADR-038's three
+        // filter shapes, the same one ContactRole takes. The argument differs
+        // though — a tenant is not extending what the FDA means, it is
+        // recording which of its divisions they correspond with, because RegOS
+        // cannot ship a complete universe of them.
+        modelBuilder.Entity<AuthorityDivisionAggregate>().HasQueryFilter(
+            x => CurrentTenant != null
+                && (x.TenantId == null || x.TenantId == CurrentTenant));
 
         modelBuilder.Entity<RegistrationAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);

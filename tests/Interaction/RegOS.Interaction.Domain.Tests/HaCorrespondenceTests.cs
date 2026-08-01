@@ -22,11 +22,13 @@ public sealed class HaCorrespondenceTests
         DateOnly? responseDueOn = null,
         CorrespondenceDirection direction = CorrespondenceDirection.Inbound,
         string subject = "Information request on IND 123456",
-        string? authorityReference = null)
+        string? authorityReference = null,
+        AuthorityDivisionId? authorityDivisionId = null)
         => HaCorrespondence.Record(
             Tenant,
             Authority,
             Type,
+            authorityDivisionId,
             direction,
             subject,
             occurredOn ?? Dated,
@@ -92,10 +94,10 @@ public sealed class HaCorrespondenceTests
     public void ALetterNeedsAnAuthorityAndAType()
     {
         var withoutAuthority = () => HaCorrespondence.Record(
-            Tenant, default, Type, CorrespondenceDirection.Inbound, "x", Dated);
+            Tenant, default, Type, null, CorrespondenceDirection.Inbound, "x", Dated);
 
         var withoutType = () => HaCorrespondence.Record(
-            Tenant, Authority, default, CorrespondenceDirection.Inbound, "x", Dated);
+            Tenant, Authority, default, null, CorrespondenceDirection.Inbound, "x", Dated);
 
         withoutAuthority.Should().Throw<DomainException>()
             .WithMessage(HaCorrespondenceErrors.AuthorityRequired);
@@ -134,6 +136,35 @@ public sealed class HaCorrespondenceTests
         Record(authorityReference: "   ").AuthorityReference.Should().BeNull();
         Record(authorityReference: " IND 123456 ").AuthorityReference
             .Should().Be("IND 123456");
+    }
+
+    [Fact]
+    public void ADivisionIsOptional_AndTheAggregateDoesNotPolicyItsOwner()
+    {
+        var division = new AuthorityDivisionId(Guid.NewGuid());
+
+        Record().AuthorityDivisionId.Should().BeNull();
+        Record(authorityDivisionId: division).AuthorityDivisionId
+            .Should().Be(division);
+
+        // Deliberately no check here that the division belongs to the
+        // authority: that is another aggregate's fact, and this one cannot see
+        // its rows. The rule lives in IHaCorrespondencePolicy — stated
+        // generally, as "a referenced child must belong to its selected
+        // parent", so a committee or an office inherits it unchanged.
+    }
+
+    [Fact]
+    public void AmendingCanClearOrChangeTheDivision()
+    {
+        var division = new AuthorityDivisionId(Guid.NewGuid());
+        var letter = Record(authorityDivisionId: division);
+
+        letter.Amend(Type, null, "Same subject", Dated, null, null);
+
+        // The letter was re-read and the division turned out to be wrong.
+        // Clearing it is a correction, not a deletion of history.
+        letter.AuthorityDivisionId.Should().BeNull();
     }
 
     [Fact]
@@ -177,6 +208,7 @@ public sealed class HaCorrespondenceTests
 
         letter.Amend(
             Type,
+            null,
             "Corrected subject",
             new DateOnly(2026, 3, 2),
             new DateOnly(2026, 4, 1),
@@ -199,7 +231,7 @@ public sealed class HaCorrespondenceTests
         var letter = Record();
 
         var act = () => letter.Amend(
-            Type, "x", new DateOnly(2026, 3, 1), new DateOnly(2026, 2, 1), null);
+            Type, null, "x", new DateOnly(2026, 3, 1), new DateOnly(2026, 2, 1), null);
 
         act.Should().Throw<DomainException>()
             .WithMessage(HaCorrespondenceErrors.ResponseDueBeforeOccurred);

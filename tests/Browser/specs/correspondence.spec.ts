@@ -9,10 +9,14 @@ import { test, api, collectErrors, EXPECTED_400 } from "./support";
  * **file** a letter, **find** it again, and **understand** it without opening
  * anything else.
  *
- * Two things are asserted as absences, because they are decisions rather than
- * omissions (ADR-040): correspondence has **no status** — it is an event, not a
- * lifecycle — and it carries **no division**, because the division on a letter
- * is the authority's and `OrganizationDivision` cannot express one.
+ * One thing is asserted as an absence, because it is a decision rather than an
+ * omission (ADR-040): correspondence has **no status** — it is an event, not a
+ * lifecycle.
+ *
+ * The division **was** an asserted absence in S001, and S001a deliberately
+ * flips it. That is the tripwire working: the earlier assertion made adding a
+ * division a decision rather than a commit, and the division that arrived is
+ * the *authority's* (`AuthorityDivision`), never `OrganizationDivision`.
  */
 const FDA_NAME = "Food and Drug Administration";
 
@@ -52,6 +56,13 @@ test.describe("Health-authority correspondence", () => {
     await page
       .getByLabel("Correspondence type")
       .selectOption({ label: "Information Request" });
+
+    // The division list is scoped to the authority already chosen — the picker
+    // cannot compose the refusal the server would give.
+    await page
+      .getByLabel("Division (optional)")
+      .selectOption({ label: "Center for Drug Evaluation and Research" });
+
     await page.getByLabel("Subject").fill(subject);
     await page.getByLabel("Dated").fill("2019-06-14");
     await page.getByLabel("Response due (optional)").fill("2019-07-14");
@@ -96,10 +107,14 @@ test.describe("Health-authority correspondence", () => {
       page.getByText("Nothing — general correspondence")
     ).toBeVisible();
 
-    // --- 6. the two deliberate absences -----------------------------------
-    // Asserted so that adding either one is a conversation, not a commit.
+    // --- 6. the authority's division, and the one remaining absence -------
+    await expect(
+      page.getByText("Center for Drug Evaluation and Research")
+    ).toBeVisible();
+
+    // Still asserted, so adding a status stays a conversation rather than a
+    // commit.
     await expect(page.getByText("Status")).toHaveCount(0);
-    await expect(page.getByText("Division")).toHaveCount(0);
 
     expect(errors()).toEqual([]);
   });
@@ -160,5 +175,60 @@ test.describe("Health-authority correspondence", () => {
 
     const problem = await response.json();
     expect(problem.detail).toContain("cannot be due before");
+  });
+});
+
+test.describe("Authority divisions", () => {
+  test("a division belongs to its authority, and the server says so", async () => {
+    // The first genuinely semantic creation policy in the codebase: not "does
+    // this row exist" but "does this child belong to the parent you chose".
+    // A letter from the FDA cannot name a Health Canada directorate.
+    const authorities = await (await api("/master-data/authorities")).json();
+    const types = await (
+      await api("/api/master-data/correspondence-types")
+    ).json();
+
+    const fda = authorities.find((a: { code: string }) => a.code === "FDA");
+    const healthCanada = authorities.find(
+      (a: { code: string }) => a.code === "HC"
+    );
+
+    const canadianDivisions = await (
+      await api(`/api/master-data/authorities/${healthCanada.id}/divisions`)
+    ).json();
+
+    expect(canadianDivisions.length).toBeGreaterThan(0);
+
+    const response = await api("/api/correspondence", {
+      method: "POST",
+      body: JSON.stringify({
+        authorityId: fda.id,
+        correspondenceTypeId: types[0].id,
+        direction: "Inbound",
+        subject: "Cross-authority division",
+        occurredOn: "2026-03-01",
+        authorityDivisionId: canadianDivisions[0].id,
+      }),
+    });
+
+    // A valid request that business state forbids — ADR-012's 409.
+    expect(response.status).toBe(409);
+
+    const problem = await response.json();
+    expect(problem.detail).toContain("does not belong to");
+  });
+
+  test("the divisions offered are scoped to the authority chosen", async () => {
+    const authorities = await (await api("/master-data/authorities")).json();
+    const fda = authorities.find((a: { code: string }) => a.code === "FDA");
+
+    const divisions = await (
+      await api(`/api/master-data/authorities/${fda.id}/divisions`)
+    ).json();
+
+    expect(divisions.length).toBeGreaterThan(0);
+    expect(
+      divisions.every((d: { authorityId: string }) => d.authorityId === fda.id)
+    ).toBe(true);
   });
 });

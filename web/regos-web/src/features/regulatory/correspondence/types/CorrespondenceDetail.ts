@@ -10,6 +10,8 @@ export interface CorrespondenceDetail {
   authorityName: string;
   correspondenceTypeId: string;
   correspondenceTypeName: string;
+  authorityDivisionId: string | null;
+  authorityDivisionName: string | null;
   regulatoryApplicationId: string | null;
   regulatoryApplicationName: string | null;
   regulatoryApplicationNumber: string | null;

@@ -32,10 +32,18 @@ public sealed class GetCorrespondenceHandler
                 t => t.Id,
                 (x, t) => new { x.Correspondence, x.Authority, Type = t })
             .GroupJoin(
+                _dbContext.AuthorityDivisions.AsNoTracking(),
+                x => x.Correspondence.AuthorityDivisionId,
+                d => d.Id,
+                (x, divisions) => new { x.Correspondence, x.Authority, x.Type, Divisions = divisions })
+            .SelectMany(
+                x => x.Divisions.DefaultIfEmpty(),
+                (x, division) => new { x.Correspondence, x.Authority, x.Type, Division = division })
+            .GroupJoin(
                 _dbContext.RegulatoryApplications.AsNoTracking(),
                 x => x.Correspondence.RegulatoryApplicationId,
                 a => a.Id,
-                (x, applications) => new { x.Correspondence, x.Authority, x.Type, Applications = applications })
+                (x, applications) => new { x.Correspondence, x.Authority, x.Type, x.Division, Applications = applications })
             .SelectMany(
                 x => x.Applications.DefaultIfEmpty(),
                 (x, application) => new CorrespondenceDetail(
@@ -50,6 +58,8 @@ public sealed class GetCorrespondenceHandler
                     x.Authority.Name,
                     x.Type.Id.Value,
                     x.Type.Name,
+                    x.Division != null ? x.Division.Id.Value : (Guid?)null,
+                    x.Division != null ? x.Division.Name : null,
                     application != null ? application.Id.Value : null,
                     application != null ? application.Name : null,
                     application != null ? application.ApplicationNumber : null,

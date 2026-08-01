@@ -161,6 +161,7 @@ referenceData.MapGetRegulatoryTemplate();
 referenceData.MapListIdentifierSchemes();
 referenceData.MapListContactRoles();
 referenceData.MapListCorrespondenceTypes();
+referenceData.MapListAuthorityDivisions();
 
 var authentication = app.MapGroup("").WithTags("Authentication");
 authentication.MapLogin();

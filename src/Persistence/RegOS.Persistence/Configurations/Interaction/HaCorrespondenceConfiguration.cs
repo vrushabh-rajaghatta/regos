@@ -48,6 +48,11 @@ public sealed class HaCorrespondenceConfiguration
                 value => new CorrespondenceTypeId(value))
             .IsRequired();
 
+        builder.Property(x => x.AuthorityDivisionId)
+            .HasConversion(
+                id => id!.Value.Value,
+                value => new AuthorityDivisionId(value));
+
         builder.Property(x => x.Direction)
             .HasConversion<int>()
             .IsRequired();
@@ -98,6 +103,11 @@ public sealed class HaCorrespondenceConfiguration
         builder.HasOne<CorrespondenceTypeEntity>()
             .WithMany()
             .HasForeignKey(x => x.CorrespondenceTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<AuthorityDivision>()
+            .WithMany()
+            .HasForeignKey(x => x.AuthorityDivisionId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
