@@ -6,6 +6,24 @@ export interface CorrespondenceAttachmentSummary {
   uploadedOnUtc: string;
 }
 
+export interface QuestionHistoryEntry {
+  status: string;
+  occurredOn: string;
+  recordedOnUtc: string;
+  note: string | null;
+}
+
+export interface CorrespondenceQuestionSummary {
+  questionId: string;
+  number: string;
+  text: string;
+  targetResponseOn: string | null;
+  responseText: string | null;
+  currentStatus: string;
+  respondedOn: string | null;
+  history: QuestionHistoryEntry[];
+}
+
 export interface CorrespondenceDetail {
   correspondenceId: string;
   direction: string;
@@ -26,4 +44,5 @@ export interface CorrespondenceDetail {
   submissionId: string | null;
   registrationId: string | null;
   attachments: CorrespondenceAttachmentSummary[];
+  questions: CorrespondenceQuestionSummary[];
 }

@@ -1,7 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Interaction.Application.Commands.AttachCorrespondenceContent;
+using RegOS.Interaction.Application.Commands.RaiseQuestion;
 using RegOS.Interaction.Application.Commands.RecordCorrespondence;
+using RegOS.Interaction.Application.Commands.ResolveQuestion;
+using RegOS.Interaction.Application.Commands.RespondToQuestion;
 using RegOS.Interaction.Application.Commands.RemoveCorrespondenceContent;
 using RegOS.Interaction.Application.Queries.GetCorrespondenceContent;
 using RegOS.Interaction.Application.Queries.GetCorrespondence;
@@ -21,6 +24,12 @@ public static class DependencyInjection
         services.AddScoped<RemoveCorrespondenceContentHandler>();
 
         services.AddScoped<GetCorrespondenceContentHandler>();
+
+        services.AddScoped<RaiseQuestionHandler>();
+
+        services.AddScoped<RespondToQuestionHandler>();
+
+        services.AddScoped<ResolveQuestionHandler>();
 
         services.AddScoped<ListCorrespondenceHandler>();
 

@@ -265,6 +265,9 @@ correspondence.MapGetCorrespondence();
 correspondence.MapAttachCorrespondenceContent();
 correspondence.MapDownloadCorrespondenceContent();
 correspondence.MapRemoveCorrespondenceContent();
+correspondence.MapRaiseQuestion();
+correspondence.MapRespondToQuestion();
+correspondence.MapResolveQuestion();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

@@ -46,6 +46,7 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
     public const int ReferenceMaxLength = 100;
 
     private readonly List<CorrespondenceAttachment> _attachments = [];
+    private readonly List<HaQuestion> _questions = [];
 
     // Parameterized private constructor and no parameterless one — EF binds by
     // parameter name, which keeps every non-optional field non-nullable.
@@ -132,6 +133,14 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
     /// </summary>
     public IReadOnlyCollection<CorrespondenceAttachment> Attachments
         => _attachments.AsReadOnly();
+
+    /// <summary>
+    /// The questions raised inside this letter. Mutated only through the root:
+    /// a question is a child, and there is no path to one that does not go via
+    /// the letter it arrived in.
+    /// </summary>
+    public IReadOnlyCollection<HaQuestion> Questions
+        => _questions.AsReadOnly();
 
     public static HaCorrespondence Record(
         TenantId tenantId,
@@ -263,6 +272,64 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
 
         return attachment;
     }
+
+    /// <summary>
+    /// Raises a question under this letter. The number is the authority's, and
+    /// is unique within the letter — two questions numbered 3 in one letter is
+    /// a transcription error, not a business case.
+    /// </summary>
+    public HaQuestion RaiseQuestion(
+        string number,
+        string text,
+        DateOnly? targetResponseOn = null,
+        DateOnly? raisedOn = null)
+    {
+        var trimmedNumber = number?.Trim() ?? string.Empty;
+
+        if (_questions.Any(x =>
+                string.Equals(x.Number, trimmedNumber, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new BusinessRuleViolationException(
+                HaCorrespondenceErrors.QuestionNumberNotUnique);
+        }
+
+        // A question is raised on the date of the letter unless told otherwise
+        // — it arrived with it.
+        var question = new HaQuestion(
+            HaQuestionId.New(),
+            number!,
+            text,
+            targetResponseOn,
+            raisedOn ?? OccurredOn);
+
+        _questions.Add(question);
+
+        return question;
+    }
+
+    public void RespondToQuestion(
+        HaQuestionId questionId,
+        string responseText,
+        DateOnly occurredOn,
+        string? note = null)
+        => Question(questionId).Respond(responseText, occurredOn, note);
+
+    public void ResolveQuestion(
+        HaQuestionId questionId,
+        DateOnly occurredOn,
+        string? note = null)
+        => Question(questionId).Resolve(occurredOn, note);
+
+    public void AmendQuestion(
+        HaQuestionId questionId,
+        string number,
+        string text,
+        DateOnly? targetResponseOn)
+        => Question(questionId).Amend(number, text, targetResponseOn);
+
+    private HaQuestion Question(HaQuestionId questionId)
+        => _questions.SingleOrDefault(x => x.Id == questionId)
+            ?? throw new NotFoundException(HaCorrespondenceErrors.QuestionNotFound);
 
     private static string Validated(string subject)
     {

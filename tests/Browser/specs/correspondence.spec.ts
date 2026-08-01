@@ -318,6 +318,94 @@ test.describe("Correspondence content", () => {
   });
 });
 
+test.describe("Questions inside a letter", () => {
+  test("a question is raised, answered, accepted — and its history reads back on the page", async ({
+    page,
+  }) => {
+    const errors = collectErrors(page);
+    const unique = Date.now();
+    const subject = `Information request ${unique}`;
+
+    const correspondenceId = await recordLetter(subject);
+    await page.goto(`/regulatory/correspondence/${correspondenceId}`);
+
+    await expect(
+      page.getByTestId("correspondence-questions-empty")
+    ).toBeVisible();
+
+    // --- raise ------------------------------------------------------------
+    await page.getByRole("button", { name: "Raise question" }).click();
+    await page.getByLabel("Number, as the letter gives it").fill("3a");
+    await page
+      .getByLabel("What they asked")
+      .fill(`Justify the stability data ${unique}`);
+    await page.getByLabel("Our target response date (optional)").fill("2026-04-15");
+    await page.getByRole("button", { name: "Raise" }).click();
+
+    await expect(page.getByTestId("correspondence-question")).toHaveCount(1);
+    await expect(page.getByText("target 2026-04-15")).toBeVisible();
+
+    // --- answer -----------------------------------------------------------
+    await page.getByLabel("Our answer").fill("See section 3.2.P.5.");
+    await page.getByLabel("Sent on").fill("2026-04-10");
+    await page.getByRole("button", { name: "Record answer" }).click();
+
+    await expect(page.getByText("See section 3.2.P.5.")).toBeVisible();
+    await expect(page.getByText("answered 2026-04-10")).toBeVisible();
+
+    // --- accepted ---------------------------------------------------------
+    // Weeks later, and the gap is the point: Responded is us, Resolved is
+    // them. Collapsing the two would lose exactly the period a regulatory team
+    // is anxious about.
+    await page.getByLabel("Accepted on").fill("2026-05-30");
+    await page.getByRole("button", { name: "Mark resolved" }).click();
+
+    // --- the history is READ BACK on the same page ------------------------
+    // testing.md principle 8. EPIC-017 S003 shipped a history that was written
+    // correctly and readable nowhere; this is the story that would repeat it.
+    const history = page.getByTestId("question-history");
+    await expect(history).toBeVisible();
+    await expect(history.getByText("Open")).toBeVisible();
+    await expect(history.getByText("Responded")).toBeVisible();
+    await expect(history.getByText("Resolved")).toBeVisible();
+
+    expect(errors()).toEqual([]);
+  });
+
+  test("the API refuses a history that goes backwards", async () => {
+    const correspondenceId = await recordLetter(`Chronology ${Date.now()}`);
+
+    const raised = await api(
+      `/api/correspondence/${correspondenceId}/questions`,
+      {
+        method: "POST",
+        body: JSON.stringify({ number: "1", text: "Clarify." }),
+      }
+    );
+
+    expect(raised.status).toBe(201);
+    const questionId = (await raised.json()).id;
+
+    // The letter is dated 2026-03-01; answering it in February is not a late
+    // entry, it is a wrong one.
+    const response = await api(
+      `/api/correspondence/${correspondenceId}/questions/${questionId}/response`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          responseText: "Answer",
+          occurredOn: "2026-02-01",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(400);
+
+    const problem = await response.json();
+    expect(problem.detail).toContain("cannot go backwards");
+  });
+});
+
 async function recordLetter(subject: string): Promise<string> {
   const authorities = await (await api("/master-data/authorities")).json();
   const types = await (

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using RegOS.Interaction.Domain.Correspondence;
 using RegOS.Persistence;
 using RegOS.SharedKernel.Exceptions;
 
@@ -77,6 +78,31 @@ public sealed class GetCorrespondenceHandler
                             a.ContentType,
                             a.FileSizeBytes,
                             a.UploadedOnUtc))
+                        .ToList(),
+                    x.Correspondence.Questions
+                        .OrderBy(q => q.Number)
+                        .Select(q => new CorrespondenceQuestionSummary(
+                            q.Id.Value,
+                            q.Number,
+                            q.Text,
+                            q.TargetResponseOn,
+                            q.ResponseText,
+                            q.CurrentStatus.ToString(),
+                            // Derived from the history, never stored — the
+                            // same call LaunchedOn made one epic ago.
+                            q.History
+                                .Where(h => h.Status == HaQuestionStatus.Responded)
+                                .Select(h => (DateOnly?)h.OccurredOn)
+                                .FirstOrDefault(),
+                            q.History
+                                .OrderBy(h => h.OccurredOn)
+                                .ThenBy(h => h.RecordedOnUtc)
+                                .Select(h => new QuestionHistoryEntry(
+                                    h.Status.ToString(),
+                                    h.OccurredOn,
+                                    h.RecordedOnUtc,
+                                    h.Note))
+                                .ToList()))
                         .ToList()))
             .SingleOrDefaultAsync(cancellationToken);
 

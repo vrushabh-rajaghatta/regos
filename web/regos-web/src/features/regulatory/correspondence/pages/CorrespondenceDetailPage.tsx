@@ -4,6 +4,7 @@ import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { CorrespondenceContent } from "../components/CorrespondenceContent";
+import { CorrespondenceQuestions } from "../components/CorrespondenceQuestions";
 import { ResponseDue } from "../components/ResponseDue";
 import { directionLabel } from "../constants/correspondenceDirections";
 import { useCorrespondence } from "../hooks/useCorrespondence";
@@ -13,7 +14,7 @@ import { useCorrespondence } from "../hooks/useCorrespondence";
  *
  * There is no status here, and there is not meant to be: a letter that has been
  * received does not change (ADR-040 decision 4). Its content arrived in S002;
- * questions attach in S003.
+ * its questions in S003.
  */
 export function CorrespondenceDetailPage() {
   const { correspondenceId } = useParams();
@@ -143,6 +144,11 @@ export function CorrespondenceDetailPage() {
       <CorrespondenceContent
         correspondenceId={letter.correspondenceId}
         attachments={letter.attachments}
+      />
+
+      <CorrespondenceQuestions
+        correspondenceId={letter.correspondenceId}
+        questions={letter.questions}
       />
     </Page>
   );

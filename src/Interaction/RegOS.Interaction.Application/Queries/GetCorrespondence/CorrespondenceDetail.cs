@@ -28,7 +28,26 @@ public sealed record CorrespondenceDetail(
     string? RegulatoryApplicationNumber,
     Guid? SubmissionId,
     Guid? RegistrationId,
-    IReadOnlyList<CorrespondenceAttachmentSummary> Attachments);
+    IReadOnlyList<CorrespondenceAttachmentSummary> Attachments,
+    IReadOnlyList<CorrespondenceQuestionSummary> Questions);
+
+/// <summary>One question, with the history it has accumulated.</summary>
+public sealed record CorrespondenceQuestionSummary(
+    Guid QuestionId,
+    string Number,
+    string Text,
+    DateOnly? TargetResponseOn,
+    string? ResponseText,
+    string CurrentStatus,
+    DateOnly? RespondedOn,
+    IReadOnlyList<QuestionHistoryEntry> History);
+
+/// <summary>One dated point in a question's history.</summary>
+public sealed record QuestionHistoryEntry(
+    string Status,
+    DateOnly OccurredOn,
+    DateTime RecordedOnUtc,
+    string? Note);
 
 /// <summary>One attached file, as the page lists it.</summary>
 public sealed record CorrespondenceAttachmentSummary(

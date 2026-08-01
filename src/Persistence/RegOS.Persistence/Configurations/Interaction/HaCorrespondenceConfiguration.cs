@@ -143,6 +143,77 @@ public sealed class HaCorrespondenceConfiguration
 
         builder.Navigation(x => x.Attachments).AutoInclude();
 
+        // The third near-identical owned-collection block in the codebase, and
+        // the second in this one file. This — not the entry type — is where the
+        // duplication that actually costs maintenance lives; see the S003
+        // extraction review.
+        builder.OwnsMany(x => x.Questions, question =>
+        {
+            question.ToTable("HaQuestions");
+
+            question.WithOwner().HasForeignKey("HaCorrespondenceId");
+
+            question.HasKey(x => x.Id);
+
+            question.Property(x => x.Id)
+                .HasColumnName("Id")
+                .HasConversion(
+                    id => id.Value,
+                    value => HaQuestionId.From(value));
+
+            question.Property(x => x.Number)
+                .HasMaxLength(HaQuestion.NumberMaxLength)
+                .IsRequired();
+
+            question.Property(x => x.Text)
+                .HasMaxLength(HaQuestion.TextMaxLength)
+                .IsRequired();
+
+            question.Property(x => x.TargetResponseOn);
+
+            question.Property(x => x.ResponseText)
+                .HasMaxLength(HaQuestion.ResponseMaxLength);
+
+            question.Property(x => x.CurrentStatus)
+                .HasConversion<int>()
+                .IsRequired();
+
+            question.Ignore(x => x.RespondedOn);
+
+            question.HasIndex("HaCorrespondenceId");
+
+            question.OwnsMany(x => x.History, entry =>
+            {
+                entry.ToTable("HaQuestionStatusEntries");
+
+                entry.WithOwner().HasForeignKey("HaQuestionId");
+
+                entry.HasKey(x => x.Id);
+
+                entry.Property(x => x.Id)
+                    .HasColumnName("Id")
+                    .HasConversion(
+                        id => id.Value,
+                        value => new HaQuestionStatusEntryId(value));
+
+                entry.Property(x => x.Status)
+                    .HasConversion<int>()
+                    .IsRequired();
+
+                entry.Property(x => x.OccurredOn).IsRequired();
+                entry.Property(x => x.RecordedOnUtc).IsRequired();
+
+                entry.Property(x => x.Note)
+                    .HasMaxLength(HaQuestionStatusEntry.NoteMaxLength);
+
+                entry.HasIndex("HaQuestionId");
+            });
+
+            question.Navigation(x => x.History).AutoInclude();
+        });
+
+        builder.Navigation(x => x.Questions).AutoInclude();
+
         builder.HasOne<AuthorityDivision>()
             .WithMany()
             .HasForeignKey(x => x.AuthorityDivisionId)

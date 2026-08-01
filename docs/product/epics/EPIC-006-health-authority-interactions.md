@@ -1,6 +1,6 @@
 # EPIC-006 — Health-authority interactions
 
-**Status:** 🟡 In Progress — S001, S001a, S002 done; S003 next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress — S001, S001a, S002, S003 done; S004 next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Everything that passes between the sponsor and the authority **after** a filing — letters, questions, meetings, commitments, inspections. In headcount terms this is what a regulatory affairs team actually does all day, and today it lives in inboxes and spreadsheets.
 
@@ -608,6 +608,54 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
 
 ---
 
+## The S003 extraction review *(2026-08-01)*
+
+Occurrence three of the append-only history arrived. **The Rule of Three asks
+for three demonstrated consumers, not the third consumer**, so
+`HaQuestionStatusEntry` was written by hand and then measured. The verdict is
+**do not extract yet** — and the measurement matters more than the verdict,
+because it shows ADR-039 named the wrong target.
+
+### What was actually measured
+
+| Candidate | Real duplication | Cost of sharing | Verdict |
+|---|---|---|---|
+| **The entry type** | 3 × ~30 lines of code (the files are 63–77 lines, most of it doc comment). Field-for-field identical: `Id`, `Status`, `OccurredOn`, `RecordedOnUtc`, `Note`, `NoteMaxLength = 500`. | a generic over a strongly-typed status, as an **EF-owned entity** — awkward, and it buys ~60 lines | **not worth it** |
+| **The chronology rule** | `if (occurredOn < _history[^1].OccurredOn)` — **one line, three times, character-identical** | you cannot meaningfully extract one line | **nothing to extract** |
+| **The EF configuration** | `RegistrationStatusEntryConfiguration` 51 lines · `MarketStatusEntryConfiguration` 59 lines · the nested block in `HaCorrespondenceConfiguration` ~45 lines. **~155 lines, near-identical.** | a generic owned-collection configuration helper | **this is the real cost — and it is not yet large enough** |
+| **The tests** | **Not duplicated at all.** Each history's tests assert *domain* semantics: a registration cannot approve twice, a market can relaunch, a question cannot reopen. Only the chronology test repeats. | — | **evidence against a behavioural abstraction** |
+
+### What this falsifies
+
+ADR-039 decision 6's table named the shared part as *append-only entries,
+`OccurredOn`/`RecordedOnUtc`, current-value projection, chronology validation.*
+**Three of those four are one-liners or near-free.** The expensive duplication is
+**EF configuration**, which the table does not mention.
+
+The prediction was directionally right — there *is* a shared shape — and wrong
+about where the money is. Recorded here rather than by editing ADR-039, which is
+immutable; ADR-041 supersedes decision 6 if and when the extraction happens.
+
+**The test measurement is the strongest single result.** Had the three test
+suites converged, that would have argued for a behavioural abstraction — a
+`HistoryAggregate<TStatus>` or an `AppendHistory` helper. They did not converge,
+because the business meaning of each history genuinely differs. That is ADR-039
+decision 6's central claim confirmed from a direction it did not anticipate:
+**the shape generalises and the semantics do not**, and the tests are where you
+can see it.
+
+### When to revisit
+
+S004's `Commitment` and S005/S006's `HaMeeting` and `Inspection` bring the
+configuration count to **five copies of ~50 lines**. That is the point to
+extract a configuration helper — and *only* the configuration. The entry type
+and the chronology line may never earn it, and that is a legitimate outcome.
+
+> "History" may not be one reusable thing. On this evidence it is three smaller
+> ones, each earning extraction at a different time — and two of them may never.
+
+---
+
 ## Phase 3 — Stories *(approved 2026-08-01)*
 
 Seven vertical slices, in EPIC-017's cadence: **vocabulary → identity → local
@@ -622,7 +670,7 @@ The `S000` the sketch called for is gone — Phase 2 settled the vocabularies.
 | **S001** | ✅ **A letter, filed where it belongs** — the `Interaction` context, `HaCorrespondence` with direction, type, authority and nullable anchors; a list and its own page. **ADR-040.** | full slice |
 | **S001a** | **Who at the authority** — `AuthorityDivision` under `Authority`; correspondence gains the division that actually sent it | full slice |
 | **S002** | ✅ **The letter's content** — attachments; `IFileStorage` moves to `src/Storage`; decision 0 built | full slice |
-| **S003** | **The questions inside it** — `HaQuestion` with owner, due date, response and the epic's first dated history, rendered on the correspondence page | full slice |
+| **S003** | ✅ **The questions inside it** — `HaQuestion` with owner, due date, response and the epic's first dated history, rendered on the correspondence page | full slice |
 | **S004** | **What we promised** — `Commitment` from a question or standalone, dated history, its own page, **and the "what's due" view** | full slice |
 | **S005** | **Meetings** — request → grant → hold → minutes and outcome; the one transition table | full slice |
 | **S006** | **Inspections** — anchored to an `OrganizationSite`, dated history | full slice |
