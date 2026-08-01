@@ -91,6 +91,30 @@ EPIC-017 produced all three, and they behaved differently on purpose:
   of the decision it was attached to. A constraint outlives the solution it was
   first written beside; a decision that prescribes a solution does not.
 
+### Two kinds of hypothesis — label them
+
+*Added 2026-08-01, from EPIC-004.* Hypotheses divide by **what settles them**, and
+mixing the two makes a retro hard to read. Carry a `Type` column:
+
+| Type | Settled by | If it turns out wrong, you are |
+|---|---|---|
+| **Architecture** | building the model and seeing what it rejects — the evidence is in this repository | changing the design |
+| **Regulatory evidence** | a real filing, a seeded blueprint, a customer artefact | **updating evidence, not architecture** |
+
+*"`Append` is unexercised in FDA practice"* is not an architectural claim; a real
+sequence proving otherwise costs an enum value, not a model. *"The snapshot is the
+publication record"* is architectural; being wrong deletes an aggregate. Count
+them separately at the retro, and note that only the first kind is within the
+epic's power to resolve.
+
+A regulatory-evidence hypothesis still needs its milestone, and the strongest
+form names the **cost**, not the ignorance:
+
+> **Deferred because the cost of an incorrect assumption is first paid in
+> EPIC-007.**
+
+That is a justification. *"We don't know yet"* is a shrug.
+
 ### Applying it
 
 - **Phase 2** — when a shape recurs, ask whether you are making a decision or
