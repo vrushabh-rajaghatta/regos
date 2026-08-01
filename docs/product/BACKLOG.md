@@ -33,8 +33,9 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-*Nothing in flight.* EPIC-005 shipped on 2026-07-31; the next epic is the open
-call below.
+*Nothing in flight.* EPIC-016 and EPIC-017 both shipped; the next epic is the
+open call below — and a small maintenance epic is queued behind them (nine
+forms still carry the EPIC-016 mutation defect; see the EPIC-017 retro).
 
 ## Next
 
@@ -43,7 +44,7 @@ Three candidates, **planned to Phase 1 depth** (see [RIM alignment](#rim-alignme
 | ID | Epic | Status | Depends on |
 |---|---|---|---|
 | **EPIC-016** | **Organization depth** — sites, contacts, divisions; deepen Organization itself | ✅ **Complete** | ADR-038 · deactivation deferred with a reason → [`epics/EPIC-016-organization-depth.md`](epics/EPIC-016-organization-depth.md) |
-| **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier (**"Markets"** in the UI), + trade names and market status | 🟡 In Progress | S000 rename + S001 tier shipped; S002–S004 open → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
+| **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier (**"Markets"** in the UI), + trade names and market status | ✅ **Complete** | ADR-039 · seven stories, 7/7 DoD → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | ⚪ Not Started | EPIC-003 (placement makes a sequence a diff of placements, not an inference); S005 needs EPIC-016 → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
 
 > **Open call — EPIC-017 vs EPIC-004.** They are genuinely independent: sequences live inside `Submission` and never touch `ProductId`; the tier work never touches submission internals. Neither makes the other harder, so this is a **value** decision, not a dependency one. EPIC-017 completes an epic already in flight (EPIC-005's portfolio views currently answer *"what do we hold in Canada?"* with a global product code); EPIC-004 completes nothing in flight but may be what a customer is waiting on. **EPIC-016 goes first either way** — it blocks EPIC-006 and part of EPIC-004, and is blocked by nothing.

@@ -1,6 +1,6 @@
 # EPIC-017 — The market-local product tier
 
-**Status:** 🟡 In Progress · **Branch:** `epic/EPIC-017-market-local-product-tier` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** ✅ Complete · **Branch:** `epic/EPIC-017-market-local-product-tier` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 > **Vocabulary.** The aggregate is `MedicinalProduct`; the UI calls it a
 > **Market**. RIM's word keeps the model precise, the screen uses the word a
@@ -622,10 +622,145 @@ diff.
 
 ---
 
+### S005 — The portfolio answered properly *(shipped)*
+
+The capstone. **No new domain concepts** — it projects the model S000–S004 built
+and verifies the sentence the epic set out to be able to answer.
+
+**The DoD, as a test.** `TheMarketViewAnswersWhatDoWeHoldHereInOneRead` asserts
+that one row carries the product, every name it goes by there, whether it is on
+sale and since when, the licence, and how long it lasts.
+
+**The projection is denormalised across three aggregates on purpose.** Those
+facts do not belong together in the domain; they belong together in the
+*question*. That is what a read model is for, and it is the first read running
+`Registration → Product` — every earlier one ran the other way.
+
+> **ADR-039 principle 7 — writes remain owned; reads compose.** A read model may
+> project across bounded contexts to answer a user's question. Projection does
+> not imply write ownership, nor does it justify cross-aggregate invariants.
+> Recorded so that nobody later infers *"Registration reads Product, therefore
+> Product may validate Registration."*
+
+**All trade names, no primary.** An `IsPrimary` flag would be a new business
+concept dragging unanswered questions behind it — who chooses, must exactly one
+exist, can it differ by authority, what happens on import. None of those
+questions exist today. If a narrow row shows one name, that is presentation
+choosing, not the domain.
+
+**Retired markets are surfaced, never filtered.** The same call this query
+already made by not hiding withdrawn licences: *"what do we hold"* is not
+*"what is currently operational"*, and the operability flag already tells that
+story.
+
+**Only the market-centric view was enriched.** The product page answers *"where
+are we?"*; the market page answers *"tell me about Canada"*. Symmetry is not a
+reason to duplicate a projection.
+
+**A narrative browser proof.** `market-tier.spec.ts` walks the whole epic in the
+order a regulatory user lives it — global product, market entered, named in two
+languages, launched, licensed, granted — and ends on the portfolio row answering
+the question with all five facts. Then it withdraws the licence and shows the
+market **still reporting as launched**, because a surrendered authorisation does
+not take a product off a shelf. Every other spec proves one capability; this one
+proves they compose.
+
+**Two guidelines promoted, both on their third occurrence:**
+
+- **[accessible-names.md](../../engineering/accessible-names.md)** — duplicate
+  accessible names are wording defects first. Three collisions, three
+  improvements to the page: *Identifier* → *Identifier Value*, *Trade name in
+  Canada* → *Name in Canada*, *Launched* → *Launched on*.
+- **[testing.md](../../engineering/testing.md) Principle 8** — both halves of a
+  capability are reachable: *can perform → can observe*. RegOS has now shipped
+  each half without the other, in both directions.
+
+**Verification:** 917 backend tests (+2), 65 browser specs (+1), CORS widening
+reverted with no `Program.cs` diff.
+
+---
+
+## Retro
+
+**Definition of Done — 7/7.**
+
+| | |
+|---|---|
+| A `MedicinalProduct` exists per (product, country) and a `Registration` is created against it | ✅ S001 |
+| Every `ProductId` reference has an explicit, documented tier | ✅ the re-pointing table; only `Registration` moved |
+| One trade name per language, and a dated market-status history | ✅ S002, S003 |
+| *"What do we hold in Canada?"* returns trade name + market status + licence + expiry in one read | ✅ S005, asserted as a test |
+| EPIC-005 registration tests **re-pointed rather than rewritten** | ✅ every one kept its name and its subject |
+| Migration verified on a fresh database **and** a seeded one | ✅ and by rolling `Down` |
+| ADR written for the tier model and the re-pointing | ✅ [ADR-039](../../adr/ADR-039-the-market-local-product-tier.md) |
+
+### What the epic actually produced
+
+It set out to insert a tier. It finished having established a **cadence** —
+seven steps, each introducing exactly one durable concept:
+
+| | Step | Story |
+|---|---|---|
+| 1 | Vocabulary — before any behaviour | S000 |
+| 2 | Identity and ownership move to the right aggregate | S001 |
+| 3 | Local concepts | S002 |
+| 4 | Business history | S003 |
+| 5 | Operability, kept separate from it | S003a |
+| 6 | A first-class working surface | S004 |
+| 7 | Projection back into portfolio reads | S005 |
+
+**EPIC-018 (labels) and EPIC-010 (IDMP) should follow it**, attaching to the
+market's working surface rather than extending the product summary.
+
+### What went well
+
+- **Every story removed ambiguity rather than adding features.** The two largest
+  improvements — `Registration` losing `GlobalProductId`, and `LaunchDate`
+  becoming derived — were both *deletions* that followed from a rule already
+  agreed.
+- **Staging the ADR as decisions were made.** Nothing had to be reconstructed
+  from commits. A reader of the commits alone would not notice that reusing
+  `Planned` and refusing `Withdrawn` are the same decision.
+- **Two exemptions retired opportunistically** — SC-002's grandfathered list is
+  empty, and `detailOf` collapsed on the third consumer that its own second copy
+  had predicted.
+
+### What we learned the hard way
+
+- **Scaffolded migrations understand schema, not identity.** EF's S001 migration
+  was structurally valid and semantically catastrophic — it would have renamed
+  `GlobalProductId` to `MedicinalProductId` and left every registration pointing
+  at a row that does not exist. **Read every generated migration that touches an
+  existing column.**
+- **The chronology rule caught bad test data twice**, in S003 and again in S005:
+  a fixture created a market dated today and then tried to launch it in 2021.
+  Both read like defects and were the domain protecting itself. That is a
+  concrete argument for chronology living in the aggregate rather than in UI
+  validation — had it been the latter, the same fixture would have written
+  incoherent history straight past it.
+- **`VITE_API_BASE_URL`, not `VITE_API_URL`.** An hour lost to an isolated web
+  server silently pointing at the founder's API. The CORS policy refused the
+  preflight and nothing was written, but that was luck rather than design.
+- **Docker Desktop stopped mid-S003**, taking Postgres with it. Restarted, no
+  data lost.
+
+### Carried out of the epic
+
+**The EPIC-016 mutation defect is live in nine more forms** — users (2),
+products (3), applications, submissions, documents (2). `await mutateAsync`
+with no `catch`, so a refusal renders *and* escapes to the window. EPIC-016
+fixed six and wrote the rule; the sweep never ran outside that epic's slices.
+**Approved as a small maintenance epic after EPIC-017 lands** — the pattern,
+browser proof and rationale already exist, so what remains is mechanical and is
+worth keeping away from domain work.
+
+---
+
 ## ADR-039 — staged material
 
-Written as it was decided rather than reconstructed at the end. S004 lifts this
-section; nothing here needs to be re-derived from the commits.
+Written as it was decided rather than reconstructed at the end. **Lifted into
+[ADR-039](../../adr/ADR-039-the-market-local-product-tier.md) in S005** — kept
+here as the record of when each decision was actually taken.
 
 ### Decisions to record
 

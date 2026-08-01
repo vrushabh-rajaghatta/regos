@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
+using RegOS.Product.Application.Commands.AddTradeName;
+using RegOS.Product.Application.Commands.ChangeMarketStatus;
 using RegOS.Product.Application.Commands.CreateMedicinalProduct;
+using RegOS.Product.Application.Commands.DeactivateMedicinalProduct;
 using RegOS.Product.Domain.Product;
 using RegOS.Product.Infrastructure.Persistence;
 using RegOS.Product.Infrastructure.Services;
@@ -564,6 +567,84 @@ public sealed class RegistrationTests : IAsyncLifetime
     }
 
     /// <summary>
+    /// <b>The epic's Definition of Done, as a test.</b> <em>"What do we hold in
+    /// Canada?"</em> returns the product, what it is called there, whether it is
+    /// on sale, the licence and its expiry — in one read.
+    /// </summary>
+    /// <remarks>
+    /// The row is denormalised across three aggregates on purpose. Those facts
+    /// do not belong together in the domain; they belong together in the
+    /// question. Writes remain owned, reads compose (ADR-039 principle 7).
+    /// </remarks>
+    [Fact]
+    public async Task TheMarketViewAnswersWhatDoWeHoldHereInOneRead()
+    {
+        await using var ctx = New();
+        var globalProductId = await ProductAsync(ctx);
+
+        // Entered long ago, so the commercial history has room to run.
+        var market = await MarketAsync(
+            ctx, globalProductId, statusDate: new DateOnly(2019, 6, 1));
+
+        await NameAsync(market, "en", "Cardiolex");
+        await NameAsync(market, "fr", "Cardiolexe");
+        await OnSaleAsync(market, new DateOnly(2021, 3, 15));
+
+        var id = await CreateAsync(ctx, market, occurredOn: new DateOnly(2020, 1, 1));
+        await ApproveAsync(
+            id, "NDA-hold", new DateOnly(2021, 2, 8), new DateOnly(2031, 2, 8));
+
+        await using var check = New();
+        var row = (await new ListMarketRegistrationsHandler(check)
+            .HandleAsync(UnitedStates, default))!
+            .Single(x => x.RegistrationId == id.Value);
+
+        // What product.
+        row.ProductName.Should().NotBeNullOrWhiteSpace();
+        row.ProductCode.Should().NotBeNullOrWhiteSpace();
+
+        // What it is called there — every name, because there is no primary.
+        row.TradeNames.Should().Equal("Cardiolex", "Cardiolexe");
+
+        // Whether it is on sale, and since when.
+        row.MarketStatus.Should().Be(nameof(MarketStatus.Launched));
+        row.LaunchedOn.Should().Be(new DateOnly(2021, 3, 15));
+        row.MarketIsRetired.Should().BeFalse();
+
+        // The licence, and how long it lasts.
+        row.RegistrationNumber.Should().Be("NDA-hold");
+        row.Status.Should().Be(nameof(RegistrationStatus.Approved));
+        row.AuthorityName.Should().NotBeNullOrWhiteSpace();
+        row.HolderOrganizationName.Should().NotBeNullOrWhiteSpace();
+        row.ExpiresOn.Should().Be(new DateOnly(2031, 2, 8));
+        row.HasRunningValidity.Should().BeTrue();
+        row.DaysUntilExpiry.Should().BePositive();
+    }
+
+    /// <summary>
+    /// A retired market record is surfaced, never filtered — the same call this
+    /// query already makes by not hiding withdrawn licences. The question is
+    /// "what do we hold", not "what is currently operational".
+    /// </summary>
+    [Fact]
+    public async Task ARetiredMarketStillReportsWhatIsHeldThere()
+    {
+        await using var ctx = New();
+        var market = await ProductInUsAsync(ctx);
+        var id = await CreateAsync(ctx, market);
+
+        await RetireAsync(market);
+
+        await using var check = New();
+        var row = (await new ListMarketRegistrationsHandler(check)
+            .HandleAsync(UnitedStates, default))!
+            .Single(x => x.RegistrationId == id.Value);
+
+        row.MarketIsRetired.Should().BeTrue();
+        row.Status.Should().Be(nameof(RegistrationStatus.Planned));
+    }
+
+    /// <summary>
     /// "What do we hold" is not "what is currently marketable": a withdrawn
     /// authorisation is still part of the regulatory portfolio, so nothing is
     /// filtered away. Narrowing the view is the client's business.
@@ -830,10 +911,16 @@ public sealed class RegistrationTests : IAsyncLifetime
     /// The tier a licence is now granted over. Defaults to the US market
     /// because that is where the seeded FDA regulates.
     /// </summary>
+    /// <param name="statusDate">
+    /// When the market presence began — also the business date of its first
+    /// market-status entry, so anything recorded afterwards must come later. A
+    /// test with a commercial history to tell backdates this.
+    /// </param>
     private async Task<MedicinalProductId> MarketAsync(
         RegOSDbContext ctx,
         GlobalProductId globalProductId,
-        CountryId? countryId = null)
+        CountryId? countryId = null,
+        DateOnly? statusDate = null)
     {
         var handler = new CreateMedicinalProductHandler(
             new MedicinalProductPolicy(ctx),
@@ -842,7 +929,9 @@ public sealed class RegistrationTests : IAsyncLifetime
 
         var result = await handler.HandleAsync(
             new CreateMedicinalProductCommand(
-                globalProductId, countryId ?? UnitedStates, Today),
+                globalProductId,
+                countryId ?? UnitedStates,
+                statusDate ?? Today),
             default);
 
         _medicinalProductIds.Add(result.Id.Value);
@@ -853,6 +942,40 @@ public sealed class RegistrationTests : IAsyncLifetime
     /// <summary>A product with one market presence — the usual starting point.</summary>
     private async Task<MedicinalProductId> ProductInUsAsync(RegOSDbContext ctx)
         => await MarketAsync(ctx, await ProductAsync(ctx));
+
+    // The three Product-side facts the market view now composes with. Driven
+    // through that context's own handlers — this test project owns the data it
+    // mutates, whichever context wrote it.
+
+    private static async Task NameAsync(
+        MedicinalProductId market, string language, string name)
+    {
+        await using var ctx = New();
+
+        await new AddTradeNameHandler(new MedicinalProductRepository(ctx))
+            .HandleAsync(new AddTradeNameCommand(market, language, name), default);
+    }
+
+    private static async Task OnSaleAsync(
+        MedicinalProductId market, DateOnly on)
+    {
+        await using var ctx = New();
+
+        await new ChangeMarketStatusHandler(new MedicinalProductRepository(ctx))
+            .HandleAsync(
+                new ChangeMarketStatusCommand(market, MarketStatus.Launched, on),
+                default);
+    }
+
+    private static async Task RetireAsync(MedicinalProductId market)
+    {
+        await using var ctx = New();
+
+        await new DeactivateMedicinalProductHandler(
+                new MedicinalProductRepository(ctx))
+            .HandleAsync(
+                new DeactivateMedicinalProductCommand(market, Today), default);
+    }
 
     /// <summary>
     /// Each transition through its own context, the way a request would arrive —

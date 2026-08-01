@@ -7,11 +7,11 @@
 
 **Status:** Approved
 
-**Version:** 1.0
+**Version:** 1.1
 
 **Effective Date:** 2026-07-08
 
-**Last Reviewed:** 2026-07-08
+**Last Reviewed:** 2026-08-01
 
 **Next Review:** 2027-07-08
 
@@ -125,6 +125,36 @@ Two safeguards back the rule, and they do different jobs:
 
 Related: [ADR-019](../adr/ADR-019-testing-strategy.md) rule 1, which this
 principle strengthens.
+
+---
+
+## Principle 8 — Both Halves Of A Capability Are Reachable
+
+For every new business capability, ask two questions:
+
+1. **Can the user perform the action?**
+2. **Can the user then observe the business fact that action created?**
+
+A capability is not shipped until both are true. The question is symmetric on
+purpose, because RegOS has now shipped each half without the other:
+
+| | Missing half | Found |
+|---|---|---|
+| Milestone 1 | `Activate`/`Deactivate` existed on the aggregate; no endpoint reached them | EPIC-016, by inspection |
+| EPIC-016 S003 | Organization identity was modelled and unreachable | during the same epic |
+| EPIC-017 S003 | Market status history was **written on every change and readable nowhere** | EPIC-017 S004, when the row ran out of room |
+
+The third is the instructive one. Nothing was broken: the write worked, the
+data was correct, the tests passed. But the whole reason that history stores
+`OccurredOn` *and* `RecordedOnUtc` is so a reader can tell a backdated entry
+from a late one — and with no reader, the second timestamp was pure cost.
+
+**An unobservable fact is indistinguishable from a fact that was never
+recorded.** Write the observation surface in the same story, or say in the epic
+which story owns it.
+
+> Applies to reviews as much as to tests: *can perform → can observe* is short
+> enough to run against every story in your head.
 
 ---
 
@@ -277,6 +307,8 @@ Before considering a capability complete, verify:
 - [ ] Historical behavior remains preserved.
 - [ ] Architectural boundaries remain valid.
 - [ ] Every browser spec owns the entities it mutates (Principle 7).
+- [ ] Both halves of every new capability are reachable — the user can perform
+      the action *and* observe the fact it created (Principle 8).
 
 ---
 
@@ -284,4 +316,5 @@ Before considering a capability complete, verify:
 
 | Version | Date | Summary |
 |----------|------------|------------------------------------------|
+| 1.1 | 2026-08-01 | Principle 8 — both halves of a capability are reachable (EPIC-017 S005). |
 | 1.0 | 2026-07-08 | Initial approved version. |

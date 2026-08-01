@@ -7,9 +7,18 @@
  */
 export interface MarketRegistrationSummary {
   registrationId: string;
+  medicinalProductId: string;
   globalProductId: string;
   productCode: string;
   productName: string;
+  /** Every name it carries here, one per language. There is no primary. */
+  tradeNames: string[];
+  /** Whether it is on sale — not the licence's status, and not `marketIsRetired`. */
+  marketStatus: string;
+  /** Derived from the market's history, never stored. */
+  launchedOn: string | null;
+  /** Whether the market record is excluded from normal work. */
+  marketIsRetired: boolean;
   authorityId: string;
   authorityName: string;
   holderOrganizationName: string;

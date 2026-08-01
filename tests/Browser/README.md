@@ -56,18 +56,8 @@ Each was learned from a check that reported the wrong answer:
    refusal available.
 
 6. **Duplicate accessible names are wording defects first, test defects
-   second.** Within a dialog or form, interactive controls should have distinct
-   accessible names unless they deliberately represent the same logical
-   control. A Playwright strict-mode failure caused by two controls sharing a
-   name is reporting a UX problem: a screen reader cannot tell them apart
-   either, and the browser is simply the first thing that noticed.
+   second.** Fix the words, not the selector.
 
-   Fix the words, not the selector. It has happened twice, and both times the
-   page read better afterwards:
-
-   | Collided | Became |
-   |---|---|
-   | dialog *Record Identifier* · field *Identifier* | field → **Identifier Value** |
-   | dialog *Trade name in Canada* · field *Trade name* | dialog → **Name in Canada** |
-
-   A third occurrence earns a written guideline rather than a convention here.
+   It happened a third time in EPIC-017 S005, so this is now a written
+   guideline rather than a convention here:
+   **[docs/engineering/accessible-names.md](../../docs/engineering/accessible-names.md)**.

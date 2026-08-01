@@ -5,6 +5,7 @@ import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { useCountries } from "../../masterData/hooks/useCountries";
+import { marketStatusLabel } from "../../medicinalProducts/constants/marketStatuses";
 import { RegistrationExpiry } from "../components/RegistrationExpiry";
 import { RegistrationStatusBadge } from "../components/RegistrationStatusBadge";
 import { RegistrationStatusFilter } from "../components/RegistrationStatusFilter";
@@ -75,8 +76,13 @@ export function MarketRegistrationsPage() {
           <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm" data-testid="market-registrations">
               <thead className="bg-muted/50 text-left">
+                {/* The question this page exists to answer, column by column:
+                    what product, what it is called here, whether it is on
+                    sale, what licence covers it, and how long that lasts. */}
                 <tr>
                   <th className="px-4 py-2 font-medium">Product</th>
+                  <th className="px-4 py-2 font-medium">Called here</th>
+                  <th className="px-4 py-2 font-medium">On sale</th>
                   <th className="px-4 py-2 font-medium">Authority</th>
                   <th className="px-4 py-2 font-medium">Number</th>
                   <th className="px-4 py-2 font-medium">Holder</th>
@@ -103,7 +109,37 @@ export function MarketRegistrationsPage() {
                       <span className="ml-2 text-xs text-muted-foreground">
                         {row.productCode}
                       </span>
+
+                      {/* Surfaced, never filtered: "what do we hold" is not
+                          "what is currently operational". */}
+                      {row.marketIsRetired && (
+                        <span
+                          className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+                          data-testid="market-registration-retired"
+                        >
+                          Market retired
+                        </span>
+                      )}
                     </td>
+
+                    <td className="px-4 py-2" data-testid="registration-trade-names">
+                      {row.tradeNames.length > 0 ? (
+                        row.tradeNames.join(", ")
+                      ) : (
+                        <span className="text-muted-foreground">Not named</span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-2" data-testid="registration-market-status">
+                      {marketStatusLabel(row.marketStatus)}
+
+                      {row.launchedOn && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          since {row.launchedOn}
+                        </span>
+                      )}
+                    </td>
+
                     <td className="px-4 py-2">{row.authorityName}</td>
                     <td className="px-4 py-2">
                       {row.registrationNumber ?? (
