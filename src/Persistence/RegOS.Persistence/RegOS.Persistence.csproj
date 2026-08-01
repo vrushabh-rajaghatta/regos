@@ -9,6 +9,7 @@
     <ProjectReference Include="..\..\Submission\RegOS.Submission.Domain\RegOS.Submission.Domain.csproj" />
     <ProjectReference Include="..\..\ProductDocument\RegOS.ProductDocument.Domain\RegOS.ProductDocument.Domain.csproj" />
     <ProjectReference Include="..\..\Registration\RegOS.Registration.Domain\RegOS.Registration.Domain.csproj" />
+    <ProjectReference Include="..\..\Interaction\RegOS.Interaction.Domain\RegOS.Interaction.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

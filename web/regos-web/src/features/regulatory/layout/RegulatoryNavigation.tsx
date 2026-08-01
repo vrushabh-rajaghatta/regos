@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 const items = [
   "Products",
   "Registrations",
+  "Correspondence",
   "Submissions",
   "Organizations",
   "Sites",

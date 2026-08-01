@@ -26,6 +26,8 @@
     <ProjectReference Include="..\..\ProductDocument\RegOS.ProductDocument.Infrastructure\RegOS.ProductDocument.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Registration\RegOS.Registration.Application\RegOS.Registration.Application.csproj" />
     <ProjectReference Include="..\..\Registration\RegOS.Registration.Infrastructure\RegOS.Registration.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Interaction\RegOS.Interaction.Application\RegOS.Interaction.Application.csproj" />
+    <ProjectReference Include="..\..\Interaction\RegOS.Interaction.Infrastructure\RegOS.Interaction.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

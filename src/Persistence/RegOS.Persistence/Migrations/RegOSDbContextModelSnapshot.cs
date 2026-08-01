@@ -22,6 +22,67 @@ namespace RegOS.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("RegOS.Interaction.Domain.Correspondence.HaCorrespondence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AuthorityReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("CorrespondenceTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("OccurredOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("RecordedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RegistrationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RegulatoryApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ResponseDueOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid?>("SubmissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityId");
+
+                    b.HasIndex("CorrespondenceTypeId");
+
+                    b.HasIndex("RegulatoryApplicationId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "OccurredOn");
+
+                    b.HasIndex("TenantId", "ResponseDueOn");
+
+                    b.ToTable("HaCorrespondence", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1178,6 +1239,32 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Authorities", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("CorrespondenceTypes", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.ReferenceData.Domain.SubmissionType.SubmissionType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1470,6 +1557,21 @@ namespace RegOS.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("SubmissionDocuments", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Interaction.Domain.Correspondence.HaCorrespondence", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType", null)
+                        .WithMany()
+                        .HasForeignKey("CorrespondenceTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>

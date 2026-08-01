@@ -1,6 +1,6 @@
 # EPIC-006 — Health-authority interactions
 
-**Status:** ⚪ Not Started · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress — S001 done, S001a next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Everything that passes between the sponsor and the authority **after** a filing — letters, questions, meetings, commitments, inspections. In headcount terms this is what a regulatory affairs team actually does all day, and today it lives in inboxes and spreadsheets.
 
@@ -506,8 +506,39 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
    tests: due-date proximity, the commitment's authority, a question's days
    overdue, and the correspondence anchor. Confirmed only if the epic lands there
    **without being told to**. Earns a place in ADR-040 if so.
-3. **ADR-038's division prediction.** `OrganizationDivisionId` gets its first
-   holder in S001, or that root's justification never materialised.
+3. ~~**ADR-038's division prediction.** `OrganizationDivisionId` gets its first
+   holder in S001, or that root's justification never materialised.~~
+   **RESOLVED 2026-08-01 — falsified, before S001 was written.**
+
+   `OrganizationDivision`'s own doc comment named this epic as its justification:
+   *"the authority division that reviews a submission… EPIC-006 will point an
+   Application, a Licence and an HA Meeting at this division."* It cannot.
+
+   `Authority` is **ReferenceData** — global, seeded. `OrganizationDivision` and
+   `Contact` hang off **`Organization`** — tenant-owned — and `OrganizationType`
+   is `Manufacturer`, `Sponsor`, `MarketingAuthorizationHolder`,
+   `ContractResearchOrganization`. **There is no way to express "FDA" as an
+   `Organization`**, so an FDA division and an FDA reviewer are both
+   unrepresentable today.
+
+   Widening `OrganizationType` was considered and rejected: it would produce
+   *FDA (reference data)* and *FDA (tenant organization)* — a canonical world
+   fact duplicated across a boundary, which ADR-039 decision 1 forbids and which
+   would regress the ADR-030/032 split.
+
+   > **The two divisions share a name and not an identity.** One describes
+   > regulators; the other describes companies. Different universes.
+
+   So `HaCorrespondence` carries **no** `OrganizationDivisionId` — *better no
+   field than a misleading one*. The prediction fails in the form ADR-038 wrote
+   it. It may still be redeemed narrowly if the **sponsor-side** division earns a
+   reference on a meeting (S005); that is a separate, weaker claim and is not
+   assumed.
+
+   **The process gets the credit, not the reviewer.** Phase 2 asked what a user
+   needs to file, find and understand a letter. Had it started from the entity
+   list, `OrganizationDivisionId` would have been wired in *because it already
+   existed*.
 4. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
    "status" of an object is really derived from related objects or dates, the
    object may be an event rather than a lifecycle.* `HaCorrespondence` is the
@@ -527,7 +558,8 @@ The `S000` the sketch called for is gone — Phase 2 settled the vocabularies.
 
 | # | Story | Slice |
 |---|---|---|
-| **S001** | **A letter, filed where it belongs** — `HaCorrespondence` with direction, type, authority, division, contact and nullable anchors; a list and its own page | full slice |
+| **S001** | ✅ **A letter, filed where it belongs** — the `Interaction` context, `HaCorrespondence` with direction, type, authority and nullable anchors; a list and its own page. **ADR-040.** | full slice |
+| **S001a** | **Who at the authority** — `AuthorityDivision` under `Authority`; correspondence gains the division that actually sent it | full slice |
 | **S002** | **The letter's content** — attachments; `IFileStorage` moves to `src/Storage`; decision 0 built | full slice |
 | **S003** | **The questions inside it** — `HaQuestion` with owner, due date, response and the epic's first dated history, rendered on the correspondence page | full slice |
 | **S004** | **What we promised** — `Commitment` from a question or standalone, dated history, its own page, **and the "what's due" view** | full slice |
@@ -541,5 +573,18 @@ EPIC-017's tier insertion — no migration of existing rows, no re-pointing of
 foreign keys. If it does sprawl, the fracture line is **after S004**: S001–S004
 is the daily work and ships alone.
 
-**ADR-040 — *the health-authority interaction cluster is one bounded context***,
-written at S007 and carrying the resolution of every hypothesis above.
+**ADR-040 — *the health-authority interaction cluster is one bounded context*,
+written at S001, not S007.** CLAUDE.md requires an ADR *before* a new bounded
+context, and `src/Interaction/` is created in S001 — waiting until the capstone
+would invert what an ADR is for. It covers the context boundary, why this is not
+`Product` or `Registration`, why correspondence owns its own content, and why
+storage is shared infrastructure rather than shared domain. S007 appends the
+hypothesis outcomes and the retro observations, the way ADR-039 was staged.
+
+> **S001a exists because S001 found a contradiction, not a missing field.**
+> *"Which FDA office sent it?"* turned out to require reference-data modelling,
+> seeded hierarchies and a governance question — enough design to deserve its own
+> story. And its two questions are deliberately asked in order: **what is an
+> authority division** first, **who may define one** second. Answer the domain
+> question before the governance question; seeded-only may well be sufficient
+> until EPIC-012.

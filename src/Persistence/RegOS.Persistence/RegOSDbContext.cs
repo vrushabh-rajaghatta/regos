@@ -26,6 +26,10 @@ using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using RegistrationAggregate =
     RegOS.Registration.Domain.Aggregates.Registration.Registration;
+using HaCorrespondenceAggregate =
+    RegOS.Interaction.Domain.Correspondence.HaCorrespondence;
+using CorrespondenceTypeAggregate =
+    RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType;
 using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
 using TenantAggregate =
@@ -126,6 +130,20 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<SubmissionSnapshotAggregate> SubmissionSnapshots =>
         Set<SubmissionSnapshotAggregate>();
+
+    /// <summary>
+    /// Correspondence with a health authority. Tenant-owned and fail-closed,
+    /// like every other record of what the business did (ADR-031).
+    /// </summary>
+    public DbSet<HaCorrespondenceAggregate> HaCorrespondence =>
+        Set<HaCorrespondenceAggregate>();
+
+    /// <summary>
+    /// The correspondence vocabulary. A global world fact, so no filter —
+    /// the third of ADR-038's three filter shapes.
+    /// </summary>
+    public DbSet<CorrespondenceTypeAggregate> CorrespondenceTypes =>
+        Set<CorrespondenceTypeAggregate>();
 
     public DbSet<RegistrationAggregate> Registrations =>
         Set<RegistrationAggregate>();
@@ -252,6 +270,9 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<ProductDocumentAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<HaCorrespondenceAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegistrationAggregate>().HasQueryFilter(

@@ -32,6 +32,8 @@ import { OrganizationOverviewPage } from "@/features/regulatory/organizations/pa
 import { OrganizationDivisionsPage } from "@/features/regulatory/organizations/pages/OrganizationDivisionsPage";
 import { OrganizationSitesPage } from "@/features/regulatory/organizations/pages/OrganizationSitesPage";
 import { OrganizationContactsPage } from "@/features/regulatory/organizations/pages/OrganizationContactsPage";
+import { CorrespondencePage } from "@/features/regulatory/correspondence/pages/CorrespondencePage";
+import { CorrespondenceDetailPage } from "@/features/regulatory/correspondence/pages/CorrespondenceDetailPage";
 import { OrganizationsPage } from "@/features/regulatory/organizations/pages/OrganizationsPage";
 import { SiteDirectoryPage } from "@/features/regulatory/organizations/pages/SiteDirectoryPage";
 import { ContactDirectoryPage } from "@/features/regulatory/organizations/pages/ContactDirectoryPage";
@@ -292,6 +294,23 @@ export const router = createBrowserRouter([
               // platform administration. They lived under /platform until
               // EPIC-016 S004, a leftover of the ADR-015 model where an
               // organization *was* the tenant. Tenants and Users stayed behind.
+              // Correspondence is a tenant-wide list, a sibling of Products
+              // and Organizations rather than a child of an application: the
+              // question "what came in this week?" precedes knowing which
+              // application a letter was about.
+              {
+                path: "correspondence",
+                children: [
+                  {
+                    index: true,
+                    element: <CorrespondencePage />,
+                  },
+                  {
+                    path: ":correspondenceId",
+                    element: <CorrespondenceDetailPage />,
+                  },
+                ],
+              },
               {
                 path: "organizations",
                 children: [
