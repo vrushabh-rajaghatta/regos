@@ -506,4 +506,86 @@ because the *fixture* created markets dated today and then tried to launch them
 in 2021 — the chronology rule refusing bad test data, not a defect. The domain
 tests, which backdate properly, passed throughout and localised it immediately.
 
+> **Keep this in the retro.** The fixture asked the system to *launch something
+> before it existed*, and the domain refused. That is not a nuisance; it is
+> evidence the chronology rule lives where it belongs. Had it been UI
+> validation, the same fixture would have written incoherent history straight
+> past it and the tests would have passed.
+
+---
+
+## ADR-039 — staged material
+
+Written as it was decided rather than reconstructed at the end. S004 lifts this
+section; nothing here needs to be re-derived from the commits.
+
+### Decisions to record
+
+| # | Decision | Where it was made |
+|---|---|---|
+| 1 | The tier exists, and **`Registration` names only `MedicinalProduct`** — not the global product, not the country | S001 |
+| 2 | **No uniqueness on (global product, country)**, which is what makes resolve-or-create impossible rather than merely unwise | S001 |
+| 3 | **`Registration` is intentionally the authorisation root** for now; a separate `MarketingAuthorization` aggregate is unnecessary unless the domain reveals a clear distinction | Phase 2, Amendment C |
+| 4 | **`LanguageCode` is a value object**, not a governed reference-data aggregate | S002 |
+| 5 | **Only the history *shape* generalises**, never the transition graph | S003 |
+| 6 | **Uniqueness on (market, language)** is the deliberate opposite of decision 2 — alternative labels vs distinct business objects | S002 |
+
+### The vocabulary rule this epic established
+
+> **Never reuse a word for two concepts — but reusing a word for one concept
+> across tiers is correct, and preserves the vocabulary rather than diluting it.**
+>
+> `Planned` appears on both `RegistrationStatus` and `MarketStatus` and means
+> the same thing at each: *intended, not yet actual*. `Withdrawn` was refused at
+> the market tier for the opposite reason — it would have meant *authorisation
+> surrendered* on one row and *commercial availability ceased* on the row beside
+> it, and the portfolio views show both at once.
+>
+> This is a naming principle, not a fact about market status. It applies to
+> every tier this model grows.
+
+A corollary worth stating: an initial state whose meaning is **already consumed
+by having moved on** needs no rule forbidding return to it. `Planned` cannot be
+re-entered because a market already entered cannot be intended; `NotLaunched`
+would have needed that written down instead. **Prefer the word whose semantics
+enforce the constraint.**
+
+### The extraction criterion for EPIC-006
+
+When the third, fourth and fifth append-only status histories arrive
+(authority question, commitment, inspection, meeting), the shared abstraction is
+**not** `StatusHistory`. The line runs between shape and semantics:
+
+| Shared | Owned by each concept |
+|---|---|
+| append-only entries | permitted transitions |
+| `OccurredOn` / `RecordedOnUtc` | initial status |
+| current-value projection | terminal statuses |
+| chronology validation | business meaning of each state |
+
+`RegistrationStatusEntry` and `MarketStatusEntry` are kept **identical** — field
+for field, table for table, configuration for configuration — precisely so that
+extraction is mechanical. `RegistrationLifecycle` has no counterpart at all, and
+that absence is the evidence for where the boundary sits.
+
+### Principles established
+
+Not observations about EPIC-017 — principles the next epics inherit.
+
+1. **Market identity is explicit.** `MedicinalProduct` is the authoritative
+   owner of market-specific identity; downstream aggregates derive market and
+   product context from it rather than duplicating those facts.
+2. **Persist facts, derive interpretation.** Historical events are stored once;
+   values such as launch date are projections over history, not independently
+   persisted state. (Restates ADR-037 with a second demonstration.)
+3. **Reuse shapes, not semantics.** Shared infrastructure may emerge for
+   append-only bitemporal histories, but lifecycle transition rules remain owned
+   by each domain concept.
+4. **Model the demonstrated business concept.** Introduce the smallest
+   abstraction the domain currently requires — `LanguageCode` rather than a
+   governed `Language` reference model — and record what would falsify that.
+
+Expected to guide **EPIC-006** (principle 3), **EPIC-010** and **EPIC-018**
+(principles 1 and 4), and **EPIC-020**.
+
 **Sequencing note:** this epic and **EPIC-004** are genuinely independent — sequences live inside `Submission` and never touch `ProductId`; this never touches submission internals. Neither makes the other harder. Order is a **value call**: this one completes an epic already in flight (EPIC-005); EPIC-004 completes nothing in flight but may be what a customer is waiting on.
