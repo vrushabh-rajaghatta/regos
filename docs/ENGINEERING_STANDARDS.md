@@ -134,3 +134,107 @@ All developers and CI environments should build RegOS using the same SDK version
 ## ES-019 — Initializers Are Additive and Idempotent
 
 > Every `IDataInitializer` has a single responsibility: ensure its capability has the minimum required platform-owned data. Initializers must be additive and idempotent — never deleting or overwriting existing customer data, and safe to run on every application startup. As RegOS grows, startup remains a simple loop over registered initializers, and each capability bootstraps itself independently without special orchestration logic.
+
+---
+
+## ES-020 — Entity Identity Derives From `StronglyTypedId`
+
+> Every entity and aggregate identity is a `sealed class <X>Id : StronglyTypedId`
+> ([SharedKernel/Primitives/StronglyTypedId.cs](../src/Shared/RegOS.SharedKernel/Primitives/StronglyTypedId.cs)).
+> The older `readonly record struct <X>Id(Guid Value)` form is **closed to new
+> code** and shrink-only in existing code. This applies to child entities and
+> status-history entries exactly as it applies to aggregate roots.
+
+### The two forms are not interchangeable
+
+"Strongly typed" is not the standard — deriving from the kernel type is. A
+`record struct` is strongly typed and still fails the standard, which is why
+this needed writing down: the weaker phrasing let the second form spread.
+
+[`Entity<TId>`](../src/Shared/RegOS.SharedKernel/Abstractions/Entity.cs)
+constrains `where TId : StronglyTypedId`. A record struct cannot satisfy it, so
+an entity keyed that way **cannot inherit `Entity<TId>` or `AggregateRoot<TId>`
+at all**. It silently loses:
+
+- **Identity equality** — two instances of the same entity with the same id are
+  not equal, because the class has no base type supplying `Equals`.
+- **The empty-guid guard** — `StronglyTypedId` rejects `Guid.Empty` with
+  `DomainException` (400). A record struct accepts it and the request surfaces
+  as a **500** further down. [ADR-017](adr/ADR-017-shared-kernel-scope.md) names
+  this defect specifically.
+- **The aggregate-boundary marker** — no `AggregateRoot<TId>`, so the
+  consistency boundary is undeclared.
+
+### Correct by construction
+
+Every conforming id in the solution has exactly these four members. Copy them.
+
+```csharp
+// <Aggregate>Id.cs
+using RegOS.SharedKernel.Primitives;
+
+public sealed class CommitmentId : StronglyTypedId
+{
+    public CommitmentId(Guid value) : base(value)
+    {
+    }
+
+    public static CommitmentId New() => new(Guid.NewGuid());
+
+    public static CommitmentId From(Guid value) => new(value);
+
+    public static implicit operator Guid(CommitmentId id) => id.Value;
+}
+
+// <Aggregate>.cs — inheriting the base class is the point, not just the id type
+public sealed class Commitment : AggregateRoot<CommitmentId> { … }
+
+// child entity or status-history entry
+public sealed class CommitmentStatusEntry : Entity<CommitmentStatusEntryId> { … }
+```
+
+Reference: [Commitment.cs](../src/Interaction/RegOS.Interaction.Domain/Commitments/Commitment.cs)
+and [CommitmentId.cs](../src/Interaction/RegOS.Interaction.Domain/Commitments/CommitmentId.cs).
+
+### Where a new entity most often gets this wrong
+
+The **status-history entry**. Six exist — `RegistrationStatusEntry`,
+`MarketStatusEntry`, `CommitmentStatusEntry`, `InspectionStatusEntry`,
+`HaMeetingStatusEntry`, `HaQuestionStatusEntry` — spread across four contexts,
+and **every one** uses a record struct id, because each was copied from the
+previous one. Two were added after [ADR-017](adr/ADR-017-shared-kernel-scope.md)
+recorded the migration policy.
+
+When adding a status entry to a new aggregate, take the id from an aggregate
+root, not from the nearest status entry. This is the concrete case
+[CLAUDE.md](../CLAUDE.md) means by "do not infer conventions by copying the
+nearest file".
+
+### Migration ledger — shrink-only
+
+27 identities predate this standard, as of 2026-08-01. The count may only go
+down; adding to it is the thing this standard forbids.
+
+| Context | Non-conforming ids | Scope |
+|---|---:|---|
+| ReferenceData | 13 | entire context |
+| Submission | 4 | entire context |
+| Registration | 2 | entire context |
+| ProductDocument | 2 | entire context |
+| RegulatoryApplication | 1 | entire context |
+| Interaction | 4 | status entries only — aggregates conform |
+| Product | 1 | `MarketStatusEntry` only — aggregates conform |
+
+Per [ADR-017](adr/ADR-017-shared-kernel-scope.md), these migrate **one bounded
+context per story, when that context is being worked on anyway** — never as a
+standalone refactor. A whole-context conversion is mechanical but wide: the
+`ProductId` migration touched 67 files.
+
+Two entities have a conforming id but still declare `Id` by hand instead of
+inheriting `Entity<TId>` —
+[HaQuestion.cs](../src/Interaction/RegOS.Interaction.Domain/Correspondence/HaQuestion.cs)
+and [CorrespondenceAttachment.cs](../src/Interaction/RegOS.Interaction.Domain/Correspondence/CorrespondenceAttachment.cs).
+
+> **Not yet test-enforced.** Unlike the `SC-` rules, no architecture test asserts
+> this today, which is why the ledger grew by four after ADR-017 recorded it.
+> Until that test exists, this is a review-time rule.

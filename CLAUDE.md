@@ -72,10 +72,18 @@ the same PR.
 ## Aggregates
 
 Frozen shape — private constructor, static `Create()` factory (never
-`Register()`, ES-004), behaviour methods, no public setters. Identifiers are
-strongly typed (`ProductId`, `CountryId`); a bare `Guid` never crosses a
-boundary. Aggregates reference each other **by id only** — no navigation
-properties (ES-014).
+`Register()`, ES-004), behaviour methods, no public setters. Aggregates
+reference each other **by id only** — no navigation properties (ES-014).
+
+Identity is `sealed class <X>Id : StronglyTypedId`, and the entity inherits
+`AggregateRoot<TId>` or `Entity<TId>` (ES-020). "Strongly typed" is not
+sufficient — `readonly record struct <X>Id(Guid Value)` is the legacy form,
+closed to new code. It cannot satisfy the `Entity<TId>` constraint, so those
+entities have no base class, no identity equality, and no empty-guid guard.
+27 such ids remain and are shrink-only; `CountryId` and `SubmissionId` are
+among them, so **do not copy an id from ReferenceData, Submission,
+Registration, RegulatoryApplication, ProductDocument, or any `*StatusEntry`** —
+copy [CommitmentId.cs](src/Interaction/RegOS.Interaction.Domain/Commitments/CommitmentId.cs).
 
 Lifecycle over deletion (ES-018): entities move `Active ↔ Inactive` rather than
 being removed. Regulatory records are retained.

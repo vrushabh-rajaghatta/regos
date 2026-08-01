@@ -184,7 +184,7 @@ src/<Context>/
 ├── RegOS.<Context>.Domain/
 │   └── Aggregates/<Aggregate>/
 │       ├── <Aggregate>.cs              private ctor + Create() factory
-│       ├── <Aggregate>Id.cs            strongly typed, never a bare Guid
+│       ├── <Aggregate>Id.cs            : StronglyTypedId — ES-020, not a record struct
 │       ├── <Aggregate>Errors.cs
 │       ├── <Aggregate>Status.cs
 │       └── I<Aggregate>Repository.cs   SC-002
