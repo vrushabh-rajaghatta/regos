@@ -9,6 +9,7 @@ using RegOS.Product.Application.Commands.ChangeMarketStatus;
 using RegOS.Product.Application.Commands.CreateMedicinalProduct;
 using RegOS.Product.Application.Commands.DeactivateMedicinalProduct;
 using RegOS.Product.Application.Commands.RemoveTradeName;
+using RegOS.Product.Application.Queries.GetMedicinalProduct;
 using RegOS.Product.Application.Queries.ListMedicinalProducts;
 using RegOS.Product.Application.Services;
 using RegOS.Product.Application.Tests.Fixtures;
@@ -630,6 +631,68 @@ public sealed class MedicinalProductTests : IAsyncLifetime
                 new ListMedicinalProductsQuery(GlobalProductId.New()), default);
 
         missing.Should().BeNull();
+    }
+
+    /// <summary>
+    /// The market's own read — everything its page shows, including the
+    /// commercial history, which until S004 was written and never readable.
+    /// </summary>
+    [Fact]
+    public async Task TheMarketDetailCarriesItsWholeCommercialRecord()
+    {
+        await using var ctx = New();
+        var globalProductId = await ProductAsync(ctx);
+        var id = await CreateAsync(ctx, globalProductId, statusDate: Entered);
+
+        await AddTradeNameAsync(id, "en", "Cardiolex");
+        await ChangeAsync(id, MarketStatus.Launched, new(2021, 3, 15));
+        await ChangeAsync(
+            id, MarketStatus.TemporarilyUnavailable, new(2023, 8, 1),
+            "API supply interruption.");
+
+        await using var check = New();
+        var detail = await new GetMedicinalProductHandler(check)
+            .HandleAsync(new GetMedicinalProductQuery(id), default);
+
+        detail.Should().NotBeNull();
+        detail!.CountryName.Should().NotBeNullOrWhiteSpace();
+        detail.ProductName.Should().NotBeNullOrWhiteSpace();
+        detail.ProductCode.Should().NotBeNullOrWhiteSpace();
+
+        // The three questions, each answered separately.
+        detail.Status.Should().Be(nameof(MedicinalProductStatus.Active));
+        detail.MarketStatus
+            .Should().Be(nameof(MarketStatus.TemporarilyUnavailable));
+        detail.LaunchedOn.Should().Be(new DateOnly(2021, 3, 15));
+
+        detail.TradeNames.Should().ContainSingle()
+            .Which.Name.Should().Be("Cardiolex");
+
+        // Oldest first, and both dates on every entry — the reason the second
+        // timestamp exists is only visible if someone can read it.
+        detail.MarketStatusHistory.Select(entry => entry.Status)
+            .Should().Equal(
+                nameof(MarketStatus.Planned),
+                nameof(MarketStatus.Launched),
+                nameof(MarketStatus.TemporarilyUnavailable));
+
+        var interruption = detail.MarketStatusHistory[^1];
+
+        interruption.OccurredOn.Should().Be(new DateOnly(2023, 8, 1));
+        interruption.RecordedOnUtc.Date.Should().Be(DateTime.UtcNow.Date);
+        interruption.Note.Should().Be("API supply interruption.");
+    }
+
+    [Fact]
+    public async Task AMarketThatIsNotThereHasNoDetail()
+    {
+        await using var ctx = New();
+
+        var detail = await new GetMedicinalProductHandler(ctx)
+            .HandleAsync(
+                new GetMedicinalProductQuery(MedicinalProductId.New()), default);
+
+        detail.Should().BeNull();
     }
 
     // --- helpers -------------------------------------------------------------

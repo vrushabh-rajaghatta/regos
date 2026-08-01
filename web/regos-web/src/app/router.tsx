@@ -51,6 +51,7 @@ import { RequireAuth } from "@/features/auth/components/RequireAuth";
 import { TemplateListPage } from "@/features/regulatory/templates/pages/TemplateListPage";
 import { TemplateDetailPage } from "@/features/regulatory/templates/pages/TemplateDetailPage";
 import { ProductRegistrationsPage } from "@/features/regulatory/registrations/pages/ProductRegistrationsPage";
+import { MedicinalProductPage } from "@/features/regulatory/medicinalProducts/pages/MedicinalProductPage";
 import { RegistrationMarketsPage } from "@/features/regulatory/registrations/pages/RegistrationMarketsPage";
 import { MarketRegistrationsPage } from "@/features/regulatory/registrations/pages/MarketRegistrationsPage";
 import { RegistrationDetailPage } from "@/features/regulatory/registrations/pages/RegistrationDetailPage";
@@ -178,6 +179,14 @@ export const router = createBrowserRouter([
                       {
                         path: "registrations",
                         element: <ProductRegistrationsPage />,
+                      },
+                      // One market, as its own working surface (EPIC-017 S004).
+                      // Nested inside the product workspace rather than beside
+                      // it: a market is always read in the context of the
+                      // product it localises, and the sidebar should stay.
+                      {
+                        path: "markets/:medicinalProductId",
+                        element: <MedicinalProductPage />,
                       },
                     ],
                   },

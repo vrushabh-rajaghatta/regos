@@ -238,7 +238,8 @@ semantic one.
 | **S002** | **Trade Name** — one per (medicinal product, language), enforced; surfaced wherever a registration is shown | full slice | *what it is called there* |
 | **S003** | **Market Status** — dated history + current value; launch date **derived**, risk of supply deferred | full slice | *whether it is actually on sale* |
 | **S003a** | **Market deactivation** — `Activate`/`Deactivate`, completing the activation lifecycle S001 introduced. Operability, not market state | small slice | *this record is no longer in use* |
-| **S004** | **Capstone** — portfolio views enriched, browser proof, ADR-039, retro | UI → test → docs | *"what do we hold in Canada?" answered properly* |
+| **S004** | **The market's working surface** — a market gets its own page; the commercial history becomes readable; the row becomes a summary | UI → test | *a market is somewhere you go* |
+| **S005** | **Capstone** — *"what do we hold in Canada?"* returns trade name + market status + licence + expiry in one read; browser proof; ADR-039; retro | UI → test → docs | *the DoD sentence, verbatim* |
 
 **ADR to write:** *The market-local product tier, and which tier each reference means* — next free number (expected **ADR-039**).
 
@@ -572,6 +573,55 @@ reverted with no `Program.cs` diff.
 
 ---
 
+### S004 — The market's working surface *(shipped)*
+
+**The decision this story exists to make:** *what is the primary interaction
+surface for a `MedicinalProduct`?* Not *how do we fit a sixth action into the
+row*. The row had accumulated five actions and four columns across S001–S003a,
+and labels, packaging and strengths are all still to come.
+
+**A market gets a page.** `/regulatory/products/:globalProductId/markets/:medicinalProductId`,
+nested inside the product workspace so the sidebar stays — a market is always
+read in the context of the product it localises.
+
+**Sections, not tabs.** `OrganizationWorkspaceLayout` earned tabs by having four
+genuinely separate directories; a market has three short sections that read as
+one narrative top to bottom. **The route is the expensive decision; tabs are
+cheap**, and remain available when EPIC-018 adds labels.
+
+**An overview projection at the top** — on sale, launched on, trade names,
+authorisations, record status. Nothing editable: every value is identity or a
+projection over something recorded below. It is also where later epics
+accumulate derived facts while their detail grows underneath.
+
+**The row becomes a summary again** — one action (New registration, the common
+one), country name as the link. The other four moved to the page.
+
+**A gap this closed.** S003 shipped an append-only history that **no user could
+read**: `ListMedicinalProducts` returned the current status and the derived
+launch date, and the history had no query, no endpoint, no screen. The write was
+reachable and the read was not — the EPIC-016 defect in reverse, and it makes
+the second timestamp invisible complexity. `MarketStatusTimeline` mirrors
+`RegistrationHistoryTimeline`, showing *occurred* and *recorded* side by side,
+which is the only way that design pays for itself.
+
+**The registrations still come from the Registration slice's own query**,
+filtered to this market. The Product context reads nothing of Registration
+(ADR-039 principle 5), and `GetMedicinalProduct` returns no registrations at all.
+
+**A third wording collision, caught the same way.** The overview had a *label*
+`Launched` beside a *value* `Launched`, so a reader parsed "On sale: Launched /
+Launched: 2021-03-15" to work out which was which. Renamed **"Launched on"**, in
+the summary table too. That is now three, which per the browser README's own
+note is the threshold for a written guideline rather than a convention — **S005
+should decide whether to elevate it**.
+
+**Verification:** 915 backend tests (+2), 64 browser specs, three journeys
+rewritten to enter the market page, CORS widening reverted with no `Program.cs`
+diff.
+
+---
+
 ## ADR-039 — staged material
 
 Written as it was decided rather than reconstructed at the end. S004 lifts this
@@ -653,7 +703,14 @@ Not observations about EPIC-017 — principles the next epics inherit.
    > belongs in orchestration or in that other aggregate. It came out of S003a,
    > where *"has registrations"* turned out not to be the invariant anyone meant.
 
+6. **Interaction surfaces follow aggregate boundaries.** When an aggregate
+   accumulates independent behaviour and history, the UI should present it as a
+   first-class working surface rather than continuing to compress it into a
+   summary row. Not every aggregate earns a page — but the moment a row grows a
+   fifth action, the domain has already decided and the UI is lagging. This is
+   not a React decision; it is a consequence of the model.
+
 Expected to guide **EPIC-006** (principles 3 and 5), **EPIC-010** and
-**EPIC-018** (principles 1 and 4), and **EPIC-020**.
+**EPIC-018** (principles 1, 4 and 6), and **EPIC-020**.
 
 **Sequencing note:** this epic and **EPIC-004** are genuinely independent — sequences live inside `Submission` and never touch `ProductId`; this never touches submission internals. Neither makes the other harder. Order is a **value call**: this one completes an epic already in flight (EPIC-005); EPIC-004 completes nothing in flight but may be what a customer is waiting on.

@@ -9,6 +9,7 @@ using RegOS.Product.Application.Commands.RegisterProduct;
 using RegOS.Product.Application.Commands.RemoveTradeName;
 using RegOS.Product.Application.Commands.UpdateProduct;
 using RegOS.Product.Application.Queries.GetProduct;
+using RegOS.Product.Application.Queries.GetMedicinalProduct;
 using RegOS.Product.Application.Queries.ListMedicinalProducts;
 using RegOS.Product.Application.Queries.ListProducts;
 
@@ -27,6 +28,7 @@ public static class ProductApplicationServiceCollectionExtensions
 
         services.AddScoped<CreateMedicinalProductHandler>();
         services.AddScoped<ListMedicinalProductsHandler>();
+        services.AddScoped<GetMedicinalProductHandler>();
         services.AddScoped<AddTradeNameHandler>();
         services.AddScoped<RemoveTradeNameHandler>();
         services.AddScoped<ChangeMarketStatusHandler>();

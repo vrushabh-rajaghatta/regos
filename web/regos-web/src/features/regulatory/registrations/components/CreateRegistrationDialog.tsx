@@ -12,11 +12,19 @@ import { Input } from "@/components/ui/input";
 
 import { useAuthorities } from "../../masterData/hooks/useAuthorities";
 import { useOrganizations } from "../../masterData/hooks/useOrganizations";
-import type { MedicinalProduct } from "../../medicinalProducts/types/MedicinalProduct";
 import { useCreateRegistration } from "../hooks/useCreateRegistration";
 
+/**
+ * Takes the three facts it needs rather than a whole market, so both the
+ * summary row and the market's own page can open it without either having to
+ * hold the shape the other one loaded.
+ */
 interface Props {
-  market: MedicinalProduct;
+  market: {
+    medicinalProductId: string;
+    countryId: string;
+    countryName: string;
+  };
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

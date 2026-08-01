@@ -6,9 +6,6 @@ import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { AddMarketDialog } from "../../medicinalProducts/components/AddMarketDialog";
-import { AddTradeNameDialog } from "../../medicinalProducts/components/AddTradeNameDialog";
-import { ChangeMarketStatusDialog } from "../../medicinalProducts/components/ChangeMarketStatusDialog";
-import { MarketActivationDialog } from "../../medicinalProducts/components/MarketActivationDialog";
 import { MarketTradeNames } from "../../medicinalProducts/components/MarketTradeNames";
 import { marketStatusLabel } from "../../medicinalProducts/constants/marketStatuses";
 import { useMedicinalProducts } from "../../medicinalProducts/hooks/useMedicinalProducts";
@@ -38,9 +35,6 @@ export function ProductRegistrationsPage() {
   const [registeringIn, setRegisteringIn] = useState<MedicinalProduct | null>(
     null
   );
-  const [namingIn, setNamingIn] = useState<MedicinalProduct | null>(null);
-  const [restatusing, setRestatusing] = useState<MedicinalProduct | null>(null);
-  const [retiring, setRetiring] = useState<MedicinalProduct | null>(null);
   const [status, setStatus] = useState("");
 
   const markets = useMedicinalProducts(globalProductId!);
@@ -94,7 +88,7 @@ export function ProductRegistrationsPage() {
                   <th className="px-4 py-2 font-medium">Market</th>
                   <th className="px-4 py-2 font-medium">Called</th>
                   <th className="px-4 py-2 font-medium">On sale</th>
-                  <th className="px-4 py-2 font-medium">Launched</th>
+                  <th className="px-4 py-2 font-medium">Launched on</th>
                   <th className="px-4 py-2 font-medium">Authorisations</th>
                   <th className="px-4 py-2" />
                 </tr>
@@ -108,7 +102,12 @@ export function ProductRegistrationsPage() {
                     data-testid="product-market-row"
                   >
                     <td className="px-4 py-2 font-medium">
-                      {market.countryName}
+                      <Link
+                        to={`/regulatory/products/${globalProductId}/markets/${market.medicinalProductId}`}
+                        className="text-primary hover:underline"
+                      >
+                        {market.countryName}
+                      </Link>
 
                       {/* Retired markets stay visible, labelled. Hiding them
                           would be data loss dressed as a default. */}
@@ -143,31 +142,11 @@ export function ProductRegistrationsPage() {
                         ).length
                       }
                     </td>
+                    {/* One action, not five. Naming, sale status and
+                        retirement moved to the market's own page in S004 —
+                        the row is a summary again, and the next capability
+                        this tier gains has somewhere to go that is not here. */}
                     <td className="px-4 py-2 text-right whitespace-nowrap">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setRestatusing(market)}
-                      >
-                        Record sale status
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setNamingIn(market)}
-                      >
-                        Add name
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setRetiring(market)}
-                      >
-                        {market.status === "Inactive" ? "Restore" : "Retire"}
-                      </Button>
-
                       <Button
                         variant="outline"
                         size="sm"
@@ -274,46 +253,7 @@ export function ProductRegistrationsPage() {
         onOpenChange={setAddingMarket}
       />
 
-      {retiring && (
-        <MarketActivationDialog
-          medicinalProductId={retiring.medicinalProductId}
-          countryName={retiring.countryName}
-          active={retiring.status === "Inactive"}
-          registrationCount={
-            (data ?? []).filter(
-              (row) => row.medicinalProductId === retiring.medicinalProductId
-            ).length
-          }
-          open
-          onOpenChange={(open) => {
-            if (!open) setRetiring(null);
-          }}
-        />
-      )}
-
-      {restatusing && (
-        <ChangeMarketStatusDialog
-          medicinalProductId={restatusing.medicinalProductId}
-          countryName={restatusing.countryName}
-          open
-          onOpenChange={(open) => {
-            if (!open) setRestatusing(null);
-          }}
-        />
-      )}
-
-      {namingIn && (
-        <AddTradeNameDialog
-          medicinalProductId={namingIn.medicinalProductId}
-          countryName={namingIn.countryName}
-          open
-          onOpenChange={(open) => {
-            if (!open) setNamingIn(null);
-          }}
-        />
-      )}
-
-      {/* Mounted per market so the dialog never has to ask which one it is in;
+                        {/* Mounted per market so the dialog never has to ask which one it is in;
           unmounting on close is also what resets the form. */}
       {registeringIn && (
         <CreateRegistrationDialog

@@ -161,14 +161,11 @@ test.describe("Registration portfolio", () => {
     );
 
     await page.goto(`/regulatory/products/${globalProductId}/registrations`);
-
-    await page.getByRole("button", { name: "Add market" }).click();
-    await page.getByLabel("Country").selectOption({ label: "Canada" });
-    await page.getByLabel("Present since").fill("2019-06-01");
-    await page.getByRole("button", { name: "Add" }).click();
+    await enterMarket(page, "Canada", "2019-06-01");
 
     // --- 1. a market with no branding says so ----------------------------
     await expect(page.getByTestId("market-unnamed")).toBeVisible();
+    await expect(overviewFact(page, "Trade names")).toHaveText("0");
 
     // --- 2. named in two languages, which is the point of the tier -------
     await addTradeName(page, "English", `Cardiolex ${unique}`);
@@ -176,7 +173,7 @@ test.describe("Registration portfolio", () => {
 
     await addTradeName(page, "French", `Cardiolexe ${unique}`);
     await expect(page.getByTestId("market-trade-name")).toHaveCount(2);
-    await expect(page.getByTestId("product-markets")).toContainText("French");
+    await expect(overviewFact(page, "Trade names")).toHaveText("2");
 
     // --- 3. a second English name is one of them being wrong -------------
     await page.getByRole("button", { name: "Add name" }).click();
@@ -202,6 +199,11 @@ test.describe("Registration portfolio", () => {
 
     await addTradeName(page, "English", `Renamed ${unique}`);
     await expect(page.getByTestId("market-trade-name")).toHaveCount(2);
+
+    // --- 5. and the summary row reflects it -------------------------------
+    // The row still answers "what is it called there?" at a glance; the page
+    // is where it is managed.
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
     await expect(page.getByTestId("product-markets")).toContainText(
       `Renamed ${unique}`,
     );
@@ -231,22 +233,23 @@ test.describe("Registration portfolio", () => {
     );
 
     await page.goto(`/regulatory/products/${globalProductId}/registrations`);
+    await enterMarket(page, "Canada", "2019-06-01");
 
-    await page.getByRole("button", { name: "Add market" }).click();
-    await page.getByLabel("Country").selectOption({ label: "Canada" });
-    await page.getByLabel("Present since").fill("2019-06-01");
-    await page.getByRole("button", { name: "Add" }).click();
-
-    const status = page.getByTestId("market-status");
-    const launched = page.getByTestId("market-launched");
+    const onSale = overviewFact(page, "On sale");
+    const launched = overviewFact(page, "Launched on");
+    const entries = page.getByTestId("market-status-history-entry");
 
     // --- 1. a market begins as an intention, not a failure to launch -----
-    await expect(status).toHaveText("Planned");
+    await expect(onSale).toHaveText("Planned");
     await expect(launched).toHaveText("—");
+
+    // The history was written from the moment the market existed — and until
+    // this page existed, nobody could read it.
+    await expect(entries).toHaveCount(1);
 
     // --- 2. on sale ------------------------------------------------------
     await recordSaleStatus(page, "Launched", "2021-03-15");
-    await expect(status).toHaveText("Launched");
+    await expect(onSale).toHaveText("Launched");
     await expect(launched).toHaveText("2021-03-15");
 
     // --- 3. off the shelf, licence untouched -----------------------------
@@ -257,10 +260,15 @@ test.describe("Registration portfolio", () => {
       "API supply interruption.",
     );
 
-    await expect(status).toHaveText("Temporarily unavailable");
+    await expect(onSale).toHaveText("Temporarily unavailable");
 
     // The launch happened. Losing supply does not un-happen it.
     await expect(launched).toHaveText("2021-03-15");
+
+    // Both dates on the entry: what happened, and when RegOS learned of it.
+    // That difference is the reason the second timestamp exists.
+    await expect(entries.last()).toContainText("recorded");
+    await expect(entries.last()).toContainText("API supply interruption.");
 
     // --- 4. business time only moves forward -----------------------------
     await page.getByRole("button", { name: "Record sale status" }).click();
@@ -273,21 +281,27 @@ test.describe("Registration portfolio", () => {
     );
 
     await page.keyboard.press("Escape");
-    await expect(status).toHaveText("Temporarily unavailable");
+    await expect(onSale).toHaveText("Temporarily unavailable");
+    await expect(entries).toHaveCount(3);
 
     // --- 5. back on sale, and the launch date is still the first one -----
     await recordSaleStatus(page, "Launched", "2024-02-01");
-    await expect(status).toHaveText("Launched");
+    await expect(onSale).toHaveText("Launched");
     await expect(launched).toHaveText("2021-03-15");
 
     // --- 6. discontinued — and the record itself is untouched ------------
     await recordSaleStatus(page, "Discontinued", "2026-01-15");
-    await expect(status).toHaveText("Discontinued");
+    await expect(onSale).toHaveText("Discontinued");
     await expect(launched).toHaveText("2021-03-15");
+    await expect(overviewFact(page, "Record")).toHaveText("In use");
 
-    // Commercial state is not operability: the market row is still here,
-    // still nameable, still able to hold authorisations.
-    await expect(page.getByTestId("product-market-row")).toHaveCount(1);
+    // --- 7. the whole commercial life, in one chronological record -------
+    await expect(entries).toHaveCount(5);
+
+    // --- 8. and the summary row agrees ------------------------------------
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
+    await expect(page.getByTestId("market-status")).toHaveText("Discontinued");
+    await expect(page.getByTestId("market-launched")).toHaveText("2021-03-15");
 
     expect(errors()).toEqual([]);
   });
@@ -313,28 +327,20 @@ test.describe("Registration portfolio", () => {
     );
 
     await page.goto(`/regulatory/products/${globalProductId}/registrations`);
-
-    await page.getByRole("button", { name: "Add market" }).click();
-    await page.getByLabel("Country").selectOption({ label: "Canada" });
-    await page.getByLabel("Present since").fill("2019-06-01");
-    await page.getByRole("button", { name: "Add" }).click();
+    await enterMarket(page, "Canada", "2019-06-01");
 
     // A market that is on sale and holds a licence — so retiring it has
     // something to leave alone.
     await recordSaleStatus(page, "Launched", "2021-03-15");
 
-    await page
-      .getByTestId("product-market-row")
-      .first()
-      .getByRole("button", { name: "New registration" })
-      .click();
-
+    await page.getByRole("button", { name: "New registration" }).click();
     await page.getByLabel("Authority").selectOption({ index: 1 });
     await page.getByLabel("Authorisation holder").selectOption({ index: 1 });
     await page.getByLabel("Planned on").fill("2020-01-10");
     await page.getByRole("button", { name: "Create" }).click();
 
-    await expect(page.getByTestId("product-registration-row")).toHaveCount(1);
+    await expect(page.getByTestId("market-registration")).toHaveCount(1);
+    await expect(overviewFact(page, "Authorisations")).toHaveText("1");
 
     // --- retire it, and be told what it holds ----------------------------
     await page.getByRole("button", { name: "Retire" }).click();
@@ -349,21 +355,23 @@ test.describe("Registration portfolio", () => {
     await page.getByRole("button", { name: "Save" }).click();
 
     // --- the record is retired, and nothing else moved -------------------
-    await expect(page.getByTestId("market-retired")).toBeVisible();
-    await expect(page.getByTestId("market-status")).toHaveText("Launched");
-    await expect(page.getByTestId("market-launched")).toHaveText("2021-03-15");
-    await expect(page.getByTestId("product-registration-row")).toHaveCount(1);
-
-    // Retained, not deleted (ES-018): the row is still on the page.
-    await expect(page.getByTestId("product-market-row")).toHaveCount(1);
+    await expect(overviewFact(page, "Record")).toHaveText("Retired");
+    await expect(overviewFact(page, "On sale")).toHaveText("Launched");
+    await expect(overviewFact(page, "Launched on")).toHaveText("2021-03-15");
+    await expect(page.getByTestId("market-registration")).toHaveCount(1);
 
     // --- and it comes back ------------------------------------------------
     await page.getByRole("button", { name: "Restore" }).click();
     await page.getByLabel("Restored on").fill("2026-05-01");
     await page.getByRole("button", { name: "Save" }).click();
 
+    await expect(overviewFact(page, "Record")).toHaveText("In use");
+    await expect(overviewFact(page, "On sale")).toHaveText("Launched");
+
+    // Retained, not deleted (ES-018), and the summary row says so too.
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
+    await expect(page.getByTestId("product-market-row")).toHaveCount(1);
     await expect(page.getByTestId("market-retired")).toHaveCount(0);
-    await expect(page.getByTestId("market-status")).toHaveText("Launched");
 
     expect(errors()).toEqual([]);
   });
@@ -403,6 +411,29 @@ test.describe("Registration portfolio", () => {
   });
 });
 
+/**
+ * Adds a market and opens its own page — since S004 that is where a market is
+ * worked on, and the summary row is a summary again.
+ */
+async function enterMarket(
+  page: import("@playwright/test").Page,
+  country: string,
+  presentSince: string,
+) {
+  await page.getByRole("button", { name: "Add market" }).click();
+  await page.getByLabel("Country").selectOption({ label: country });
+  await page.getByLabel("Present since").fill(presentSince);
+  await page.getByRole("button", { name: "Add" }).click();
+
+  await page
+    .getByTestId("product-market-row")
+    .first()
+    .getByRole("link", { name: country })
+    .click();
+
+  await expect(page.getByTestId("market-overview")).toBeVisible();
+}
+
 async function recordSaleStatus(
   page: import("@playwright/test").Page,
   status: string,
@@ -425,6 +456,18 @@ async function addTradeName(
   await page.getByLabel("Language").selectOption({ label: language });
   await page.getByLabel("Trade name").fill(name);
   await page.getByRole("button", { name: "Save" }).click();
+}
+
+/** One labelled fact from the market page's overview projection. */
+function overviewFact(
+  page: import("@playwright/test").Page,
+  label: string,
+) {
+  return page
+    .getByTestId("market-overview")
+    .locator("div")
+    .filter({ has: page.getByText(label, { exact: true }) })
+    .locator("dd");
 }
 
 async function createProduct(unique: number, name: string): Promise<string> {

@@ -214,6 +214,7 @@ products.MapListProductsEndpoint();
 var medicinalProducts = app.MapGroup("").WithTags("Medicinal Products");
 medicinalProducts.MapCreateMedicinalProduct();
 medicinalProducts.MapListMedicinalProducts();
+medicinalProducts.MapGetMedicinalProduct();
 medicinalProducts.MapAddTradeName();
 medicinalProducts.MapRemoveTradeName();
 medicinalProducts.MapChangeMarketStatus();
