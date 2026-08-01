@@ -77,6 +77,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [040](ADR-040-the-health-authority-interaction-context.md) | The health-authority interaction context, and the supertype that isn't | Accepted | Current |
 | [041](ADR-041-platform-contracts-and-the-identity-that-crosses.md) | Platform contracts, and the only identity that crosses | Accepted | Current |
 | [042](ADR-042-what-the-interaction-context-turned-out-to-be.md) | What the interaction context turned out to be | Accepted | Current |
+| [043](ADR-043-entity-identity-derives-from-the-kernel.md) | Entity identity derives from the kernel, and master data does not | Accepted | Direction |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

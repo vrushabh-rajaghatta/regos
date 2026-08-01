@@ -210,14 +210,31 @@ root, not from the nearest status entry. This is the concrete case
 [CLAUDE.md](../CLAUDE.md) means by "do not infer conventions by copying the
 nearest file".
 
+### Scope — master data is deliberately outside this rule
+
+Eight flat master-data lookups keep their record struct ids, permanently and by
+decision, not as a backlog: `CountryId`, `DocumentTypeId`, `SubmissionTypeId`,
+`AuthorityId`, `AuthorityDivisionId`, `CorrespondenceTypeId`, `ContactRoleId`,
+`IdentifierSchemeId`.
+
+These are the ES-015 records — platform-assigned deterministic ids, no child
+entities, no lifecycle beyond `Create`, never loaded as an aggregate to be
+mutated. Nothing here inherits `Entity<TId>` or wants to, so the argument that
+justifies the rule does not reach them. See
+[ADR-043](adr/ADR-043-entity-identity-derives-from-the-kernel.md).
+
+The carve-out is **not** "the ReferenceData context". `RegulatoryTemplate` is an
+aggregate root that owns its versions and is tenant-scoped — the metadata engine
+this product is built on. It and the rest of Blueprint migrate like anything
+else.
+
 ### Migration ledger — shrink-only
 
-27 identities predate this standard, as of 2026-08-01. The count may only go
-down; adding to it is the thing this standard forbids.
+19 identities predate this standard and are still to migrate, as of 2026-08-01.
 
-| Context | Non-conforming ids | Scope |
+| Context | Pending | Scope |
 |---|---:|---|
-| ReferenceData | 13 | entire context |
+| ReferenceData · Blueprint | 5 | `RegulatoryTemplate` + versions, sections, required docs, rules |
 | Submission | 4 | entire context |
 | Registration | 2 | entire context |
 | ProductDocument | 2 | entire context |
@@ -225,16 +242,18 @@ down; adding to it is the thing this standard forbids.
 | Interaction | 4 | status entries only — aggregates conform |
 | Product | 1 | `MarketStatusEntry` only — aggregates conform |
 
-Per [ADR-017](adr/ADR-017-shared-kernel-scope.md), these migrate **one bounded
-context per story, when that context is being worked on anyway** — never as a
-standalone refactor. A whole-context conversion is mechanical but wide: the
-`ProductId` migration touched 67 files.
+These migrate **a whole bounded context at a time, when that context is being
+worked on anyway** — never as a standalone refactor, and never half a context.
+A conversion is mechanical but wide: the `ProductId` migration touched 67 files.
 
 Two entities have a conforming id but still declare `Id` by hand instead of
 inheriting `Entity<TId>` —
 [HaQuestion.cs](../src/Interaction/RegOS.Interaction.Domain/Correspondence/HaQuestion.cs)
 and [CorrespondenceAttachment.cs](../src/Interaction/RegOS.Interaction.Domain/Correspondence/CorrespondenceAttachment.cs).
+The id form is enforced; this base-class rule is still review-time.
 
-> **Not yet test-enforced.** Unlike the `SC-` rules, no architecture test asserts
-> this today, which is why the ledger grew by four after ADR-017 recorded it.
-> Until that test exists, this is a review-time rule.
+> **Enforced by** `IdentityConventionTests` in
+> [tests/Architecture/RegOS.Architecture.Tests](../tests/Architecture/RegOS.Architecture.Tests/IdentityConventionTests.cs).
+> Both lists above are asserted to hold no stale entries, so an exemption cannot
+> outlive the thing it excused. The lists there are the authority; this table is
+> a summary.
