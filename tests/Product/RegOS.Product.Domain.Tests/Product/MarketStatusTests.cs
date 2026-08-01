@@ -201,6 +201,11 @@ public sealed class MarketStatusTests
     }
 
     // --- The separation that must never blur ---------------------------------
+    //
+    // These are living documentation of an architectural boundary, not
+    // incidental coverage. Three questions are asked of a market presence —
+    // what has the regulator done, is it on sale, and should this record be
+    // used — and each pair of them is independent.
 
     /// <summary>
     /// Operability and commercial state are different questions with different
@@ -215,5 +220,107 @@ public sealed class MarketStatusTests
 
         market.Status.Should().Be(MedicinalProductStatus.Active);
         market.StatusDate.Should().Be(Start);
+    }
+
+    /// <summary>
+    /// And the other direction: retiring the record says nothing about whether
+    /// the product is on sale. Deactivation implies no commercial state.
+    /// </summary>
+    [Fact]
+    public void RetiringTheRecordDoesNotTakeTheProductOffSale()
+    {
+        var market = New();
+        market.ChangeMarketStatus(MarketStatus.Launched, new(2021, 3, 15));
+
+        market.Deactivate(new(2026, 1, 1));
+
+        market.Status.Should().Be(MedicinalProductStatus.Inactive);
+        market.CurrentMarketStatus.Should().Be(MarketStatus.Launched);
+        market.MarketStatusHistory.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void BringingTheRecordBackDoesNotTouchTheCommercialStateEither()
+    {
+        var market = New();
+        market.ChangeMarketStatus(MarketStatus.Launched, new(2021, 3, 15));
+        market.Deactivate(new(2026, 1, 1));
+
+        market.Activate(new(2026, 2, 1));
+
+        market.Status.Should().Be(MedicinalProductStatus.Active);
+        market.StatusDate.Should().Be(new DateOnly(2026, 2, 1));
+        market.CurrentMarketStatus.Should().Be(MarketStatus.Launched);
+    }
+
+    /// <summary>
+    /// An inactive record still accepts commercial history. Excluding it from
+    /// normal work is not the same as freezing what is true about the market.
+    /// </summary>
+    [Fact]
+    public void AnInactiveRecordStillRecordsWhatHappensInTheMarket()
+    {
+        var market = New();
+        market.ChangeMarketStatus(MarketStatus.Launched, new(2021, 3, 15));
+        market.Deactivate(new(2026, 1, 1));
+
+        var discontinue = () => market.ChangeMarketStatus(
+            MarketStatus.Discontinued, new(2026, 6, 1));
+
+        discontinue.Should().NotThrow();
+        market.Status.Should().Be(MedicinalProductStatus.Inactive);
+    }
+
+    // --- Activation, which is a toggle over one date -------------------------
+
+    [Fact]
+    public void ARecordIsCreatedActive()
+    {
+        New().Status.Should().Be(MedicinalProductStatus.Active);
+    }
+
+    [Fact]
+    public void DeactivatingStampsTheDateItLeftNormalWork()
+    {
+        var market = New();
+
+        market.Deactivate(new(2026, 4, 30));
+
+        market.Status.Should().Be(MedicinalProductStatus.Inactive);
+        market.StatusDate.Should().Be(new DateOnly(2026, 4, 30));
+    }
+
+    /// <summary>
+    /// Not idempotent, deliberately: a caller asking for a state the record
+    /// already holds is acting on a stale view, and silently succeeding would
+    /// hide that. The same call OrganizationDivision makes.
+    /// </summary>
+    [Fact]
+    public void AskingForTheStateItIsAlreadyInIsARefusal()
+    {
+        var market = New();
+
+        var activateAgain = () => market.Activate(new(2026, 1, 1));
+
+        activateAgain.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(MedicinalProductErrors.AlreadyActive);
+
+        market.Deactivate(new(2026, 1, 1));
+
+        var deactivateAgain = () => market.Deactivate(new(2026, 2, 1));
+
+        deactivateAgain.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(MedicinalProductErrors.AlreadyInactive);
+    }
+
+    [Fact]
+    public void ADateIsRequiredToChangeActivation()
+    {
+        var market = New();
+
+        var undated = () => market.Deactivate(default);
+
+        undated.Should().Throw<DomainException>()
+            .WithMessage(MedicinalProductErrors.StatusDateRequired);
     }
 }

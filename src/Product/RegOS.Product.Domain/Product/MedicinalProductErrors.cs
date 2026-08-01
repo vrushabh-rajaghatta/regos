@@ -37,6 +37,12 @@ public static class MedicinalProductErrors
     public const string TradeNameNotFound =
         "Trade name does not exist.";
 
+    public const string AlreadyActive =
+        "This market record is already active.";
+
+    public const string AlreadyInactive =
+        "This market record is already inactive.";
+
     public const string MarketStatusNotRecognised =
         "That market status is not recognised.";
 

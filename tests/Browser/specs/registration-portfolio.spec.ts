@@ -293,6 +293,82 @@ test.describe("Registration portfolio", () => {
   });
 
   /**
+   * Operability — the third question asked of a market, and the one that
+   * touches neither of the others.
+   *
+   * Retiring a market record excludes it from normal work. It does not
+   * surrender a licence, does not take a product off sale, and does not delete
+   * anything. This walks all three through the browser at once, because the
+   * boundary is only convincing when you can see the other two not moving.
+   */
+  test("retiring a market record touches neither its sale status nor its licences", async ({
+    page,
+  }) => {
+    const errors = collectErrors(page);
+    const unique = Date.now();
+
+    const globalProductId = await createProduct(
+      unique,
+      `Retired Market Product ${unique}`,
+    );
+
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
+
+    await page.getByRole("button", { name: "Add market" }).click();
+    await page.getByLabel("Country").selectOption({ label: "Canada" });
+    await page.getByLabel("Present since").fill("2019-06-01");
+    await page.getByRole("button", { name: "Add" }).click();
+
+    // A market that is on sale and holds a licence — so retiring it has
+    // something to leave alone.
+    await recordSaleStatus(page, "Launched", "2021-03-15");
+
+    await page
+      .getByTestId("product-market-row")
+      .first()
+      .getByRole("button", { name: "New registration" })
+      .click();
+
+    await page.getByLabel("Authority").selectOption({ index: 1 });
+    await page.getByLabel("Authorisation holder").selectOption({ index: 1 });
+    await page.getByLabel("Planned on").fill("2020-01-10");
+    await page.getByRole("button", { name: "Create" }).click();
+
+    await expect(page.getByTestId("product-registration-row")).toHaveCount(1);
+
+    // --- retire it, and be told what it holds ----------------------------
+    await page.getByRole("button", { name: "Retire" }).click();
+
+    // A warning, not a refusal: the licence is a fact about the market, not a
+    // reason the record must stay in circulation.
+    await expect(page.getByTestId("retire-warning")).toContainText(
+      "1 authorisation",
+    );
+
+    await page.getByLabel("Retired on").fill("2026-04-01");
+    await page.getByRole("button", { name: "Save" }).click();
+
+    // --- the record is retired, and nothing else moved -------------------
+    await expect(page.getByTestId("market-retired")).toBeVisible();
+    await expect(page.getByTestId("market-status")).toHaveText("Launched");
+    await expect(page.getByTestId("market-launched")).toHaveText("2021-03-15");
+    await expect(page.getByTestId("product-registration-row")).toHaveCount(1);
+
+    // Retained, not deleted (ES-018): the row is still on the page.
+    await expect(page.getByTestId("product-market-row")).toHaveCount(1);
+
+    // --- and it comes back ------------------------------------------------
+    await page.getByRole("button", { name: "Restore" }).click();
+    await page.getByLabel("Restored on").fill("2026-05-01");
+    await page.getByRole("button", { name: "Save" }).click();
+
+    await expect(page.getByTestId("market-retired")).toHaveCount(0);
+    await expect(page.getByTestId("market-status")).toHaveText("Launched");
+
+    expect(errors()).toEqual([]);
+  });
+
+  /**
    * The EPIC-016 house rule: every new mutation dialog is walked through at
    * least one real server refusal, because success-path verification is what
    * let six forms ship with an unhandled promise rejection escaping to the

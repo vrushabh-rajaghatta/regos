@@ -8,6 +8,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { AddMarketDialog } from "../../medicinalProducts/components/AddMarketDialog";
 import { AddTradeNameDialog } from "../../medicinalProducts/components/AddTradeNameDialog";
 import { ChangeMarketStatusDialog } from "../../medicinalProducts/components/ChangeMarketStatusDialog";
+import { MarketActivationDialog } from "../../medicinalProducts/components/MarketActivationDialog";
 import { MarketTradeNames } from "../../medicinalProducts/components/MarketTradeNames";
 import { marketStatusLabel } from "../../medicinalProducts/constants/marketStatuses";
 import { useMedicinalProducts } from "../../medicinalProducts/hooks/useMedicinalProducts";
@@ -39,6 +40,7 @@ export function ProductRegistrationsPage() {
   );
   const [namingIn, setNamingIn] = useState<MedicinalProduct | null>(null);
   const [restatusing, setRestatusing] = useState<MedicinalProduct | null>(null);
+  const [retiring, setRetiring] = useState<MedicinalProduct | null>(null);
   const [status, setStatus] = useState("");
 
   const markets = useMedicinalProducts(globalProductId!);
@@ -107,6 +109,17 @@ export function ProductRegistrationsPage() {
                   >
                     <td className="px-4 py-2 font-medium">
                       {market.countryName}
+
+                      {/* Retired markets stay visible, labelled. Hiding them
+                          would be data loss dressed as a default. */}
+                      {market.status === "Inactive" && (
+                        <span
+                          className="ml-2 rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground"
+                          data-testid="market-retired"
+                        >
+                          Retired
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       <MarketTradeNames
@@ -145,6 +158,14 @@ export function ProductRegistrationsPage() {
                         onClick={() => setNamingIn(market)}
                       >
                         Add name
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setRetiring(market)}
+                      >
+                        {market.status === "Inactive" ? "Restore" : "Retire"}
                       </Button>
 
                       <Button
@@ -252,6 +273,23 @@ export function ProductRegistrationsPage() {
         open={addingMarket}
         onOpenChange={setAddingMarket}
       />
+
+      {retiring && (
+        <MarketActivationDialog
+          medicinalProductId={retiring.medicinalProductId}
+          countryName={retiring.countryName}
+          active={retiring.status === "Inactive"}
+          registrationCount={
+            (data ?? []).filter(
+              (row) => row.medicinalProductId === retiring.medicinalProductId
+            ).length
+          }
+          open
+          onOpenChange={(open) => {
+            if (!open) setRetiring(null);
+          }}
+        />
+      )}
 
       {restatusing && (
         <ChangeMarketStatusDialog

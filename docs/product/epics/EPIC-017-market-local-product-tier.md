@@ -514,6 +514,64 @@ tests, which backdate properly, passed throughout and localised it immediately.
 
 ---
 
+### S003a — Market deactivation *(shipped)*
+
+Completes the activation lifecycle S001 opened. `Activate`/`Deactivate` mirror
+`OrganizationDivision`, including refusing a no-op rather than being idempotent:
+a caller asking for a state the record already holds is acting on a stale view.
+
+**The rule this story deliberately does not impose.** Nothing consults the
+registrations held in a market before retiring its record, for two reasons and
+the second is the stronger:
+
+1. It would reverse the dependency the epic exists to establish. `GlobalProduct
+   → MedicinalProduct → Registration` runs one way, and a parent inspecting its
+   dependants across an aggregate boundary is the first crack in it. It is also
+   the same coupling S002 refused when it dropped `registrationCount` from the
+   markets list — accepting it here would have made that decision arbitrary.
+2. **"Has registrations" is not the invariant anyone means.** An expired
+   registration should not block retirement; nor a withdrawn one; nor a
+   superseded one. The rule immediately becomes *"has registrations whose
+   current status is…"*, which is a policy over another aggregate's lifecycle.
+   **The more a rule depends on `Registration` semantics, the more clearly it
+   belongs with `Registration`.**
+
+The UI warns — *"This market holds 1 authorisation"* — and proceeds. **Warnings
+help humans; domain rules preserve truth**, and nothing here makes a truth
+impossible to represent. If the rule is ever genuinely required, it arrives as
+an application-level policy that reads registrations and then calls
+`Deactivate`, and the aggregate stays ignorant.
+
+**What deactivation means, stated so it cannot drift:**
+
+> **Active** — this market record participates in normal operational workflows.
+>
+> **Inactive** — this market record is retained for history but intentionally
+> excluded from operational workflows. **Deactivation implies no regulatory or
+> commercial state**: it does not withdraw a licence, does not take a product
+> off sale, and does not delete anything (ES-018).
+
+**Tests as living documentation of the boundary.** Three questions are asked of
+a market presence — what has the regulator done, is it on sale, should this
+record be used — and each pair is asserted independent in both directions:
+discontinuing leaves the record active; retiring leaves the sale status,
+the derived launch date and the registrations untouched; restoring changes
+neither; and an inactive record still accepts commercial history.
+
+One of those tests needed a **test-only** reference from the Product test
+project to `RegOS.Registration.Infrastructure`, so it could create a real
+licence and prove it survives. Noted because it is the one place in the epic
+where those two names appear together, and it is a test proving a negative —
+the Product context itself still references nothing of Registration.
+
+**Retired markets stay visible**, labelled, never hidden. Hiding is data loss
+dressed as a default — the `ListMarketRegistrations` precedent.
+
+**Verification:** 913 backend tests (+10), 64 browser specs (+1), CORS widening
+reverted with no `Program.cs` diff.
+
+---
+
 ## ADR-039 — staged material
 
 Written as it was decided rather than reconstructed at the end. S004 lifts this

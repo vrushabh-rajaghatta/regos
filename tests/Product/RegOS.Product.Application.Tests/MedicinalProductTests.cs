@@ -1,10 +1,13 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
+using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
+using RegOS.Product.Application.Commands.ActivateMedicinalProduct;
 using RegOS.Product.Application.Commands.AddTradeName;
 using RegOS.Product.Application.Commands.ChangeMarketStatus;
 using RegOS.Product.Application.Commands.CreateMedicinalProduct;
+using RegOS.Product.Application.Commands.DeactivateMedicinalProduct;
 using RegOS.Product.Application.Commands.RemoveTradeName;
 using RegOS.Product.Application.Queries.ListMedicinalProducts;
 using RegOS.Product.Application.Services;
@@ -13,6 +16,11 @@ using RegOS.Product.Domain.Product;
 using RegOS.Product.Infrastructure.Persistence;
 using RegOS.Product.Infrastructure.Services;
 using RegOS.ReferenceData.Domain.Geography.Country;
+using RegOS.ReferenceData.Domain.Regulatory.Authority;
+using RegOS.Registration.Application.Commands.CreateRegistration;
+using RegOS.Registration.Domain.Aggregates.Registration;
+using RegOS.Registration.Infrastructure.Repositories;
+using RegOS.Registration.Infrastructure.Services;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Product.Application.Tests;
@@ -39,6 +47,13 @@ public sealed class MedicinalProductTests : IAsyncLifetime
     /// <summary>A market entered long ago, so its history has room to run.</summary>
     private static readonly DateOnly Entered = new(2020, 1, 1);
 
+    /// <summary>The seeded FDA and Demo Manufacturer Ltd.</summary>
+    private static readonly AuthorityId Fda =
+        new(Guid.Parse("20000000-0000-0000-0000-000000000001"));
+    private static readonly OrganizationId Holder =
+        new(Guid.Parse("30000000-0000-0000-0000-000000000001"));
+
+    private readonly List<Guid> _registrationIds = [];
     private readonly List<Guid> _medicinalProductIds = [];
     private readonly List<Guid> _productIds = [];
 
@@ -54,6 +69,20 @@ public sealed class MedicinalProductTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await using var ctx = New();
+
+        // Registrations first: they point at the markets removed below, and
+        // that FK is Restrict.
+        foreach (var id in _registrationIds)
+        {
+            var registration = await ctx.Registrations
+                .Include(x => x.History)
+                .FirstOrDefaultAsync(x => x.Id == new RegistrationId(id));
+
+            if (registration is not null)
+                ctx.Registrations.Remove(registration);
+        }
+
+        await ctx.SaveChangesAsync();
 
         foreach (var id in _medicinalProductIds)
         {
@@ -413,6 +442,92 @@ public sealed class MedicinalProductTests : IAsyncLifetime
                 MedicinalProductPolicyErrors.MedicinalProductDoesNotExist);
     }
 
+    // --- Operability ---------------------------------------------------------
+
+    /// <summary>
+    /// <b>The rule this story deliberately does not impose.</b> Nothing
+    /// consults the registrations held in this market, because "has
+    /// registrations" is not the invariant anyone means — an expired one should
+    /// not block it, nor a withdrawn one — and the rule would immediately
+    /// become a policy over another aggregate's lifecycle, running against the
+    /// dependency direction the whole epic established.
+    /// </summary>
+    [Fact]
+    public async Task AMarketHoldingRegistrationsCanStillBeRetired()
+    {
+        await using var ctx = New();
+        var market = await CreateAsync(ctx, await ProductAsync(ctx));
+        var registrationId = await RegistrationAsync(ctx, market);
+
+        var retire = async () =>
+            await SetActivationAsync(market, active: false, on: Today);
+
+        await retire.Should().NotThrowAsync();
+
+        await using var check = New();
+
+        var reloaded = await check.MedicinalProducts
+            .AsNoTracking().FirstAsync(x => x.Id == market);
+
+        reloaded.Status.Should().Be(MedicinalProductStatus.Inactive);
+        reloaded.StatusDate.Should().Be(Today);
+
+        // The licence is untouched, and still points at this market. Retiring
+        // a record is not a regulatory event.
+        var registration = await check.Registrations
+            .AsNoTracking().FirstAsync(x => x.Id == registrationId);
+
+        registration.MedicinalProductId.Should().Be(market);
+        registration.CurrentStatus.Should().Be(RegistrationStatus.Planned);
+    }
+
+    /// <summary>
+    /// Round-tripped through Postgres: retiring the record leaves the
+    /// commercial history exactly where it was.
+    /// </summary>
+    [Fact]
+    public async Task RetiringARecordLeavesItsCommercialHistoryUntouched()
+    {
+        await using var ctx = New();
+        var market = await CreateAsync(
+            ctx, await ProductAsync(ctx), statusDate: Entered);
+
+        await ChangeAsync(market, MarketStatus.Launched, new(2021, 3, 15));
+        await SetActivationAsync(market, active: false, on: new(2026, 4, 1));
+
+        await using var check = New();
+        var reloaded = await check.MedicinalProducts
+            .AsNoTracking()
+            .Include(x => x.MarketStatusHistory)
+            .FirstAsync(x => x.Id == market);
+
+        reloaded.Status.Should().Be(MedicinalProductStatus.Inactive);
+        reloaded.CurrentMarketStatus.Should().Be(MarketStatus.Launched);
+        reloaded.MarketStatusHistory.Should().HaveCount(2);
+
+        // And back again, with the commercial state still untouched.
+        await SetActivationAsync(market, active: true, on: new(2026, 5, 1));
+
+        await using var after = New();
+        var restored = await after.MedicinalProducts
+            .AsNoTracking().FirstAsync(x => x.Id == market);
+
+        restored.Status.Should().Be(MedicinalProductStatus.Active);
+        restored.StatusDate.Should().Be(new DateOnly(2026, 5, 1));
+        restored.CurrentMarketStatus.Should().Be(MarketStatus.Launched);
+    }
+
+    [Fact]
+    public async Task RetiringARecordThatIsNotThereIsNotFound()
+    {
+        var retire = async () => await SetActivationAsync(
+            MedicinalProductId.New(), active: false, on: Today);
+
+        await retire.Should().ThrowAsync<NotFoundException>()
+            .WithMessage(
+                MedicinalProductPolicyErrors.MedicinalProductDoesNotExist);
+    }
+
     // --- Reading -------------------------------------------------------------
 
     /// <summary>
@@ -524,6 +639,26 @@ public sealed class MedicinalProductTests : IAsyncLifetime
     /// the one-name-per-language rule is exercised against persisted state
     /// rather than an aggregate that never left memory.
     /// </summary>
+    private static async Task SetActivationAsync(
+        MedicinalProductId market,
+        bool active,
+        DateOnly on)
+    {
+        await using var ctx = New();
+        var repository = new MedicinalProductRepository(ctx);
+
+        if (active)
+        {
+            await new ActivateMedicinalProductHandler(repository).HandleAsync(
+                new ActivateMedicinalProductCommand(market, on), default);
+        }
+        else
+        {
+            await new DeactivateMedicinalProductHandler(repository).HandleAsync(
+                new DeactivateMedicinalProductCommand(market, on), default);
+        }
+    }
+
     /// <summary>
     /// Each change through its own context, the way a request would arrive — so
     /// the chronology rule is exercised against persisted state rather than an
@@ -582,6 +717,27 @@ public sealed class MedicinalProductTests : IAsyncLifetime
             default);
 
         _medicinalProductIds.Add(result.Id.Value);
+
+        return result.Id;
+    }
+
+    /// <summary>
+    /// A real licence over this market, so the "retiring leaves it untouched"
+    /// test proves something rather than asserting over an empty set.
+    /// </summary>
+    private async Task<RegistrationId> RegistrationAsync(
+        RegOSDbContext ctx,
+        MedicinalProductId market)
+    {
+        var result = await new CreateRegistrationHandler(
+                new RegistrationCreationPolicy(ctx),
+                new RegistrationRepository(ctx),
+                TestTenant.Context)
+            .HandleAsync(
+                new CreateRegistrationCommand(market, Fda, Holder, Today),
+                default);
+
+        _registrationIds.Add(result.Id.Value);
 
         return result.Id;
     }

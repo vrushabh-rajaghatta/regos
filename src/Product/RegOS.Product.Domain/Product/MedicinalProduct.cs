@@ -80,10 +80,8 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
     public CountryId CountryId { get; }
 
     /// <summary>
-    /// An activation flag, not the market status — see
-    /// <see cref="MedicinalProductStatus"/>. It carries no transitions yet:
-    /// the capability to retire a market-local record arrives with S003, where
-    /// the market lifecycle makes it something a user can actually reach.
+    /// Whether this record participates in normal work — an activation flag,
+    /// not the market status. See <see cref="MedicinalProductStatus"/>.
     /// </summary>
     public MedicinalProductStatus Status { get; private set; }
 
@@ -158,6 +156,67 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
 
         return medicinalProduct;
     }
+
+    /// <summary>
+    /// Retires this record from normal work. Nothing beneath it changes.
+    /// </summary>
+    /// <remarks>
+    /// <b>Nothing here consults the registrations held in this market</b>, and
+    /// that is deliberate twice over.
+    /// <para>
+    /// First, it would reverse the dependency this tier exists to establish:
+    /// <c>GlobalProduct → MedicinalProduct → Registration</c> runs one way, and
+    /// a parent inspecting its dependants across an aggregate boundary is the
+    /// first crack in it.
+    /// </para>
+    /// <para>
+    /// Second — and the stronger reason — <em>"has registrations"</em> is not
+    /// the invariant anyone actually means. An expired one should not block
+    /// this; nor a withdrawn one; nor a superseded one. The rule immediately
+    /// becomes <em>"has registrations whose current status is…"</em>, which is
+    /// a policy over another aggregate's lifecycle. The more a rule depends on
+    /// <c>Registration</c> semantics, the more clearly it belongs with
+    /// <c>Registration</c>. If it is ever required, it arrives as an
+    /// application-level policy that reads registrations and then calls this —
+    /// and the aggregate stays ignorant.
+    /// </para>
+    /// <para>
+    /// "This market has five registrations, are you sure?" is a <b>warning</b>,
+    /// and warnings help humans. Domain rules preserve truth, and nothing about
+    /// this makes a truth impossible to represent.
+    /// </para>
+    /// </remarks>
+    public void Deactivate(DateOnly on)
+    {
+        if (Status == MedicinalProductStatus.Inactive)
+            throw new BusinessRuleViolationException(
+                MedicinalProductErrors.AlreadyInactive);
+
+        Status = MedicinalProductStatus.Inactive;
+        StatusDate = Dated(on);
+    }
+
+    /// <remarks>
+    /// Not idempotent, deliberately, and for the same reason
+    /// <c>OrganizationDivision</c> is not: a caller asking for a state the
+    /// record already holds is acting on a stale view, and silently succeeding
+    /// would hide that.
+    /// </remarks>
+    public void Activate(DateOnly on)
+    {
+        if (Status == MedicinalProductStatus.Active)
+            throw new BusinessRuleViolationException(
+                MedicinalProductErrors.AlreadyActive);
+
+        Status = MedicinalProductStatus.Active;
+        StatusDate = Dated(on);
+    }
+
+    private static DateOnly Dated(DateOnly on)
+        => on == default
+            ? throw new DomainException(
+                MedicinalProductErrors.StatusDateRequired)
+            : on;
 
     /// <summary>
     /// Records what became commercially true here, and when.
