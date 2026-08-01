@@ -35,8 +35,14 @@ using RegOS.Submission.Application;
 using RegOS.Submission.Infrastructure;
 using RegOS.ProductDocument.Application;
 using RegOS.ProductDocument.Infrastructure;
+using RegOS.Interaction.Application;
+using RegOS.Interaction.Infrastructure;
 using RegOS.Registration.Application;
 using RegOS.Registration.Infrastructure;
+using RegOS.Api.Endpoints.Commitments;
+using RegOS.Api.Endpoints.Inspections;
+using RegOS.Api.Endpoints.Meetings;
+using RegOS.Api.Endpoints.Correspondence;
 using RegOS.Api.Endpoints.Registrations;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -110,6 +116,9 @@ builder.Services.AddProductDocumentInfrastructure(builder.Configuration);
 builder.Services.AddRegistrationApplication();
 builder.Services.AddRegistrationInfrastructure();
 
+builder.Services.AddInteractionApplication();
+builder.Services.AddInteractionInfrastructure();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -154,6 +163,8 @@ referenceData.MapListRegulatoryTemplates();
 referenceData.MapGetRegulatoryTemplate();
 referenceData.MapListIdentifierSchemes();
 referenceData.MapListContactRoles();
+referenceData.MapListCorrespondenceTypes();
+referenceData.MapListAuthorityDivisions();
 
 var authentication = app.MapGroup("").WithTags("Authentication");
 authentication.MapLogin();
@@ -249,6 +260,36 @@ registrations.MapListProductRegistrations();
 registrations.MapListMarketRegistrations();
 registrations.MapListRegistrationMarkets();
 registrations.MapListExpiringRegistrations();
+
+var correspondence = app.MapGroup("").WithTags("Correspondence");
+correspondence.MapRecordCorrespondence();
+correspondence.MapListCorrespondence();
+correspondence.MapGetCorrespondence();
+correspondence.MapAttachCorrespondenceContent();
+correspondence.MapDownloadCorrespondenceContent();
+correspondence.MapRemoveCorrespondenceContent();
+correspondence.MapRaiseQuestion();
+correspondence.MapRespondToQuestion();
+correspondence.MapResolveQuestion();
+correspondence.MapAssignQuestion();
+
+var commitments = app.MapGroup("").WithTags("Commitments");
+commitments.MapGiveCommitment();
+commitments.MapListCommitments();
+commitments.MapChangeCommitmentStatus();
+commitments.MapListDueWork();
+
+var meetings = app.MapGroup("").WithTags("Meetings");
+meetings.MapBeginMeeting();
+meetings.MapListMeetings();
+meetings.MapChangeMeetingStatus();
+meetings.MapRecordMeetingOutcome();
+
+var inspections = app.MapGroup("").WithTags("Inspections");
+inspections.MapBeginInspection();
+inspections.MapListInspections();
+inspections.MapChangeInspectionStatus();
+inspections.MapRecordInspectionFindings();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

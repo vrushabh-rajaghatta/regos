@@ -22,7 +22,7 @@ word. The browser is simply the first thing that noticed.
 
 ## Why this is not a testing rule
 
-It has happened three times, and every fix improved the page for a sighted user
+It has happened four times, and every fix improved the page for a sighted user
 reading it silently:
 
 | Collided | Became | What was actually wrong |
@@ -30,6 +30,7 @@ reading it silently:
 | dialog *Record Identifier* · field *Identifier* | field → **Identifier Value** | The field holds half of a scheme-plus-value pair. "Identifier" named the pair, not the half. |
 | dialog *Trade name in Canada* · field *Trade name* | dialog → **Name in Canada** | The heading stuttered against its own field. |
 | overview label *Launched* · status value *Launched* | label → **Launched on** | A reader parsed "On sale: Launched / Launched: 2021-03-15" to work out which word was the label. |
+| list filter *Filter by type* · dialog field *Type* | field → **Correspondence type** | The dialog opens **over** the list, so both are in the accessibility tree at once. A bare "Type" in that context names nothing. |
 
 None was a test defect. Each was a place where **one word was carrying two
 jobs** — and that is a vocabulary problem, which this codebase already takes
@@ -66,6 +67,14 @@ name when they genuinely are the same logical control rendered twice — a
 "Save" in a sticky footer mirroring one in a form, for instance. In that case
 say so in the spec, because the next reader will otherwise apply this rule.
 
+**A different case, and the commoner one: names that are distinct to a person
+but collide under Playwright's substring matching.** A page heading
+*"Correspondence"* and an empty state *"No correspondence yet."* are never
+ambiguous read aloud; only the matcher sees two hits. Narrow with
+`{ exact: true }` — and write the reason in the spec, so the next reader can
+tell this apart from a real defect. **The test is whether a person would be
+confused, not whether the locator is.**
+
 ---
 
 ## Change History
@@ -73,3 +82,4 @@ say so in the spec, because the next reader will otherwise apply this rule.
 | Version | Date | Summary |
 |---|---|---|
 | 1.0 | 2026-08-01 | Promoted from a browser-spec convention on the third occurrence (EPIC-017 S005). |
+| 1.1 | 2026-08-01 | Fourth occurrence (EPIC-006 S001). Separated genuine wording defects from substring-only matcher collisions. |

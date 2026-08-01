@@ -27,33 +27,56 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | **EPIC-001** | **The Regulatory Data Dictionary** — complete Reference Data as the governed, standards-aligned controlled-vocabulary + dossier-blueprint backbone; seeded for FDA IND (CTD) + CA/AU/IN | 🟢 Complete | 8 stories; merged to `main` (PR #5) → `epics/EPIC-001-regulatory-data-dictionary.md` |
 | **EPIC-002** | **Submission validates against the blueprint** — bind a Submission to a published template version; metadata-driven validation engine; publishing gated on it | 🟢 Complete | 4 stories; [ADR-035](../adr/ADR-035-submissions-bind-to-a-published-template-version.md) → `epics/EPIC-002-submission-validates-against-blueprint.md` |
 | **EPIC-003** | **Submission planning & content** — place documents into the bound blueprint's sections; placeholder-shaped content plan / gap view (the dossier builder); placement-aware validation | 🟢 Complete | 4 stories; [ADR-036](../adr/ADR-036-the-dossier-is-structure-placeholders-are-validation.md) → `epics/EPIC-003-submission-planning-and-content.md` |
+| **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | 🟢 Complete | 8 stories; [ADR-040](../adr/ADR-040-the-health-authority-interaction-context.md) · [ADR-041](../adr/ADR-041-platform-contracts-and-the-identity-that-crosses.md) · [ADR-042](../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
 | **EPIC-005** | **Registration tracking** — what the business *holds*: a product's market authorisations, their status over time, licence numbers and key dates (the RIM core) | 🟢 Complete | 4 stories; [ADR-037](../adr/ADR-037-registrations-are-regulatory-assets-with-derived-visibility.md) → `epics/EPIC-005-registration-tracking.md` |
+| **EPIC-016** | **Organization depth** — sites, contacts, divisions; deepen Organization itself | 🟢 Complete | [ADR-038](../adr/ADR-038-organization-depth-roots-and-the-three-filter-shapes.md) · deactivation deferred with a reason → [`epics/EPIC-016-organization-depth.md`](epics/EPIC-016-organization-depth.md) |
+| **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier (**"Markets"** in the UI), + trade names and market status | 🟢 Complete | 7 stories, 7/7 DoD; [ADR-039](../adr/ADR-039-the-market-local-product-tier.md) → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
 
 ---
 
 ## Now
 
-*Nothing in flight.* EPIC-016 and EPIC-017 both shipped; the next epic is the
-open call below — and a small maintenance epic is queued behind them (nine
-forms still carry the EPIC-016 mutation defect; see the EPIC-017 retro).
+*Nothing in flight.* **EPIC-006 is complete** — 8 stories, [ADR-040](../adr/ADR-040-the-health-authority-interaction-context.md) · [ADR-041](../adr/ADR-041-platform-contracts-and-the-identity-that-crosses.md) · [ADR-042](../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md). The **maintenance epic** (nine forms carrying the EPIC-016 mutation defect) is next, then **EPIC-004**.
+
+Its Phase 2 opened on the domain question rather than the entity list and
+**falsified its own central hypothesis** — the spanning question is real, but it
+is a read model, not an aggregate. Across eight stories the process prevented an
+incorrect dependency, an incorrect ownership model, two speculative
+abstractions, one premature extraction and one business status from entering the
+model; the retro records each with the story it came from.
 
 ## Next
 
-Three candidates, **planned to Phase 1 depth** (see [RIM alignment](#rim-alignment) for why these three). Order among them is an open priority call — see the note below the table.
+**Planned to Phase 1–2 depth.** Order in this table is priority.
 
-| ID | Epic | Status | Depends on |
-|---|---|---|---|
-| **EPIC-016** | **Organization depth** — sites, contacts, divisions; deepen Organization itself | ✅ **Complete** | ADR-038 · deactivation deferred with a reason → [`epics/EPIC-016-organization-depth.md`](epics/EPIC-016-organization-depth.md) |
-| **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier (**"Markets"** in the UI), + trade names and market status | ✅ **Complete** | ADR-039 · seven stories, 7/7 DoD → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
-| **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | ⚪ Not Started | EPIC-003 (placement makes a sequence a diff of placements, not an inference); S005 needs EPIC-016 → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
+| # | ID | Epic | Status | Depends on |
+|---|---|---|---|---|
+| 1 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | ⚪ Not Started | EPIC-003 ✅ (placement makes a sequence a diff of placements, not an inference) · EPIC-016 ✅ (S005) → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
 
-> **Open call — EPIC-017 vs EPIC-004.** They are genuinely independent: sequences live inside `Submission` and never touch `ProductId`; the tier work never touches submission internals. Neither makes the other harder, so this is a **value** decision, not a dependency one. EPIC-017 completes an epic already in flight (EPIC-005's portfolio views currently answer *"what do we hold in Canada?"* with a global product code); EPIC-004 completes nothing in flight but may be what a customer is waiting on. **EPIC-016 goes first either way** — it blocks EPIC-006 and part of EPIC-004, and is blocked by nothing.
+> **Call made 2026-08-01 — EPIC-006 before EPIC-004.** Both are unblocked and
+> genuinely independent: sequences live inside `Submission` and never touch
+> `ProductId`; interactions never touch submission internals. `EPIC-020` needs
+> both, so the order costs nothing downstream — it is a **value** decision.
+>
+> It goes to EPIC-006 because RegOS today knows *what we submitted* and *what we
+> hold*, and still does not know **what is happening with the authority** — the
+> operational half of a RIM, and where a regulatory affairs team actually spends
+> its day. EPIC-004 deepens an area that is already coherent; EPIC-006 opens one
+> that is absent. It is also the largest single block of RIM coverage available
+> in one epic (**+5 objects**), and the epic that **tests ADR-039's central
+> prediction** — the bitemporal-history extraction — while the reasoning is still
+> fresh.
+>
+> **The one thing that reverses this:** a paying customer waiting on eCTD
+> sequence management. Revenue outranks sequencing; nothing else here does.
+>
+> The [RIM runway](#the-runway) has ordered it `006 → 004` since it was written.
+> Only this table disagreed.
 
 ## Later
 
 | ID | Epic | Status | Notes |
 |---|---|---|---|
-| **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | ⚪ Not Started | needs EPIC-016 · planned → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations | ⚪ Not Started | needs EPIC-017 · planned → [`epics/EPIC-018-labeling-and-product-information.md`](epics/EPIC-018-labeling-and-product-information.md) |
 | **EPIC-019** | **Study registry** — clinical & non-clinical studies, cited by applications and submission content | ⚪ Not Started | no dependencies — good filler when a larger epic needs breaking up · planned → [`epics/EPIC-019-study-registry.md`](epics/EPIC-019-study-registry.md) |
 | **EPIC-010** | **IDMP / product data depth** — substances, ingredients, strength, presentation, packaging, manufacturing | ⚪ Not Started | needs EPIC-016 + EPIC-017 · **split into 10a/10b/10c before cutting a branch** · planned → [`epics/EPIC-010-idmp-product-data-depth.md`](epics/EPIC-010-idmp-product-data-depth.md) |
@@ -65,7 +88,7 @@ Three candidates, **planned to Phase 1 depth** (see [RIM alignment](#rim-alignme
 | **EPIC-012** | **Reference-data authoring & governance** — data-steward CRUD, change control, tenant-authored/cloned templates & document types | ⚪ Not Started | deferred write-side from EPIC-001; grows with every vocabulary EPIC-006/010/018 add |
 | **EPIC-013** | **Audit & activity history** — cross-cutting audit trail (`LastModifiedOn` was deferred to here) | ⚪ Not Started | see the status-history rule below — most of this should never reach here |
 | **EPIC-014** | **Notifications** — email & in-app | ⚪ Not Started | EPIC-005 (expiry), 006 (due dates), 020 (slipping steps) all defer their "tell someone" half to here |
-| **EPIC-015** | **Production readiness & security** — rate limiting (SEC-001), email delivery, token-table cleanup jobs | ⚪ Not Started | |
+| **EPIC-015** | **Production readiness & security** — rate limiting (SEC-001), email delivery, token-table cleanup jobs, **a CI job proving a clean clone builds** | ⚪ Not Started | The clean-clone check is carried debt from EPIC-006 S002: an unanchored `storage/` in `.gitignore` kept `IFileStorage.cs` and `LocalFileStorage.cs` out of the repository entirely. Local builds passed; a fresh clone did not build, and nothing said so. The rule is fixed — the **class** of defect is not. |
 
 ---
 

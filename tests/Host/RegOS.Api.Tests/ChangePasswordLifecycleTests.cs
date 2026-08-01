@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using FluentAssertions;
 
 using RegOS.Api.Authentication;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Api.Tests;
 

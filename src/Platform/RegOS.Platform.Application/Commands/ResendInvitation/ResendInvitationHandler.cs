@@ -3,6 +3,7 @@ using RegOS.Platform.Application.Invitations;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Commands.ResendInvitation;
 

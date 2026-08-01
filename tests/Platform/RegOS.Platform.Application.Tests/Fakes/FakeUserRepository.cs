@@ -1,6 +1,7 @@
 using RegOS.Platform.Domain.Aggregates.User;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Tests.Fakes;
 

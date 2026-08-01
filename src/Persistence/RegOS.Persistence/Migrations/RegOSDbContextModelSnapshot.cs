@@ -22,6 +22,220 @@ namespace RegOS.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("RegOS.Interaction.Domain.Commitments.Commitment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateOnly>("DueOn")
+                        .HasColumnType("date");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RegistrationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RegulatoryApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceCorrespondenceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceInspectionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceMeetingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityId");
+
+                    b.HasIndex("TenantId", "OwnerUserId");
+
+                    b.HasIndex("TenantId", "CurrentStatus", "DueOn");
+
+                    b.ToTable("Commitments", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Interaction.Domain.Correspondence.HaCorrespondence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AuthorityDivisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AuthorityReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("CorrespondenceTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("OccurredOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("RecordedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RegistrationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RegulatoryApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ResponseDueOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid?>("SubmissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityDivisionId");
+
+                    b.HasIndex("AuthorityId");
+
+                    b.HasIndex("CorrespondenceTypeId");
+
+                    b.HasIndex("RegulatoryApplicationId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "OccurredOn");
+
+                    b.HasIndex("TenantId", "ResponseDueOn");
+
+                    b.ToTable("HaCorrespondence", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Interaction.Domain.Inspections.Inspection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("OrganizationSiteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Outcome")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ScheduledFor")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityId");
+
+                    b.HasIndex("OrganizationSiteId");
+
+                    b.HasIndex("TenantId", "CurrentStatus", "ScheduledFor");
+
+                    b.ToTable("Inspections", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Interaction.Domain.Meetings.HaMeeting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AuthorityDivisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Minutes")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<string>("Outcome")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RegulatoryApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ScheduledFor")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityDivisionId");
+
+                    b.HasIndex("AuthorityId");
+
+                    b.HasIndex("TenantId", "CurrentStatus", "ScheduledFor");
+
+                    b.ToTable("HaMeetings", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1178,6 +1392,59 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Authorities", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Regulatory.Authority.AuthorityDivision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityId", "TenantId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("AuthorityDivisions", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("CorrespondenceTypes", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.ReferenceData.Domain.SubmissionType.SubmissionType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1470,6 +1737,287 @@ namespace RegOS.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("SubmissionDocuments", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Interaction.Domain.Commitments.Commitment", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("RegOS.Interaction.Domain.Commitments.CommitmentStatusEntry", "History", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("Id");
+
+                            b1.Property<Guid>("CommitmentId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Note")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<DateOnly>("OccurredOn")
+                                .HasColumnType("date");
+
+                            b1.Property<DateTime>("RecordedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<int>("Status")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("CommitmentId");
+
+                            b1.ToTable("CommitmentStatusEntries", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("CommitmentId");
+                        });
+
+                    b.Navigation("History");
+                });
+
+            modelBuilder.Entity("RegOS.Interaction.Domain.Correspondence.HaCorrespondence", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.AuthorityDivision", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityDivisionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType", null)
+                        .WithMany()
+                        .HasForeignKey("CorrespondenceTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("RegOS.Interaction.Domain.Correspondence.CorrespondenceAttachment", "Attachments", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("Id");
+
+                            b1.Property<string>("ContentType")
+                                .IsRequired()
+                                .HasMaxLength(255)
+                                .HasColumnType("character varying(255)");
+
+                            b1.Property<long>("FileSizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.Property<Guid>("HaCorrespondenceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("OriginalFileName")
+                                .IsRequired()
+                                .HasMaxLength(255)
+                                .HasColumnType("character varying(255)");
+
+                            b1.Property<string>("StoragePath")
+                                .IsRequired()
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<DateTime>("UploadedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("HaCorrespondenceId");
+
+                            b1.ToTable("CorrespondenceAttachments", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("HaCorrespondenceId");
+                        });
+
+                    b.OwnsMany("RegOS.Interaction.Domain.Correspondence.HaQuestion", "Questions", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("Id");
+
+                            b1.Property<int>("CurrentStatus")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("HaCorrespondenceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Number")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)");
+
+                            b1.Property<Guid?>("OwnerUserId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("ResponseText")
+                                .HasMaxLength(8000)
+                                .HasColumnType("character varying(8000)");
+
+                            b1.Property<DateOnly?>("TargetResponseOn")
+                                .HasColumnType("date");
+
+                            b1.Property<string>("Text")
+                                .IsRequired()
+                                .HasMaxLength(4000)
+                                .HasColumnType("character varying(4000)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("HaCorrespondenceId");
+
+                            b1.HasIndex("CurrentStatus", "TargetResponseOn");
+
+                            b1.ToTable("HaQuestions", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("HaCorrespondenceId");
+
+                            b1.OwnsMany("RegOS.Interaction.Domain.Correspondence.HaQuestionStatusEntry", "History", b2 =>
+                                {
+                                    b2.Property<Guid>("Id")
+                                        .HasColumnType("uuid")
+                                        .HasColumnName("Id");
+
+                                    b2.Property<Guid>("HaQuestionId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Note")
+                                        .HasMaxLength(500)
+                                        .HasColumnType("character varying(500)");
+
+                                    b2.Property<DateOnly>("OccurredOn")
+                                        .HasColumnType("date");
+
+                                    b2.Property<DateTime>("RecordedOnUtc")
+                                        .HasColumnType("timestamp with time zone");
+
+                                    b2.Property<int>("Status")
+                                        .HasColumnType("integer");
+
+                                    b2.HasKey("Id");
+
+                                    b2.HasIndex("HaQuestionId");
+
+                                    b2.ToTable("HaQuestionStatusEntries", (string)null);
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("HaQuestionId");
+                                });
+
+                            b1.Navigation("History");
+                        });
+
+                    b.Navigation("Attachments");
+
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("RegOS.Interaction.Domain.Inspections.Inspection", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationSiteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.OwnsMany("RegOS.Interaction.Domain.Inspections.InspectionStatusEntry", "History", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("Id");
+
+                            b1.Property<Guid>("InspectionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Note")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<DateOnly>("OccurredOn")
+                                .HasColumnType("date");
+
+                            b1.Property<DateTime>("RecordedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<int>("Status")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("InspectionId");
+
+                            b1.ToTable("InspectionStatusEntries", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("InspectionId");
+                        });
+
+                    b.Navigation("History");
+                });
+
+            modelBuilder.Entity("RegOS.Interaction.Domain.Meetings.HaMeeting", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.AuthorityDivision", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityDivisionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("RegOS.Interaction.Domain.Meetings.HaMeetingStatusEntry", "History", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("Id");
+
+                            b1.Property<Guid>("HaMeetingId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Note")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<DateOnly>("OccurredOn")
+                                .HasColumnType("date");
+
+                            b1.Property<DateTime>("RecordedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<int>("Status")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("HaMeetingId");
+
+                            b1.ToTable("HaMeetingStatusEntries", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("HaMeetingId");
+                        });
+
+                    b.Navigation("History");
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
@@ -1808,6 +2356,15 @@ namespace RegOS.Persistence.Migrations
                     b.HasOne("RegOS.ReferenceData.Domain.Geography.Country.Country", null)
                         .WithMany()
                         .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Regulatory.Authority.AuthorityDivision", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

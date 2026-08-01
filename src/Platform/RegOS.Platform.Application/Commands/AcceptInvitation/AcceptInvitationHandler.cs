@@ -4,6 +4,7 @@ using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.Invitation;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Commands.AcceptInvitation;
 

@@ -1,5 +1,6 @@
 using RegOS.Platform.Domain.Aggregates.PasswordReset;
 using RegOS.Platform.Domain.Aggregates.User;
+using RegOS.Platform.Contracts;
 
 using PasswordResetAggregate =
     RegOS.Platform.Domain.Aggregates.PasswordReset.PasswordReset;

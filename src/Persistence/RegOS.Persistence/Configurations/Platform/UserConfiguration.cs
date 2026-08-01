@@ -6,6 +6,7 @@ using RegOS.Platform.Domain.ValueObjects;
 using RegOS.SharedKernel.Primitives;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Persistence.Configurations.Platform;
 

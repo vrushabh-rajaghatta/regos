@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\RegOS.SharedKernel\RegOS.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\Platform\RegOS.Platform.Contracts\RegOS.Platform.Contracts.csproj" />
+    <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Domain\RegOS.ReferenceData.Domain.csproj" />
+    <ProjectReference Include="..\..\Organization\RegOS.Organization.Domain\RegOS.Organization.Domain.csproj" />
+    <ProjectReference Include="..\..\RegulatoryApplication\RegOS.RegulatoryApplication.Domain\RegOS.RegulatoryApplication.Domain.csproj" />
+    <ProjectReference Include="..\..\Submission\RegOS.Submission.Domain\RegOS.Submission.Domain.csproj" />
+    <ProjectReference Include="..\..\Registration\RegOS.Registration.Domain\RegOS.Registration.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

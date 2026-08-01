@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RegOS.Persistence;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
+using RegOS.Platform.Contracts;
 
 using UserCredentialAggregate =
     RegOS.Platform.Domain.Aggregates.UserCredential.UserCredential;

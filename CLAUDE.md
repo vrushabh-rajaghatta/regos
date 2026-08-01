@@ -51,7 +51,7 @@ components.
 Read in this order when the question is "how should this work":
 
 1. **[docs/adr/](docs/adr/)** — the single immutable decision series, ADR-001
-   onward. Next number is **ADR-040**. Never edit an accepted ADR; supersede it.
+   onward. Next number is **ADR-044**. Never edit an accepted ADR; supersede it.
 2. **[docs/engineering/slice-conventions.md](docs/engineering/slice-conventions.md)** — mechanical file/folder rules.
 3. **[docs/engineering/implementation-standards.md](docs/engineering/implementation-standards.md)** — principles behind them.
 4. **[docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md)** — cross-cutting platform standards (ES-001…).
@@ -72,10 +72,23 @@ the same PR.
 ## Aggregates
 
 Frozen shape — private constructor, static `Create()` factory (never
-`Register()`, ES-004), behaviour methods, no public setters. Identifiers are
-strongly typed (`ProductId`, `CountryId`); a bare `Guid` never crosses a
-boundary. Aggregates reference each other **by id only** — no navigation
-properties (ES-014).
+`Register()`, ES-004), behaviour methods, no public setters. Aggregates
+reference each other **by id only** — no navigation properties (ES-014).
+
+Identity is `sealed class <X>Id : StronglyTypedId`, and the entity inherits
+`AggregateRoot<TId>` or `Entity<TId>` (ES-020, ADR-043). "Strongly typed" is not
+sufficient — `readonly record struct <X>Id(Guid Value)` cannot satisfy the
+`Entity<TId>` constraint, so those entities have no base class, no identity
+equality, and no empty-guid guard. Copy
+[CommitmentId.cs](src/Interaction/RegOS.Interaction.Domain/Commitments/CommitmentId.cs),
+never the nearest id — 19 record-struct ids are still pending migration
+(`SubmissionId`, `RegistrationId`, all of Blueprint, every `*StatusEntry`) and
+copying one propagates it. `IdentityConventionTests` enforces this.
+
+The exception is **flat master data** (`CountryId`, `AuthorityId`,
+`DocumentTypeId` and five more): deterministic ids, no children, no lifecycle,
+no `Entity<TId>`. They keep record structs permanently (ADR-043 §2). This is by
+shape, not by context — Blueprint lives in ReferenceData and is a real aggregate.
 
 Lifecycle over deletion (ES-018): entities move `Active ↔ Inactive` rather than
 being removed. Regulatory records are retained.
@@ -97,7 +110,7 @@ Persistence is centralised on purpose — EF configuration for every context
 lives in `RegOS.Persistence`, not beside the aggregate.
 
 Contexts today: Platform · Organization · Product · ProductDocument ·
-RegulatoryApplication · Submission · Registration · ReferenceData.
+RegulatoryApplication · Submission · Registration · Interaction · ReferenceData.
 
 ---
 

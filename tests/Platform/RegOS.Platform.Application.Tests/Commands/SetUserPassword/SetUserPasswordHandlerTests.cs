@@ -12,6 +12,7 @@ using RegOS.Platform.Infrastructure.Services;
 using RegOS.SharedKernel.Exceptions;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Tests.Commands.SetUserPassword;
 

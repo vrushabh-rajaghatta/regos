@@ -134,3 +134,126 @@ All developers and CI environments should build RegOS using the same SDK version
 ## ES-019 — Initializers Are Additive and Idempotent
 
 > Every `IDataInitializer` has a single responsibility: ensure its capability has the minimum required platform-owned data. Initializers must be additive and idempotent — never deleting or overwriting existing customer data, and safe to run on every application startup. As RegOS grows, startup remains a simple loop over registered initializers, and each capability bootstraps itself independently without special orchestration logic.
+
+---
+
+## ES-020 — Entity Identity Derives From `StronglyTypedId`
+
+> Every entity and aggregate identity is a `sealed class <X>Id : StronglyTypedId`
+> ([SharedKernel/Primitives/StronglyTypedId.cs](../src/Shared/RegOS.SharedKernel/Primitives/StronglyTypedId.cs)).
+> The older `readonly record struct <X>Id(Guid Value)` form is **closed to new
+> code** and shrink-only in existing code. This applies to child entities and
+> status-history entries exactly as it applies to aggregate roots.
+
+### The two forms are not interchangeable
+
+"Strongly typed" is not the standard — deriving from the kernel type is. A
+`record struct` is strongly typed and still fails the standard, which is why
+this needed writing down: the weaker phrasing let the second form spread.
+
+[`Entity<TId>`](../src/Shared/RegOS.SharedKernel/Abstractions/Entity.cs)
+constrains `where TId : StronglyTypedId`. A record struct cannot satisfy it, so
+an entity keyed that way **cannot inherit `Entity<TId>` or `AggregateRoot<TId>`
+at all**. It silently loses:
+
+- **Identity equality** — two instances of the same entity with the same id are
+  not equal, because the class has no base type supplying `Equals`.
+- **The empty-guid guard** — `StronglyTypedId` rejects `Guid.Empty` with
+  `DomainException` (400). A record struct accepts it and the request surfaces
+  as a **500** further down. [ADR-017](adr/ADR-017-shared-kernel-scope.md) names
+  this defect specifically.
+- **The aggregate-boundary marker** — no `AggregateRoot<TId>`, so the
+  consistency boundary is undeclared.
+
+### Correct by construction
+
+Every conforming id in the solution has exactly these four members. Copy them.
+
+```csharp
+// <Aggregate>Id.cs
+using RegOS.SharedKernel.Primitives;
+
+public sealed class CommitmentId : StronglyTypedId
+{
+    public CommitmentId(Guid value) : base(value)
+    {
+    }
+
+    public static CommitmentId New() => new(Guid.NewGuid());
+
+    public static CommitmentId From(Guid value) => new(value);
+
+    public static implicit operator Guid(CommitmentId id) => id.Value;
+}
+
+// <Aggregate>.cs — inheriting the base class is the point, not just the id type
+public sealed class Commitment : AggregateRoot<CommitmentId> { … }
+
+// child entity or status-history entry
+public sealed class CommitmentStatusEntry : Entity<CommitmentStatusEntryId> { … }
+```
+
+Reference: [Commitment.cs](../src/Interaction/RegOS.Interaction.Domain/Commitments/Commitment.cs)
+and [CommitmentId.cs](../src/Interaction/RegOS.Interaction.Domain/Commitments/CommitmentId.cs).
+
+### Where a new entity most often gets this wrong
+
+The **status-history entry**. Six exist — `RegistrationStatusEntry`,
+`MarketStatusEntry`, `CommitmentStatusEntry`, `InspectionStatusEntry`,
+`HaMeetingStatusEntry`, `HaQuestionStatusEntry` — spread across four contexts,
+and **every one** uses a record struct id, because each was copied from the
+previous one. Two were added after [ADR-017](adr/ADR-017-shared-kernel-scope.md)
+recorded the migration policy.
+
+When adding a status entry to a new aggregate, take the id from an aggregate
+root, not from the nearest status entry. This is the concrete case
+[CLAUDE.md](../CLAUDE.md) means by "do not infer conventions by copying the
+nearest file".
+
+### Scope — master data is deliberately outside this rule
+
+Eight flat master-data lookups keep their record struct ids, permanently and by
+decision, not as a backlog: `CountryId`, `DocumentTypeId`, `SubmissionTypeId`,
+`AuthorityId`, `AuthorityDivisionId`, `CorrespondenceTypeId`, `ContactRoleId`,
+`IdentifierSchemeId`.
+
+These are the ES-015 records — platform-assigned deterministic ids, no child
+entities, no lifecycle beyond `Create`, never loaded as an aggregate to be
+mutated. Nothing here inherits `Entity<TId>` or wants to, so the argument that
+justifies the rule does not reach them. See
+[ADR-043](adr/ADR-043-entity-identity-derives-from-the-kernel.md).
+
+The carve-out is **not** "the ReferenceData context". `RegulatoryTemplate` is an
+aggregate root that owns its versions and is tenant-scoped — the metadata engine
+this product is built on. It and the rest of Blueprint migrate like anything
+else.
+
+### Migration ledger — shrink-only
+
+19 identities predate this standard and are still to migrate, as of 2026-08-01.
+
+| Context | Pending | Scope |
+|---|---:|---|
+| ReferenceData · Blueprint | 5 | `RegulatoryTemplate` + versions, sections, required docs, rules |
+| Submission | 4 | entire context |
+| Registration | 2 | entire context |
+| ProductDocument | 2 | entire context |
+| RegulatoryApplication | 1 | entire context |
+| Interaction | 4 | status entries only — aggregates conform |
+| Product | 1 | `MarketStatusEntry` only — aggregates conform |
+
+These migrate **a whole bounded context at a time, when that context is being
+worked on anyway** — never as a standalone refactor, and never half a context.
+A conversion is mechanical but wide: the `ProductId` migration touched 67 files.
+
+Two entities have a conforming id but still declare `Id` by hand instead of
+inheriting `Entity<TId>` —
+[HaQuestion.cs](../src/Interaction/RegOS.Interaction.Domain/Correspondence/HaQuestion.cs)
+and [CorrespondenceAttachment.cs](../src/Interaction/RegOS.Interaction.Domain/Correspondence/CorrespondenceAttachment.cs).
+The id form is enforced; this base-class rule is still review-time.
+
+> **Enforced by** `IdentityConventionTests` in
+> [tests/Architecture/RegOS.Architecture.Tests](../tests/Architecture/RegOS.Architecture.Tests/IdentityConventionTests.cs).
+> Both lists above are asserted to hold no stale entries, so an exemption cannot
+> outlive the thing it excused. The lists there are the authority; this table is
+> a summary.

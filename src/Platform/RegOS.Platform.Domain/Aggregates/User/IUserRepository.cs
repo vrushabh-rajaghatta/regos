@@ -1,3 +1,5 @@
+using RegOS.Platform.Contracts;
+
 namespace RegOS.Platform.Domain.Aggregates.User;
 
 public interface IUserRepository

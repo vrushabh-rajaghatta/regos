@@ -74,6 +74,10 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [037](ADR-037-registrations-are-regulatory-assets-with-derived-visibility.md) | Registrations are regulatory assets, with derived visibility | Accepted | Current |
 | [038](ADR-038-organization-depth-roots-and-the-three-filter-shapes.md) | Sites, contacts and divisions are roots; tenant filtering has three shapes | Accepted | Current |
 | [039](ADR-039-the-market-local-product-tier.md) | The market-local product tier, and what a registration names | Accepted | Current |
+| [040](ADR-040-the-health-authority-interaction-context.md) | The health-authority interaction context, and the supertype that isn't | Accepted | Current |
+| [041](ADR-041-platform-contracts-and-the-identity-that-crosses.md) | Platform contracts, and the only identity that crosses | Accepted | Current |
+| [042](ADR-042-what-the-interaction-context-turned-out-to-be.md) | What the interaction context turned out to be | Accepted | Current |
+| [043](ADR-043-entity-identity-derives-from-the-kernel.md) | Entity identity derives from the kernel, and master data does not | Accepted | Direction |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

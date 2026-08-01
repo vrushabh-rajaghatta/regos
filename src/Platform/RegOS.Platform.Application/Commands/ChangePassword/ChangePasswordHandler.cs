@@ -5,6 +5,7 @@ using RegOS.Platform.Application.Services;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.Platform.Domain.Aggregates.UserCredential;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Commands.ChangePassword;
 

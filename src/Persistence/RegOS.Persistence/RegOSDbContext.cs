@@ -26,6 +26,18 @@ using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using RegistrationAggregate =
     RegOS.Registration.Domain.Aggregates.Registration.Registration;
+using HaCorrespondenceAggregate =
+    RegOS.Interaction.Domain.Correspondence.HaCorrespondence;
+using CorrespondenceTypeAggregate =
+    RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType;
+using AuthorityDivisionAggregate =
+    RegOS.ReferenceData.Domain.Regulatory.Authority.AuthorityDivision;
+using CommitmentAggregate =
+    RegOS.Interaction.Domain.Commitments.Commitment;
+using HaMeetingAggregate =
+    RegOS.Interaction.Domain.Meetings.HaMeeting;
+using InspectionAggregate =
+    RegOS.Interaction.Domain.Inspections.Inspection;
 using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
 using TenantAggregate =
@@ -126,6 +138,42 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<SubmissionSnapshotAggregate> SubmissionSnapshots =>
         Set<SubmissionSnapshotAggregate>();
+
+    /// <summary>
+    /// Correspondence with a health authority. Tenant-owned and fail-closed,
+    /// like every other record of what the business did (ADR-031).
+    /// </summary>
+    public DbSet<HaCorrespondenceAggregate> HaCorrespondence =>
+        Set<HaCorrespondenceAggregate>();
+
+    /// <summary>
+    /// The correspondence vocabulary. A global world fact, so no filter —
+    /// the third of ADR-038's three filter shapes.
+    /// </summary>
+    public DbSet<CorrespondenceTypeAggregate> CorrespondenceTypes =>
+        Set<CorrespondenceTypeAggregate>();
+
+    /// <summary>
+    /// Units inside a health authority. Platform-seeded, tenant-augmentable —
+    /// RegOS has no authoritative source for the world's authority divisions,
+    /// so a tenant records the ones it actually deals with.
+    /// </summary>
+    public DbSet<AuthorityDivisionAggregate> AuthorityDivisions =>
+        Set<AuthorityDivisionAggregate>();
+
+    /// <summary>
+    /// What we promised an authority. Tenant-owned and fail-closed.
+    /// </summary>
+    public DbSet<CommitmentAggregate> Commitments =>
+        Set<CommitmentAggregate>();
+
+    /// <summary>Meetings with an authority. Tenant-owned and fail-closed.</summary>
+    public DbSet<HaMeetingAggregate> HaMeetings =>
+        Set<HaMeetingAggregate>();
+
+    /// <summary>Authority inspections. Tenant-owned and fail-closed.</summary>
+    public DbSet<InspectionAggregate> Inspections =>
+        Set<InspectionAggregate>();
 
     public DbSet<RegistrationAggregate> Registrations =>
         Set<RegistrationAggregate>();
@@ -253,6 +301,27 @@ public sealed class RegOSDbContext : DbContext
 
         modelBuilder.Entity<ProductDocumentAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<HaCorrespondenceAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<CommitmentAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<HaMeetingAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<InspectionAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // Platform-seeded, tenant-augmentable: the second of ADR-038's three
+        // filter shapes, the same one ContactRole takes. The argument differs
+        // though — a tenant is not extending what the FDA means, it is
+        // recording which of its divisions they correspond with, because RegOS
+        // cannot ship a complete universe of them.
+        modelBuilder.Entity<AuthorityDivisionAggregate>().HasQueryFilter(
+            x => CurrentTenant != null
+                && (x.TenantId == null || x.TenantId == CurrentTenant));
 
         modelBuilder.Entity<RegistrationAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);

@@ -47,6 +47,65 @@ main
 
 ---
 
+## Three registers — decision, hypothesis, constraint
+
+*Added 2026-08-01, from EPIC-017.* Planning documents in this repo record three
+different kinds of thing, and **conflating them is how a project either forgets
+what it noticed or builds what it merely suspected.** Name which one you are
+writing.
+
+| Register | Says | Written as | What changes it |
+|---|---|---|---|
+| **Decision** | *this is how it works* | a claim in the present tense, with the argument that forced it | a superseding ADR — never an edit |
+| **Hypothesis** | *this may be how it works* | the observation, **plus what evidence would confirm or falsify it**, plus a named milestone | the evidence arriving, either way |
+| **Constraint** | *whatever we do, not that* | a bound on the solution space, not a solution | a decision that meets it, or an argument that it was wrong |
+
+### Why the middle one is the hard one
+
+Most projects handle hypotheses in one of two failure modes: they never record
+them, and rediscover the same observation three epics later; or they record them
+by **implementing** them, at which point the hypothesis can no longer be wrong.
+
+The discipline is that **noticing a possible abstraction is not introducing it**
+— which is [ADR-018](../adr/ADR-018-rule-of-three.md) restated as a documentation
+rule. A hypothesis earns its place by being *falsifiable*: if it cannot be
+written with a named milestone and a stated way of losing, it is a preference
+with a citation, and it should be left out.
+
+> **Hypotheses are expected to fail.** Recording that a hypothesis was falsified
+> is a **successful** outcome if it prevented premature architecture.
+
+Say that out loud before writing one, because the instinct is to record only the
+observations you expect to be vindicated — and those are the ones least worth
+recording. The value of a hypothesis is in how **cheap it is to disprove**.
+
+EPIC-017 produced all three, and they behaved differently on purpose:
+
+- **Decision** — *a registration names only its medicinal product* (ADR-039
+  decision 1). Argued, tested, immutable.
+- **Hypothesis** — *prefer storing canonical identity and projecting derived
+  views over persisting convenience facts.* Deliberately **not** promoted to a
+  principle; recorded in EPIC-006 §9 with four independent tests, and it either
+  earns ADR-040 or disappears.
+- **Constraint** — *do not build a second document store.* Survived the collapse
+  of the decision it was attached to. A constraint outlives the solution it was
+  first written beside; a decision that prescribes a solution does not.
+
+### Applying it
+
+- **Phase 2** — when a shape recurs, ask whether you are making a decision or
+  noticing one. If noticing: write the milestone that settles it, then stop.
+- **Phase 5** — the retro's *Decisions to promote* section is where hypotheses go
+  to be resolved. Every hypothesis the epic carried gets an outcome recorded,
+  **including the ones that failed** — a hypothesis quietly dropped is
+  indistinguishable from one never raised.
+- **Prefer constraints to premature decisions.** *"Do not build a second X"*
+  leaves Phase 2 free to widen X, share X, or invent a third thing, while still
+  ruling out the outcome nobody wants. *"Reuse X"* forecloses all three, and
+  usually on less evidence than it appears.
+
+---
+
 ## Phase 1 — Plan the epic
 
 Define the **outcome**, not the implementation. Produce a one-page epic:
@@ -59,7 +118,21 @@ Output: `docs/product/epics/EPIC-XXX-<slug>.md`. Add a one-line entry to `docs/p
 
 ## Phase 2 — Design the domain (entities, columns, future-proofing)
 
-Before writing stories, design the data. For each entity:
+**Begin with the domain question, not the entity list.** Ask what the user is
+trying to answer or accomplish — *"what does a user ask that spans a
+correspondence, a meeting and an inspection?"* **"Nothing" is a valid outcome**,
+and usually the one that keeps the model smallest. Only once a question
+demonstrates the need for a new concept should that concept become a candidate
+entity. See [ADR-038](../adr/ADR-038-organization-depth-roots-and-the-three-filter-shapes.md)
+for the cost of beginning from a predicted root instead of a demonstrated query:
+*a root justified by a query that does not exist yet is a demo of an empty table.*
+
+The order is directional, which is why it matters. **A question can produce a
+hypothesis; a hypothesis can only go looking for confirmation.** *"Should there
+be an `X`?"* has already conceded the noun. Phase 2 still **ends** with entities
+and columns — it just does not start there.
+
+Then design the data. For each entity:
 
 1. **Entity + columns** — name, fields, types, ownership (global vs tenant-scoped — see ADR-030/031), identity (strongly-typed id), invariants.
 2. **Change-case analysis (required).** For each entity, ask *"what is likely to change about this in the next 1–3 years, and does the shape accommodate it without a breaking migration?"* Fill the table:

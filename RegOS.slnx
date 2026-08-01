@@ -10,6 +10,7 @@
   </Folder>
   <Folder Name="/src/Platform/">
     <Project Path="src/Platform/RegOS.Platform.Application/RegOS.Platform.Application.csproj" />
+    <Project Path="src/Platform/RegOS.Platform.Contracts/RegOS.Platform.Contracts.csproj" />
     <Project Path="src/Platform/RegOS.Platform.Domain/RegOS.Platform.Domain.csproj" />
     <Project Path="src/Platform/RegOS.Platform.Infrastructure/RegOS.Platform.Infrastructure.csproj" />
   </Folder>
@@ -45,6 +46,14 @@
     <Project Path="src/ProductDocument/RegOS.ProductDocument.Domain/RegOS.ProductDocument.Domain.csproj" />
     <Project Path="src/ProductDocument/RegOS.ProductDocument.Infrastructure/RegOS.ProductDocument.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Interaction/">
+    <Project Path="src/Interaction/RegOS.Interaction.Application/RegOS.Interaction.Application.csproj" />
+    <Project Path="src/Interaction/RegOS.Interaction.Domain/RegOS.Interaction.Domain.csproj" />
+    <Project Path="src/Interaction/RegOS.Interaction.Infrastructure/RegOS.Interaction.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Storage/">
+    <Project Path="src/Storage/RegOS.Storage/RegOS.Storage.csproj" />
+  </Folder>
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/RegOS.SharedKernel/RegOS.SharedKernel.csproj" />
   </Folder>
@@ -74,6 +83,9 @@
   <Folder Name="/tests/Registration/">
     <Project Path="tests/Registration/RegOS.Registration.Application.Tests/RegOS.Registration.Application.Tests.csproj" />
     <Project Path="tests/Registration/RegOS.Registration.Domain.Tests/RegOS.Registration.Domain.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Interaction/">
+    <Project Path="tests/Interaction/RegOS.Interaction.Domain.Tests/RegOS.Interaction.Domain.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Submission/">
     <Project Path="tests/Submission/RegOS.Submission.Domain.Tests/RegOS.Submission.Domain.Tests.csproj" />

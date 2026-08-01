@@ -1,5 +1,6 @@
 using RegOS.Platform.Domain.Aggregates.Invitation;
 using RegOS.Platform.Domain.Aggregates.User;
+using RegOS.Platform.Contracts;
 
 using InvitationAggregate =
     RegOS.Platform.Domain.Aggregates.Invitation.Invitation;

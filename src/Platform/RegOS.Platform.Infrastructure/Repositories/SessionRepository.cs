@@ -5,6 +5,7 @@ using RegOS.Platform.Domain.Aggregates.Session;
 using RegOS.Platform.Domain.Aggregates.User;
 
 using SessionAggregate = RegOS.Platform.Domain.Aggregates.Session.Session;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Infrastructure.Repositories;
 

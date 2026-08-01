@@ -1,5 +1,6 @@
 using RegOS.Platform.Application.Services;
 using RegOS.SharedKernel.Abstractions;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Api.Endpoints.Authentication;
 

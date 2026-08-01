@@ -1,6 +1,7 @@
 using RegOS.Api.Authentication;
 using RegOS.Platform.Application.Commands.ActivateUser;
 using RegOS.Platform.Domain.Aggregates.User;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Api.Endpoints.Platform;
 

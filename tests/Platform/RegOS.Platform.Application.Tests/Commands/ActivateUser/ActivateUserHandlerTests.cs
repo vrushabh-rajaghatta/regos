@@ -8,6 +8,7 @@ using RegOS.Platform.Domain.ValueObjects;
 
 using UserAggregate = RegOS.Platform.Domain.Aggregates.User.User;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Tests.Commands.ActivateUser;
 

@@ -1,6 +1,7 @@
 using RegOS.Platform.Application.Common;
 using RegOS.Platform.Domain.Aggregates.User;
 using RegOS.SharedKernel.Abstractions;
+using RegOS.Platform.Contracts;
 
 namespace RegOS.Platform.Application.Commands.DeactivateUser;
 

@@ -1,8 +1,12 @@
 import { NavLink } from "react-router-dom";
 
 const items = [
+  "Due work",
   "Products",
   "Registrations",
+  "Correspondence",
+  "Meetings",
+  "Inspections",
   "Submissions",
   "Organizations",
   "Sites",
@@ -17,7 +21,7 @@ export function RegulatoryNavigation() {
       {items.map((item) => (
         <NavLink
           key={item}
-          to={`/regulatory/${item.toLowerCase()}`}
+          to={`/regulatory/${item.toLowerCase().replace(/ /g, "-")}`}
           className="block rounded-md px-3 py-2 hover:bg-muted"
         >
           {item}

@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
-using RegOS.ProductDocument.Application.Storage;
+using RegOS.Storage;
 using RegOS.ProductDocument.Domain.Repositories;
 using RegOS.SharedKernel.Exceptions;
 
