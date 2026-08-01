@@ -37,7 +37,7 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 | ID | Epic | Status | Notes |
 |---|---|---|---|
-| **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | 🟡 **In Progress** | Phases 1–3 settled 2026-08-01; **8 stories**, S001…S004 done, S005 next → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
+| **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | 🟡 **In Progress** | Phases 1–3 settled 2026-08-01; **8 stories**, S001…S005 done, S006 next → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
 
 Phase 2 opened on the domain question rather than the entity list, and
 **falsified** its own central hypothesis: the spanning question (an activity

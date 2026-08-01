@@ -40,6 +40,7 @@ using RegOS.Interaction.Infrastructure;
 using RegOS.Registration.Application;
 using RegOS.Registration.Infrastructure;
 using RegOS.Api.Endpoints.Commitments;
+using RegOS.Api.Endpoints.Meetings;
 using RegOS.Api.Endpoints.Correspondence;
 using RegOS.Api.Endpoints.Registrations;
 
@@ -276,6 +277,12 @@ commitments.MapGiveCommitment();
 commitments.MapListCommitments();
 commitments.MapChangeCommitmentStatus();
 commitments.MapListDueWork();
+
+var meetings = app.MapGroup("").WithTags("Meetings");
+meetings.MapBeginMeeting();
+meetings.MapListMeetings();
+meetings.MapChangeMeetingStatus();
+meetings.MapRecordMeetingOutcome();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

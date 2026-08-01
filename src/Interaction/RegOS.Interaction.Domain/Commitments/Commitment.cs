@@ -1,4 +1,5 @@
 using RegOS.Interaction.Domain.Correspondence;
+using RegOS.Interaction.Domain.Meetings;
 using RegOS.Platform.Contracts;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Registration.Domain.Aggregates.Registration;
@@ -72,12 +73,15 @@ public sealed class Commitment : AggregateRoot<CommitmentId>
 
     public RegulatoryApplicationId? RegulatoryApplicationId { get; private set; }
 
-    /// <summary>
-    /// Where it arose, when it arose from a letter. A meeting source arrives
-    /// with meetings in S005 — a column for a type that does not exist yet is
-    /// the speculation this epic keeps refusing.
-    /// </summary>
+    /// <summary>Where it arose, when it arose from a letter.</summary>
     public HaCorrespondenceId? SourceCorrespondenceId { get; private set; }
+
+    /// <summary>
+    /// Where it arose, when it arose at a meeting. Deferred in S004 because a
+    /// column for a type that did not exist yet would have been the
+    /// speculation this epic keeps refusing; it arrived with S005.
+    /// </summary>
+    public HaMeetingId? SourceMeetingId { get; private set; }
 
     public CommitmentStatus CurrentStatus { get; private set; }
 
@@ -103,7 +107,8 @@ public sealed class Commitment : AggregateRoot<CommitmentId>
         UserId? ownerUserId = null,
         RegistrationId? registrationId = null,
         RegulatoryApplicationId? regulatoryApplicationId = null,
-        HaCorrespondenceId? sourceCorrespondenceId = null)
+        HaCorrespondenceId? sourceCorrespondenceId = null,
+        HaMeetingId? sourceMeetingId = null)
     {
         if (tenantId is null)
             throw new DomainException(CommitmentErrors.TenantRequired);
@@ -122,6 +127,7 @@ public sealed class Commitment : AggregateRoot<CommitmentId>
             RegistrationId = registrationId,
             RegulatoryApplicationId = regulatoryApplicationId,
             SourceCorrespondenceId = sourceCorrespondenceId,
+            SourceMeetingId = sourceMeetingId,
             CurrentStatus = CommitmentStatus.Open
         };
 

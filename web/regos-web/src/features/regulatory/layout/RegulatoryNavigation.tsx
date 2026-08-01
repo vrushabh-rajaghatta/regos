@@ -5,6 +5,7 @@ const items = [
   "Products",
   "Registrations",
   "Correspondence",
+  "Meetings",
   "Submissions",
   "Organizations",
   "Sites",

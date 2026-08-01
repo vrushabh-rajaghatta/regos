@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RegOS.Interaction.Application.Services;
 using RegOS.Interaction.Domain.Commitments;
 using RegOS.Interaction.Domain.Correspondence;
+using RegOS.Interaction.Domain.Meetings;
 using RegOS.Interaction.Infrastructure.Repositories;
 using RegOS.Interaction.Infrastructure.Services;
 
@@ -18,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<IHaCorrespondencePolicy, HaCorrespondencePolicy>();
 
         services.AddScoped<ICommitmentRepository, CommitmentRepository>();
+
+        services.AddScoped<IHaMeetingRepository, HaMeetingRepository>();
 
         return services;
     }

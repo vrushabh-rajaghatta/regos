@@ -1,6 +1,6 @@
 # EPIC-006 — Health-authority interactions
 
-**Status:** 🟡 In Progress — S001…S004 done; S005 next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress — S001…S005 done; S006 next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Everything that passes between the sponsor and the authority **after** a filing — letters, questions, meetings, commitments, inspections. In headcount terms this is what a regulatory affairs team actually does all day, and today it lives in inboxes and spreadsheets.
 
@@ -497,6 +497,15 @@ constant. Action, Mode and Category wait for something to ask for them.
 Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
 **Phase 5 owes an outcome on every one, including the failures.**
 
+> **Occurrences are of two kinds, and they are not equal evidence.**
+> An **applied** occurrence is someone remembering a principle and following it.
+> A **discovered** occurrence is the model rejecting something while you were
+> trying to build it — nobody looking for an example. `Commitment.GivenOn` was
+> written as a stored field and then removed because it was already
+> `history[0].OccurredOn`; that is discovered. Five entries deriving a date
+> because the previous four did is applied. **Count them separately at the
+> retro.**
+
 1. ~~**The bitemporal extraction** (ADR-039 decision 6).~~
    **RESOLVED at S003 — measured, not extracted.** The conclusion, for ADR-041
    to carry into the canon:
@@ -627,7 +636,16 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
    "solves" it by adding response documents to the request. *Settle it in S003
    if answering a question turns out to need it, or leave it unbuilt.*
 
-7. **The Rule of Three has a second half** *(new, S003 — candidate, not
+7. **Objects that generate work, and objects that conclude** *(new, S005 —
+   recorded, not promoted)*. The five interaction objects split naturally:
+   **correspondence, questions and commitments generate ongoing work**;
+   **a meeting concludes.** Its value is the work it produces — commitments,
+   follow-up questions, a recorded position — not a continuing lifecycle. That
+   framing is why the meeting aggregate is the smallest in the context, and why
+   both its list and the due view stop showing it once it is held. Useful for
+   keeping aggregates small; one instance, so it stays here.
+
+8. **The Rule of Three has a second half** *(new, S003 — candidate, not
    promoted)*. ADR-018 says *duplicate twice, abstract on the third demonstrated
    need*. S003 suggests a refinement: **three occurrences, then measure where
    the maintenance cost actually lives** — because it is not always in the
@@ -640,13 +658,52 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
    points somewhere other than the obvious duplicate. Raise it at the S007
    retro; do not change ADR-018 mid-epic.
 
-8. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
+9. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
    "status" of an object is really derived from related objects or dates, the
    object may be an event rather than a lifecycle.* `HaCorrespondence` is the
    first instance. **One example is not enough to promote it**; watch for a
    second here and record the outcome in the retro. Do not add it to the flow.
 
 ---
+
+## The extraction ledger *(open — closes after S006)*
+
+S003 measured three consumers and returned *do not extract*. The remaining
+stories add two more, and the decision should be **one measured artefact**
+rather than something reconstructed from six story retros. Fill this in after
+S005 and S006 and decide once:
+
+| Candidate | Consumers | Measured at five | Verdict |
+|---|---|---|---|
+| entry type | 5 | **306 lines total**, ~30 of code each; identical fields, different status enums | **do not extract** — a generic EF-owned entity buys ~120 lines and costs generic-over-strongly-typed-id awkwardness |
+| chronology rule | 5 | `if (occurredOn < _history[^1].OccurredOn)` — **one line, five times, character-identical** | **nothing to extract** |
+| EF configuration | 5 | **not five copies of one thing.** `HaQuestion` 26 · `Commitment` 22 · `HaMeeting` 22 lines as `OwnsMany` blocks; `Registration` and `MarketStatus` are **standalone `IEntityTypeConfiguration` classes** — a different persistence shape entirely | **do not extract** — see below |
+| tests | 5 | still **not duplicated**: each suite asserts its own domain's rules | **evidence against a behavioural abstraction** |
+
+### The verdict at five: still no — and for a new reason
+
+S003 predicted the EF configuration would be the thing worth extracting. **At
+five consumers it turns out the five are not five copies of one shape.** Two of
+them (`RegistrationStatusEntry`, `MarketStatusEntry`) are configured as separate
+entity configuration classes; the three newer ones are `OwnsMany` blocks inside
+their root's configuration.
+
+So a shared configuration helper would cover **three** consumers totalling ~70
+lines — and would first require migrating two existing aggregates onto a
+different persistence shape, touching their tables, to save perhaps fifty.
+
+> **Two predictions have now failed in the same place.** ADR-039 guessed the
+> shared part was the entry and the chronology rule; S003 measured that it was
+> the configuration; S005 measured that the configuration is not uniform either.
+> Each guess was made from *looking at the code that existed*, and each was
+> corrected by *measuring the code that arrived*.
+
+**Recommendation for the S007 retro: close this as resolved-not-extracted.** The
+histories converged in shape and diverged in every layer that would have made
+sharing worthwhile. If a sixth arrives in EPIC-020, measure again — but the
+burden has now moved: this is no longer a deferred extraction, it is a
+**refused** one, and reopening it needs new evidence rather than another
+occurrence.
 
 ## The S003 extraction review *(2026-08-01)*
 
@@ -712,7 +769,7 @@ The `S000` the sketch called for is gone — Phase 2 settled the vocabularies.
 | **S002** | ✅ **The letter's content** — attachments; `IFileStorage` moves to `src/Storage`; decision 0 built | full slice |
 | **S003** | ✅ **The questions inside it** — `HaQuestion` with owner, due date, response and the epic's first dated history, rendered on the correspondence page | full slice |
 | **S004** | ✅ **What we promised** — `Commitment` from a question or standalone, dated history, its own page, **and the "what's due" view** | full slice |
-| **S005** | **Meetings** — request → grant → hold → minutes and outcome; the one transition table | full slice |
+| **S005** | ✅ **Meetings** — request → grant → hold → minutes and outcome; the one transition table | full slice |
 | **S006** | **Inspections** — anchored to an `OrganizationSite`, dated history | full slice |
 | **S007** | **Capstone** — the application activity timeline (the falsified supertype, as a read model), narrative browser proof, ADR-040, retro | UI → test → docs |
 
