@@ -1,10 +1,10 @@
 # EPIC-006 — Health-authority interactions
 
-**Status:** ⚪ Not Started · **Branch:** `epic/EPIC-006-health-authority-interactions` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** ⚪ Not Started · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Everything that passes between the sponsor and the authority **after** a filing — letters, questions, meetings, commitments, inspections. In headcount terms this is what a regulatory affairs team actually does all day, and today it lives in inboxes and spreadsheets.
 
-> **Phase 1 below is settled.** **Phases 2–3 are a sketch**, written so this epic can be picked up months from now without re-deriving it — they are **not approved design**. Confirm, amend or replace them in the Phase-2 conversation when this epic is pulled into **Now**.
+> **Phases 1–3 are settled.** Phase 2 was run on 2026-08-01 and **approved**; the sketch it replaced is gone, but the section that shaped it — *What EPIC-017 settles* — is kept as the reasoning trail. Ready for S001.
 
 ---
 
@@ -29,7 +29,7 @@ Five RIM objects — the largest single block of RIM coverage available in one e
 - **EPIC-016** — correspondence names an HA **division**, a **contact** and a contact role; meetings have HA attendees. Without contacts this epic invents a shadow person model.
 
 ### In scope ✅
-- **`HaCorrespondence`** — name, description, date, action, format, mode, type, category, response-due date, initiator/recipient, health authority + division + contact + contact role; attachable `Content` (reuses `ProductDocument`).
+- **`HaCorrespondence`** — name, description, date, ~~action,~~ format, ~~mode,~~ type, ~~category,~~ response-due date, ~~initiator/recipient~~ **direction**, health authority + division + contact + contact role; attachable content ~~(reuses `ProductDocument`)~~ **owned by the correspondence, sharing `IFileStorage`** — *Phase 2, decision 0. Five RIM classifications reduced to two; see Phase 2 vocabularies.*
 - **`HaQuestion`** — child of a correspondence: question text, number, topic, response, response lead + contributors, date received, planned due date, mandated flag, CTD section(s) impacted, dated status.
 - **`Commitment`** — title, subject, description, type, source, date given, due date, internal target and actual completion dates, owner, department, dated status.
 - **`HaMeeting`** — subject, type, format, request date, meeting date, attendees, minutes, materials, outcomes, discipline, owner, stakeholders, dated status.
@@ -43,7 +43,7 @@ Five RIM objects — the largest single block of RIM coverage available in one e
 |---|---|
 | **Notifications / reminder emails** | Showing *"due in 14 days"* is a domain capability; sending mail is infrastructure → **EPIC-014**. Same split EPIC-005 made for expiry. |
 | **Process Step linkage** | RIM anchors all five on `Process Step`. That layer does not exist yet → **EPIC-020**, which wires them up. Model the nullable FK *seam* now, per the Phase-2 rule; do not build the workflow. |
-| **Question response authoring / document assembly** | A response is `Content` — the existing ProductDocument machinery. Structured response-package building is → **EPIC-007**. |
+| **Question response authoring / document assembly** | A response is content on the correspondence (Phase 2, decision 0). Structured response-package building is → **EPIC-007**. |
 | **Approval workflow on responses** | → **EPIC-008**. |
 | **Free-text search across correspondence** | Read-side concern; add when volume justifies it. |
 | **Inbound email ingestion** | Infrastructure and a large surface of its own. |
@@ -55,21 +55,23 @@ Five RIM objects — the largest single block of RIM coverage available in one e
 - A commitment can be created from a question, a meeting or standalone, and appears in the "what's due" view.
 - A meeting can be scheduled, held, and closed with minutes and outcomes.
 - An inspection can be recorded with its dated status.
-- **Every status on all five objects carries a dated history** (`OccurredOn` / `RecordedOnUtc`) — RIM marks Commitment, Inspection and Question status "Single / Historical".
+- **Every status on all ~~five~~ four objects that has one carries a dated history** (`OccurredOn` / `RecordedOnUtc`) — RIM marks Commitment, Inspection and Question status "Single / Historical". *Corrected in Phase 2: `HaCorrespondence` has no status at all. It is an event, not a lifecycle.*
 - Due-date proximity is **derived, never stored** (EPIC-005 precedent).
 - Browser proof: log a correspondence → raise two questions → answer one → convert the other into a commitment → see both in the due view.
 - ADR written for the interaction cluster's context boundary.
 
 ---
 
-## What EPIC-017 settles *(added 2026-08-01 — amends the sketch below)*
+## What EPIC-017 settles *(added 2026-08-01 — the reasoning trail into Phase 2)*
 
-EPIC-017 shipped after this sketch was written, and [ADR-039](../../adr/ADR-039-the-market-local-product-tier.md)
-answers four questions the sketch left open and adds one it did not ask. Read
-this section **before** Phase 2; where the two disagree, this section is later.
+EPIC-017 shipped after this epic's Phase 2–3 sketch was written, and
+[ADR-039](../../adr/ADR-039-the-market-local-product-tier.md) answered four
+questions the sketch had left open, added one it had not asked, and resisted one
+simplification it was reaching for.
 
-Everything here is still *sketch*. It narrows the Phase-2 conversation; it does
-not replace it.
+**This section drove the Phase 2 below and is kept for its reasoning, not its
+authority.** Where the two differ, Phase 2 is the settled design. The
+strikethroughs point at sketch decisions that no longer exist.
 
 ### 1. `HaQuestion` stays a child — the promotion pressure was imaginary
 
@@ -279,123 +281,265 @@ decision here with reach beyond this epic, so it goes first.
 
 ---
 
-## Phase 2 — Domain design *(sketch — not approved · see "What EPIC-017 settles" above)*
+## Phase 2 — Domain design *(approved 2026-08-01)*
+
+Supersedes the sketch. Run in the order
+[FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md) now prescribes:
+the domain question first, the entity list last.
+
+### The question this phase opened with
+
+Not *"what is an authority interaction?"* — that form has already conceded the
+noun. The falsifiable form:
+
+> **What does a user ask that spans a correspondence, a meeting and an
+> inspection?**
+
+| A regulatory user asks | Spans |
+|---|---|
+| *"What's due this week?"* | questions + commitments |
+| *"Did we respond to the FDA's information request?"* | correspondence |
+| *"What did we commit to at approval, and have we done it?"* | commitments |
+| *"When is the EMA meeting, and what came out of the last one?"* | meetings |
+| *"The inspection is next month — what is outstanding?"* | inspections + commitments |
+| *"Show me everything that has happened on this application"* | **all of them** |
+
+The answer is not *"nothing"*. One question genuinely spans them: the **activity
+timeline**.
+
+### Hypothesis: resolved, falsified
+
+> *There may be an `AuthorityInteraction` abstraction — correspondence, meeting
+> and inspection being three kinds of one thing.* Carried into Phase 2 from
+> [ADR-039](../../adr/ADR-039-the-market-local-product-tier.md)'s review, with
+> decisions 0 and 7 named as the pressure points.
+
+**Falsified.** The spanning question is real, and
+[ADR-039](../../adr/ADR-039-the-market-local-product-tier.md) principle 7
+answers it without an aggregate: **reads compose**. An activity timeline over an
+application is a read model, in exactly the way `ListMarketRegistrations`
+projects across contexts while granting nobody write ownership.
+
+Both pressure points released:
+
+- **Decision 7** resolved to *intrinsic* (below), so the nullable sources are not
+  evidence of a missing parent.
+- **Decision 0** resolved one layer down (below), so no common parent is needed
+  to own content.
+
+RIM keeps all five separate; departing from it owed evidence, and the evidence
+did not arrive. **Four roots and one child, no supertype.**
+
+*Recorded as a success under the register: hypothesis → tested → falsified →
+architecture stayed simpler. The abstraction was prevented, not discovered late.*
+
+### How the open decisions resolved
+
+| | Question | Resolution |
+|---|---|---|
+| **0** | The natural owner of authority correspondence | **The interaction owns it.** Storage is shared; the anchor is not. |
+| **1** | One context or several | **One** — `src/Interaction/`. |
+| **2** | `HaQuestion` child or root | **Child.** No behaviour of a question changes the letter; the due view is a read model. |
+| **3** | Dated history on all five | **Four**, not five. No transition tables except `HaMeeting`. |
+| **4** | Correspondence direction | **Explicit enum.** Every real query starts with *"did they write to us, or we to them?"* |
+| **5** | Controlled lists | **Three buckets**, and five correspondence classifications become two. |
+| **6** | Attachments reuse `ProductDocument` | **Superseded by 0.** The constraint survives; the prescription does not. |
+| **7** | Authority intrinsic to a `Commitment`? | **Intrinsic.** |
+
+### Decision 0 — the interaction owns its content
+
+Reading the code decided this.
+[ProductDocument](../../../src/ProductDocument/RegOS.ProductDocument.Domain/Aggregates/ProductDocument.cs)
+is `GlobalProductId` + `DocumentTypeId` + `Draft → Active → Archived` + numbered
+versions. A letter from Health Canada has **none of that**: no product anchor,
+no CTD document type, no approval lifecycle, and it is received exactly once —
+it does not have a v2. Forcing it in would mean a fictitious product, an
+inapplicable lifecycle and unused versioning.
+
+But the thing the constraint protects was never the aggregate. It is
+[IFileStorage](../../../src/ProductDocument/RegOS.ProductDocument.Application/Storage/IFileStorage.cs),
+and that port is **already anchor-agnostic** — a relative path and a stream.
+
+```
+ProductDocument   owns  product documents      ─┐
+HaCorrespondence  owns  correspondence content ─┴─▶ IFileStorage
+```
+
+`IFileStorage` and `LocalFileStorage` move to a thin **`src/Storage/RegOS.Storage`**
+module both contexts reference. **Not** `RegOS.SharedKernel`: ADR-017 rule 1
+admits *concepts*, not patterns, and storage is infrastructure with no domain
+meaning. One store, two anchors — the constraint honoured without fusing two
+domains because both happen to hold files.
+
+### Decision 7 — the authority is intrinsic
+
+A commitment is *made to* an authority. That is constitutive, not inherited: a
+commitment with no source letter is ordinary, and a commitment with no authority
+is meaningless. Storing `AuthorityId` therefore does not violate ADR-039
+decision 1, because there is no required parent that already owns it.
 
 ### Context
 
-*Lean: one new bounded context, `src/Interaction/`* (or `src/HealthAuthority/`). The five objects are a cohesive cluster with heavy mutual cross-links — splitting them into five contexts would make almost every query cross-context. RIM treats them as one neighbourhood too.
+One bounded context: **`src/Interaction/RegOS.Interaction.{Domain,Application,Infrastructure}`**.
+The five objects cross-link heavily and splitting them would make almost every
+query cross-context; RIM treats them as one neighbourhood too.
 
-### Aggregate boundaries
+Named `Interaction` rather than `HealthAuthority` because `Authority` is already
+a `ReferenceData` aggregate and the collision would be read as the same thing. A
+context named for a noun it deliberately does not contain is ordinary — a context
+is a neighbourhood, not a type.
 
-| Object | Root or child | Why |
+All aggregates carry `TenantId` and the **fail-closed tenant-owned** filter
+shape (ADR-038 decision 2, ADR-031).
+
+### Aggregates
+
+**`HaCorrespondence`** *(root)* — an event, with no status of its own.
+
+| Field | Note |
+|---|---|
+| `Id`, `TenantId` | |
+| `Direction` | enum — `Inbound` / `Outbound` |
+| `CorrespondenceTypeId` | reference data — Information Request, Deficiency Letter, Approval Letter… |
+| `Subject` | |
+| `OccurredOn` | the letter's own date |
+| `ResponseDueOn?` | drives the due view |
+| `AuthorityId` | |
+| `OrganizationDivisionId?`, `ContactId?` | **ADR-038's absence-shaped prediction fires here** |
+| `RegulatoryApplicationId?`, `SubmissionId?`, `RegistrationId?` | all nullable — an unfiled interaction is still real |
+| `Attachments` | child collection (S002) |
+
+Whether a letter is *"open"* is **derived**: an unmet `ResponseDueOn`, or
+unresolved questions beneath it. Persist the fact, derive the interpretation
+(ADR-037).
+
+**`HaQuestion`** *(child of correspondence)* — `Number`, `Text`, `TopicId?`,
+`OwnerUserId?`, `DueOn?`, `ResponseText?`, `RespondedOn?`, `CurrentStatus` +
+history.
+
+> The owner is a **`UserId`**, not a `ContactId`. A `Contact` (EPIC-016) is a
+> person at an external regulatory party; the response lead is one of ours. The
+> two are never the same person and must never share a field.
+
+**`Commitment`** *(root)* — `Title`, `Description`, **`AuthorityId`**,
+`RegistrationId?` / `RegulatoryApplicationId?` (what it is about),
+`SourceCorrespondenceId?` / `SourceMeetingId?` (where it arose), `GivenOn`,
+`DueOn`, `OwnerUserId`, `CurrentStatus` + history.
+
+**`HaMeeting`** *(root)* — `Subject`, `MeetingTypeId`, `AuthorityId`,
+`RequestedOn`, `ScheduledFor?`, `Minutes?`, `Outcome?`, anchors nullable,
+`CurrentStatus` + history + **transition table**. Attendees are deferred — the
+least-asked of the questions above, and a child collection is cheap to add.
+
+**`Inspection`** *(root)* — `Title`, `InspectionTypeId`, `AuthorityId`,
+**`OrganizationSiteId?`** (an inspection inspects a *site* — EPIC-016's),
+`ScheduledFor?`, `ConductedOn?`, `Outcome?`, `CurrentStatus` + history.
+
+### Statuses, and the collisions caught before they were built
+
+| | Statuses | Transition table |
 |---|---|---|
-| `HaCorrespondence` | **root** | referenced by Application, Submission, Commitment, Meeting; own lifecycle |
-| `HaQuestion` | **child of correspondence** | RIM: Correspondence is `Parent, Single, Required`. A question has no meaning without the letter it arrived in. *But* it carries its own due date, owner and status — if the "due view" needs to query questions directly and often, revisit. |
-| `Commitment` | **root** | referenced from four other objects; long-lived, outlives its source |
-| `HaMeeting` | **root** | scheduled independently, referenced by correspondence and commitments |
-| `Inspection` | **root** | independent lifecycle, referenced by Process Step later |
+| `HaCorrespondence` | **none** | — |
+| `HaQuestion` | `Open` → `Responded` → `Resolved` | no — our process |
+| `Commitment` | `Open` → `InProgress` → `Fulfilled` / `Waived` | no — our process |
+| `Inspection` | `Scheduled` → `InProgress` → `Completed` | no — our process |
+| `HaMeeting` | `Requested` → `Granted` / `Declined` → `Held` / `Cancelled` | **yes** |
 
-All carry `TenantId` and a fail-closed query filter (ADR-031) — same reasoning as EPIC-016 decision 2.
+**`HaMeeting` is the exception, and the reason is not that it resembles
+`Registration`.** It is that the graph itself contains a fork **the authority
+chooses** — granted or declined is not our decision to record at will. Every
+other lifecycle here is entirely our own process, which is the `MarketStatus`
+shape (ADR-039 decision 6).
 
-### The cross-link web *(RIM's, worth reproducing)*
+Three collisions refused, on ADR-039's vocabulary rule:
 
-```
-RegulatoryApplication ──┐
-Submission ─────────────┼──▶ HaCorrespondence ──▶ HaQuestion
-Registration ───────────┘         │  ▲                 │
-                                  │  │                 ▼
-                       HaMeeting ─┘  └──────────── Commitment
-                                                        ▲
-                                          Inspection ───┘  (both via Process Step, EPIC-020)
-```
+- **`Cancelled`** would have meant *the meeting did not happen* and *the
+  authority released us from an obligation*. Two concepts → the commitment gets
+  **`Waived`**. The test is **who performs the action**: fulfilment is something
+  we perform; waiving is something the authority does. *Released* reads
+  contractual rather than regulatory.
+- **`Completed`** (the inspection event finished) is not **`Fulfilled`** (the
+  obligation discharged).
+- **`Closed`** is banned outright — the vaguest word available, and it would have
+  carried three meanings across four objects.
 
-Most of these are `Multiple` in RIM and nullable — model as nullable FKs or join tables, and **do not** make any of them required. An interaction that cannot be filed against anything is still a real interaction.
+`Open` is deliberately reused across question and commitment: one concept, two
+tiers, which ADR-039's vocabulary rule permits and encourages.
 
-### Decisions to settle (Phase 2, on pull-in)
+### Vocabularies — three buckets
 
-**0. What is the natural owner of authority correspondence?** *No lean — settle
-this first, before aggregate boundaries.*
+| Bucket | Members |
+|---|---|
+| **Enum** — a rule branches on it | `Direction`; all four statuses |
+| **Reference data** — governed, tenant-extensible facts | `CorrespondenceType`, `MeetingType` (FDA Type A/B/C/D is authority-defined and legislated), `InspectionType`, `QuestionTopic` |
+| **Curated constant** — only a dropdown needs labels | correspondence format (letter / email / portal) |
 
-Everything else in this epic can be built around whatever answer emerges:
-aggregates, histories, vocabularies, working surfaces. **Correspondence has to
-live somewhere**, and it is an anchor rather than a leaf — EPIC-018 (labeling)
-and EPIC-010 (IDMP) will attach documents of their own, and they will attach
-them wherever this decision puts them.
-
-The pressure: `ProductDocument` is anchored to the **global** product
-([ADR-039](../../adr/ADR-039-the-market-local-product-tier.md), Consequences —
-`ProductDocument` deliberately did *not* move to the market tier). A letter from
-Health Canada about a Canadian market presence is not obviously a *product*
-document at all. Candidate answers, none yet argued:
-
-- **The interaction owns it** — correspondence holds its own content, and
-  `ProductDocument` stays what it is: a dossier artefact.
-- **`ProductDocument` widens** — one document store, its anchor becomes
-  polymorphic or moves to the market tier.
-- **A third thing exists** — RIM's `Content` is broader than either, and
-  neither of ours is it.
-
-This is the only decision in EPIC-006 that plausibly changes epics other than
-EPIC-006. Answer it first; the aggregate boundaries below get easier once it is
-settled.
-
-**1. One context or several.** *Lean: one.* Record the reasoning; it is the ADR.
-
-**2. `HaQuestion` — child or root.** *Lean: child*, per RIM. ~~The pressure to promote it comes from the due view; measure before promoting.~~ → **amended, §1**: the due view is a read model and exerts no pressure at all. Decide on behaviour.
-
-**3. Dated status history on all five.** *Recommended.* This epic is where the cross-cutting history rule earns its keep — four of the five statuses are "Single / Historical" in RIM. ~~Reuse `RegistrationStatusEntry` verbatim rather than inventing a per-aggregate shape; if this is the third occurrence, **extract the shared shape**.~~ → **amended, §2 and §3**: reuse the entry, not the lifecycle; default to no transition table; write the first one by hand before extracting.
-
-**4. Correspondence direction.** RIM has `Correspondence Mode`/`Action` but no explicit inbound/outbound flag. *Lean: add one* — every real query starts with "did they write to us or we to them?", and deriving it from initiator/recipient names is fragile.
-
-**5. Controlled lists.** Correspondence Action/Format/Mode/Type/Category, Meeting Type/Format/Status, Commitment Type/Source/Status, Question Topic, Inspection Type/Source — RIM makes all of these controlled lists. That is **11+ vocabularies**. Decide up front: reference data (feeds EPIC-012 authoring) or closed enums. ~~*Lean: reference data for the classifications, closed enums for the statuses*~~ → **amended, §4**: three buckets, not two. Most classifications need a curated constant, not a governed aggregate.
-
-**6. Attachments reuse `ProductDocument`.** RIM points Correspondence at `Content`, which is what `ProductDocument`/`DocumentVersion` already is. Do not build a second document store — ~~*lean: reuse*~~ → **superseded by decision 0**, which asks the prior question. "Do not build a second store" survives as a constraint on the answer, not as the answer.
-
-**7. Is the authority an intrinsic fact of a `Commitment`, or inherited context?** *No lean.* The one place ADR-039 decision 1 is under genuine pressure, and it resolves in one of two directions:
-
-- If commitments **can genuinely originate independently**, the authority is intrinsic — a commitment is *made to* an authority, which is its own fact rather than a copy of a letter's, and storing it does not violate decision 1.
-- If **every commitment ultimately originates from an interaction**, then the three nullable sources are not evidence of independence. They are pointing at a **missing abstraction** — some common notion of *the interaction this arose from* that we have not named yet.
-
-Do not answer it here. Make sure Phase 2 does, because the second answer would change the model rather than a field.
-
-> **Decisions 0 and 7 may be the same decision.** If the missing abstraction in
-> the second branch above is *"the authority interaction this arose from"* —
-> correspondence, meeting and inspection being three kinds of one thing — then it
-> is also the natural owner of correspondence content, and decision 0 falls out
-> of it. The epic's own title contains the word. **Notice this; do not build it.**
-> A supertype spanning three roots on the strength of a symmetry is precisely
-> what [ADR-018](../../adr/ADR-018-rule-of-three.md) forbids — *symmetry is not a
-> demonstration.* Test it in Phase 2 against real questions, and if it survives,
-> it is ADR-040's subject rather than a note in this file.
+**Five correspondence classifications become two.** RIM has Action, Format, Mode,
+Type and Category. The questions demand `Direction` and `Type`; format is a
+constant. Action, Mode and Category wait for something to ask for them.
 
 ### Change-case analysis
 
 | Likely future change | Probability | How the design accommodates it |
 |---|---|---|
-| Reminders and escalation (EPIC-014) | **High** | Due dates are stored data; a scheduler reads the same rows |
-| Process Step becomes the anchor (EPIC-020) | **High** | Nullable `ProcessStepId` seam present from day one |
-| Commitments cite studies (EPIC-019) | Medium | Nullable seam |
-| Questions need threaded follow-ups | Medium | RIM has `Related Questions` (Multiple) — self-referencing link table |
-| Authority-specific question taxonomies | Medium | Question Topic as reference data, authority-scopable |
-| Inbound email ingestion | Medium | Correspondence is already the target shape; ingestion is an adapter |
-| Volume growth → search | Medium | Read-side; no aggregate change |
+| Reminders and escalation (EPIC-014) | High | due dates are stored data; a scheduler reads the same rows |
+| Process Step becomes the anchor (EPIC-020) | High | nullable `ProcessStepId` seam present from day one |
+| The bitemporal history shape is extracted | High | four identical entries, cut line fixed by ADR-039 decision 6 |
+| Commitments cite studies (EPIC-019) | Medium | nullable seam |
+| Threaded follow-up questions | Medium | self-referencing link, no aggregate change |
+| Authority-specific question taxonomies | Medium | `QuestionTopic` is reference data, authority-scopable |
+| Meeting attendees | Medium | child collection, additive |
+| Inbound email ingestion | Medium | correspondence is already the target shape; ingestion is an adapter |
+| Volume growth → search | Medium | read-side only |
+
+### Hypotheses this epic carries
+
+Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
+**Phase 5 owes an outcome on every one, including the failures.**
+
+1. **The bitemporal extraction** (ADR-039 decision 6). Occurrences three through
+   six arrive here. *Write the first by hand; extract with real consumers
+   visible.* Falsified if, at S007, the extraction still is not obviously worth
+   doing.
+2. **Identity over convenience facts** — *prefer storing canonical identity and
+   projecting derived views over persisting convenience facts.* Four independent
+   tests: due-date proximity, the commitment's authority, a question's days
+   overdue, and the correspondence anchor. Confirmed only if the epic lands there
+   **without being told to**. Earns a place in ADR-040 if so.
+3. **ADR-038's division prediction.** `OrganizationDivisionId` gets its first
+   holder in S001, or that root's justification never materialised.
+4. **Event, not lifecycle** *(new, from this Phase 2)* — *if every apparent
+   "status" of an object is really derived from related objects or dates, the
+   object may be an event rather than a lifecycle.* `HaCorrespondence` is the
+   first instance. **One example is not enough to promote it**; watch for a
+   second here and record the outcome in the retro. Do not add it to the flow.
 
 ---
 
-## Phase 3 — Candidate stories *(sketch — re-slice on pull-in)*
+## Phase 3 — Stories *(approved 2026-08-01)*
+
+Seven vertical slices, in EPIC-017's cadence: **vocabulary → identity → local
+concepts → business history → operability → working surface → projection.** Each
+carries its own working surface, and each **reads back the history it writes**
+(testing.md principle 8).
+
+The `S000` the sketch called for is gone — Phase 2 settled the vocabularies.
 
 | # | Story | Slice |
 |---|---|---|
-| **S001** | **`HaCorrespondence`** — record a letter against an application/submission, with authority + division + contact, and attach content | domain → persistence → API → UI → test |
-| **S002** | **`HaQuestion`** — raise questions under a correspondence, assign owner + due date, answer them, dated status | full slice |
-| **S003** | **`Commitment`** — create standalone or from a question, owner, due date, dated status; **the "what's due" view** across questions + commitments | full slice |
-| **S004** | **`HaMeeting`** — request, schedule, hold, close with minutes and outcomes | full slice |
-| **S005** | **`Inspection`** — record and track, dated status | full slice |
-| **S006** | **Capstone** — the *"what's due"* view across all five, narrative browser proof of the full journey, ADR, retro | UI → test → docs |
+| **S001** | **A letter, filed where it belongs** — `HaCorrespondence` with direction, type, authority, division, contact and nullable anchors; a list and its own page | full slice |
+| **S002** | **The letter's content** — attachments; `IFileStorage` moves to `src/Storage`; decision 0 built | full slice |
+| **S003** | **The questions inside it** — `HaQuestion` with owner, due date, response and the epic's first dated history, rendered on the correspondence page | full slice |
+| **S004** | **What we promised** — `Commitment` from a question or standalone, dated history, its own page, **and the "what's due" view** | full slice |
+| **S005** | **Meetings** — request → grant → hold → minutes and outcome; the one transition table | full slice |
+| **S006** | **Inspections** — anchored to an `OrganizationSite`, dated history | full slice |
+| **S007** | **Capstone** — the application activity timeline (the falsified supertype, as a read model), narrative browser proof, ADR-040, retro | UI → test → docs |
 
-> **Amended, §8.** Each of S001–S005 carries its own working surface and its own
-> read-back of the history it writes; the capstone is the cross-aggregate
-> projection, not the first time any of this is visible. And a story **S000** —
-> the five status vocabularies settled on one page (§7) — comes before S001.
+**Not split into 006a/006b.** The pull toward a split was the supertype question,
+and Phase 2 answered it. Four additive greenfield aggregates are far cheaper than
+EPIC-017's tier insertion — no migration of existing rows, no re-pointing of
+foreign keys. If it does sprawl, the fracture line is **after S004**: S001–S004
+is the daily work and ships alone.
 
-**ADR to write:** *The health-authority interaction cluster is one bounded context* — next free number (**ADR-040**).
+**ADR-040 — *the health-authority interaction cluster is one bounded context***,
+written at S007 and carrying the resolution of every hypothesis above.

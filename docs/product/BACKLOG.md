@@ -35,10 +35,15 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-*Nothing in flight.* EPIC-016 and EPIC-017 have both shipped, and **EPIC-006 is
-next** — see the call below the table. A small **maintenance epic** is queued
-behind it: nine forms still carry the EPIC-016 mutation defect (see the EPIC-017
-retro).
+| ID | Epic | Status | Notes |
+|---|---|---|---|
+| **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | 🟡 **In Progress** | Phases 1–3 settled 2026-08-01; **7 stories**, S001 next → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
+
+Phase 2 opened on the domain question rather than the entity list, and
+**falsified** its own central hypothesis: the spanning question (an activity
+timeline) is real, but it is a read model, not an aggregate. Four roots and one
+child, no supertype. A small **maintenance epic** is queued behind this one:
+nine forms still carry the EPIC-016 mutation defect (see the EPIC-017 retro).
 
 ## Next
 
@@ -46,8 +51,7 @@ retro).
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 1 | **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | ⚪ Not Started | EPIC-016 ✅ · Phase-2 sketch **amended by EPIC-017** before pull-in → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
-| 2 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | ⚪ Not Started | EPIC-003 ✅ (placement makes a sequence a diff of placements, not an inference) · EPIC-016 ✅ (S005) → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
+| 1 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | ⚪ Not Started | EPIC-003 ✅ (placement makes a sequence a diff of placements, not an inference) · EPIC-016 ✅ (S005) → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
 
 > **Call made 2026-08-01 — EPIC-006 before EPIC-004.** Both are unblocked and
 > genuinely independent: sequences live inside `Submission` and never touch
