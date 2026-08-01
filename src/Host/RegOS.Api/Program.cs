@@ -216,6 +216,7 @@ medicinalProducts.MapCreateMedicinalProduct();
 medicinalProducts.MapListMedicinalProducts();
 medicinalProducts.MapAddTradeName();
 medicinalProducts.MapRemoveTradeName();
+medicinalProducts.MapChangeMarketStatus();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

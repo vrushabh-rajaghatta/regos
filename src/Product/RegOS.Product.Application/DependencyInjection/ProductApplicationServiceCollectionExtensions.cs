@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using RegOS.Product.Application.Commands.AddTradeName;
 using RegOS.Product.Application.Commands.ArchiveProduct;
+using RegOS.Product.Application.Commands.ChangeMarketStatus;
 using RegOS.Product.Application.Commands.CreateMedicinalProduct;
 using RegOS.Product.Application.Commands.RegisterProduct;
 using RegOS.Product.Application.Commands.RemoveTradeName;
@@ -26,6 +27,7 @@ public static class ProductApplicationServiceCollectionExtensions
         services.AddScoped<ListMedicinalProductsHandler>();
         services.AddScoped<AddTradeNameHandler>();
         services.AddScoped<RemoveTradeNameHandler>();
+        services.AddScoped<ChangeMarketStatusHandler>();
 
         return services;
     }

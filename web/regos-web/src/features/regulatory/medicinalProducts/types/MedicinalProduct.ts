@@ -23,6 +23,13 @@ export interface MedicinalProduct {
   /** The record's own lifecycle — not whether the product is on sale there. */
   status: string;
   statusDate: string;
+  /** Whether the product is on sale. A different question from `status`. */
+  marketStatus: string;
+  /**
+   * Derived by the server from the first entry reaching Launched, never
+   * stored — so it cannot disagree with the history. Null until then.
+   */
+  launchedOn: string | null;
   /** At most one per language, enforced by the server. */
   tradeNames: TradeName[];
 }

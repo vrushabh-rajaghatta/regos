@@ -39,6 +39,7 @@ namespace RegOS.Product.Domain.Product;
 public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
 {
     private readonly List<TradeName> _tradeNames = [];
+    private readonly List<MarketStatusEntry> _marketStatusHistory = [];
 
     // Parameterized private constructor, no parameterless one: EF binds by
     // parameter name, and this keeps every field non-nullable. Same shape as
@@ -94,6 +95,25 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
     /// </summary>
     public IReadOnlyCollection<TradeName> TradeNames => _tradeNames.AsReadOnly();
 
+    /// <summary>
+    /// What is commercially true here — <b>not</b> <see cref="Status"/>, which
+    /// says whether this record is in use. A discontinued product's record is
+    /// still perfectly active; a deactivated record may describe a market that
+    /// is still selling. The two never merge.
+    /// </summary>
+    /// <remarks>
+    /// Stored, not replayed: the portfolio views read one indexed column rather
+    /// than reducing a history per row. <see cref="MarketStatusHistory"/>
+    /// records how it reached this.
+    /// </remarks>
+    public MarketStatus CurrentMarketStatus { get; private set; }
+
+    /// <summary>
+    /// Every market status this presence has held, oldest first. Append-only.
+    /// </summary>
+    public IReadOnlyCollection<MarketStatusEntry> MarketStatusHistory
+        => _marketStatusHistory.AsReadOnly();
+
     /// <param name="statusDate">
     /// The business date this market-local record came into being — supplied,
     /// never read from the clock, so a migrated portfolio can state when the
@@ -119,13 +139,106 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
             throw new DomainException(
                 MedicinalProductErrors.StatusDateRequired);
 
-        return new MedicinalProduct(
+        var medicinalProduct = new MedicinalProduct(
             MedicinalProductId.New(),
             tenantId,
             globalProductId,
             countryId,
             MedicinalProductStatus.Active,
             statusDate);
+
+        // The first history entry is the status it starts in, not a separate
+        // "created" event: the history is one chronological sequence of the
+        // states held, in one vocabulary. The same shape Registration uses.
+        //
+        // One supplied date, two derived facts — the record became active and
+        // the plan began on the same real-world day, and that is honest rather
+        // than a conflation: nothing later moves them together.
+        medicinalProduct.Record(MarketStatus.Planned, statusDate, null);
+
+        return medicinalProduct;
+    }
+
+    /// <summary>
+    /// Records what became commercially true here, and when.
+    /// </summary>
+    /// <remarks>
+    /// <b>There is no transition table.</b> <c>RegistrationLifecycle</c> exists
+    /// because a regulator's decision graph is genuinely constrained; commercial
+    /// reality is not. A product may be launched, become unavailable, return,
+    /// and be discontinued and relaunched years later, and none of that is
+    /// incoherent. Encoding one company's history as universal law is exactly
+    /// what that lifecycle's own governing principle forbids.
+    /// <para>
+    /// Two rules survive, because they are about coherence rather than process:
+    /// a status cannot be re-entered from itself, and business time moves
+    /// forward. A third is specific to <see cref="MarketStatus.Planned"/> — a
+    /// market already entered cannot be planned again.
+    /// </para>
+    /// </remarks>
+    /// <param name="occurredOn">
+    /// The business date this became true — never the clock, and never earlier
+    /// than the status it replaces.
+    /// </param>
+    public void ChangeMarketStatus(
+        MarketStatus target,
+        DateOnly occurredOn,
+        string? note = null)
+    {
+        if (!Enum.IsDefined(target))
+            throw new DomainException(
+                MedicinalProductErrors.MarketStatusNotRecognised);
+
+        if (occurredOn == default)
+            throw new DomainException(
+                MedicinalProductErrors.OccurredOnRequired);
+
+        // The one genuinely incoherent transition. Planned means "we intend to
+        // be here"; a market that has been entered cannot be intended again.
+        // This is why the initial state is Planned rather than NotLaunched —
+        // the latter reads as a reversible observation and would need this rule
+        // explained in prose instead of enforced.
+        if (target == MarketStatus.Planned)
+            throw new BusinessRuleViolationException(
+                MedicinalProductErrors.MarketCannotBePlannedAgain);
+
+        if (target == CurrentMarketStatus)
+            throw new BusinessRuleViolationException(
+                MedicinalProductErrors.AlreadyInMarketStatus(target));
+
+        // Two entries may share a date — a migration routinely produces that —
+        // but a status taking effect before the one it replaces would make the
+        // history unreadable. Discovering an earlier event later is a
+        // correction, which is a separate concept.
+        if (occurredOn < _marketStatusHistory[^1].OccurredOn)
+            throw new DomainException(
+                MedicinalProductErrors.OccurredOnBeforePreviousEntry);
+
+        Record(target, occurredOn, note);
+    }
+
+    /// <summary>
+    /// The core invariant: <b>every change updates
+    /// <see cref="CurrentMarketStatus"/> and appends exactly one immutable
+    /// entry.</b> Nothing else writes either, so current state and the record
+    /// of how it was reached can never disagree.
+    /// </summary>
+    private void Record(MarketStatus status, DateOnly occurredOn, string? note)
+    {
+        if (note is not null
+            && note.Trim().Length > MarketStatusEntry.NoteMaxLength)
+        {
+            throw new DomainException(MedicinalProductErrors.NoteTooLong);
+        }
+
+        CurrentMarketStatus = status;
+
+        _marketStatusHistory.Add(new MarketStatusEntry(
+            MarketStatusEntryId.New(),
+            status,
+            occurredOn,
+            DateTime.UtcNow,
+            string.IsNullOrWhiteSpace(note) ? null : note.Trim()));
     }
 
     /// <summary>

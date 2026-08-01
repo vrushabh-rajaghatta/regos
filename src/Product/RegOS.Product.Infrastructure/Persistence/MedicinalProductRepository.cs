@@ -25,14 +25,16 @@ public sealed class MedicinalProductRepository : IMedicinalProductRepository
     }
 
     /// <summary>
-    /// Tracked, with trade names — see <see cref="IMedicinalProductRepository"/>
-    /// for why they are always loaded rather than on request.
+    /// Tracked, with both child collections — see
+    /// <see cref="IMedicinalProductRepository"/> for why each is always loaded
+    /// rather than on request.
     /// </summary>
     public async Task<MedicinalProduct?> GetByIdAsync(
         MedicinalProductId id,
         CancellationToken cancellationToken)
         => await _dbContext.MedicinalProducts
             .Include(x => x.TradeNames)
+            .Include(x => x.MarketStatusHistory)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public async Task UpdateAsync(

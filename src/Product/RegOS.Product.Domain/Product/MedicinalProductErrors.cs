@@ -36,4 +36,23 @@ public static class MedicinalProductErrors
 
     public const string TradeNameNotFound =
         "Trade name does not exist.";
+
+    public const string MarketStatusNotRecognised =
+        "That market status is not recognised.";
+
+    public const string OccurredOnRequired =
+        "The date this took effect is required.";
+
+    public const string OccurredOnBeforePreviousEntry =
+        "History is read in business time: a status cannot take effect before "
+        + "the one it replaces.";
+
+    public const string MarketCannotBePlannedAgain =
+        "A market that has already been entered cannot be planned again.";
+
+    public static readonly string NoteTooLong =
+        $"A note must be {MarketStatusEntry.NoteMaxLength} characters or fewer.";
+
+    public static string AlreadyInMarketStatus(MarketStatus status)
+        => $"This market is already {status}.";
 }

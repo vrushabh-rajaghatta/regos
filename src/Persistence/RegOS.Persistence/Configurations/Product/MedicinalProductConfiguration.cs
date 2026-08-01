@@ -45,6 +45,14 @@ public sealed class MedicinalProductConfiguration
             .HasColumnType("date")
             .IsRequired();
 
+        // Stored, not replayed — the portfolio views read one column rather
+        // than reducing a history per row. A different concept from Status
+        // above and stored as a different column, so nothing can read one as
+        // the other. Kept as int, matching RegistrationStatus.
+        builder.Property(x => x.CurrentMarketStatus)
+            .HasConversion<int>()
+            .IsRequired();
+
         // Cross-aggregate foreign keys; the domain exposes no navigation
         // properties. Restrict on both: a global product or a country that a
         // market presence names must never be deleted out from under it.
@@ -81,5 +89,19 @@ public sealed class MedicinalProductConfiguration
         builder.Metadata
             .FindNavigation(nameof(MedicinalProduct.TradeNames))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // Ownership: MedicinalProduct (1) -> market status history (N).
+        builder.HasMany(x => x.MarketStatusHistory)
+            .WithOne()
+            .HasForeignKey("MedicinalProductId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(MedicinalProduct.MarketStatusHistory))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // "What is actually on sale in this market?" — the S004 portfolio
+        // question, answered off one index rather than a history reduction.
+        builder.HasIndex(x => new { x.CountryId, x.CurrentMarketStatus });
     }
 }

@@ -45,6 +45,17 @@ public sealed class ListMedicinalProductsHandler
                 CountryCode = country.Code,
                 market.Status,
                 market.StatusDate,
+                market.CurrentMarketStatus,
+                // Only what the launch date is derived from travels — the two
+                // dates of every Launched entry, not the whole history.
+                Launches = market.MarketStatusHistory
+                    .Where(entry => entry.Status == Domain.Product.MarketStatus.Launched)
+                    .Select(entry => new
+                    {
+                        entry.OccurredOn,
+                        entry.RecordedOnUtc,
+                    })
+                    .ToList(),
                 // Projected, not Include()d: this is a read, and the trade
                 // names travel as part of the row rather than as an aggregate
                 // the query handler would have no business loading (ADR-016).
@@ -67,6 +78,15 @@ public sealed class ListMedicinalProductsHandler
                 row.CountryCode,
                 row.Status.ToString(),
                 row.StatusDate,
+                row.CurrentMarketStatus.ToString(),
+                // The first launch, in business time — with what was recorded
+                // first as the tie-break, exactly as the registration detail
+                // orders its history. Null while a market has never launched.
+                row.Launches
+                    .OrderBy(launch => launch.OccurredOn)
+                    .ThenBy(launch => launch.RecordedOnUtc)
+                    .Select(launch => (DateOnly?)launch.OccurredOn)
+                    .FirstOrDefault(),
                 [.. row.TradeNames.Select(name => new TradeNameListItem(
                     name.Id.Value,
                     name.Language.Value,

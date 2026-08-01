@@ -6,6 +6,7 @@ import {
   collectErrors,
   EXPECTED_404,
   EXPECTED_409,
+  EXPECTED_400,
 } from "./support";
 
 /**
@@ -209,6 +210,89 @@ test.describe("Registration portfolio", () => {
   });
 
   /**
+   * Whether it is actually on sale — the commercial life of a market, driven
+   * through the browser.
+   *
+   * Its subject is the pair of facts a registration cannot answer: a licence
+   * being granted does not put a product on a shelf, and a product leaving the
+   * shelf does not surrender the licence. It also proves the launch date is
+   * derived rather than typed — a relaunch does not move it, because nobody
+   * can move it.
+   */
+  test("a market is launched, lost, relaunched — and the launch date never moves", async ({
+    page,
+  }) => {
+    const errors = collectErrors(page, [EXPECTED_400]);
+    const unique = Date.now();
+
+    const globalProductId = await createProduct(
+      unique,
+      `Market Status Product ${unique}`,
+    );
+
+    await page.goto(`/regulatory/products/${globalProductId}/registrations`);
+
+    await page.getByRole("button", { name: "Add market" }).click();
+    await page.getByLabel("Country").selectOption({ label: "Canada" });
+    await page.getByLabel("Present since").fill("2019-06-01");
+    await page.getByRole("button", { name: "Add" }).click();
+
+    const status = page.getByTestId("market-status");
+    const launched = page.getByTestId("market-launched");
+
+    // --- 1. a market begins as an intention, not a failure to launch -----
+    await expect(status).toHaveText("Planned");
+    await expect(launched).toHaveText("—");
+
+    // --- 2. on sale ------------------------------------------------------
+    await recordSaleStatus(page, "Launched", "2021-03-15");
+    await expect(status).toHaveText("Launched");
+    await expect(launched).toHaveText("2021-03-15");
+
+    // --- 3. off the shelf, licence untouched -----------------------------
+    await recordSaleStatus(
+      page,
+      "Temporarily unavailable",
+      "2023-08-01",
+      "API supply interruption.",
+    );
+
+    await expect(status).toHaveText("Temporarily unavailable");
+
+    // The launch happened. Losing supply does not un-happen it.
+    await expect(launched).toHaveText("2021-03-15");
+
+    // --- 4. business time only moves forward -----------------------------
+    await page.getByRole("button", { name: "Record sale status" }).click();
+    await page.getByLabel("Now").selectOption({ label: "Discontinued" });
+    await page.getByLabel("Took effect on").fill("2020-01-01");
+    await page.getByRole("button", { name: "Save" }).click();
+
+    await expect(page.getByTestId("market-status-error")).toContainText(
+      "History is read in business time",
+    );
+
+    await page.keyboard.press("Escape");
+    await expect(status).toHaveText("Temporarily unavailable");
+
+    // --- 5. back on sale, and the launch date is still the first one -----
+    await recordSaleStatus(page, "Launched", "2024-02-01");
+    await expect(status).toHaveText("Launched");
+    await expect(launched).toHaveText("2021-03-15");
+
+    // --- 6. discontinued — and the record itself is untouched ------------
+    await recordSaleStatus(page, "Discontinued", "2026-01-15");
+    await expect(status).toHaveText("Discontinued");
+    await expect(launched).toHaveText("2021-03-15");
+
+    // Commercial state is not operability: the market row is still here,
+    // still nameable, still able to hold authorisations.
+    await expect(page.getByTestId("product-market-row")).toHaveCount(1);
+
+    expect(errors()).toEqual([]);
+  });
+
+  /**
    * The EPIC-016 house rule: every new mutation dialog is walked through at
    * least one real server refusal, because success-path verification is what
    * let six forms ship with an unhandled promise rejection escaping to the
@@ -242,6 +326,19 @@ test.describe("Registration portfolio", () => {
     expect(errors()).toEqual([]);
   });
 });
+
+async function recordSaleStatus(
+  page: import("@playwright/test").Page,
+  status: string,
+  occurredOn: string,
+  note?: string,
+) {
+  await page.getByRole("button", { name: "Record sale status" }).click();
+  await page.getByLabel("Now").selectOption({ label: status });
+  await page.getByLabel("Took effect on").fill(occurredOn);
+  if (note) await page.getByLabel("Note (optional)").fill(note);
+  await page.getByRole("button", { name: "Save" }).click();
+}
 
 async function addTradeName(
   page: import("@playwright/test").Page,

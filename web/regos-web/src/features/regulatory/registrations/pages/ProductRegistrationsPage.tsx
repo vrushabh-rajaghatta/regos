@@ -7,7 +7,9 @@ import { PageHeader } from "@/shared/components/PageHeader";
 
 import { AddMarketDialog } from "../../medicinalProducts/components/AddMarketDialog";
 import { AddTradeNameDialog } from "../../medicinalProducts/components/AddTradeNameDialog";
+import { ChangeMarketStatusDialog } from "../../medicinalProducts/components/ChangeMarketStatusDialog";
 import { MarketTradeNames } from "../../medicinalProducts/components/MarketTradeNames";
+import { marketStatusLabel } from "../../medicinalProducts/constants/marketStatuses";
 import { useMedicinalProducts } from "../../medicinalProducts/hooks/useMedicinalProducts";
 import type { MedicinalProduct } from "../../medicinalProducts/types/MedicinalProduct";
 import { CreateRegistrationDialog } from "../components/CreateRegistrationDialog";
@@ -36,6 +38,7 @@ export function ProductRegistrationsPage() {
     null
   );
   const [namingIn, setNamingIn] = useState<MedicinalProduct | null>(null);
+  const [restatusing, setRestatusing] = useState<MedicinalProduct | null>(null);
   const [status, setStatus] = useState("");
 
   const markets = useMedicinalProducts(globalProductId!);
@@ -88,7 +91,8 @@ export function ProductRegistrationsPage() {
                 <tr>
                   <th className="px-4 py-2 font-medium">Market</th>
                   <th className="px-4 py-2 font-medium">Called</th>
-                  <th className="px-4 py-2 font-medium">Present since</th>
+                  <th className="px-4 py-2 font-medium">On sale</th>
+                  <th className="px-4 py-2 font-medium">Launched</th>
                   <th className="px-4 py-2 font-medium">Authorisations</th>
                   <th className="px-4 py-2" />
                 </tr>
@@ -110,7 +114,14 @@ export function ProductRegistrationsPage() {
                         tradeNames={market.tradeNames}
                       />
                     </td>
-                    <td className="px-4 py-2">{market.statusDate}</td>
+                    <td className="px-4 py-2" data-testid="market-status">
+                      {marketStatusLabel(market.marketStatus)}
+                    </td>
+                    <td className="px-4 py-2" data-testid="market-launched">
+                      {market.launchedOn ?? (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2">
                       {
                         (data ?? []).filter(
@@ -120,6 +131,14 @@ export function ProductRegistrationsPage() {
                       }
                     </td>
                     <td className="px-4 py-2 text-right whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setRestatusing(market)}
+                      >
+                        Record sale status
+                      </Button>
+
                       <Button
                         variant="ghost"
                         size="sm"
@@ -233,6 +252,17 @@ export function ProductRegistrationsPage() {
         open={addingMarket}
         onOpenChange={setAddingMarket}
       />
+
+      {restatusing && (
+        <ChangeMarketStatusDialog
+          medicinalProductId={restatusing.medicinalProductId}
+          countryName={restatusing.countryName}
+          open
+          onOpenChange={(open) => {
+            if (!open) setRestatusing(null);
+          }}
+        />
+      )}
 
       {namingIn && (
         <AddTradeNameDialog

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.Product.Application.Commands.AddTradeName;
+using RegOS.Product.Application.Commands.ChangeMarketStatus;
 using RegOS.Product.Application.Commands.CreateMedicinalProduct;
 using RegOS.Product.Application.Commands.RemoveTradeName;
 using RegOS.Product.Application.Queries.ListMedicinalProducts;
@@ -34,6 +35,9 @@ public sealed class MedicinalProductTests : IAsyncLifetime
         new(Guid.Parse("10000000-0000-0000-0000-000000000001"));
 
     private static readonly DateOnly Today = new(2026, 7, 31);
+
+    /// <summary>A market entered long ago, so its history has room to run.</summary>
+    private static readonly DateOnly Entered = new(2020, 1, 1);
 
     private readonly List<Guid> _medicinalProductIds = [];
     private readonly List<Guid> _productIds = [];
@@ -303,7 +307,147 @@ public sealed class MedicinalProductTests : IAsyncLifetime
             .WithMessage(MedicinalProductErrors.LanguageNotRecognised);
     }
 
+    // --- Market status -------------------------------------------------------
+
+    [Fact]
+    public async Task AMarketIsCreatedPlannedAndPersistedWithItsHistory()
+    {
+        await using var ctx = New();
+        var id = await CreateAsync(ctx, await ProductAsync(ctx));
+
+        await using var check = New();
+        var market = await check.MedicinalProducts
+            .AsNoTracking()
+            .Include(x => x.MarketStatusHistory)
+            .FirstAsync(x => x.Id == id);
+
+        market.CurrentMarketStatus.Should().Be(MarketStatus.Planned);
+        market.MarketStatusHistory.Should().ContainSingle()
+            .Which.OccurredOn.Should().Be(Today);
+    }
+
+    /// <summary>
+    /// The whole commercial story of a market, round-tripped through Postgres.
+    /// The equivalent of EPIC-005's registration-lifecycle test, one tier down —
+    /// and the sequence it proves is one a registration could never hold.
+    /// </summary>
+    [Fact]
+    public async Task AnEntireCommercialLifeIsPersistedAsOneChronologicalHistory()
+    {
+        await using var ctx = New();
+        var id = await CreateAsync(ctx, await ProductAsync(ctx), statusDate: Entered);
+
+        await ChangeAsync(id, MarketStatus.Launched, new(2021, 3, 15));
+        await ChangeAsync(
+            id, MarketStatus.TemporarilyUnavailable, new(2023, 8, 1),
+            "API supply interruption.");
+        await ChangeAsync(id, MarketStatus.Launched, new(2024, 2, 1));
+        await ChangeAsync(id, MarketStatus.Discontinued, new(2026, 1, 15));
+
+        await using var check = New();
+        var market = await check.MedicinalProducts
+            .AsNoTracking()
+            .Include(x => x.MarketStatusHistory)
+            .FirstAsync(x => x.Id == id);
+
+        market.CurrentMarketStatus.Should().Be(MarketStatus.Discontinued);
+
+        market.MarketStatusHistory
+            .OrderBy(entry => entry.OccurredOn)
+            .Select(entry => entry.Status)
+            .Should().Equal(
+                MarketStatus.Planned,
+                MarketStatus.Launched,
+                MarketStatus.TemporarilyUnavailable,
+                MarketStatus.Launched,
+                MarketStatus.Discontinued);
+
+        market.MarketStatusHistory
+            .Should().ContainSingle(entry => entry.Note != null)
+            .Which.Note.Should().Be("API supply interruption.");
+    }
+
+    /// <summary>
+    /// The chronology rule survives a reload — the same proof the trade-name
+    /// rule gets, because it also depends on the aggregate seeing its own
+    /// history through the repository's Include.
+    /// </summary>
+    [Fact]
+    public async Task TheChronologyRuleSurvivesAReload()
+    {
+        await using var ctx = New();
+        var id = await CreateAsync(ctx, await ProductAsync(ctx), statusDate: Entered);
+
+        await ChangeAsync(id, MarketStatus.Launched, new(2021, 3, 15));
+
+        var backdated = async () =>
+            await ChangeAsync(id, MarketStatus.Discontinued, new(2020, 1, 1));
+
+        await backdated.Should().ThrowAsync<DomainException>()
+            .WithMessage(MedicinalProductErrors.OccurredOnBeforePreviousEntry);
+    }
+
+    [Fact]
+    public async Task AMarketAlreadyEnteredCannotBePlannedAgain()
+    {
+        await using var ctx = New();
+        var id = await CreateAsync(ctx, await ProductAsync(ctx), statusDate: Entered);
+
+        await ChangeAsync(id, MarketStatus.Launched, new(2021, 3, 15));
+
+        var replan = async () =>
+            await ChangeAsync(id, MarketStatus.Planned, new(2022, 1, 1));
+
+        await replan.Should().ThrowAsync<BusinessRuleViolationException>()
+            .WithMessage(MedicinalProductErrors.MarketCannotBePlannedAgain);
+    }
+
+    [Fact]
+    public async Task ChangingTheStatusOfAMarketThatIsNotThereIsNotFound()
+    {
+        var change = async () => await ChangeAsync(
+            MedicinalProductId.New(), MarketStatus.Launched, Today);
+
+        await change.Should().ThrowAsync<NotFoundException>()
+            .WithMessage(
+                MedicinalProductPolicyErrors.MedicinalProductDoesNotExist);
+    }
+
     // --- Reading -------------------------------------------------------------
+
+    /// <summary>
+    /// <b>The launch date is derived, never stored.</b> It cannot disagree with
+    /// the history because it <em>is</em> the history — and a relaunch does not
+    /// move it, because "when did we launch" means the original.
+    /// </summary>
+    [Fact]
+    public async Task TheLaunchDateIsTheFirstLaunchAndARelaunchDoesNotMoveIt()
+    {
+        await using var ctx = New();
+        var globalProductId = await ProductAsync(ctx);
+        var id = await CreateAsync(ctx, globalProductId, statusDate: Entered);
+
+        await using var planned = New();
+        var whilePlanned = await new ListMedicinalProductsHandler(planned)
+            .HandleAsync(new ListMedicinalProductsQuery(globalProductId), default);
+
+        whilePlanned!.Single().MarketStatus
+            .Should().Be(nameof(MarketStatus.Planned));
+        whilePlanned.Single().LaunchedOn
+            .Should().BeNull("nothing has launched yet");
+
+        await ChangeAsync(id, MarketStatus.Launched, new(2021, 3, 15));
+        await ChangeAsync(id, MarketStatus.Discontinued, new(2023, 1, 1));
+        await ChangeAsync(id, MarketStatus.Launched, new(2025, 6, 1));
+
+        await using var check = New();
+        var row = (await new ListMedicinalProductsHandler(check)
+            .HandleAsync(new ListMedicinalProductsQuery(globalProductId), default))!
+            .Single();
+
+        row.MarketStatus.Should().Be(nameof(MarketStatus.Launched));
+        row.LaunchedOn.Should().Be(new DateOnly(2021, 3, 15));
+    }
 
     [Fact]
     public async Task TheMarketsOfAProductAreListedWithTheNamesAPersonReads()
@@ -380,6 +524,25 @@ public sealed class MedicinalProductTests : IAsyncLifetime
     /// the one-name-per-language rule is exercised against persisted state
     /// rather than an aggregate that never left memory.
     /// </summary>
+    /// <summary>
+    /// Each change through its own context, the way a request would arrive — so
+    /// the chronology rule is exercised against persisted state rather than an
+    /// aggregate that never left memory.
+    /// </summary>
+    private static async Task ChangeAsync(
+        MedicinalProductId market,
+        MarketStatus status,
+        DateOnly occurredOn,
+        string? note = null)
+    {
+        await using var ctx = New();
+
+        await new ChangeMarketStatusHandler(new MedicinalProductRepository(ctx))
+            .HandleAsync(
+                new ChangeMarketStatusCommand(market, status, occurredOn, note),
+                default);
+    }
+
     private static async Task<TradeNameId> AddTradeNameAsync(
         MedicinalProductId market,
         string? language,
@@ -395,10 +558,16 @@ public sealed class MedicinalProductTests : IAsyncLifetime
         return result.Id;
     }
 
+    /// <param name="statusDate">
+    /// When the market presence began — which is also the business date of its
+    /// first market-status entry, so anything a test records afterwards must
+    /// come later. A test with a commercial history to tell backdates this.
+    /// </param>
     private async Task<MedicinalProductId> CreateAsync(
         RegOSDbContext ctx,
         GlobalProductId globalProductId,
-        CountryId? countryId = null)
+        CountryId? countryId = null,
+        DateOnly? statusDate = null)
     {
         var handler = new CreateMedicinalProductHandler(
             new MedicinalProductPolicy(ctx),
@@ -407,7 +576,9 @@ public sealed class MedicinalProductTests : IAsyncLifetime
 
         var result = await handler.HandleAsync(
             new CreateMedicinalProductCommand(
-                globalProductId, countryId ?? UnitedStates, Today),
+                globalProductId,
+                countryId ?? UnitedStates,
+                statusDate ?? Today),
             default);
 
         _medicinalProductIds.Add(result.Id.Value);

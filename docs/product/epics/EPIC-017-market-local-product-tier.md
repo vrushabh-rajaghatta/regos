@@ -236,7 +236,8 @@ semantic one.
 | **S000** | **The rename** — `Product` → `GlobalProduct`, `ProductId` → `GlobalProductId`, across backend, frontend and specs. Projects, namespaces and sibling types unchanged | mechanical | *nothing behaves differently* |
 | **S001** | **The tier** — `MedicinalProduct` aggregate, re-point `Registration` to it, migration, EPIC-005 tests re-pointed rather than rewritten | domain → persistence → API → test | *the tier exists and a licence is granted against it* |
 | **S002** | **Trade Name** — one per (medicinal product, language), enforced; surfaced wherever a registration is shown | full slice | *what it is called there* |
-| **S003** | **Market Status** — dated history + current value + launch date + risk of supply | full slice | *whether it is actually on sale* |
+| **S003** | **Market Status** — dated history + current value; launch date **derived**, risk of supply deferred | full slice | *whether it is actually on sale* |
+| **S003a** | **Market deactivation** — `Activate`/`Deactivate`, completing the activation lifecycle S001 introduced. Operability, not market state | small slice | *this record is no longer in use* |
 | **S004** | **Capstone** — portfolio views enriched, browser proof, ADR-039, retro | UI → test → docs | *"what do we hold in Canada?" answered properly* |
 
 **ADR to write:** *The market-local product tier, and which tier each reference means* — next free number (expected **ADR-039**).
@@ -421,5 +422,88 @@ entirely inside one aggregate.
 
 **Verification:** 886 backend tests (+23), 62 browser specs (+1), CORS widening
 reverted with no `Program.cs` diff.
+
+---
+
+### S003 — Market Status *(shipped)*
+
+*Whether it is actually on sale.* `MedicinalProduct` gains a stored
+`CurrentMarketStatus` and the append-only history behind it — the second
+bitemporal status history in the model, and the one that sets up EPIC-006's
+extraction.
+
+**`LaunchDate` is not a field.** The sketch had it stored. It is the
+`OccurredOn` of the first entry reaching `Launched` — a second copy of a fact
+the history already holds, which is the S001 argument one tier down. Deriving it
+also dissolves the question rather than answering it: *"why does the launch date
+precede approval in migrated data?"* cannot arise, because nobody types it. It
+is **first commercial availability**, not authorisation effectiveness — that
+already exists as `Registration.ApprovedOn`, one aggregate over. First launch
+rather than most recent, because a relaunch is a different question (ADR-037).
+
+**Exact parity with `RegistrationStatusEntry`** — field for field, table for
+table, configuration for configuration. Kept identical on purpose: the more
+alike they are, the more mechanical EPIC-006's extraction becomes.
+
+**And a deliberate divergence, which is the sharpest thing this story
+establishes.** There is **no transition table**. `RegistrationLifecycle` exists
+because a regulator's decision graph is genuinely constrained; commercial
+reality is not, and a product may be launched, become unavailable, return, and
+be discontinued and relaunched years later without a single incoherent step.
+Encoding one company's commercial history as universal law is exactly what that
+lifecycle's own governing principle forbids.
+
+> **For the retro and ADR-039:** the bitemporal append-only *shape* generalises;
+> the constraint *graph* does not. When EPIC-006 extracts the pattern, that is
+> the line it should cut along.
+
+Two coherence rules survive, because they are not about process: a status cannot
+be re-entered from itself, and business time only moves forward.
+
+**`Planned`, not `NotLaunched`** — and the reason is structural, not stylistic.
+The word carries **one meaning at both tiers** ("intended, not yet actual"),
+which is why reusing it is fine where `Withdrawn` would not have been: that
+would have meant *surrendered licence* at one tier and *no longer sold* at the
+other, and the portfolio views show both at once. **The rule is not "never reuse
+a word across tiers" — it is "never let one word carry two meanings."**
+
+`Planned` is also **non-reentrant by its own semantics**: you cannot plan to
+enter a market you have already entered. So the one genuinely incoherent
+transition is enforced with a rule and a test, where `NotLaunched` — which reads
+as a reversible observation — would have needed a warning in prose instead.
+
+**Operability and commercial state cannot blur**, enforced by naming rather than
+discipline:
+
+| | Question | Shape |
+|---|---|---|
+| `Status` + `StatusDate` | do we use this record? | activation flag, one date |
+| `CurrentMarketStatus` + history | is it on sale? | append-only, bitemporal |
+
+A test asserts that discontinuing a market leaves `Status` untouched.
+
+**Migration.** `CurrentMarketStatus` defaults to `Planned`, correct for every
+existing row — but a current status with no history behind it would break the
+aggregate's core invariant on first read. So each existing market gets exactly
+the entry `Create` would have written, dated its own `StatusDate`, with
+`RecordedOnUtc` set to now. That the two differ is the point of keeping both,
+and this migration is precisely the case they exist to describe. Verified: 6
+markets → 6 entries, none without history, every one dated from its own market.
+
+**Deferred, and both were in the approved scope:** risk-of-supply is orthogonal
+to status — a flag can be raised and cleared without the status moving — so it
+would have been a third concept in a one-concept story. **Market-record
+deactivation is its own follow-up story**, completing the activation lifecycle
+S001 introduced; folding it in here would have blurred the very distinction the
+table above protects.
+
+**Verification:** 903 backend tests (+17), 63 browser specs (+1), migration
+backfill verified, CORS widening reverted with no `Program.cs` diff.
+
+**Operational note.** Docker Desktop stopped mid-story, taking Postgres with it;
+restarted, no data lost. Separately, four integration tests failed on first run
+because the *fixture* created markets dated today and then tried to launch them
+in 2021 — the chronology rule refusing bad test data, not a defect. The domain
+tests, which backdate properly, passed throughout and localised it immediately.
 
 **Sequencing note:** this epic and **EPIC-004** are genuinely independent — sequences live inside `Submission` and never touch `ProductId`; this never touches submission internals. Neither makes the other harder. Order is a **value call**: this one completes an epic already in flight (EPIC-005); EPIC-004 completes nothing in flight but may be what a customer is waiting on.
