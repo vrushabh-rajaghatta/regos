@@ -2,7 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Interaction.Application.Commands.AttachCorrespondenceContent;
 using RegOS.Interaction.Application.Commands.AssignQuestion;
+using RegOS.Interaction.Application.Commands.BeginInspection;
 using RegOS.Interaction.Application.Commands.BeginMeeting;
+using RegOS.Interaction.Application.Commands.ChangeInspectionStatus;
+using RegOS.Interaction.Application.Commands.RecordInspectionFindings;
 using RegOS.Interaction.Application.Commands.ChangeMeetingStatus;
 using RegOS.Interaction.Application.Commands.RecordMeetingOutcome;
 using RegOS.Interaction.Application.Commands.ChangeCommitmentStatus;
@@ -17,6 +20,7 @@ using RegOS.Interaction.Application.Queries.GetCorrespondence;
 using RegOS.Interaction.Application.Queries.ListCommitments;
 using RegOS.Interaction.Application.Queries.ListCorrespondence;
 using RegOS.Interaction.Application.Queries.ListDueWork;
+using RegOS.Interaction.Application.Queries.ListInspections;
 using RegOS.Interaction.Application.Queries.ListMeetings;
 
 namespace RegOS.Interaction.Application;
@@ -57,6 +61,14 @@ public static class DependencyInjection
         services.AddScoped<RecordMeetingOutcomeHandler>();
 
         services.AddScoped<ListMeetingsHandler>();
+
+        services.AddScoped<BeginInspectionHandler>();
+
+        services.AddScoped<ChangeInspectionStatusHandler>();
+
+        services.AddScoped<RecordInspectionFindingsHandler>();
+
+        services.AddScoped<ListInspectionsHandler>();
 
         services.AddScoped<ListCorrespondenceHandler>();
 

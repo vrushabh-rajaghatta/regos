@@ -1,4 +1,5 @@
 using RegOS.Interaction.Domain.Correspondence;
+using RegOS.Interaction.Domain.Inspections;
 using RegOS.Interaction.Domain.Meetings;
 using RegOS.Platform.Contracts;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
@@ -83,6 +84,23 @@ public sealed class Commitment : AggregateRoot<CommitmentId>
     /// </summary>
     public HaMeetingId? SourceMeetingId { get; private set; }
 
+    /// <summary>
+    /// Where it arose, when it arose from an inspection's findings — a
+    /// corrective action.
+    /// </summary>
+    /// <remarks>
+    /// The <b>third</b> independent business origin. Three nullable foreign
+    /// keys are referentially enforced, individually queryable and honest,
+    /// which a polymorphic <c>(SourceType, SourceId)</c> pair is not. But this
+    /// is the simplest truthful model measured, not an ideal one: <b>a fourth
+    /// independent business origin reopens the Phase 2 ownership discussion</b>
+    /// — the one that falsified an <c>AuthorityInteraction</c> supertype.
+    /// Deliberately worded as origins rather than columns, so adding a
+    /// <c>MeetingFollowUpId</c> does not trip it: that is still a
+    /// meeting-derived commitment.
+    /// </remarks>
+    public InspectionId? SourceInspectionId { get; private set; }
+
     public CommitmentStatus CurrentStatus { get; private set; }
 
     public IReadOnlyList<CommitmentStatusEntry> History => _history.AsReadOnly();
@@ -108,7 +126,8 @@ public sealed class Commitment : AggregateRoot<CommitmentId>
         RegistrationId? registrationId = null,
         RegulatoryApplicationId? regulatoryApplicationId = null,
         HaCorrespondenceId? sourceCorrespondenceId = null,
-        HaMeetingId? sourceMeetingId = null)
+        HaMeetingId? sourceMeetingId = null,
+        InspectionId? sourceInspectionId = null)
     {
         if (tenantId is null)
             throw new DomainException(CommitmentErrors.TenantRequired);
@@ -128,6 +147,7 @@ public sealed class Commitment : AggregateRoot<CommitmentId>
             RegulatoryApplicationId = regulatoryApplicationId,
             SourceCorrespondenceId = sourceCorrespondenceId,
             SourceMeetingId = sourceMeetingId,
+            SourceInspectionId = sourceInspectionId,
             CurrentStatus = CommitmentStatus.Open
         };
 

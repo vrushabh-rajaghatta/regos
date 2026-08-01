@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.Interaction.Domain.Commitments;
 using RegOS.Interaction.Domain.Correspondence;
+using RegOS.Interaction.Domain.Inspections;
 using RegOS.Interaction.Domain.Meetings;
 using RegOS.Platform.Contracts;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
@@ -59,6 +60,9 @@ public sealed class CommitmentConfiguration : IEntityTypeConfiguration<Commitmen
 
         builder.Property(x => x.SourceMeetingId)
             .HasConversion(id => id!.Value, value => HaMeetingId.From(value));
+
+        builder.Property(x => x.SourceInspectionId)
+            .HasConversion(id => id!.Value, value => InspectionId.From(value));
 
         builder.Property(x => x.CurrentStatus)
             .HasConversion<int>()

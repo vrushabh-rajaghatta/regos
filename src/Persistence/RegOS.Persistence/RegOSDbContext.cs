@@ -36,6 +36,8 @@ using CommitmentAggregate =
     RegOS.Interaction.Domain.Commitments.Commitment;
 using HaMeetingAggregate =
     RegOS.Interaction.Domain.Meetings.HaMeeting;
+using InspectionAggregate =
+    RegOS.Interaction.Domain.Inspections.Inspection;
 using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
 using TenantAggregate =
@@ -168,6 +170,10 @@ public sealed class RegOSDbContext : DbContext
     /// <summary>Meetings with an authority. Tenant-owned and fail-closed.</summary>
     public DbSet<HaMeetingAggregate> HaMeetings =>
         Set<HaMeetingAggregate>();
+
+    /// <summary>Authority inspections. Tenant-owned and fail-closed.</summary>
+    public DbSet<InspectionAggregate> Inspections =>
+        Set<InspectionAggregate>();
 
     public DbSet<RegistrationAggregate> Registrations =>
         Set<RegistrationAggregate>();
@@ -303,6 +309,9 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<HaMeetingAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<InspectionAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // Platform-seeded, tenant-augmentable: the second of ADR-038's three

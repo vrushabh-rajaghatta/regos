@@ -1,0 +1,92 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+using RegOS.Interaction.Domain.Inspections;
+using RegOS.Organization.Domain.Aggregates.OrganizationSite;
+using RegOS.Platform.Contracts;
+using RegOS.ReferenceData.Domain.Regulatory.Authority;
+using RegOS.SharedKernel.Primitives;
+
+using AuthorityAggregate = RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
+
+namespace RegOS.Persistence.Configurations.Interaction;
+
+public sealed class InspectionConfiguration : IEntityTypeConfiguration<Inspection>
+{
+    public void Configure(EntityTypeBuilder<Inspection> builder)
+    {
+        builder.ToTable("Inspections");
+
+        builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.Id)
+            .HasConversion(id => id.Value, value => InspectionId.From(value));
+
+        builder.Property(x => x.TenantId)
+            .HasConversion(id => id.Value, value => TenantId.From(value))
+            .IsRequired();
+
+        builder.Property(x => x.AuthorityId)
+            .HasConversion(id => id.Value, value => new AuthorityId(value))
+            .IsRequired();
+
+        builder.Property(x => x.Title)
+            .HasMaxLength(Inspection.TitleMaxLength)
+            .IsRequired();
+
+        // The thing inspected. A real foreign key: unlike a user, the site is
+        // a regulatory record this context may legitimately constrain.
+        builder.Property(x => x.OrganizationSiteId)
+            .HasConversion(id => id!.Value, value => OrganizationSiteId.From(value));
+
+        builder.Property(x => x.ScheduledFor);
+
+        builder.Property(x => x.OwnerUserId)
+            .HasConversion(id => id!.Value, value => UserId.From(value));
+
+        builder.Property(x => x.Outcome).HasMaxLength(Inspection.OutcomeMaxLength);
+
+        builder.Property(x => x.CurrentStatus).HasConversion<int>().IsRequired();
+
+        builder.Ignore(x => x.RaisedOn);
+        builder.Ignore(x => x.CompletedOn);
+
+        builder.HasIndex(x => new { x.TenantId, x.CurrentStatus, x.ScheduledFor });
+        builder.HasIndex(x => x.OrganizationSiteId);
+
+        builder.HasOne<AuthorityAggregate>()
+            .WithMany()
+            .HasForeignKey(x => x.AuthorityId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<OrganizationSite>()
+            .WithMany()
+            .HasForeignKey(x => x.OrganizationSiteId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.OwnsMany(x => x.History, entry =>
+        {
+            entry.ToTable("InspectionStatusEntries");
+
+            entry.WithOwner().HasForeignKey("InspectionId");
+
+            entry.HasKey(x => x.Id);
+
+            entry.Property(x => x.Id)
+                .HasColumnName("Id")
+                .HasConversion(
+                    id => id.Value, value => new InspectionStatusEntryId(value));
+
+            entry.Property(x => x.Status).HasConversion<int>().IsRequired();
+            entry.Property(x => x.OccurredOn).IsRequired();
+            entry.Property(x => x.RecordedOnUtc).IsRequired();
+
+            entry.Property(x => x.Note)
+                .HasMaxLength(InspectionStatusEntry.NoteMaxLength);
+
+            entry.HasIndex("InspectionId");
+        });
+
+        builder.Navigation(x => x.History).AutoInclude();
+    }
+}

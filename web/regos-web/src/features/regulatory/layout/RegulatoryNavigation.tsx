@@ -6,6 +6,7 @@ const items = [
   "Registrations",
   "Correspondence",
   "Meetings",
+  "Inspections",
   "Submissions",
   "Organizations",
   "Sites",

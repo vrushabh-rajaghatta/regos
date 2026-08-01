@@ -34,6 +34,7 @@ import { OrganizationSitesPage } from "@/features/regulatory/organizations/pages
 import { OrganizationContactsPage } from "@/features/regulatory/organizations/pages/OrganizationContactsPage";
 import { DueWorkPage } from "@/features/regulatory/dueWork/pages/DueWorkPage";
 import { MeetingsPage } from "@/features/regulatory/meetings/pages/MeetingsPage";
+import { InspectionsPage } from "@/features/regulatory/inspections/pages/InspectionsPage";
 import { CorrespondencePage } from "@/features/regulatory/correspondence/pages/CorrespondencePage";
 import { CorrespondenceDetailPage } from "@/features/regulatory/correspondence/pages/CorrespondenceDetailPage";
 import { OrganizationsPage } from "@/features/regulatory/organizations/pages/OrganizationsPage";
@@ -306,6 +307,10 @@ export const router = createBrowserRouter([
               {
                 path: "due-work",
                 element: <DueWorkPage />,
+              },
+              {
+                path: "inspections",
+                element: <InspectionsPage />,
               },
               {
                 path: "meetings",

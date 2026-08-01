@@ -1,6 +1,6 @@
 # EPIC-006 — Health-authority interactions
 
-**Status:** 🟡 In Progress — S001…S005 done; S006 next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress — S001…S006 done; S007 capstone next · **Branch:** `epic/EPIC-006-health-authority-interactions` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Everything that passes between the sponsor and the authority **after** a filing — letters, questions, meetings, commitments, inspections. In headcount terms this is what a regulatory affairs team actually does all day, and today it lives in inboxes and spreadsheets.
 
@@ -639,11 +639,17 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
 7. **Objects that generate work, and objects that conclude** *(new, S005 —
    recorded, not promoted)*. The five interaction objects split naturally:
    **correspondence, questions and commitments generate ongoing work**;
-   **a meeting concludes.** Its value is the work it produces — commitments,
-   follow-up questions, a recorded position — not a continuing lifecycle. That
-   framing is why the meeting aggregate is the smallest in the context, and why
-   both its list and the due view stop showing it once it is held. Useful for
-   keeping aggregates small; one instance, so it stays here.
+   **a meeting concludes** — and S006 confirmed **an inspection does too**. Their
+   value is the work they produce — commitments, follow-up questions, a recorded
+   position — not a continuing lifecycle. That framing is why both are the
+   smallest aggregates in the context and why both leave their lists once
+   concluded.
+
+   **Two aggregates and a third confirming instance** (correspondence leaves the
+   due view once decomposed). Predicted for inspections before S006 was written
+   and confirmed by it, which makes this the register's only entry that was used
+   as a *forecast* rather than a retrospective label. Still one epic, so it
+   stays here.
 
 8. **The Rule of Three has a second half** *(new, S003 — candidate, not
    promoted)*. ADR-018 says *duplicate twice, abstract on the third demonstrated
@@ -770,7 +776,7 @@ The `S000` the sketch called for is gone — Phase 2 settled the vocabularies.
 | **S003** | ✅ **The questions inside it** — `HaQuestion` with owner, due date, response and the epic's first dated history, rendered on the correspondence page | full slice |
 | **S004** | ✅ **What we promised** — `Commitment` from a question or standalone, dated history, its own page, **and the "what's due" view** | full slice |
 | **S005** | ✅ **Meetings** — request → grant → hold → minutes and outcome; the one transition table | full slice |
-| **S006** | **Inspections** — anchored to an `OrganizationSite`, dated history | full slice |
+| **S006** | ✅ **Inspections** — anchored to an `OrganizationSite`, dated history | full slice |
 | **S007** | **Capstone** — the application activity timeline (the falsified supertype, as a read model), narrative browser proof, ADR-040, retro | UI → test → docs |
 
 **Not split into 006a/006b.** The pull toward a split was the supertype question,
