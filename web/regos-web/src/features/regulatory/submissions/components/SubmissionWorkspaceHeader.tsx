@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 
 import { useSubmission } from "../hooks/useSubmission";
+import { nextSequenceLabel, sequenceLabel } from "../utils/sequenceLabel";
 import { SubmissionStatusBadge } from "./SubmissionStatusBadge";
 
 export function SubmissionWorkspaceHeader() {
@@ -25,7 +26,22 @@ export function SubmissionWorkspaceHeader() {
           </p>
         </div>
 
-        <SubmissionStatusBadge status={submission.status} />
+        <div className="flex flex-col items-end gap-1">
+          <SubmissionStatusBadge status={submission.status} />
+
+          {/* A fact once filed, an expectation before. The two are worded
+              differently on purpose: a draft that says "0004" is claiming
+              something it has not earned (ADR-044 decision 4). */}
+          {submission.sequenceNumber !== null ? (
+            <span className="font-mono text-sm">
+              {sequenceLabel(submission.sequenceNumber)}
+            </span>
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              {nextSequenceLabel(submission.nextSequenceNumber)}
+            </span>
+          )}
+        </div>
       </div>
     </header>
   );

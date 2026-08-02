@@ -1608,53 +1608,6 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("RegulatoryApplications", (string)null);
                 });
 
-            modelBuilder.Entity("RegOS.Submission.Domain.Snapshot.SnapshotDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("DocumentVersionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SubmissionSnapshotId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DocumentVersionId");
-
-                    b.HasIndex("SubmissionSnapshotId");
-
-                    b.HasIndex("SubmissionSnapshotId", "DisplayOrder")
-                        .IsUnique();
-
-                    b.ToTable("SubmissionSnapshotDocuments", (string)null);
-                });
-
-            modelBuilder.Entity("RegOS.Submission.Domain.Snapshot.SubmissionSnapshot", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SubmissionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SubmissionId")
-                        .IsUnique();
-
-                    b.HasIndex("TenantId");
-
-                    b.ToTable("SubmissionSnapshots", (string)null);
-                });
-
             modelBuilder.Entity("RegOS.Submission.Domain.Submission.Submission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1669,8 +1622,8 @@ namespace RegOS.Persistence.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTimeOffset?>("PublishedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<int?>("SequenceNumber")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -1696,7 +1649,38 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("TenantId");
 
+                    b.HasIndex("ApplicationId", "SequenceNumber")
+                        .IsUnique()
+                        .HasFilter("\"SequenceNumber\" IS NOT NULL");
+
                     b.ToTable("Submissions", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Submission.Domain.Submission.SubmissionDeletion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DeletesSubmissionDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SubmissionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TemplateSectionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.HasIndex("SubmissionId", "ProductDocumentId", "TemplateSectionId")
+                        .IsUnique();
+
+                    b.ToTable("SubmissionDeletions", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.Submission.Domain.Submission.SubmissionDocument", b =>
@@ -1713,7 +1697,13 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("DocumentVersionId")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("Operation")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("ProductDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ReplacesSubmissionDocumentId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("SubmissionId")
@@ -2440,30 +2430,6 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("RegOS.Submission.Domain.Snapshot.SnapshotDocument", b =>
-                {
-                    b.HasOne("RegOS.ProductDocument.Domain.Entities.DocumentVersion", null)
-                        .WithMany()
-                        .HasForeignKey("DocumentVersionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RegOS.Submission.Domain.Snapshot.SubmissionSnapshot", null)
-                        .WithMany("Documents")
-                        .HasForeignKey("SubmissionSnapshotId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("RegOS.Submission.Domain.Snapshot.SubmissionSnapshot", b =>
-                {
-                    b.HasOne("RegOS.Submission.Domain.Submission.Submission", null)
-                        .WithMany()
-                        .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("RegOS.Submission.Domain.Submission.Submission", b =>
                 {
                     b.HasOne("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", null)
@@ -2481,6 +2447,49 @@ namespace RegOS.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("SubmissionTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("RegOS.Submission.Domain.Submission.SubmissionStatusEntry", "History", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("Id");
+
+                            b1.Property<string>("Note")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<DateOnly>("OccurredOn")
+                                .HasColumnType("date");
+
+                            b1.Property<DateTime>("RecordedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<int>("Status")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("SubmissionId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("SubmissionId");
+
+                            b1.ToTable("SubmissionStatusEntries", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubmissionId");
+                        });
+
+                    b.Navigation("History");
+                });
+
+            modelBuilder.Entity("RegOS.Submission.Domain.Submission.SubmissionDeletion", b =>
+                {
+                    b.HasOne("RegOS.Submission.Domain.Submission.Submission", null)
+                        .WithMany("Deletions")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -2554,13 +2563,10 @@ namespace RegOS.Persistence.Migrations
                     b.Navigation("History");
                 });
 
-            modelBuilder.Entity("RegOS.Submission.Domain.Snapshot.SubmissionSnapshot", b =>
-                {
-                    b.Navigation("Documents");
-                });
-
             modelBuilder.Entity("RegOS.Submission.Domain.Submission.Submission", b =>
                 {
+                    b.Navigation("Deletions");
+
                     b.Navigation("Documents");
                 });
 #pragma warning restore 612, 618

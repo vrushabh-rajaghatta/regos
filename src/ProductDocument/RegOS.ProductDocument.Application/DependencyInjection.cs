@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.ProductDocument.Application.Commands.ActivateProductDocument;
 using RegOS.ProductDocument.Application.Commands.ArchiveProductDocument;
+using RegOS.ProductDocument.Application.Commands.UploadDocumentVersion;
 using RegOS.ProductDocument.Application.Commands.UploadProductDocument;
 using RegOS.ProductDocument.Application.Queries.GetProductDocument;
 using RegOS.ProductDocument.Application.Queries.ListProductDocuments;
@@ -14,6 +15,8 @@ public static class DependencyInjection
         this IServiceCollection services)
     {
         services.AddScoped<UploadProductDocumentHandler>();
+
+        services.AddScoped<UploadDocumentVersionHandler>();
 
         services.AddScoped<ActivateProductDocumentHandler>();
 

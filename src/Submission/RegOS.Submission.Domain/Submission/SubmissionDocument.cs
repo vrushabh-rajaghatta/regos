@@ -1,5 +1,6 @@
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
+using RegOS.SharedKernel.Abstractions;
 
 namespace RegOS.Submission.Domain.Submission;
 
@@ -14,8 +15,13 @@ namespace RegOS.Submission.Domain.Submission;
 /// file itself. Name, status, storage, and content are read through the
 /// referenced Product Document / version.
 /// </summary>
-public sealed class SubmissionDocument
+public sealed class SubmissionDocument : Entity<SubmissionDocumentId>
 {
+    // EF materialisation only.
+    private SubmissionDocument()
+    {
+    }
+
     // Only the Submission aggregate may create attachments.
     internal SubmissionDocument(
         SubmissionDocumentId id,
@@ -33,17 +39,15 @@ public sealed class SubmissionDocument
         TemplateSectionId = templateSectionId;
     }
 
-    public SubmissionDocumentId Id { get; }
-
-    public ProductDocumentId ProductDocumentId { get; }
+    public ProductDocumentId ProductDocumentId { get; private set; }
 
     // Pinned at attach time — the dossier stays immutable even if a newer
     // version of the document is uploaded later.
-    public DocumentVersionId DocumentVersionId { get; }
+    public DocumentVersionId DocumentVersionId { get; private set; }
 
-    public int DisplayOrder { get; }
+    public int DisplayOrder { get; private set; }
 
-    public DateTime AttachedAt { get; }
+    public DateTime AttachedAt { get; private set; }
 
     /// <summary>
     /// Where this document sits in the dossier: a section of the submission's
@@ -64,8 +68,45 @@ public sealed class SubmissionDocument
     /// </remarks>
     public TemplateSectionId? TemplateSectionId { get; private set; }
 
+    /// <summary>
+    /// What this filing did to this placement, relative to the previously
+    /// published sequence. **Null until the submission is published**, and null
+    /// afterwards for a document that was never placed.
+    /// </summary>
+    /// <remarks>
+    /// The second case is not an omission. <b>An operation is a fact about a
+    /// placement, not about an attachment</b> — a document sitting nowhere in
+    /// the dossier is in no section, produces no leaf, and did nothing to the
+    /// previous sequence. Publishing with unplaced documents is permitted (the
+    /// validator reports it as information, not an error), so the invariant
+    /// worth stating is the narrower one: <em>a published submission has an
+    /// operation for every placed document.</em>
+    /// </remarks>
+    public SubmissionContentOperation? Operation { get; private set; }
+
+    /// <summary>
+    /// The placement in the previous sequence this supersedes — eCTD's
+    /// <c>modified-file</c>. Set only alongside
+    /// <see cref="SubmissionContentOperation.Replace"/>.
+    /// </summary>
+    /// <remarks>
+    /// Derivable only at publish and meaningless afterwards without it: the
+    /// pointer names one specific prior leaf, and which leaf that was depends on
+    /// the derivation rule in force at the time.
+    /// </remarks>
+    public SubmissionDocumentId? ReplacesSubmissionDocumentId { get; private set; }
+
     // Only the aggregate may move a document; callers go through
     // Submission.PlaceDocument / ClearPlacement so the invariants are enforced.
     internal void PlaceIn(TemplateSectionId? templateSectionId)
         => TemplateSectionId = templateSectionId;
+
+    // Only Submission.Publish may set this, and only once.
+    internal void RecordOperation(
+        SubmissionContentOperation operation,
+        SubmissionDocumentId? replaces = null)
+    {
+        Operation = operation;
+        ReplacesSubmissionDocumentId = replaces;
+    }
 }

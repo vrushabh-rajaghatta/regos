@@ -29,15 +29,24 @@ namespace RegOS.Submission.Application.Tests.Fixtures;
 /// (TenantId, Code) is what actually settles the race: the loser of a
 /// concurrent insert catches the violation and re-reads the winner's row.
 /// </para>
+/// <para>
+/// <b>Publishing classes pass their own <paramref name="fixtureCode"/>.</b> Once
+/// a sequence number is scoped to an application (ADR-044), two test classes
+/// sharing one application share a numbering space — and running in parallel
+/// they contend on the unique index, so one of them gets a genuine 409 for
+/// reasons that have nothing to do with what it was testing. A shared
+/// application was harmless before numbering existed and is a test-isolation
+/// defect after it.
+/// </para>
 /// </remarks>
 internal static class TestApplications
 {
-    private const string FixtureCode = "TEST-FIXTURE";
+    private const string DefaultFixtureCode = "TEST-FIXTURE";
 
     public static async Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
-        EnsureAsync(RegOSDbContext ctx)
+        EnsureAsync(RegOSDbContext ctx, string fixtureCode = DefaultFixtureCode)
     {
-        var existing = await FindAsync(ctx);
+        var existing = await FindAsync(ctx, fixtureCode);
 
         if (existing is not null)
             return existing.Value;
@@ -57,12 +66,12 @@ internal static class TestApplications
         var tenantId = TestTenant.Id;
 
         var product = GlobalProduct.Register(
-            tenantId, FixtureCode, "Submission Test Product", ProductType.Drug);
+            tenantId, fixtureCode, "Submission Test Product", ProductType.Drug);
 
         var application = RegulatoryApplicationAggregate.Create(
             tenantId,
             product.Id, countryId, authorityId, organizationId,
-            "Submission Test Application");
+            $"Submission Test Application ({fixtureCode})");
 
         ctx.Products.Add(product);
         ctx.RegulatoryApplications.Add(application);
@@ -79,16 +88,16 @@ internal static class TestApplications
             // use theirs.
             ctx.ChangeTracker.Clear();
 
-            return await FindAsync(ctx)
+            return await FindAsync(ctx, fixtureCode)
                 ?? throw new InvalidOperationException(
                     "The shared submission fixture could not be created or found.");
         }
     }
 
     private static async Task<(RegulatoryApplicationId, GlobalProductId)?> FindAsync(
-        RegOSDbContext ctx)
+        RegOSDbContext ctx, string fixtureCode)
     {
-        var code = ProductCode.Create(FixtureCode);
+        var code = ProductCode.Create(fixtureCode);
 
         var globalProductId = await ctx.Products
             .AsNoTracking()

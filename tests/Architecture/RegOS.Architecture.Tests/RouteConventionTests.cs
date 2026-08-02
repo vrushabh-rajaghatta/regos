@@ -61,7 +61,6 @@ public sealed class RouteConventionTests
         "/submissions/{submissionId:guid}/documents/{documentId:guid}/placement",
         "/submissions/{submissionId:guid}/documents/{submissionDocumentId:guid}",
         "/submissions/{submissionId:guid}/publish",
-        "/submissions/{submissionId:guid}/snapshot",
         "/submissions/{submissionId:guid}/validation"
     ];
 

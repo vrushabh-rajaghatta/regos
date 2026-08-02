@@ -32,12 +32,21 @@ public sealed class IdentityConventionTests
     /// Identities that predate ES-020 and are still to be migrated. Shrink,
     /// never grow.
     ///
-    /// Migrating one is mechanical — the id becomes a sealed class deriving
-    /// from StronglyTypedId, the entity gains an AggregateRoot/Entity base, and
-    /// the EF value converter changes shape — but it is wide, so it is done a
-    /// whole bounded context at a time, when that context is being worked on
-    /// for another reason. Half-migrated contexts are worse than either end
+    /// Migrating one is mostly mechanical — the id becomes a sealed class
+    /// deriving from StronglyTypedId, the entity gains an AggregateRoot/Entity
+    /// base, and the EF value converter changes shape — but it is wide, so it is
+    /// done a whole bounded context at a time, when that context is being worked
+    /// on for another reason. Half-migrated contexts are worse than either end
     /// state.
+    ///
+    /// <b>One step is not mechanical, and the compiler will not find it.</b> A
+    /// shadow foreign key declared with the id type — <c>Property&lt;XId&gt;("XId")</c>
+    /// — becomes <em>optional</em> once XId is a reference type, because EF
+    /// infers optionality from CLR nullability. An optional FK severs the
+    /// relationship instead of deleting the orphan, so removing a child starts
+    /// failing on a not-null column at SaveChanges. Add <c>.IsRequired()</c> to
+    /// every shadow FK in the context being migrated. Found in the Submission
+    /// migration (EPIC-004 S001) by an existing test, not by reading the diff.
     /// </summary>
     private static readonly HashSet<string> PendingMigration =
     [
@@ -48,12 +57,6 @@ public sealed class IdentityConventionTests
         "TemplateSectionId",
         "RequiredDocumentId",
         "ValidationRuleId",
-
-        // Submission
-        "SubmissionId",
-        "SubmissionDocumentId",
-        "SubmissionSnapshotId",
-        "SnapshotDocumentId",
 
         // Registration
         "RegistrationId",

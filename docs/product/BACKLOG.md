@@ -36,7 +36,9 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-*Nothing in flight.* **EPIC-006 is complete** — 8 stories, [ADR-040](../adr/ADR-040-the-health-authority-interaction-context.md) · [ADR-041](../adr/ADR-041-platform-contracts-and-the-identity-that-crosses.md) · [ADR-042](../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md). The **maintenance epic** (nine forms carrying the EPIC-016 mutation defect) is next, then **EPIC-004**.
+**EPIC-004 is planned and ready to cut** — Phases 2–3 approved 2026-08-01, 6 stories, ADR-044 and ADR-045 scheduled. The **maintenance epic** (nine forms carrying the EPIC-016 mutation defect) is **deferred, deliberately**: EPIC-004 is invasive, and behavioural change does not share a branch with repository housekeeping.
+
+**EPIC-006 is complete** — 8 stories, [ADR-040](../adr/ADR-040-the-health-authority-interaction-context.md) · [ADR-041](../adr/ADR-041-platform-contracts-and-the-identity-that-crosses.md) · [ADR-042](../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md).
 
 Its Phase 2 opened on the domain question rather than the entity list and
 **falsified its own central hypothesis** — the spanning question is real, but it
@@ -51,7 +53,21 @@ model; the retro records each with the story it came from.
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 1 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | ⚪ Not Started | EPIC-003 ✅ (placement makes a sequence a diff of placements, not an inference) · EPIC-016 ✅ (S005) → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
+| 1 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | ⚪ Not Started · **Phases 2–3 approved** | EPIC-003 ✅ (placement makes a sequence a diff of placements, not an inference) · EPIC-016 ✅ (S005) → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
+
+> **What Phase 2 settled, 2026-08-01.** It opened on *"what business thing
+> survives after sequence 0003 has been transmitted?"* and found the answer was
+> already modelled: **the application is the enduring regulatory conversation; a
+> `Submission` is one transmitted sequence** (screen word *"Sequence 0003"*). The
+> candidate *regulatory activity* tier failed the test that a tier must own a
+> business fact neither neighbour can own without contradiction — it owns nothing
+> in US·FDA·IND — so it is a **live hypothesis**, falsified or confirmed at the
+> first EU market or US supplement, not a model element.
+>
+> The epic's central architectural hypothesis is **whether `SubmissionSnapshot`
+> is the publication record at all**: today it stores strictly less than the
+> submission it snapshots, and S002 either gives it publication-only facts or
+> ends it.
 
 > **Call made 2026-08-01 — EPIC-006 before EPIC-004.** Both are unblocked and
 > genuinely independent: sequences live inside `Submission` and never touch

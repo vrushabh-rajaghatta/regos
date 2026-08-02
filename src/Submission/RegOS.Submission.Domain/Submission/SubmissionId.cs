@@ -1,11 +1,16 @@
+using RegOS.SharedKernel.Primitives;
+
 namespace RegOS.Submission.Domain.Submission;
 
-public readonly record struct SubmissionId(Guid Value)
+public sealed class SubmissionId : StronglyTypedId
 {
+    public SubmissionId(Guid value) : base(value)
+    {
+    }
+
     public static SubmissionId New() => new(Guid.NewGuid());
 
-    public override string ToString() => Value.ToString();
+    public static SubmissionId From(Guid value) => new(value);
 
-    public static implicit operator Guid(SubmissionId id)
-        => id.Value;
+    public static implicit operator Guid(SubmissionId id) => id.Value;
 }

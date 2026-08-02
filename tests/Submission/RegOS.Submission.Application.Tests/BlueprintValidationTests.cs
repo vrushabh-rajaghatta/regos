@@ -15,6 +15,7 @@ using RegOS.Submission.Application.Validation;
 using RegOS.Submission.Application.Validation.Models;
 using RegOS.Submission.Domain.Submission;
 using RegOS.Submission.Infrastructure.Repositories;
+using RegOS.Submission.Infrastructure.Services;
 
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
@@ -57,19 +58,6 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await using var ctx = New();
-
-        if (_submissionIds.Count > 0)
-        {
-            var ids = _submissionIds.ToArray();
-
-            await ctx.Database.ExecuteSqlRawAsync(
-                "DELETE FROM \"SubmissionSnapshotDocuments\" WHERE \"SubmissionSnapshotId\" IN "
-                    + "(SELECT \"Id\" FROM \"SubmissionSnapshots\" WHERE \"SubmissionId\" = ANY({0}))",
-                new object[] { ids });
-            await ctx.Database.ExecuteSqlRawAsync(
-                "DELETE FROM \"SubmissionSnapshots\" WHERE \"SubmissionId\" = ANY({0})",
-                new object[] { ids });
-        }
 
         foreach (var id in _submissionIds)
         {
@@ -253,8 +241,8 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
 
         var handler = new PublishSubmissionHandler(
             ValidatorFor(ctx),
-            new SubmissionRepository(ctx),
-            new SubmissionSnapshotRepository(ctx));
+            new SubmissionPublicationBaseline(ctx),
+            new SubmissionRepository(ctx));
 
         var result = await handler.HandleAsync(
             new PublishSubmissionCommand(submissionId), default);

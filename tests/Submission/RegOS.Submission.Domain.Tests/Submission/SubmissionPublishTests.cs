@@ -28,6 +28,8 @@ public class SubmissionPublishTests
 
         submission.Status.Should().Be(SubmissionStatus.Draft);
         submission.PublishedAt.Should().BeNull();
+        // A draft has not been transmitted, so it has no number to carry.
+        submission.SequenceNumber.Should().BeNull();
     }
 
     [Fact]
@@ -35,24 +37,100 @@ public class SubmissionPublishTests
     {
         var submission = NewDraft();
 
-        submission.Publish(PublishedAt);
+        submission.Publish(0, null, [], PublishedAt);
 
         submission.Status.Should().Be(SubmissionStatus.Published);
-        submission.PublishedAt.Should().Be(PublishedAt);
+        submission.PublishedAt.Should().Be(PublishedAt.UtcDateTime);
+    }
+
+    // --- Sequence numbering (ADR-044) ----------------------------------------
+
+    /// <summary>
+    /// The empty-baseline case, asserted rather than assumed: eCTD numbering
+    /// starts at 0000, so the first sequence in an application has no
+    /// predecessor and must be exactly zero.
+    /// </summary>
+    [Fact]
+    public void Publish_TheFirstSequenceInAnApplication_Is0000()
+    {
+        var submission = NewDraft();
+
+        submission.Publish(0, previousPublishedSequenceNumber: null, [], PublishedAt);
+
+        submission.SequenceNumber.Should().Be(0);
+    }
+
+    [Fact]
+    public void Publish_TheFirstSequence_MustBeZeroAndNotOne()
+    {
+        var submission = NewDraft();
+
+        var act = () => submission.Publish(1, null, [], PublishedAt);
+
+        act.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(SubmissionErrors.SequenceNumberNotContiguous);
+        submission.Status.Should().Be(SubmissionStatus.Draft);
+        submission.SequenceNumber.Should().BeNull();
+    }
+
+    [Fact]
+    public void Publish_FollowingAnExistingSequence_TakesTheNextNumber()
+    {
+        var submission = NewDraft();
+
+        submission.Publish(3, previousPublishedSequenceNumber: 2, [], PublishedAt);
+
+        submission.SequenceNumber.Should().Be(3);
+    }
+
+    /// <summary>
+    /// A gap is what the aggregate exists to refuse. It cannot see whether 0006
+    /// really exists — a Submission is a root and its siblings are outside its
+    /// consistency boundary — but it can refuse a number that does not follow
+    /// the one it was told about (ADR-044 decision 6).
+    /// </summary>
+    [Theory]
+    [InlineData(7, 5)]   // skips 0006
+    [InlineData(2, 5)]   // goes backwards
+    [InlineData(5, 5)]   // repeats the previous
+    public void Publish_WithANumberThatDoesNotFollowTheLast_IsRefused(
+        int sequenceNumber, int previous)
+    {
+        var submission = NewDraft();
+
+        var act = () => submission.Publish(sequenceNumber, previous, [], PublishedAt);
+
+        act.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(SubmissionErrors.SequenceNumberNotContiguous);
+        // Refused before any state change — still a draft, still unnumbered.
+        submission.Status.Should().Be(SubmissionStatus.Draft);
+        submission.SequenceNumber.Should().BeNull();
+    }
+
+    [Fact]
+    public void Publish_WithANegativeSequenceNumber_Throws()
+    {
+        var submission = NewDraft();
+
+        var act = () => submission.Publish(-1, null, [], PublishedAt);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(SubmissionErrors.SequenceNumberNotNegative + "*");
+        submission.SequenceNumber.Should().BeNull();
     }
 
     [Fact]
     public void Publish_WhenAlreadyPublished_ThrowsAndKeepsOriginalPublishedAt()
     {
         var submission = NewDraft();
-        submission.Publish(PublishedAt);
+        submission.Publish(0, null, [], PublishedAt);
 
-        var act = () => submission.Publish(PublishedAt.AddDays(1));
+        var act = () => submission.Publish(1, 0, [], PublishedAt.AddDays(1));
 
         act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.SubmissionNotDraft);
         // The original publication timestamp is unchanged.
-        submission.PublishedAt.Should().Be(PublishedAt);
+        submission.PublishedAt.Should().Be(PublishedAt.UtcDateTime);
     }
 
     [Fact]
@@ -60,7 +138,7 @@ public class SubmissionPublishTests
     {
         var submission = NewDraft();
 
-        var act = () => submission.Publish(default);
+        var act = () => submission.Publish(0, null, [], default);
 
         act.Should().Throw<DomainException>()
             .WithMessage(SubmissionErrors.PublishedAtRequired + "*");

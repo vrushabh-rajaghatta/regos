@@ -25,7 +25,7 @@ public sealed class SubmissionConfiguration
         builder.Property(x => x.Id)
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionId(value));
+                value => SubmissionId.From(value));
 
         builder.Property(x => x.ApplicationId)
             .HasConversion(
@@ -61,9 +61,12 @@ public sealed class SubmissionConfiguration
             .HasColumnType("timestamp with time zone")
             .IsRequired();
 
-        // Null until published.
-        builder.Property(x => x.PublishedAt)
-            .HasColumnType("timestamp with time zone");
+        // PublishedAt is not mapped: it is the RecordedOnUtc of the Published
+        // entry in the history below, and a stored copy could disagree with the
+        // record beside it (ADR-046).
+
+        // What this was filed as. Null until published (ADR-044 decision 4).
+        builder.Property(x => x.SequenceNumber);
 
         // Cross-aggregate foreign keys. The domain exposes no navigation
         // properties, but EF still models the relationships.
@@ -108,6 +111,17 @@ public sealed class SubmissionConfiguration
         builder.HasIndex(x => x.SubmissionTypeId);
         builder.HasIndex(x => x.BoundTemplateVersionId);
 
+        // Two submissions in one application can never be filed under the same
+        // sequence number. This is the *authority* on that, not the numbering
+        // policy: the policy reads a number that a concurrent publish may take
+        // before the reader saves, and only the index can arbitrate that race
+        // (ADR-044 decision 6). SubmissionRepository translates its violation.
+        //
+        // Filtered, because unlimited drafts legitimately share "no number".
+        builder.HasIndex(x => new { x.ApplicationId, x.SequenceNumber })
+            .IsUnique()
+            .HasFilter("\"SequenceNumber\" IS NOT NULL");
+
         // Ownership: Submission (1) -> SubmissionDocuments (N). The child has
         // no FK property, so EF uses a shadow "SubmissionId". Deleting a
         // submission deletes its attachments.
@@ -119,5 +133,45 @@ public sealed class SubmissionConfiguration
         builder.Metadata
             .FindNavigation(nameof(SubmissionAggregate.Documents))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // Ownership: Submission (1) -> SubmissionDeletions (N). What this filing
+        // withdrew from the sequence before it — written at publish, never after.
+        builder.HasMany(x => x.Deletions)
+            .WithOne()
+            .HasForeignKey("SubmissionId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(SubmissionAggregate.Deletions))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // The seventh append-only history in RegOS, and the fifth written as an
+        // OwnsMany block — which is the threshold ADR-042 named for extracting
+        // the *configuration* (not the entry type, and not the behaviour). See
+        // the epic's S003 note for the measurement.
+        builder.OwnsMany(x => x.History, entry =>
+        {
+            entry.ToTable("SubmissionStatusEntries");
+
+            entry.WithOwner().HasForeignKey("SubmissionId");
+
+            entry.HasKey(x => x.Id);
+
+            entry.Property(x => x.Id)
+                .HasColumnName("Id")
+                .HasConversion(
+                    id => id.Value, value => SubmissionStatusEntryId.From(value));
+
+            entry.Property(x => x.Status).HasConversion<int>().IsRequired();
+            entry.Property(x => x.OccurredOn).IsRequired();
+            entry.Property(x => x.RecordedOnUtc).IsRequired();
+
+            entry.Property(x => x.Note)
+                .HasMaxLength(SubmissionStatusEntry.NoteMaxLength);
+
+            entry.HasIndex("SubmissionId");
+        });
+
+        builder.Navigation(x => x.History).AutoInclude();
     }
 }

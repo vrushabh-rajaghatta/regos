@@ -91,6 +91,30 @@ EPIC-017 produced all three, and they behaved differently on purpose:
   of the decision it was attached to. A constraint outlives the solution it was
   first written beside; a decision that prescribes a solution does not.
 
+### Two kinds of hypothesis — label them
+
+*Added 2026-08-01, from EPIC-004.* Hypotheses divide by **what settles them**, and
+mixing the two makes a retro hard to read. Carry a `Type` column:
+
+| Type | Settled by | If it turns out wrong, you are |
+|---|---|---|
+| **Architecture** | building the model and seeing what it rejects — the evidence is in this repository | changing the design |
+| **Regulatory evidence** | a real filing, a seeded blueprint, a customer artefact | **updating evidence, not architecture** |
+
+*"`Append` is unexercised in FDA practice"* is not an architectural claim; a real
+sequence proving otherwise costs an enum value, not a model. *"The snapshot is the
+publication record"* is architectural; being wrong deletes an aggregate. Count
+them separately at the retro, and note that only the first kind is within the
+epic's power to resolve.
+
+A regulatory-evidence hypothesis still needs its milestone, and the strongest
+form names the **cost**, not the ignorance:
+
+> **Deferred because the cost of an incorrect assumption is first paid in
+> EPIC-007.**
+
+That is a justification. *"We don't know yet"* is a shrug.
+
 ### Applying it
 
 - **Phase 2** — when a shape recurs, ask whether you are making a decision or
@@ -131,6 +155,31 @@ The order is directional, which is why it matters. **A question can produce a
 hypothesis; a hypothesis can only go looking for confirmation.** *"Should there
 be an `X`?"* has already conceded the noun. Phase 2 still **ends** with entities
 and columns — it just does not start there.
+
+### The second question, added 2026-08-02 from EPIC-004
+
+> **Is this concept genuinely one thing, or are we using one name for two
+> facts?**
+
+Ask it of every concept the design leans on, including the ones that arrived
+from a reference model and look settled. Three consecutive stories in EPIC-004
+found the same thing, each time by accident:
+
+| | One term | Two facts |
+|---|---|---|
+| S001 | publication | **numbering at publication**, and transmission later |
+| S002 | a document in a filing | the document, and **the publication's interpretation of it** |
+| S003 | a submission's status | **our lifecycle**, and the regulatory conversation |
+
+**Once the two are separated, the object or status that existed only to hold the
+ambiguity usually disappears** — which is why those stories kept deleting
+concepts instead of adding them. `SubmissionSnapshot` went; `HaStatus` was never
+built; `Withdrawn` turned out to be a relationship.
+
+**This is a question, not a pattern to satisfy.** The answer does not have to be
+*two*, and a story forced into the shape would be worse than one that never
+asked. It earns its place here because it is cheap to ask and the failure it
+prevents — a name quietly meaning two things — is expensive to find later.
 
 Then design the data. For each entity:
 

@@ -21,7 +21,7 @@ public sealed class SubmissionDocumentConfiguration
         builder.Property(x => x.Id)
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionDocumentId(value));
+                value => SubmissionDocumentId.From(value));
 
         builder.Property(x => x.ProductDocumentId)
             .HasConversion(
@@ -42,6 +42,20 @@ public sealed class SubmissionDocumentConfiguration
             .HasColumnType("timestamp with time zone")
             .IsRequired();
 
+        // What this filing did to this placement, frozen at publish (ADR-045).
+        // Null while a draft, and null for an attachment that was never placed —
+        // an operation is a fact about a placement.
+        builder.Property(x => x.Operation)
+            .HasConversion<int>();
+
+        // The placement superseded by a Replace. Held, never navigated to: it
+        // names a child of a *different* Submission aggregate, and a foreign key
+        // would let deleting one submission cascade into another's history.
+        builder.Property(x => x.ReplacesSubmissionDocumentId)
+            .HasConversion(
+                id => id!.Value,
+                value => SubmissionDocumentId.From(value));
+
         // Where the document sits in the dossier. Nullable: attached but not
         // yet placed is a legitimate state, and a submission bound to no
         // blueprint has no sections to place into at all.
@@ -56,10 +70,18 @@ public sealed class SubmissionDocumentConfiguration
         // Declared with the aggregate's strongly-typed id (and its converter)
         // so it is compatible with Submission's primary key; the ownership
         // relationship binds to it in SubmissionConfiguration.
+        //
+        // IsRequired is load-bearing, not decoration. SubmissionId is a
+        // reference type (ES-020), so EF infers an *optional* shadow FK, and an
+        // optional FK turns "remove a child" into "null the FK" rather than
+        // "delete the row" — which the not-null column then rejects at
+        // SaveChanges. Under the old record-struct id the non-nullability came
+        // for free from the CLR type.
         builder.Property<SubmissionId>("SubmissionId")
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionId(value));
+                value => SubmissionId.From(value))
+            .IsRequired();
 
         // Reference to the immutable version. No navigation (we avoid
         // cross-aggregate navigation); the FK exists only to protect the

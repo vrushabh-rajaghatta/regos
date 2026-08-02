@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import type { SubmissionSummary } from "../types/SubmissionSummary";
+import { sequenceLabel } from "../utils/sequenceLabel";
 
 interface SubmissionCardProps {
   globalProductId: string;
@@ -29,9 +30,20 @@ export function SubmissionCard({
           </p>
         </div>
 
-        <span className="text-sm text-muted-foreground">
-          {submission.status}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-sm text-muted-foreground">
+            {submission.status}
+          </span>
+
+          {/* Only what was actually filed. A draft carries no number here —
+              the expectation belongs on the submission's own page, where
+              someone is about to act on it. */}
+          {submission.sequenceNumber !== null && (
+            <span className="font-mono text-sm">
+              {sequenceLabel(submission.sequenceNumber)}
+            </span>
+          )}
+        </div>
       </div>
     </Link>
   );

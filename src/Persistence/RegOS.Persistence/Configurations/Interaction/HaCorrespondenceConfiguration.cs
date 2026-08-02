@@ -79,8 +79,8 @@ public sealed class HaCorrespondenceConfiguration
 
         builder.Property(x => x.SubmissionId)
             .HasConversion(
-                id => id!.Value.Value,
-                value => new SubmissionId(value));
+                id => id!.Value,
+                value => SubmissionId.From(value));
 
         builder.Property(x => x.RegistrationId)
             .HasConversion(
