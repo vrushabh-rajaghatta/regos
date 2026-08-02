@@ -79,26 +79,48 @@ which is not a convenience: **every eCTD package must ship its DTDs inside
 `util/dtd/`** (ICH Appendix 4, rows 372–376), so the file is a build input, not
 just a reference.
 
-### Open blocker — `ich-ectd-3-2.dtd` is missing, and it blocks more than validation
+### ✅ Resolved — `ich-ectd-3-2.dtd` is pinned, and how it got here matters
 
-Only **one** of the two backbones is pinned. The ICH DTD governs `index.xml`,
-and by the same Appendix 4 rule it must also ship inside `util/dtd/`.
+Both backbones are now pinned. The blocker is closed: a conformant sequence
+folder can be assembled, because `util/dtd/` can be populated.
 
-**Because it is a build input, its absence blocks package generation itself, not
-merely the Level 2a claim on `index.xml`.** A sequence folder assembled without
-it is not a conformant package — it is missing a file the specification requires
-to be present. This is the one Phase 2 dependency that no amount of modelling
-can route around.
+**Provenance, stated plainly.** This file was **transcribed from Appendix 8 of
+the ICH eCTD Specification v3.2.2 PDF**, not downloaded from ICH. Every
+web route to the published file failed — `admin.ich.org` 404, `estri.ich.org`
+does not resolve, `ich.org`'s page is JavaScript-rendered with no file links.
 
-| Attempted | Result |
+> **A transcription is not the same artifact as the publication.** If the
+> transcription is wrong, every Level 2a claim resting on it is wrong too, and
+> would look exactly as convincing. So it is verified rather than trusted, and
+> **a byte-authentic copy from a real package should replace it** the moment one
+> is available.
+
+**What the verification was.** Not "it parses" — that only proves it is a DTD,
+not that it is *this* DTD:
+
+| Check | Result |
 |---|---|
-| `admin.ich.org` inline-files path | 404 |
-| `estri.ich.org/eCTD/` | connection failed — host does not resolve |
-| `ich.org` eCTD v3.2 page | 200, but JavaScript-rendered; no file links in the served HTML |
+| ICH spec's own **Example 6-1** (Module 2, simple new submission) | ✅ valid |
+| ICH spec's own **Example 6-3** (Modules 2 **and** 5, required `indication`) | ✅ valid |
+| `operation="unchanged"` | ✖ rejected — *not among the enumerated set* |
+| required `indication` removed | ✖ rejected |
+| required `checksum` removed | ✖ rejected |
 
-Needed: the DTD as a **file**, from the ICH distribution or any sequence already
-holding it in `util/dtd/` — a single conformant package from any source carries a
-copy, because the specification requires it to.
+165 elements, 165 ATTLISTs. **Two instances the specification wrote itself both
+validate, and three deliberate mutations are all caught** — which is a
+substantially stronger claim than a clean parse.
+
+### What the ICH backbone added that Module 1 could not
+
+**E14 — `operation` is closed in *both* backbones.** E2 proved the enumeration
+closed in FDA's regional DTD only. `unchanged` is now provably unrepresentable in
+`index.xml` as well, so **[ADR-045](../../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md)'s
+derived delta is forced by the format everywhere**, not merely regionally.
+
+**E16 — the two backbones disagree.** `checksum` is `#REQUIRED` in ICH and
+`#IMPLIED` in FDA regional. One rule does not cover both files, and a renderer
+that assumes it does will emit a `us-regional.xml` that passes and an
+`index.xml` that does not.
 
 ---
 
@@ -125,6 +147,7 @@ rather than the EU market that was predicted to settle it.
 | [`poc/ctd-987654/`](poc/ctd-987654/) | the exact package checked, re-runnable | ✅ |
 | [`poc/how-to-reproduce.md`](poc/how-to-reproduce.md) | the invocation, the output, **and the negative controls** | ✅ |
 | `poc/negative-controls/` | proof the parser rejects — without which a pass means nothing | ✅ |
+| [`spec/ich-ectd-3-2.dtd`](spec/ich-ectd-3-2.dtd) | the ICH backbone, transcribed from Appendix 8 and verified against the spec's own examples | ✅ |
 | `comparison-to-fda-examples.md` | Level 3 — where we match FDA's published XML and where we differ | ⚪ |
 | a 2b report | FDA business rules | ✖ carried |
 
