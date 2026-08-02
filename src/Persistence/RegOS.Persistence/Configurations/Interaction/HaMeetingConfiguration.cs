@@ -66,31 +66,12 @@ public sealed class HaMeetingConfiguration : IEntityTypeConfiguration<HaMeeting>
             .HasForeignKey(x => x.AuthorityDivisionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // The FIFTH near-identical owned-history block. This is the measurement
-        // the extraction ledger has been waiting for — see the epic.
-        builder.OwnsMany(x => x.History, entry =>
-        {
-            entry.ToTable("HaMeetingStatusEntries");
-
-            entry.WithOwner().HasForeignKey("HaMeetingId");
-
-            entry.HasKey(x => x.Id);
-
-            entry.Property(x => x.Id)
-                .HasColumnName("Id")
-                .HasConversion(
-                    id => id.Value, value => new HaMeetingStatusEntryId(value));
-
-            entry.Property(x => x.Status).HasConversion<int>().IsRequired();
-            entry.Property(x => x.OccurredOn).IsRequired();
-            entry.Property(x => x.RecordedOnUtc).IsRequired();
-
-            entry.Property(x => x.Note)
-                .HasMaxLength(HaMeetingStatusEntry.NoteMaxLength);
-
-            entry.HasIndex("HaMeetingId");
-        });
-
-        builder.Navigation(x => x.History).AutoInclude();
+        builder.OwnsStatusHistory(
+            x => x.History,
+            "HaMeetingStatusEntries",
+            "HaMeetingId",
+            (HaMeetingStatusEntryId id) => id.Value,
+            value => new HaMeetingStatusEntryId(value),
+            HaMeetingStatusEntry.NoteMaxLength);
     }
 }

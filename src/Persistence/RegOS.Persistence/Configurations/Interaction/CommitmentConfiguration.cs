@@ -80,32 +80,12 @@ public sealed class CommitmentConfiguration : IEntityTypeConfiguration<Commitmen
             .HasForeignKey(x => x.AuthorityId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // The FOURTH near-identical owned-history block. S003 measured that the
-        // configuration — not the entry type — is where the duplication costs.
-        // Five is the extraction point; S005 and S006 bring it.
-        builder.OwnsMany(x => x.History, entry =>
-        {
-            entry.ToTable("CommitmentStatusEntries");
-
-            entry.WithOwner().HasForeignKey("CommitmentId");
-
-            entry.HasKey(x => x.Id);
-
-            entry.Property(x => x.Id)
-                .HasColumnName("Id")
-                .HasConversion(
-                    id => id.Value, value => new CommitmentStatusEntryId(value));
-
-            entry.Property(x => x.Status).HasConversion<int>().IsRequired();
-            entry.Property(x => x.OccurredOn).IsRequired();
-            entry.Property(x => x.RecordedOnUtc).IsRequired();
-
-            entry.Property(x => x.Note)
-                .HasMaxLength(CommitmentStatusEntry.NoteMaxLength);
-
-            entry.HasIndex("CommitmentId");
-        });
-
-        builder.Navigation(x => x.History).AutoInclude();
+        builder.OwnsStatusHistory(
+            x => x.History,
+            "CommitmentStatusEntries",
+            "CommitmentId",
+            (CommitmentStatusEntryId id) => id.Value,
+            value => new CommitmentStatusEntryId(value),
+            CommitmentStatusEntry.NoteMaxLength);
     }
 }
