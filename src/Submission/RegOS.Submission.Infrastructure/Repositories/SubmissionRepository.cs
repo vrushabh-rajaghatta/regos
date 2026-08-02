@@ -40,9 +40,14 @@ public sealed class SubmissionRepository : ISubmissionRepository
         SubmissionId id,
         CancellationToken cancellationToken)
     {
-        // Tracked (for mutation) and includes the owned document collection.
+        // Tracked (for mutation) and includes the owned child collections the
+        // aggregate reasons over. Roles is not optional: RemoveRole searches it,
+        // and AssignRole's duplicate check reads it — an unloaded collection
+        // makes the first a silent 404 and the second vacuously true, leaving
+        // the unique index to fail what the domain should have refused.
         return await _dbContext.Submissions
             .Include(x => x.Documents)
+            .Include(x => x.Roles)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 

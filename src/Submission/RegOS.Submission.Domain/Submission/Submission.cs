@@ -1,5 +1,7 @@
+using RegOS.Organization.Domain.Aggregates.Contact;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
+using RegOS.ReferenceData.Domain.Organization;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Abstractions;
@@ -13,6 +15,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     private readonly List<SubmissionDocument> _documents = [];
     private readonly List<SubmissionDeletion> _deletions = [];
     private readonly List<SubmissionStatusEntry> _history = [];
+    private readonly List<SubmissionRole> _roles = [];
 
     // EF materialisation only.
     private Submission()
@@ -128,6 +131,12 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// </summary>
     public IReadOnlyCollection<SubmissionDeletion> Deletions
         => _deletions.AsReadOnly();
+
+    /// <summary>
+    /// Who is named on this filing, and as what (ADR-048). Empty is legitimate
+    /// — a sequence that names nobody is unusual, not invalid.
+    /// </summary>
+    public IReadOnlyCollection<SubmissionRole> Roles => _roles.AsReadOnly();
 
     /// <param name="boundTemplateVersionId">
     /// The published template version that governs this submission, resolved by
@@ -401,6 +410,64 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             SubmissionStatus.Published,
             DateOnly.FromDateTime(publishedAt.UtcDateTime),
             publishedAt.UtcDateTime);
+    }
+
+    /// <summary>
+    /// Names a person on this filing.
+    /// </summary>
+    /// <remarks>
+    /// <b>One assignment per (person, role)</b> — naming the same person as the
+    /// same thing twice would say it twice, not doubly. Two people may share a
+    /// role, and one person may hold several; neither is unusual, and the same
+    /// call <c>Contact.AddRole</c> already made.
+    /// <para>
+    /// Whether the contact exists, is active, and belongs to this tenant is the
+    /// application layer's to check — the aggregate enforces only what it can
+    /// see from its own state. It deliberately does <em>not</em> check that the
+    /// contact's profile lists this role (ADR-048).
+    /// </para>
+    /// </remarks>
+    public SubmissionRole AssignRole(ContactId contactId, ContactRoleId roleId)
+    {
+        ArgumentNullException.ThrowIfNull(contactId);
+
+        if (roleId == default)
+            throw new DomainException(SubmissionErrors.ContactRoleRequired);
+
+        // The freeze: who was named on a published sequence is a fact about a
+        // filing already made (ADR-048), and the draft guard is the whole
+        // mechanism — the same call ChangeFormat makes.
+        if (Status != SubmissionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.RolesLockedUnlessDraft);
+
+        if (_roles.Any(x => x.ContactId == contactId && x.RoleId == roleId))
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.ContactAlreadyNamedInThatRole);
+
+        var role = new SubmissionRole(SubmissionRoleId.New(), contactId, roleId);
+
+        _roles.Add(role);
+
+        return role;
+    }
+
+    /// <summary>
+    /// Removes a naming from a draft. Not a lifecycle event — a draft that
+    /// named the wrong person is corrected, not amended.
+    /// </summary>
+    public void RemoveRole(SubmissionRoleId submissionRoleId)
+    {
+        ArgumentNullException.ThrowIfNull(submissionRoleId);
+
+        if (Status != SubmissionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.RolesLockedUnlessDraft);
+
+        var role = _roles.FirstOrDefault(x => x.Id == submissionRoleId)
+            ?? throw new NotFoundException(SubmissionErrors.RoleNotOnSubmission);
+
+        _roles.Remove(role);
     }
 
     /// <summary>

@@ -1,18 +1,22 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Persistence;
+using RegOS.Submission.Application.Commands.AssignSubmissionRole;
 using RegOS.Submission.Application.Commands.AttachProductDocument;
 using RegOS.Submission.Application.Commands.ChangeSubmissionFormat;
 using RegOS.Submission.Application.Commands.CreateSubmission;
 using RegOS.Submission.Application.Commands.PlaceSubmissionDocument;
 using RegOS.Submission.Application.Commands.PublishSubmission;
 using RegOS.Submission.Application.Commands.RemoveProductDocument;
+using RegOS.Submission.Application.Commands.RemoveSubmissionRole;
+using RegOS.Submission.Application.Queries.GetApplicationContacts;
 using RegOS.Submission.Application.Queries.GetSubmission;
 using RegOS.Submission.Application.Queries.GetSubmissionChanges;
 using RegOS.Submission.Application.Queries.GetSubmissionContentPlan;
 using RegOS.Submission.Application.Queries.ListAttachableProductDocuments;
 using RegOS.Submission.Application.Queries.ListProductDocumentUsage;
 using RegOS.Submission.Application.Queries.ListSubmissionDocuments;
+using RegOS.Submission.Application.Queries.ListSubmissionRoles;
 using RegOS.Submission.Application.Queries.ListSubmissions;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Application.Validation;
@@ -33,6 +37,14 @@ public static class DependencyInjection
         services.AddScoped<PlaceSubmissionDocumentHandler>();
 
         services.AddScoped<ChangeSubmissionFormatHandler>();
+
+        services.AddScoped<AssignSubmissionRoleHandler>();
+
+        services.AddScoped<RemoveSubmissionRoleHandler>();
+
+        services.AddScoped<ListSubmissionRolesHandler>();
+
+        services.AddScoped<GetApplicationContactsHandler>();
 
         services.AddScoped<GetSubmissionContentPlanHandler>();
 

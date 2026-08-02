@@ -4,6 +4,7 @@ import { useApplication } from "../hooks/useApplication";
 import { ApplicationStatusBadge } from "../components/ApplicationStatusBadge";
 import { ApplicationActivity } from "../components/ApplicationActivity";
 import { ApplicationDashboardSummary } from "../components/ApplicationDashboardSummary";
+import { ApplicationContactsSection } from "@/features/regulatory/submissions/components/ApplicationContactsSection";
 
 export function ApplicationOverviewPage() {
   const { applicationId } = useParams();
@@ -90,6 +91,16 @@ export function ApplicationOverviewPage() {
             {new Date(application.createdOn).toLocaleString()}
           </div>
         </div>
+      </section>
+
+      <section className="space-y-4 border-t pt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Contacts
+        </h2>
+
+        {/* Read from the latest published sequence rather than stored on the
+            application — see the component (ADR-048). */}
+        <ApplicationContactsSection applicationId={applicationId!} />
       </section>
 
       <section className="space-y-4 border-t pt-8">

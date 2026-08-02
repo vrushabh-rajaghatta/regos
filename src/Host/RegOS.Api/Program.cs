@@ -236,6 +236,7 @@ var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications"
 regulatoryApplications.MapCreateRegulatoryApplication();
 regulatoryApplications.MapListRegulatoryApplications();
 regulatoryApplications.MapGetApplication();
+regulatoryApplications.MapGetApplicationContacts();
 
 var submissions = app.MapGroup("").WithTags("Submissions");
 submissions.MapCreateSubmission();
@@ -245,6 +246,9 @@ submissions.MapAttachProductDocument();
 submissions.MapRemoveProductDocument();
 submissions.MapPlaceSubmissionDocument();
 submissions.MapChangeSubmissionFormat();
+submissions.MapAssignSubmissionRole();
+submissions.MapRemoveSubmissionRole();
+submissions.MapListSubmissionRoles();
 submissions.MapGetSubmissionContentPlan();
 submissions.MapGetSubmissionChanges();
 submissions.MapListSubmissionDocuments();

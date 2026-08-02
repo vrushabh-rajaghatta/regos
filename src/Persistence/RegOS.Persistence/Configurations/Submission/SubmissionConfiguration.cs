@@ -153,6 +153,18 @@ public sealed class SubmissionConfiguration
             .FindNavigation(nameof(SubmissionAggregate.Deletions))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
+        // Ownership: Submission (1) -> SubmissionRoles (N). Who was named on
+        // this filing (ADR-048). Cascade, like the other children: the naming
+        // has no meaning apart from the filing it appears on.
+        builder.HasMany(x => x.Roles)
+            .WithOne()
+            .HasForeignKey("SubmissionId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(SubmissionAggregate.Roles))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
         // The seventh append-only history in RegOS, and the fifth written as an
         // OwnsMany block — the threshold ADR-042 named. The mapping is shared
         // now (ADR-046 decision 6); the entry type and its rules are not.

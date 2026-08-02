@@ -82,6 +82,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [045](ADR-045-the-cumulative-dossier-and-the-derived-delta.md) | The cumulative dossier, and the delta we derive from it | Accepted | Current |
 | [046](ADR-046-a-submissions-lifecycle-is-only-what-we-did.md) | A submission's lifecycle is only what we did | Accepted | Current |
 | [047](ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md) | Publication metadata exists only when publication makes it true | Accepted | Current |
+| [048](ADR-048-the-people-on-a-filing-belong-to-the-filing.md) | The people on a filing belong to the filing | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

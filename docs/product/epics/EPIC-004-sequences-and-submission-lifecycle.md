@@ -321,7 +321,7 @@ early; ship the inert data late.**
 | **S002** | ✅ **What changed since last time** — the placement diff, operation computed at publish and frozen, the replace pointer; first sequence is all-`New`, asserted. **Resolved hypothesis 2 — the snapshot went. ADR-045.** | full slice |
 | **S003** | ✅ **The lifecycle we own** — three states, dated history per the cross-cutting status rule. **Resolved hypothesis 3 — supported.** Amends ADR-044. **ADR-046.** | full slice |
 | **S004** | ✅ **What a filing is rendered as** — `SubmissionFormat`, frozen at publication; operation derivation proved format-independent. **Four of the six sketched fields refused, one shown unmodellable. ADR-047.** | full slice |
-| **S005** | **`SubmissionRole`** — named contacts with roles on a submission *(EPIC-016 ✅)* | full slice |
+| **S005** | ✅ **The people on a filing** — `SubmissionRole`, frozen at publication; an application's contacts **derived** from the latest published sequence, with no application-level model. **ADR-048.** | full slice |
 | **S006** | **Capstone** — one document's lifecycle across an application's sequences; browser proof of publish → replace → publish; the register resolved; retro | UI → test → docs |
 
 **Two ADRs, both written when the decision is made rather than at the capstone:**
@@ -733,3 +733,73 @@ the DTD columns and the gateway metadata.
 - **Required, not defaulted, in the domain.** eCTD is the only format an FDA IND
   accepts today, which is exactly what would have made a default look harmless.
   The API states the default; the aggregate takes none.
+
+---
+
+## S005 — shared vocabulary is not a shared fact *(2026-08-02)*
+
+The role is additive. **Where it lives is not**, and this was the first new
+cross-context decision since the submission work began.
+
+### The question the three questions did not answer
+
+S004's three questions (*when does this fact become true, who makes it true, can
+we honestly make it true*) eliminated nothing here — the story really was
+additive, as predicted. A different question bit instead:
+
+> **Shared vocabulary, or shared fact?**
+
+`Contact` already carried roles, and EPIC-016 had anticipated *"an application's
+QP"*. So there appeared to be one fact in three places. There are three facts:
+
+| | Subject | Fact |
+|---|---|---|
+| `ContactRole` | — | **the vocabulary** — what roles exist |
+| `Contact.Roles` | a person | what they are, in general |
+| `SubmissionRole` | **a filing** | who was named on it, and as what |
+
+**Reference data names concepts; aggregates record facts.** Easy to confuse with
+S001–S003's *one fact or two?* — and not the same question.
+
+*One occurrence. Recorded beside the earlier observation rather than promoted:
+if another story finds the same distinction, it may be a heuristic.*
+
+### The absence is the decision
+
+There is no `ApplicationContact`, and ADR-048 exists to say why. Under the
+cumulative model the latest published sequence **is** the current regulatory
+state, so an application-level copy and "the contact on the latest sequence" are
+one fact stored twice — and two copies can only differ by one being stale.
+
+**The same argument that removed `SubmissionSnapshot` in S002**, applied to
+people instead of documents. That symmetry is the strongest evidence the design
+is internally consistent: in both cases the temptation was a convenient copy of
+current state, and in both the cumulative model already had a single source.
+
+The cost is accepted knowingly: an application that has published nothing has no
+contacts. That is the absence of a filing, not missing data.
+
+### Discovered while building
+
+- **The repository did not load the collection the aggregate reasons over.**
+  `SubmissionRepository` included `Documents` but not `Roles`, so `RemoveRole`
+  searched an empty list and returned a silent 404, and `AssignRole`'s duplicate
+  check was **vacuously true** — leaving the unique index to fail what the domain
+  should have refused, as a 500 rather than a business rule.
+
+  **No unit test could see it**: an in-memory aggregate always has its collection
+  populated. It took the browser spec, and it was only *diagnosable* because the
+  API returned 404 to a direct call — the page rendered `assign` errors but not
+  `remove` ones, so a failed removal looked exactly like a successful one that had
+  not refreshed. Both are fixed, and two round-trip tests now assert what the
+  unit tests structurally cannot.
+
+- **SC-003 caught a new query folder with no `<Name>Query.cs`.** Copied from
+  `ListSubmissionDocuments`, which is on the grandfathered list. The fix was to
+  write the query record, never to grow the list.
+
+- **Carry-forward was left unbuilt on purpose.** Most sequences will name the
+  same people, so inheriting them is closer to remembering regulatory state than
+  to planning — but carry-forward was identified in S002 as its own capability,
+  and adding it for contacts alone would leave two mechanisms and two mental
+  models.

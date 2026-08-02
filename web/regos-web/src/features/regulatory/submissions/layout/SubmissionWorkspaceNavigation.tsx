@@ -28,6 +28,13 @@ export function SubmissionWorkspaceNavigation() {
         Content Plan
       </NavLink>
 
+      {/* Who is named on the filing — editable while a draft, a record after
+          (ADR-048). Beside the dossier's own pages because it is part of what
+          gets filed, not part of who works on it. */}
+      <NavLink to="people" className={linkClass}>
+        People
+      </NavLink>
+
       <NavLink to="validation" className={linkClass}>
         Validation
       </NavLink>

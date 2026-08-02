@@ -36,6 +36,16 @@ public static class SubmissionRuleErrors
     public const string ProductDocumentHasNoCurrentVersion =
         "The Product Document has no current version to attach.";
 
+    // People named on the filing (ADR-048)
+    public const string ContactDoesNotExist =
+        "Contact does not exist.";
+
+    public const string ContactNotActive =
+        "Only an active contact can be named on a submission.";
+
+    public const string ContactRoleDoesNotExist =
+        "Contact Role does not exist.";
+
     // Placement (cross-context: the section lives in Reference Data)
     public const string SubmissionHasNoBlueprintToPlaceInto =
         "This submission is not bound to a blueprint, so its documents cannot "
