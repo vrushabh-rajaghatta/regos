@@ -37,8 +37,24 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-**Nothing in progress.** EPIC-004 closed 2026-08-02 and the next epic is a
-priority decision — see below.
+**EPIC-007a — eCTD package generation.** 🟡 Phase 1 open, branch cut
+2026-08-02 → [`epics/EPIC-007a-ectd-package-generation.md`](epics/EPIC-007a-ectd-package-generation.md)
+
+**Phase 1 is investigative, and no package-generation code is written until it
+closes.** Everything downstream depends on the external validator: which DTD
+versions we target, which rules we satisfy, what *accepted* means, and what we
+must emit are all decided **by** the oracle rather than before it.
+
+> **The validator is an oracle, not a dependency.** RegOS must not depend on one
+> in production. It exists to challenge our interpretation during development
+> and release verification — never to define it. The source of truth stays the
+> eCTD specifications, not one vendor's reading of them.
+
+Targets **Level 2** confidence (an independent validator accepts the package),
+aspires to **Level 3** (matches published FDA/ICH examples), and puts **Level 4**
+(a real authority gateway) out of scope. **Task 1 can fail**: if no independent
+validator is reachable, the epic's central claim collapses to self-validation
+and the priority call gets reconsidered rather than the claim quietly weakened.
 
 **Standing debt, carried deliberately and not attached to any epic:**
 
@@ -69,7 +85,7 @@ priority decision — see below.
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 1 | **EPIC-007a** | **eCTD package generation** — the XML backbone, folder structure, checksums, and the `Filed` transition. *Split from EPIC-007: STF and xEVMPD/IDMP messages stay in 7b* | ⚪ Not Started · **needs Phase 1** | EPIC-004 ✅ — and **only** EPIC-004, once split |
+| — | **EPIC-007a** | **eCTD package generation** | 🟡 **Phase 1 open** — see [Now](#now) | EPIC-004 ✅ |
 | 2 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations | ⚪ Not Started · planned | EPIC-017 ✅ |
 | 3 | **EPIC-019** | **Study registry** — clinical & non-clinical studies, cited by applications and submission content | ⚪ Not Started · planned | none |
 
@@ -118,7 +134,7 @@ and value calls are the founder's.
 | **EPIC-019** | **Study registry** — clinical & non-clinical studies, cited by applications and submission content | ⚪ Not Started | no dependencies — good filler when a larger epic needs breaking up · planned → [`epics/EPIC-019-study-registry.md`](epics/EPIC-019-study-registry.md) |
 | **EPIC-010** | **IDMP / product data depth** — substances, ingredients, strength, presentation, packaging, manufacturing | ⚪ Not Started | needs EPIC-016 + EPIC-017 · **split into 10a/10b/10c before cutting a branch** · planned → [`epics/EPIC-010-idmp-product-data-depth.md`](epics/EPIC-010-idmp-product-data-depth.md) |
 | **EPIC-020** | **Regulatory process & planning** — objectives, plan/step templates, live plans and dated steps; RIM's spine | ⚪ Not Started | needs EPIC-004 + EPIC-006 + EPIC-017 · deliberately last · planned → [`epics/EPIC-020-regulatory-process-and-planning.md`](epics/EPIC-020-regulatory-process-and-planning.md) |
-| **EPIC-007b** | **Publishing — STF & message formats** — study tagging files, xEVMPD/IDMP messages, the output formats that need product and study depth | ⚪ Not Started | needs EPIC-010 + EPIC-019 · **7a (the eCTD backbone) is split out and promoted — see Next** |
+| **EPIC-007b** | **Publishing — transmission, STF & message formats** — gateway transmission (ESG/AS2), study tagging files, xEVMPD/IDMP messages | ⚪ Not Started | needs EPIC-010 + EPIC-019 · **carries the `Filed` transition**: ADR-046 named EPIC-007 as the milestone, and it belongs to whichever half transmits |
 | **EPIC-008** | **Review & approval workflow** — internal review, comments, approvals, e-signatures; the QC/publishing/compilation/validation status pipelines deferred from EPIC-004 | ⚪ Not Started | |
 | **EPIC-009** | **Regulatory intelligence / requirements** — what's required per market & product type; keeps the blueprint current | ⚪ Not Started | feeds EPIC-001 |
 | **EPIC-011** | **Reporting & dashboards** — portfolio status, submission readiness, activity, cross-market label divergence, Gantt | ⚪ Not Started | consumes EPIC-017, 018, 020 |
