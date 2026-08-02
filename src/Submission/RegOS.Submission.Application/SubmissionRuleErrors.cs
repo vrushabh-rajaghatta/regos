@@ -11,11 +11,10 @@ public static class SubmissionRuleErrors
     public const string ApplicationDoesNotExist =
         "Application does not exist.";
 
-    public const string SubmissionTypeDoesNotExist =
-        "Submission Type does not exist.";
-
-    public const string SubmissionTypeAuthorityMismatch =
-        "Submission Type does not belong to the application's authority.";
+    // Application type existence and authority-belonging used to be checked
+    // here, on every submission. They moved to application creation in
+    // EPIC-007a S001 — a classification is settled once, not re-proved by each
+    // sequence filed under it.
 
     public const string ApplicationClosed =
         "Submission creation is not allowed for a closed application.";

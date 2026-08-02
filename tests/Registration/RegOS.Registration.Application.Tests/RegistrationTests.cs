@@ -1029,9 +1029,12 @@ public sealed class RegistrationTests : IAsyncLifetime
     private async Task<RegulatoryApplicationId> ApplicationAsync(
         RegOSDbContext ctx, GlobalProductId globalProductId)
     {
+        var applicationType = await ctx.ApplicationTypes
+            .AsNoTracking().FirstAsync(x => x.AuthorityId == Fda);
+
         var application = RegulatoryApplicationAggregate.Create(
-            TestTenant.Id, globalProductId, UnitedStates, Fda, Holder,
-            "Registration Test Application");
+            TestTenant.Id, globalProductId, UnitedStates, Fda, applicationType,
+            Holder, "Registration Test Application");
 
         ctx.RegulatoryApplications.Add(application);
         await ctx.SaveChangesAsync();

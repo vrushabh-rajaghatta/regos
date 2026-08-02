@@ -55,8 +55,14 @@ internal static class TestApplications
             .AsNoTracking().Select(x => x.Id).FirstAsync();
         var countryId = await ctx.Countries
             .AsNoTracking().Select(x => x.Id).FirstAsync();
-        var authorityId = await ctx.Authorities
-            .AsNoTracking().Select(x => x.Id).FirstAsync();
+        // Pick the application type first and take its authority, rather than
+        // picking an authority and hoping a type matches: RegulatoryApplication
+        // refuses a type from another authority (EPIC-007a S001), so deriving
+        // the authority from the type makes the fixture correct by
+        // construction.
+        var applicationType = await ctx.ApplicationTypes
+            .AsNoTracking().FirstAsync();
+        var authorityId = applicationType.AuthorityId;
 
         // The product's owner is a tenant; the application's applicant is an
         // organization (ADR-030 split them). The tenant is pinned to the one
@@ -70,7 +76,7 @@ internal static class TestApplications
 
         var application = RegulatoryApplicationAggregate.Create(
             tenantId,
-            product.Id, countryId, authorityId, organizationId,
+            product.Id, countryId, authorityId, applicationType, organizationId,
             $"Submission Test Application ({fixtureCode})");
 
         ctx.Products.Add(product);

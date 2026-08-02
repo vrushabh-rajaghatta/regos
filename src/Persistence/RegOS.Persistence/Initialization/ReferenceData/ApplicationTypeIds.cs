@@ -1,8 +1,8 @@
 namespace RegOS.Persistence.Initialization.ReferenceData;
 
-internal static class SubmissionTypeIds
+internal static class ApplicationTypeIds
 {
-    // Submission Types (4000...)
+    // Application Types (4000...)
     public static readonly Guid Fda510k =
         Guid.Parse("40000000-0000-0000-0000-000000000001");
     public static readonly Guid FdaDeNovo =
@@ -18,7 +18,7 @@ internal static class SubmissionTypeIds
     public static readonly Guid HcMdl =
         Guid.Parse("40000000-0000-0000-0000-000000000007");
 
-    // FDA drug (pharma) submission types.
+    // FDA drug (pharma) application types.
     public static readonly Guid FdaInd =
         Guid.Parse("40000000-0000-0000-0000-000000000008");
     public static readonly Guid FdaNda =

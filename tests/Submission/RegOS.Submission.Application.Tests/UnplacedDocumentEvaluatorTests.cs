@@ -3,7 +3,7 @@ using FluentAssertions;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.DocumentType;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.Submission.Application.Validation;
 using RegOS.Submission.Application.Validation.Models;
 using RegOS.Submission.Application.Validation.Rules;
@@ -83,7 +83,7 @@ public class UnplacedDocumentEvaluatorTests
             "TEST_UNPLACED",
             "Unplaced Test Template",
             new AuthorityId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
+            new ApplicationTypeId(Guid.NewGuid()),
             "Test");
 
         template.StartDraftVersion();

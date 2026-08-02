@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.ReferenceData.Domain.Blueprint;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Domain.Submission;
 
@@ -40,35 +40,24 @@ public sealed class CreateSubmissionHandler
             throw new NotFoundException(
                 SubmissionRuleErrors.ApplicationDoesNotExist);
 
-        // Rule 2 — Submission Type must exist.
-        var submissionType = await _dbContext.SubmissionTypes
-            .AsNoTracking()
-            .SingleOrDefaultAsync(
-                x => x.Id == command.SubmissionTypeId,
-                cancellationToken);
-
-        if (submissionType is null)
-            throw new DomainException(
-                SubmissionRuleErrors.SubmissionTypeDoesNotExist);
-
-        // Rule 3 — Submission Type must belong to the same Authority as the
-        // Application. First link between the execution hierarchy and the
-        // reference-data hierarchy.
-        if (submissionType.AuthorityId != application.AuthorityId)
-            throw new DomainException(
-                SubmissionRuleErrors.SubmissionTypeAuthorityMismatch);
-
-        // Rule 4 — A closed Application accepts no new Submissions.
+        // Rule 2 — A closed Application accepts no new Submissions.
         if (application.Status == ApplicationStatus.Closed)
             throw new BusinessRuleViolationException(
                 SubmissionRuleErrors.ApplicationClosed);
 
+        // The application type is no longer supplied here, and the two rules
+        // that used to guard it are gone with it (EPIC-007a S001). It exists,
+        // and it belongs to this application's authority, because
+        // RegulatoryApplication.Create refused to produce an application for
+        // which either was false — checked once at classification rather than
+        // re-checked on every sequence.
+
         // Resolve the blueprint that governs this submission. Deliberately not
-        // a rule: a submission type with no published template produces an
+        // a rule: an application type with no published template produces an
         // unbound submission rather than a failure (incomplete reference data
         // must never block the business).
         var boundTemplateVersionId = await ResolveTemplateVersionAsync(
-            command.SubmissionTypeId, cancellationToken);
+            application.ApplicationTypeId, cancellationToken);
 
         // The tenant comes from the parent application, not from the ambient
         // context: a submission structurally cannot carry a different tenant
@@ -76,7 +65,6 @@ public sealed class CreateSubmissionHandler
         var submission = SubmissionAggregate.Create(
             application.TenantId,
             command.ApplicationId,
-            command.SubmissionTypeId,
             command.Title,
             command.Format,
             boundTemplateVersionId);
@@ -87,12 +75,12 @@ public sealed class CreateSubmissionHandler
     }
 
     /// <summary>
-    /// Finds the published template version that governs a submission type, or
+    /// Finds the published template version that governs an application type, or
     /// null when none does. The submission is pinned to that version so a later
     /// publication never changes what an in-flight submission must contain.
     /// </summary>
     private async Task<RegulatoryTemplateVersionId?> ResolveTemplateVersionAsync(
-        SubmissionTypeId submissionTypeId,
+        ApplicationTypeId applicationTypeId,
         CancellationToken cancellationToken)
     {
         // Small, read-mostly reference data: materialize the candidates (the
@@ -102,7 +90,7 @@ public sealed class CreateSubmissionHandler
         var candidates = await _dbContext.RegulatoryTemplates
             .AsNoTracking()
             .Include(t => t.Versions)
-            .Where(t => t.SubmissionTypeId == submissionTypeId
+            .Where(t => t.ApplicationTypeId == applicationTypeId
                 && t.Status == RegulatoryTemplateStatus.Active)
             .ToListAsync(cancellationToken);
 

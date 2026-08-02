@@ -3,6 +3,7 @@ import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 export interface CreateRegulatoryApplicationRequest {
   authorityId: string;
   countryId: string;
+  applicationTypeId: string;
   applicantOrganizationId: string;
   name: string;
 }

@@ -24,15 +24,19 @@ public sealed class ListSubmissionsHandler
         var rows = await (
             from submission in _dbContext.Submissions.AsNoTracking()
             where submission.ApplicationId == applicationId
-            join submissionType in _dbContext.SubmissionTypes
-                on submission.SubmissionTypeId equals submissionType.Id
+            // The application classification, reached through the application
+            // that owns it rather than copied onto each sequence (E11, S001).
+            join application in _dbContext.RegulatoryApplications
+                on submission.ApplicationId equals application.Id
+            join applicationType in _dbContext.ApplicationTypes
+                on application.ApplicationTypeId equals applicationType.Id
             orderby submission.CreatedOn descending
             select new
             {
                 submission.Id,
                 submission.Title,
                 submission.Status,
-                SubmissionTypeName = submissionType.Name,
+                ApplicationTypeName = applicationType.Name,
                 submission.Format,
                 submission.CreatedOn,
                 submission.SequenceNumber,
@@ -43,7 +47,7 @@ public sealed class ListSubmissionsHandler
                 row.Id.Value,
                 row.Title,
                 row.Status.ToString(),
-                row.SubmissionTypeName,
+                row.ApplicationTypeName,
                 row.Format.ToString(),
                 row.CreatedOn,
                 row.SequenceNumber))

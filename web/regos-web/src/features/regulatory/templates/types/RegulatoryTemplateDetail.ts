@@ -43,7 +43,7 @@ export interface RegulatoryTemplateDetail {
   code: string;
   name: string;
   authorityId: string;
-  submissionTypeId: string;
+  applicationTypeId: string;
   source: string;
   status: string;
   versions: RegulatoryTemplateVersion[];

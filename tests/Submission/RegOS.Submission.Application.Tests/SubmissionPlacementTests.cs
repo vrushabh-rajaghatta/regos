@@ -6,7 +6,7 @@ using RegOS.Product.Domain.Product;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.DocumentType;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.Submission.Application.Commands.AttachProductDocument;
@@ -28,7 +28,7 @@ namespace RegOS.Submission.Application.Tests;
 /// </summary>
 /// <remarks>
 /// The blueprint supplies the section ids these tests use — nothing is
-/// hard-coded beyond the submission types and the Cover Letter document type,
+/// hard-coded beyond the application types and the Cover Letter document type,
 /// so the tests keep meaning what they say as the template grows.
 /// </remarks>
 public sealed class SubmissionPlacementTests : IAsyncLifetime
@@ -36,10 +36,6 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     private const string ConnectionString =
         "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
 
-    private static readonly SubmissionTypeId FdaInd =
-        new(Guid.Parse("40000000-0000-0000-0000-000000000008"));
-    private static readonly SubmissionTypeId Fda510k =
-        new(Guid.Parse("40000000-0000-0000-0000-000000000001"));
     private static readonly DocumentTypeId CoverLetter =
         new(Guid.Parse("50000000-0000-0000-0000-000000000009"));
 
@@ -91,7 +87,7 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND place");
+        var submissionId = await CreateAsync(ctx, appId, "IND place");
         var section = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
 
         var attachmentId = await AttachAsync(
@@ -108,7 +104,7 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND foreign");
+        var submissionId = await CreateAsync(ctx, appId, "IND foreign");
         var foreign = await SectionOfAnotherVersionAsync(ctx, submissionId);
 
         var attach = async () => await AttachAsync(
@@ -133,10 +129,12 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task PlacingOnASubmissionWithNoBlueprint_IsRejected()
     {
         await using var ctx = New();
-        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
+        // A device-type APPLICATION under the same authority — no blueprint
+        // targets it. The type moved to the application in S001, so an unbound
+        // submission now requires an unbound application to live under.
+        var (appId, globalProductId) = await TestFdaApplication.Ensure510kAsync(ctx);
 
-        // A device type under the same authority — no blueprint targets it.
-        var submissionId = await CreateAsync(ctx, appId, Fda510k, "510(k) place");
+        var submissionId = await CreateAsync(ctx, appId, "510(k) place");
         var attachmentId = await AttachAsync(
             ctx, submissionId, globalProductId, CoverLetter);
 
@@ -156,7 +154,7 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND move");
+        var submissionId = await CreateAsync(ctx, appId, "IND move");
         var origin = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
         var attachmentId = await AttachAsync(
             ctx, submissionId, globalProductId, CoverLetter, origin);
@@ -177,7 +175,7 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND clear");
+        var submissionId = await CreateAsync(ctx, appId, "IND clear");
         var section = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
         var attachmentId = await AttachAsync(
             ctx, submissionId, globalProductId, CoverLetter, section);
@@ -199,7 +197,7 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND satisfy");
+        var submissionId = await CreateAsync(ctx, appId, "IND satisfy");
         var section = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
 
         await AttachAsync(ctx, submissionId, globalProductId, CoverLetter, section);
@@ -226,7 +224,7 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND misplaced");
+        var submissionId = await CreateAsync(ctx, appId, "IND misplaced");
         var expected = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
         var elsewhere = await SectionOtherThanAsync(ctx, submissionId, expected);
 
@@ -251,7 +249,7 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND unplaced");
+        var submissionId = await CreateAsync(ctx, appId, "IND unplaced");
 
         await AttachAsync(ctx, submissionId, globalProductId, CoverLetter);
 
@@ -270,7 +268,7 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND structure");
+        var submissionId = await CreateAsync(ctx, appId, "IND structure");
 
         await using var check = New();
         var plan = await PlanAsync(check, submissionId);
@@ -292,8 +290,8 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     public async Task ASubmissionWithNoBlueprintGetsAnEmptyStructure()
     {
         await using var ctx = New();
-        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, Fda510k, "510(k) plan");
+        var (appId, globalProductId) = await TestFdaApplication.Ensure510kAsync(ctx);
+        var submissionId = await CreateAsync(ctx, appId, "510(k) plan");
 
         await AttachAsync(ctx, submissionId, globalProductId, CoverLetter);
 
@@ -428,14 +426,13 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     private async Task<SubmissionId> CreateAsync(
         RegOSDbContext ctx,
         RegulatoryApplicationId applicationId,
-        SubmissionTypeId submissionTypeId,
         string title)
     {
         var handler = new CreateSubmissionHandler(ctx, new SubmissionRepository(ctx));
 
         var result = await handler.HandleAsync(
             new CreateSubmissionCommand(
-                applicationId, submissionTypeId, title + " " + Guid.NewGuid(),
+                applicationId, title + " " + Guid.NewGuid(),
                 SubmissionFormat.Ectd),
             default);
 

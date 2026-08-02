@@ -1,3 +1,4 @@
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
@@ -29,6 +30,7 @@ public static class CreateRegulatoryApplicationEndpoint
                 new GlobalProductId(globalProductId),
                 new CountryId(request.CountryId),
                 new AuthorityId(request.AuthorityId),
+                new ApplicationTypeId(request.ApplicationTypeId),
                 new OrganizationId(request.ApplicantOrganizationId),
                 request.Name),
             cancellationToken);

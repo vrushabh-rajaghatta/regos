@@ -5,7 +5,7 @@ using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Application.Commands.CreateSubmission;
 using RegOS.Submission.Application.Queries.GetSubmission;
@@ -22,10 +22,14 @@ namespace RegOS.Submission.Application.Tests;
 // Integration tests — exercise blueprint resolution against the real dev
 // Postgres and its seeded reference data (docker postgres-local).
 //
-// The pair of cases is the point: two submission types under the SAME authority,
-// one of which a published blueprint targets (FDA IND) and one of which none
-// does (FDA 510(k)). That isolates "was a template found?" from "does the
-// authority match?", which the create handler checks separately.
+// The pair of cases is the point: two application types under the SAME
+// authority, one of which a published blueprint targets (FDA IND) and one of
+// which none does (FDA 510(k)). That isolates "was a template found?" from
+// "does the authority match?".
+//
+// Since EPIC-007a S001 the pair is two APPLICATIONS rather than two submissions
+// under one: the type classifies the application, so a submission inherits the
+// blueprint its application's type resolves to and cannot choose another.
 public sealed class CreateSubmissionBindingTests : IAsyncLifetime
 {
     private const string ConnectionString =
@@ -33,14 +37,6 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
 
     private static readonly AuthorityId Fda =
         new(Guid.Parse("20000000-0000-0000-0000-000000000001"));
-
-    /// <summary>A pharma type the FDA IND (CTD) blueprint targets.</summary>
-    private static readonly SubmissionTypeId FdaInd =
-        new(Guid.Parse("40000000-0000-0000-0000-000000000008"));
-
-    /// <summary>A device type under the same authority, with no blueprint.</summary>
-    private static readonly SubmissionTypeId Fda510k =
-        new(Guid.Parse("40000000-0000-0000-0000-000000000001"));
 
     private static readonly RegulatoryTemplateId FdaIndCtd =
         new(Guid.Parse("60000000-0000-0000-0000-000000000001"));
@@ -80,9 +76,9 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
     public async Task Create_BindsTheSubmissionToThePublishedBlueprint()
     {
         await using var ctx = New();
-        var applicationId = await EnsureFdaApplicationAsync(ctx);
+        var applicationId = await IndApplicationAsync(ctx);
 
-        var submission = await CreateAsync(ctx, applicationId, FdaInd, "IND binding");
+        var submission = await CreateAsync(ctx, applicationId, "IND binding");
 
         submission.BoundTemplateVersionId.Should().NotBeNull();
 
@@ -101,9 +97,9 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
     public async Task Create_WithNoBlueprintForTheType_LeavesTheSubmissionUnbound()
     {
         await using var ctx = New();
-        var applicationId = await EnsureFdaApplicationAsync(ctx);
+        var applicationId = await DeviceApplicationAsync(ctx);
 
-        var submission = await CreateAsync(ctx, applicationId, Fda510k, "510(k) binding");
+        var submission = await CreateAsync(ctx, applicationId, "510(k) binding");
 
         // Reference data that has no published blueprint must not block
         // creating a submission.
@@ -114,8 +110,8 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
     public async Task GetSubmission_ExposesTheBoundBlueprintForDisplay()
     {
         await using var ctx = New();
-        var applicationId = await EnsureFdaApplicationAsync(ctx);
-        var submission = await CreateAsync(ctx, applicationId, FdaInd, "IND read model");
+        var applicationId = await IndApplicationAsync(ctx);
+        var submission = await CreateAsync(ctx, applicationId, "IND read model");
 
         var detail = await new GetSubmissionHandler(ctx)
             .HandleAsync(submission.Id, CancellationToken.None);
@@ -131,8 +127,8 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
     public async Task GetSubmission_ReportsNoBlueprintWhenUnbound()
     {
         await using var ctx = New();
-        var applicationId = await EnsureFdaApplicationAsync(ctx);
-        var submission = await CreateAsync(ctx, applicationId, Fda510k, "510(k) read model");
+        var applicationId = await DeviceApplicationAsync(ctx);
+        var submission = await CreateAsync(ctx, applicationId, "510(k) read model");
 
         var detail = await new GetSubmissionHandler(ctx)
             .HandleAsync(submission.Id, CancellationToken.None);
@@ -143,14 +139,13 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
     private async Task<SubmissionAggregate> CreateAsync(
         RegOSDbContext ctx,
         RegulatoryApplicationId applicationId,
-        SubmissionTypeId submissionTypeId,
         string title)
     {
         var handler = new CreateSubmissionHandler(ctx, new SubmissionRepository(ctx));
 
         var result = await handler.HandleAsync(
             new CreateSubmissionCommand(
-                applicationId, submissionTypeId, title, SubmissionFormat.Ectd),
+                applicationId, title, SubmissionFormat.Ectd),
             CancellationToken.None);
 
         _submissionIds.Add(result.Id.Value);
@@ -160,12 +155,18 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
             .FirstAsync(s => s.Id == result.Id);
     }
 
-    /// <summary>
-    /// A parent application pinned to the FDA, so the create handler's
-    /// "submission type must belong to the application's authority" rule is
-    /// satisfied for both submission types under test.
-    /// </summary>
-    private static async Task<RegulatoryApplicationId> EnsureFdaApplicationAsync(
+    /// <summary>An FDA IND application — the CTD blueprint targets its type.</summary>
+    private static async Task<RegulatoryApplicationId> IndApplicationAsync(
         RegOSDbContext ctx)
         => (await TestFdaApplication.EnsureAsync(ctx)).AppId;
+
+    /// <summary>
+    /// An FDA 510(k) application — same authority, and no blueprint targets its
+    /// type. The authority-belonging rule is satisfied by construction now:
+    /// RegulatoryApplication.Create would not have produced either of these
+    /// applications with a type from another authority.
+    /// </summary>
+    private static async Task<RegulatoryApplicationId> DeviceApplicationAsync(
+        RegOSDbContext ctx)
+        => (await TestFdaApplication.Ensure510kAsync(ctx)).AppId;
 }

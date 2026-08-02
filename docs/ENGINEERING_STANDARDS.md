@@ -213,7 +213,7 @@ nearest file".
 ### Scope — master data is deliberately outside this rule
 
 Eight flat master-data lookups keep their record struct ids, permanently and by
-decision, not as a backlog: `CountryId`, `DocumentTypeId`, `SubmissionTypeId`,
+decision, not as a backlog: `CountryId`, `DocumentTypeId`, `ApplicationTypeId`,
 `AuthorityId`, `AuthorityDivisionId`, `CorrespondenceTypeId`, `ContactRoleId`,
 `IdentifierSchemeId`.
 

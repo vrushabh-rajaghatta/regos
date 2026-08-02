@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
@@ -15,10 +16,14 @@ namespace RegOS.Submission.Application.Tests.Fixtures;
 /// resolution to succeed.
 /// </summary>
 /// <remarks>
-/// Distinct from <see cref="TestApplications"/>, which takes whichever authority
-/// comes back first: creating a submission requires the submission type to
-/// belong to the application's authority, so any test about FDA blueprints needs
-/// an FDA application specifically.
+/// <b>The application type is the fixture's defining property</b> (EPIC-007a
+/// S001). A blueprint binds to an application type, and the type belongs to the
+/// application rather than to each sequence — so "an IND submission" and "a
+/// 510(k) submission" are no longer two submissions under one application, they
+/// are submissions under two applications. Each type therefore needs its own
+/// product, because the unique index on
+/// (GlobalProductId, CountryId, AuthorityId) permits only one application per
+/// product for a given authority.
 /// <para>
 /// Find-or-create against a fixed product code, for the reason TestApplications
 /// documents: parallel test classes must converge on one row, and the unique
@@ -27,15 +32,36 @@ namespace RegOS.Submission.Application.Tests.Fixtures;
 /// </remarks>
 internal static class TestFdaApplication
 {
-    private const string FixtureCode = "TEST-BLUEPRINT-FDA";
-
     public static readonly AuthorityId Fda =
         new(Guid.Parse("20000000-0000-0000-0000-000000000001"));
 
-    public static async Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
+    private static readonly ApplicationTypeId FdaInd =
+        new(Guid.Parse("40000000-0000-0000-0000-000000000008"));
+
+    private static readonly ApplicationTypeId Fda510k =
+        new(Guid.Parse("40000000-0000-0000-0000-000000000001"));
+
+    /// <summary>An FDA <b>IND</b> application — the CTD blueprint targets it.</summary>
+    public static Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
         EnsureAsync(RegOSDbContext ctx)
+        => EnsureAsync(ctx, FdaInd, "TEST-BLUEPRINT-FDA");
+
+    /// <summary>
+    /// An FDA <b>510(k)</b> application — a device type under the same
+    /// authority, which no blueprint targets. Submissions under it are
+    /// deliberately unbound.
+    /// </summary>
+    public static Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
+        Ensure510kAsync(RegOSDbContext ctx)
+        => EnsureAsync(ctx, Fda510k, "TEST-BLUEPRINT-FDA-510K");
+
+    private static async Task<(RegulatoryApplicationId AppId, GlobalProductId GlobalProductId)>
+        EnsureAsync(
+            RegOSDbContext ctx,
+            ApplicationTypeId applicationTypeId,
+            string fixtureCode)
     {
-        var existing = await FindAsync(ctx);
+        var existing = await FindAsync(ctx, fixtureCode);
 
         if (existing is not null)
             return existing.Value;
@@ -44,15 +70,18 @@ internal static class TestFdaApplication
             .AsNoTracking().Select(x => x.Id).FirstAsync();
         var organizationId = await ctx.Organizations
             .AsNoTracking().Select(x => x.Id).FirstAsync();
+        var applicationType = await ctx.ApplicationTypes
+            .AsNoTracking().SingleAsync(x => x.Id == applicationTypeId);
 
         var product = GlobalProduct.Register(
-            TestTenant.Id, FixtureCode, "Blueprint Validation Product", ProductType.Drug);
+            TestTenant.Id, fixtureCode, "Blueprint Validation Product", ProductType.Drug);
 
         var application = RegulatoryApplicationAggregate.Create(
             TestTenant.Id,
             product.Id,
             countryId,
             Fda,
+            applicationType,
             organizationId,
             "Blueprint Validation Application");
 
@@ -70,16 +99,17 @@ internal static class TestFdaApplication
             // Another test class won the race — use its row.
             ctx.ChangeTracker.Clear();
 
-            return await FindAsync(ctx)
+            return await FindAsync(ctx, fixtureCode)
                 ?? throw new InvalidOperationException(
                     "The FDA blueprint fixture could not be created or found.");
         }
     }
 
     private static async Task<(RegulatoryApplicationId, GlobalProductId)?> FindAsync(
-        RegOSDbContext ctx)
+        RegOSDbContext ctx,
+        string fixtureCode)
     {
-        var code = ProductCode.Create(FixtureCode);
+        var code = ProductCode.Create(fixtureCode);
 
         var globalProductId = await ctx.Products
             .AsNoTracking()

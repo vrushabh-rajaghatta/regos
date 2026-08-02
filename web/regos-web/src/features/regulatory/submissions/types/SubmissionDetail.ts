@@ -3,8 +3,8 @@ export interface SubmissionDetail {
   title: string;
   applicationId: string;
   applicationName: string;
-  submissionTypeId: string;
-  submissionTypeName: string;
+  applicationTypeId: string;
+  applicationTypeName: string;
   status: string;
   /** What it will be rendered as. Editable while a draft, frozen once
    *  published (ADR-047). The domain's word — see `formatLabel`. */

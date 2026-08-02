@@ -2,7 +2,6 @@ using RegOS.Organization.Domain.Aggregates.Contact;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.Organization;
-using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
@@ -26,7 +25,6 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         SubmissionId id,
         TenantId tenantId,
         RegulatoryApplicationId applicationId,
-        SubmissionTypeId submissionTypeId,
         RegulatoryTemplateVersionId? boundTemplateVersionId,
         string title,
         SubmissionFormat format,
@@ -35,7 +33,6 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         Id = id;
         TenantId = tenantId;
         ApplicationId = applicationId;
-        SubmissionTypeId = submissionTypeId;
         BoundTemplateVersionId = boundTemplateVersionId;
         Title = title;
         Format = format;
@@ -50,12 +47,10 @@ public sealed class Submission : AggregateRoot<SubmissionId>
 
     public RegulatoryApplicationId ApplicationId { get; private set; }
 
-    public SubmissionTypeId SubmissionTypeId { get; private set; }
-
     // The published blueprint version this submission is judged against, pinned
     // at creation so a later template version never silently changes what a
     // submission must contain. Null when no published template governs this
-    // submission type (device submissions today) — incomplete reference data
+    // application type (device submissions today) — incomplete reference data
     // must never block creating a submission.
     public RegulatoryTemplateVersionId? BoundTemplateVersionId { get; private set; }
 
@@ -141,7 +136,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// <param name="boundTemplateVersionId">
     /// The published template version that governs this submission, resolved by
     /// the application layer. Optional: when no published blueprint targets the
-    /// submission type, the submission is created unbound rather than rejected.
+    /// application type, the submission is created unbound rather than rejected.
     /// </param>
     /// <param name="format">
     /// Required rather than defaulted. eCTD is the only format an FDA IND
@@ -152,7 +147,6 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     public static Submission Create(
         TenantId tenantId,
         RegulatoryApplicationId applicationId,
-        SubmissionTypeId submissionTypeId,
         string title,
         SubmissionFormat format,
         RegulatoryTemplateVersionId? boundTemplateVersionId = null)
@@ -162,9 +156,6 @@ public sealed class Submission : AggregateRoot<SubmissionId>
 
         if (applicationId == default)
             throw new DomainException(SubmissionErrors.ApplicationRequired);
-
-        if (submissionTypeId == default)
-            throw new DomainException(SubmissionErrors.SubmissionTypeRequired);
 
         if (string.IsNullOrWhiteSpace(title))
             throw new DomainException(SubmissionErrors.TitleRequired);
@@ -178,7 +169,6 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             SubmissionId.New(),
             tenantId,
             applicationId,
-            submissionTypeId,
             boundTemplateVersionId,
             title.Trim(),
             format,

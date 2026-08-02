@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
@@ -12,6 +13,7 @@ using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggreg
 using CountryAggregate = RegOS.ReferenceData.Domain.Geography.Country.Country;
 using AuthorityAggregate = RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
 using OrganizationAggregate = RegOS.Organization.Domain.Aggregates.Organization.Organization;
+using ApplicationTypeEntity = RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
 
 namespace RegOS.Persistence.Configurations.RegulatoryApplication;
 
@@ -46,6 +48,12 @@ public sealed class RegulatoryApplicationConfiguration
             .HasConversion(
                 id => id.Value,
                 value => new AuthorityId(value))
+            .IsRequired();
+
+        builder.Property(x => x.ApplicationTypeId)
+            .HasConversion(
+                id => id.Value,
+                value => new ApplicationTypeId(value))
             .IsRequired();
 
         builder.Property(x => x.ApplicantOrganizationId)
@@ -91,6 +99,14 @@ public sealed class RegulatoryApplicationConfiguration
             .HasForeignKey(x => x.ApplicantOrganizationId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // ApplicationType is reference data. Historical applications stay
+        // valid even when a type is deactivated — inactive, not deleted
+        // (ES-018).
+        builder.HasOne<ApplicationTypeEntity>()
+            .WithMany()
+            .HasForeignKey(x => x.ApplicationTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Secondary indexes on the cross-aggregate references.
         // The owning tenant (ADR-031). Held by value, no FK to Tenants —
         // cross-context references are held by value, like Products.TenantId.
@@ -104,6 +120,7 @@ public sealed class RegulatoryApplicationConfiguration
 
         builder.HasIndex(x => x.CountryId);
         builder.HasIndex(x => x.AuthorityId);
+        builder.HasIndex(x => x.ApplicationTypeId);
         builder.HasIndex(x => x.ApplicantOrganizationId);
 
         // A product may not have two applications for the same

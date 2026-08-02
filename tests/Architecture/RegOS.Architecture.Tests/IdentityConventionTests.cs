@@ -96,7 +96,7 @@ public sealed class IdentityConventionTests
     [
         "CountryId",
         "DocumentTypeId",
-        "SubmissionTypeId",
+        "ApplicationTypeId",
         "AuthorityId",
         "AuthorityDivisionId",
         "CorrespondenceTypeId",

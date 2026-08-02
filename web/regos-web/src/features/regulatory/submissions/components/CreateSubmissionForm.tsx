@@ -24,7 +24,6 @@ import {
   SUBMISSION_FORMATS,
   formatLabel,
 } from "../utils/formatLabel";
-import { useSubmissionTypes } from "../hooks/useSubmissionTypes";
 import { useCreateSubmission } from "../hooks/useCreateSubmission";
 import {
   createSubmissionSchema,
@@ -34,22 +33,18 @@ import {
 interface Props {
   globalProductId: string;
   applicationId: string;
-  authorityId: string;
   onSuccess: () => void;
 }
 
 export function CreateSubmissionForm({
   globalProductId,
   applicationId,
-  authorityId,
   onSuccess,
 }: Props) {
   const navigate = useNavigate();
 
-  // Types are scoped to the application's authority, so the user can only
-  // choose one the backend will accept (Rule 3).
-  const submissionTypesQuery = useSubmissionTypes(authorityId);
-
+  // No application-type picker: the type belongs to the application, and every
+  // sequence filed under it inherits the classification (EPIC-007a S001).
   const mutation = useCreateSubmission(applicationId);
 
   const {
@@ -61,7 +56,6 @@ export function CreateSubmissionForm({
     resolver: zodResolver(createSubmissionSchema),
     defaultValues: {
       title: "",
-      submissionTypeId: "",
       // Shown selected rather than assumed silently: eCTD is the only format
       // an FDA IND accepts today, and the user can see and change it.
       format: "Ectd",
@@ -76,20 +70,9 @@ export function CreateSubmissionForm({
     []
   );
 
-  // Value->label map so the Select trigger displays the type name rather
-  // than the raw id.
-  const submissionTypeItems = useMemo(
-    () =>
-      Object.fromEntries(
-        (submissionTypesQuery.data ?? []).map((type) => [type.id, type.name])
-      ),
-    [submissionTypesQuery.data]
-  );
-
   async function onSubmit(values: CreateSubmissionFormValues) {
     const { id } = await mutation.mutateAsync({
       title: values.title,
-      submissionTypeId: values.submissionTypeId,
       format: values.format,
     });
 
@@ -116,38 +99,6 @@ export function CreateSubmissionForm({
               <Input id="title" placeholder="e.g. Initial 510(k)" {...field} />
 
               <FieldError errors={[errors.title]} />
-            </Field>
-          )}
-        />
-
-        <Controller
-          control={control}
-          name="submissionTypeId"
-          render={({ field }) => (
-            <Field data-invalid={!!errors.submissionTypeId}>
-              <FieldLabel htmlFor="submissionTypeId">
-                Submission Type
-              </FieldLabel>
-
-              <Select
-                items={submissionTypeItems}
-                value={field.value}
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger id="submissionTypeId" className="w-full">
-                  <SelectValue placeholder="Select submission type" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {(submissionTypesQuery.data ?? []).map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <FieldError errors={[errors.submissionTypeId]} />
             </Field>
           )}
         />

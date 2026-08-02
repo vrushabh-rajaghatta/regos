@@ -2,7 +2,7 @@ using FluentAssertions;
 
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
@@ -27,7 +27,6 @@ public class SubmissionPlacementTests
         SubmissionAggregate.Create(
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
             "Initial IND",
             SubmissionFormat.Ectd);
 

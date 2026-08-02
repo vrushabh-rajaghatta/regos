@@ -2,14 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.ReferenceData.Domain.Blueprint;
-using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Primitives;
 using RegOS.Submission.Domain.Submission;
 
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
-using SubmissionTypeAggregate = RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
 
 namespace RegOS.Persistence.Configurations.Submission;
 
@@ -33,14 +31,8 @@ public sealed class SubmissionConfiguration
                 value => new RegulatoryApplicationId(value))
             .IsRequired();
 
-        builder.Property(x => x.SubmissionTypeId)
-            .HasConversion(
-                id => id.Value,
-                value => new SubmissionTypeId(value))
-            .IsRequired();
-
         // The published blueprint version this submission is judged against.
-        // Nullable: submission types with no published template (devices today)
+        // Nullable: application types with no published template (devices today)
         // are created unbound.
         builder.Property(x => x.BoundTemplateVersionId)
             .HasConversion(
@@ -86,13 +78,6 @@ public sealed class SubmissionConfiguration
             .HasForeignKey(x => x.ApplicationId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // SubmissionType is reference data. Historical Submissions stay
-        // valid even when a type is deactivated — inactive, not deleted.
-        builder.HasOne<SubmissionTypeAggregate>()
-            .WithMany()
-            .HasForeignKey(x => x.SubmissionTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         // The bound blueprint version. A deliberate cross-context reference to
         // a child entity of the RegulatoryTemplate aggregate rather than to its
         // root: the *version* is the immutable governance artifact, and naming
@@ -116,7 +101,6 @@ public sealed class SubmissionConfiguration
         builder.HasIndex(x => x.TenantId);
 
         builder.HasIndex(x => x.ApplicationId);
-        builder.HasIndex(x => x.SubmissionTypeId);
         builder.HasIndex(x => x.BoundTemplateVersionId);
 
         // Two submissions in one application can never be filed under the same

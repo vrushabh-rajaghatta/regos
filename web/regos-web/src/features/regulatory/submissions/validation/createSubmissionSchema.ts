@@ -5,7 +5,6 @@ import { SUBMISSION_FORMATS } from "../utils/formatLabel";
 export const createSubmissionSchema = z.object({
   title: z.string().trim().min(1, "Submission title is required."),
 
-  submissionTypeId: z.string().min(1, "Submission Type is required."),
 
   // Required rather than defaulted in the schema, for the reason ADR-047
   // gives: the filer chooses the format, and a default lets the form answer

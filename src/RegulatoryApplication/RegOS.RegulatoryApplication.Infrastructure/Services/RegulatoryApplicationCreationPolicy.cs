@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
@@ -8,6 +9,8 @@ using RegOS.Product.Domain.Product;
 using RegOS.RegulatoryApplication.Application;
 using RegOS.RegulatoryApplication.Application.Services;
 using RegOS.SharedKernel.Exceptions;
+
+using ApplicationTypeEntity = RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
 
 namespace RegOS.RegulatoryApplication.Infrastructure.Services;
 
@@ -21,10 +24,11 @@ public sealed class RegulatoryApplicationCreationPolicy
         _dbContext = dbContext;
     }
 
-    public async Task EnsureCanCreateAsync(
+    public async Task<ApplicationTypeEntity> EnsureCanCreateAsync(
         GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
+        ApplicationTypeId applicationTypeId,
         OrganizationId organizationId,
         CancellationToken cancellationToken)
     {
@@ -76,7 +80,19 @@ public sealed class RegulatoryApplicationCreationPolicy
             throw new DomainException(
                 RegulatoryApplicationErrors.AuthorityNotInCountry);
 
-        // Rule 7 — No duplicate application for the same jurisdiction.
+        // Rule 7 — Application Type exists. Only existence is checked here.
+        // Whether it belongs to this authority is an invariant of the
+        // aggregate, which holds both facts — see RegulatoryApplication.Create.
+        var applicationType = await _dbContext.ApplicationTypes
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                x => x.Id == applicationTypeId, cancellationToken);
+
+        if (applicationType is null)
+            throw new DomainException(
+                RegulatoryApplicationErrors.ApplicationTypeDoesNotExist);
+
+        // Rule 8 — No duplicate application for the same jurisdiction.
         var duplicateExists = await _dbContext.RegulatoryApplications
             .AnyAsync(
                 x => x.GlobalProductId == globalProductId
@@ -87,5 +103,7 @@ public sealed class RegulatoryApplicationCreationPolicy
         if (duplicateExists)
             throw new BusinessRuleViolationException(
                 RegulatoryApplicationErrors.DuplicateApplication);
+
+        return applicationType;
     }
 }

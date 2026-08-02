@@ -51,7 +51,7 @@ small: `IUserRepository` (identity-scoped), `UserPolicy` email uniqueness
 | Tables | Why |
 |---|---|
 | `Tenants` | The global directory (the one table global by definition) |
-| `Countries`, `Authorities`, `SubmissionTypes` | World facts (tier 1) — a tenant column here is a modelling error the architecture tests reject |
+| `Countries`, `Authorities`, `ApplicationTypes` | World facts (tier 1) — a tenant column here is a modelling error the architecture tests reject |
 | `UserCredentials`, `RefreshTokens`, `Invitations`, `PasswordResets`, `Sessions` | Person-scoped (ADR-029); reachable only by user id or token hash |
 | `SubmissionDocuments`, `DocumentVersions`, `SnapshotDocuments` | Children reachable only through a filtered root |
 

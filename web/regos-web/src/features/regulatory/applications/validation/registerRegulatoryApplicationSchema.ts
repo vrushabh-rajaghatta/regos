@@ -7,6 +7,8 @@ export const registerRegulatoryApplicationSchema = z.object({
 
   authorityId: z.string().min(1, "Authority is required."),
 
+  applicationTypeId: z.string().min(1, "Application type is required."),
+
   applicantOrganizationId: z
     .string()
     .min(1, "Applicant organization is required."),

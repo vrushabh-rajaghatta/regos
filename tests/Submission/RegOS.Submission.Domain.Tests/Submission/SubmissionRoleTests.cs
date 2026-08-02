@@ -2,7 +2,7 @@ using FluentAssertions;
 
 using RegOS.Organization.Domain.Aggregates.Contact;
 using RegOS.ReferenceData.Domain.Organization;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
@@ -174,7 +174,6 @@ public class SubmissionRoleTests
         SubmissionAggregate.Create(
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
             "Original IND",
             SubmissionFormat.Ectd);
 }

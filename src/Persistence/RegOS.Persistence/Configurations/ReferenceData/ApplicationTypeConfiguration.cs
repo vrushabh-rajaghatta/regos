@@ -2,26 +2,26 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 
 using AuthorityAggregate = RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
-using SubmissionTypeEntity = RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
+using ApplicationTypeEntity = RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
 
 namespace RegOS.Persistence.Configurations.ReferenceData;
 
-public sealed class SubmissionTypeConfiguration
-    : IEntityTypeConfiguration<SubmissionTypeEntity>
+public sealed class ApplicationTypeConfiguration
+    : IEntityTypeConfiguration<ApplicationTypeEntity>
 {
-    public void Configure(EntityTypeBuilder<SubmissionTypeEntity> builder)
+    public void Configure(EntityTypeBuilder<ApplicationTypeEntity> builder)
     {
-        builder.ToTable("SubmissionTypes");
+        builder.ToTable("ApplicationTypes");
 
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Id)
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionTypeId(value));
+                value => new ApplicationTypeId(value));
 
         builder.Property(x => x.Code)
             .HasMaxLength(50)

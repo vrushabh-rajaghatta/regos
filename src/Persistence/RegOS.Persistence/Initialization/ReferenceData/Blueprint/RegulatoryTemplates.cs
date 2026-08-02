@@ -1,7 +1,7 @@
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.DocumentType;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 
 namespace RegOS.Persistence.Initialization.ReferenceData.Blueprint;
 
@@ -31,7 +31,7 @@ internal static class RegulatoryTemplates
             "FDA_IND_CTD",
             "FDA IND (CTD)",
             new AuthorityId(GeographyAndRegulatoryIds.FDA),
-            new SubmissionTypeId(SubmissionTypeIds.FdaInd),
+            new ApplicationTypeId(ApplicationTypeIds.FdaInd),
             "ICH eCTD / FDA");
 
         var v1 = template.StartDraftVersion();
@@ -81,7 +81,7 @@ internal static class RegulatoryTemplates
             "HC_CTA_CTD",
             "Health Canada CTA (CTD)",
             new AuthorityId(GeographyAndRegulatoryIds.HealthCanada),
-            new SubmissionTypeId(SubmissionTypeIds.HcCta),
+            new ApplicationTypeId(ApplicationTypeIds.HcCta),
             "ICH eCTD / Health Canada");
 
         var v1 = template.StartDraftVersion();
@@ -125,7 +125,7 @@ internal static class RegulatoryTemplates
             "TGA_CTN_CTD",
             "TGA CTN (CTD)",
             new AuthorityId(GeographyAndRegulatoryIds.TGA),
-            new SubmissionTypeId(SubmissionTypeIds.TgaCtn),
+            new ApplicationTypeId(ApplicationTypeIds.TgaCtn),
             "ICH eCTD / TGA");
 
         var v1 = template.StartDraftVersion();
@@ -171,7 +171,7 @@ internal static class RegulatoryTemplates
             "CDSCO_CTA_CTD",
             "CDSCO CTA (CTD)",
             new AuthorityId(GeographyAndRegulatoryIds.CDSCO),
-            new SubmissionTypeId(SubmissionTypeIds.CdscoCta),
+            new ApplicationTypeId(ApplicationTypeIds.CdscoCta),
             "CDSCO / NDCT Rules 2019");
 
         var v1 = template.StartDraftVersion();

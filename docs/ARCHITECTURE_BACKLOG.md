@@ -110,7 +110,7 @@ TBD
 
 Status: **Done** (verified 2026-07-20)
 
-Verified by: `Country`, `Authority`, `DocumentType` and `SubmissionType`
+Verified by: `Country`, `Authority`, `DocumentType` and `ApplicationType`
 aggregates in `RegOS.ReferenceData.Domain`, each with a list query and endpoint;
 `Organization` in `src/Organization`, with `ListOrganizations`.
 

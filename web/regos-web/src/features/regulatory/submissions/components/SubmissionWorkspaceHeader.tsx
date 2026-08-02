@@ -23,7 +23,7 @@ export function SubmissionWorkspaceHeader() {
           <h1 className="text-xl font-semibold">{submission.title}</h1>
 
           <p className="text-sm text-muted-foreground">
-            {submission.submissionTypeName} &middot;{" "}
+            {submission.applicationTypeName} &middot;{" "}
             <span data-testid="header-format">
               {formatLabel(submission.format)}
             </span>

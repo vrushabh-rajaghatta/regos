@@ -1,4 +1,3 @@
-using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.Submission.Application.Commands.CreateSubmission;
@@ -36,7 +35,6 @@ public static class CreateSubmissionEndpoint
         var result = await handler.HandleAsync(
             new CreateSubmissionCommand(
                 new RegulatoryApplicationId(applicationId),
-                new SubmissionTypeId(request.SubmissionTypeId),
                 request.Title,
                 format),
             cancellationToken);

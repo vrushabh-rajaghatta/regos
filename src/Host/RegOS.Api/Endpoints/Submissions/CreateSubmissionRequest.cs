@@ -6,6 +6,5 @@ namespace RegOS.Api.Endpoints.Submissions;
 /// exactly one honest reading. The domain takes no default; this states one.
 /// </param>
 public sealed record CreateSubmissionRequest(
-    Guid SubmissionTypeId,
     string Title,
     string? Format = null);

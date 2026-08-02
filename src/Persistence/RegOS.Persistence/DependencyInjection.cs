@@ -28,7 +28,7 @@ public static class DependencyInjection
         // tenants they point at must exist first.
         services.AddScoped<IDataInitializer, TenantInitializer>();
         services.AddScoped<IDataInitializer, ProductInitializer>();
-        services.AddScoped<IDataInitializer, SubmissionTypeDataInitializer>();
+        services.AddScoped<IDataInitializer, ApplicationTypeDataInitializer>();
         services.AddScoped<IDataInitializer, DocumentTypeDataInitializer>();
         services.AddScoped<IDataInitializer, IdentifierSchemeDataInitializer>();
         services.AddScoped<IDataInitializer, ContactRoleDataInitializer>();
@@ -36,7 +36,7 @@ public static class DependencyInjection
         services.AddScoped<IDataInitializer, CorrespondenceTypeDataInitializer>();
         // After GeographyAndRegulatoryInitializer: divisions reference authorities.
         services.AddScoped<IDataInitializer, AuthorityDivisionDataInitializer>();
-        // After submission types and authorities: a template references both.
+        // After application types and authorities: a template references both.
         services.AddScoped<IDataInitializer, RegulatoryTemplateDataInitializer>();
 
         return services;

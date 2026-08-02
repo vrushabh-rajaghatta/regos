@@ -223,6 +223,31 @@ populated.
 
 ---
 
+## A cache is not an aggregate
+
+The two are easy to confuse because both hold data that took work to produce.
+They are opposites in the only way that matters:
+
+| | A cache | An aggregate |
+|---|---|---|
+| Exists to | avoid recomputation | own business facts |
+| May be discarded | ✅ yes | ✖ never — deletion loses information |
+| May be regenerated | ✅ yes | ✖ no |
+| Authoritative | ✖ no | ✅ yes |
+
+**The test is what deletion costs.** If discarding it loses no business
+information, it is a cache — however expensive it was to produce, however much a
+user wanted it, and however permanent the file on disk looks.
+
+This arrives as a performance proposal, not as a modelling one. *"Generated
+packages are slow to build, let's store them"* is a caching decision; storing
+them in a table with an id and a status is a modelling decision, and the first
+does not license the second. See
+[ADR-049](../adr/ADR-049-generation-derives-transmission-creates.md) §5, where
+the concrete case is an eCTD package.
+
+---
+
 # Cross-Cutting Standards
 
 ## Identifiers

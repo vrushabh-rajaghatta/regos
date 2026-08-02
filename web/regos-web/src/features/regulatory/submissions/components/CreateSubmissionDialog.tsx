@@ -10,7 +10,6 @@ import { CreateSubmissionForm } from "./CreateSubmissionForm";
 interface CreateSubmissionDialogProps {
   globalProductId: string;
   applicationId: string;
-  authorityId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -18,7 +17,6 @@ interface CreateSubmissionDialogProps {
 export function CreateSubmissionDialog({
   globalProductId,
   applicationId,
-  authorityId,
   open,
   onOpenChange,
 }: CreateSubmissionDialogProps) {
@@ -32,7 +30,6 @@ export function CreateSubmissionDialog({
         <CreateSubmissionForm
           globalProductId={globalProductId}
           applicationId={applicationId}
-          authorityId={authorityId}
           onSuccess={() => onOpenChange(false)}
         />
       </DialogContent>

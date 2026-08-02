@@ -1,7 +1,6 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export interface CreateSubmissionRequest {
-  submissionTypeId: string;
   title: string;
   /** `Ectd` | `Nees` | `Paper`. The domain's word, never the screen's. */
   format: string;

@@ -11,9 +11,6 @@ public static class SubmissionErrors
     public const string ApplicationRequired =
         "Application is required.";
 
-    public const string SubmissionTypeRequired =
-        "Submission Type is required.";
-
     // Document assembly
     public const string DocumentsLockedUnlessDraft =
         "Documents can only be changed while the submission is a draft.";

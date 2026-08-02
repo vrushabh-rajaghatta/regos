@@ -2,7 +2,7 @@ using FluentAssertions;
 
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ReferenceData.Domain.Tests.Blueprint;
@@ -14,7 +14,7 @@ public class ValidationRuleTests
             "FDA_IND_CTD",
             "FDA IND (CTD)",
             new AuthorityId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
+            new ApplicationTypeId(Guid.NewGuid()),
             "ICH eCTD");
 
     private static RegulatoryTemplate NewDraftTemplate()

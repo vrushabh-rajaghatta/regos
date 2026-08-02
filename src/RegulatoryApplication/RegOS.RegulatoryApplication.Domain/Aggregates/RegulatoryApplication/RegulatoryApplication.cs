@@ -2,8 +2,11 @@ using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
+
+using ApplicationTypeEntity = RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
 
 namespace RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
@@ -13,6 +16,9 @@ public sealed class RegulatoryApplication
     public const string ProductRequired = "Product is required.";
     public const string CountryRequired = "Country is required.";
     public const string AuthorityRequired = "Authority is required.";
+    public const string ApplicationTypeRequired = "Application type is required.";
+    public const string ApplicationTypeAuthorityMismatch =
+        "Application type does not belong to the application's authority.";
     public const string ApplicantOrganizationRequired = "Applicant organization is required.";
     public const string NameRequired = "Name is required.";
 
@@ -22,6 +28,7 @@ public sealed class RegulatoryApplication
         GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
+        ApplicationTypeId applicationTypeId,
         OrganizationId applicantOrganizationId,
         string name,
         DateTime createdOn)
@@ -31,6 +38,7 @@ public sealed class RegulatoryApplication
         GlobalProductId = globalProductId;
         CountryId = countryId;
         AuthorityId = authorityId;
+        ApplicationTypeId = applicationTypeId;
         ApplicantOrganizationId = applicantOrganizationId;
         Name = name;
         Status = ApplicationStatus.Draft;
@@ -53,6 +61,19 @@ public sealed class RegulatoryApplication
 
     public AuthorityId AuthorityId { get; private set; }
 
+    /// <summary>
+    /// What kind of application this is — IND, NDA, 510(k). eCTD's
+    /// <c>application-type</c>.
+    /// </summary>
+    /// <remarks>
+    /// This lived on <c>Submission</c> under the name <c>SubmissionType</c>
+    /// until EPIC-007a S001 (evidence E11). It is invariant across every
+    /// submission in an application — one application is one
+    /// <see cref="ApplicationNumber"/>, and every sequence filed under an IND
+    /// is an IND — which is what places it on the aggregate root.
+    /// </remarks>
+    public ApplicationTypeId ApplicationTypeId { get; private set; }
+
     public OrganizationId ApplicantOrganizationId { get; private set; }
 
     public string Name { get; private set; }
@@ -63,11 +84,19 @@ public sealed class RegulatoryApplication
 
     public DateTime CreatedOn { get; }
 
+    /// <param name="applicationType">
+    /// The reference-data entity, not its id, because the factory enforces a
+    /// rule about it: an application's type must belong to the authority the
+    /// application is filed with. Passing the id alone would move that check
+    /// back out to a handler, which is where it lived — on the wrong aggregate,
+    /// and fired one step too late — before EPIC-007a S001.
+    /// </param>
     public static RegulatoryApplication Create(
         TenantId tenantId,
         GlobalProductId globalProductId,
         CountryId countryId,
         AuthorityId authorityId,
+        ApplicationTypeEntity applicationType,
         OrganizationId applicantOrganizationId,
         string name)
     {
@@ -83,6 +112,15 @@ public sealed class RegulatoryApplication
         if (authorityId == default)
             throw new DomainException(AuthorityRequired);
 
+        if (applicationType is null)
+            throw new DomainException(ApplicationTypeRequired);
+
+        // An IND is an FDA thing; an ARTG inclusion is a TGA thing. Filing a
+        // TGA application type with the FDA is not a data-entry slip to be
+        // caught downstream — it is not an application.
+        if (applicationType.AuthorityId != authorityId)
+            throw new DomainException(ApplicationTypeAuthorityMismatch);
+
         if (applicantOrganizationId == default)
             throw new DomainException(ApplicantOrganizationRequired);
 
@@ -95,6 +133,7 @@ public sealed class RegulatoryApplication
             globalProductId,
             countryId,
             authorityId,
+            applicationType.Id,
             applicantOrganizationId,
             name.Trim(),
             DateTime.UtcNow);

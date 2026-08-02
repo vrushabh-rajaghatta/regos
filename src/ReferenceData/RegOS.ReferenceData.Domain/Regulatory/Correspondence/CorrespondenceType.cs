@@ -11,7 +11,7 @@ namespace RegOS.ReferenceData.Domain.Regulatory.Correspondence;
 /// the type. It classifies and it is read; no rule reads it and behaves
 /// differently. Adding <em>Refuse to File</em> must not require a deployment.
 /// <para>
-/// <b>Not authority-scoped, unlike <c>SubmissionType</c>.</b> A submission type
+/// <b>Not authority-scoped, unlike <c>ApplicationType</c>.</b> An application type
 /// genuinely differs per authority — an IND is not a CTA — whereas every
 /// authority sends information requests and approval letters, under local
 /// names. Scoping it later is additive (a nullable <c>AuthorityId</c>);

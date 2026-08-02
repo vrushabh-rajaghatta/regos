@@ -79,6 +79,27 @@ which is not a convenience: **every eCTD package must ship its DTDs inside
 `util/dtd/`** (ICH Appendix 4, rows 372–376), so the file is a build input, not
 just a reference.
 
+### Open blocker — `ich-ectd-3-2.dtd` is missing, and it blocks more than validation
+
+Only **one** of the two backbones is pinned. The ICH DTD governs `index.xml`,
+and by the same Appendix 4 rule it must also ship inside `util/dtd/`.
+
+**Because it is a build input, its absence blocks package generation itself, not
+merely the Level 2a claim on `index.xml`.** A sequence folder assembled without
+it is not a conformant package — it is missing a file the specification requires
+to be present. This is the one Phase 2 dependency that no amount of modelling
+can route around.
+
+| Attempted | Result |
+|---|---|
+| `admin.ich.org` inline-files path | 404 |
+| `estri.ich.org/eCTD/` | connection failed — host does not resolve |
+| `ich.org` eCTD v3.2 page | 200, but JavaScript-rendered; no file links in the served HTML |
+
+Needed: the DTD as a **file**, from the ICH distribution or any sequence already
+holding it in `util/dtd/` — a single conformant package from any source carries a
+copy, because the specification requires it to.
+
 ---
 
 ## Task 3 — the mapping

@@ -69,7 +69,7 @@ public sealed class BlueprintValidationEvaluator
         CancellationToken cancellationToken)
     {
         // An unbound submission is legitimate (no published blueprint targets
-        // its submission type), but silently skipping the check would be
+        // its application type), but silently skipping the check would be
         // indistinguishable from passing it. Say so, without blocking.
         if (submission.BoundTemplateVersionId is not { } versionId)
         {

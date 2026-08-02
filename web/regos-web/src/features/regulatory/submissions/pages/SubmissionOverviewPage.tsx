@@ -56,7 +56,7 @@ export function SubmissionOverviewPage() {
 
         <div>
           <div className="text-sm text-muted-foreground">Submission Type</div>
-          <div className="font-medium">{submission.submissionTypeName}</div>
+          <div className="font-medium">{submission.applicationTypeName}</div>
         </div>
 
         <SubmissionFormatField

@@ -241,6 +241,32 @@ Prove the target, then model the path to it.
 - **No document describes a package as "validated" without naming the level.**
 - ADR written for whatever Phase 2 decides the package *is*.
 
+**Business-rule validation (Level 2b) is not attempted here** — it is carried to
+EPIC-007b, and two DoD lines keep that deferral honest rather than merely
+recorded:
+
+- **The absence is stated in the product, not only in the docs.** A DTD-valid
+  package with a wrong `submission-type` token is perfectly legal XML that a
+  gateway rejects, so structural validity is a weaker promise than it sounds,
+  and no screen may imply otherwise. This is a **product requirement, not a
+  documentation one** — it is part of the product's truthfulness.
+
+  | Permitted | Forbidden until 2b, and arguably beyond |
+  |---|---|
+  | "Generate eCTD Package" | "FDA-ready" |
+  | "Download Generated Package" | "Validated" |
+  | | "Ready for submission" |
+
+  The forbidden column is not a style preference. Each phrase asserts a level of
+  evidence this epic does not reach.
+- **A business-rule validator can be introduced later without redesign** — and
+  the checkable form of that claim is: the generator's only output is a complete
+  sequence folder on disk that an external tool is *pointed at*, and **no code in
+  `src/` reads a verdict from any validator.** No `IEctdValidator` abstraction is
+  created for a single implementation (ADR-018): the seam is the filesystem,
+  which every validator that will ever exist already takes. `xmllint` lives in
+  `tests/` as a harness, because that is what it is.
+
 **Still carried, and stated so the epic cannot be overclaimed:**
 
 | # | Hypothesis | Why a validator cannot settle it |
@@ -309,9 +335,8 @@ work already done.**
 
 ## Phase 2 — Domain design
 
-*Not started. Phase 1 tasks 1–3 are closed; task 4 — a hand-built package that a
-parser accepts — comes first, because the target should be proven before any
-RegOS code assumes it.*
+*Phase 1 closed. The regulatory-activity question is **decided** below; the
+package artifact/projection question is still open.*
 
 **Phase 2 opens on the question Task 3 raised**, not on the renderer:
 
@@ -324,3 +349,60 @@ if there is not, and `submission-sub-type` belongs to the sequence either way.
 That is the same shape as EPIC-004's Phase 2, which opened on *what business
 thing survives after sequence 0003 has been transmitted?* and found the answer
 was already modelled.
+
+### Decided: the activity is **derived**, and no aggregate is introduced
+
+Signed off 2026-08-02. `Submission` gains one nullable self-reference:
+
+```
+OriginatingSubmissionId : SubmissionId?     null ⇒ this submission opens an activity
+```
+
+**Null is the origin marker, not a missing value.** The name describes the
+*target* — provenance — so nothing about it implies amendment, continuation or
+chronology beyond origin, and it deliberately does not contain the word
+*activity*: **a pointer names the relationship that exists today, not the
+aggregate that might exist tomorrow.**
+
+Rendering needs no stored grouping:
+
+```
+submission-id   = (Originating ?? this).SequenceNumber
+submission-type = (Originating ?? this).<the activity's type>
+```
+
+**Three invariants on the pointer**, the first of which is the founder's added
+rule — *an activity begins when its opening sequence is published* — and not a
+defensive check:
+
+1. the target is **published**. A draft has no sequence number, and
+   `submission-id` renders one, so an unpublished submission cannot originate an
+   activity;
+2. the target is in the **same application**;
+3. the target's sequence number is **lower** — which, with (1), makes a cycle
+   unconstructible rather than merely forbidden.
+
+**Falsified if** an activity must exist *before* its opening sequence is
+published, or acquires a fact no sequence carries — a status, an FDA-assigned
+number distinct from the sequence number, a due date. **Milestone:** EPIC-007b
+makes the first plausible; EPIC-020 makes it likely.
+
+**Why the burden of proof sat where it did.** eCTD renders
+`submission-id="0001"` — it borrows the opening sequence's number rather than
+minting an identity. A `RegulatoryActivity` aggregate would manufacture an
+identity that must then be projected away at every render. And EPIC-020 already
+owns a grouping (`ProcessStep`, with submissions attaching to steps); a second
+`Application → X → Submission` container introduced speculatively is how two
+orthogonal groupings with slightly different meanings end up coexisting.
+
+### E11 is accepted as a modelling defect, and it is fixed first, on its own
+
+RegOS's `SubmissionType` catalogue enumerates **application** kinds (`FDA_IND`,
+`FDA_NDA`, `FDA_510K`) and hangs off `Submission`. The value is invariant across
+every submission in an application — `RegulatoryApplication` carries one
+`ApplicationNumber`, so one application is one IND — which places it on the
+aggregate root. eCTD's actual `submission-type` has no home in RegOS at all.
+
+**Its own story, its own migration**, ahead of any eCTD work: domain, seed data,
+reference data, APIs, migration, UI. Only once the name is vacated does the real
+eCTD submission type get introduced. **One migration, one story.**

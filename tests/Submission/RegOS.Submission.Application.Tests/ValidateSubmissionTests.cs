@@ -6,7 +6,7 @@ using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.DocumentType;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Application.Validation;
@@ -32,7 +32,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
 
     private static readonly DocumentTypeId SeededCer =
         new(Guid.Parse("50000000-0000-0000-0000-000000000001"));
-    private static readonly SubmissionTypeId SeededSubmissionType =
+    private static readonly ApplicationTypeId SeededApplicationType =
         new(Guid.Parse("40000000-0000-0000-0000-000000000001"));
 
     private readonly List<Guid> _submissionIds = [];
@@ -110,7 +110,7 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
         ProductDocumentAggregate? document, bool publish)
     {
         var sub = SubmissionAggregate.Create(TestTenant.Id, 
-            appId, SeededSubmissionType, "Validation Sub " + Guid.NewGuid(),
+            appId, "Validation Sub " + Guid.NewGuid(),
             SubmissionFormat.Ectd);
 
         if (document is not null)

@@ -12,8 +12,8 @@ using AuthorityAggregate =
     RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
 using OrganizationAggregate =
     RegOS.Organization.Domain.Aggregates.Organization.Organization;
-using SubmissionTypeAggregate =
-    RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
+using ApplicationTypeAggregate =
+    RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
 using SubmissionAggregate =
     RegOS.Submission.Domain.Submission.Submission;
 using DocumentTypeAggregate =
@@ -128,8 +128,8 @@ public sealed class RegOSDbContext : DbContext
         ContactRoles =>
         Set<RegOS.ReferenceData.Domain.Organization.ContactRole>();
 
-    public DbSet<SubmissionTypeAggregate> SubmissionTypes =>
-        Set<SubmissionTypeAggregate>();
+    public DbSet<ApplicationTypeAggregate> ApplicationTypes =>
+        Set<ApplicationTypeAggregate>();
 
     public DbSet<SubmissionAggregate> Submissions =>
         Set<SubmissionAggregate>();
@@ -250,7 +250,7 @@ public sealed class RegOSDbContext : DbContext
     /// <c>DocumentTypes</c>, <c>RegulatoryTemplates</c>, <c>ContactRoles</c>.</item>
     /// <item><b>Global world facts</b> — no filter. RegOS is describing an
     /// external reality that does not differ by tenant. <c>Countries</c>,
-    /// <c>Authorities</c>, <c>SubmissionTypes</c>, <c>IdentifierSchemes</c>.</item>
+    /// <c>Authorities</c>, <c>ApplicationTypes</c>, <c>IdentifierSchemes</c>.</item>
     /// </list>
     /// Also unfiltered, for different reasons: <c>Tenants</c> (the platform
     /// tier), and the person-scoped satellites (<c>UserCredentials</c>,

@@ -1,79 +1,79 @@
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Persistence.Initialization.ReferenceData;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 
-using SubmissionTypeEntity =
-    RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
+using ApplicationTypeEntity =
+    RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
 
 namespace RegOS.Persistence.Initialization.ReferenceData;
 
-internal static class SubmissionTypes
+internal static class ApplicationTypes
 {
     // Authority references use the deterministic ids already seeded in
     // GeographyAndRegulatoryIds — no name lookups, independent of database state.
-    public static IReadOnlyList<SubmissionTypeEntity> Data =>
+    public static IReadOnlyList<ApplicationTypeEntity> Data =>
     [
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.Fda510k),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.Fda510k),
             "FDA_510K",
             "Premarket Notification (510(k))",
             new AuthorityId(GeographyAndRegulatoryIds.FDA)),
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.FdaDeNovo),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.FdaDeNovo),
             "FDA_DENOVO",
             "De Novo Request",
             new AuthorityId(GeographyAndRegulatoryIds.FDA)),
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.FdaPma),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.FdaPma),
             "FDA_PMA",
             "Premarket Approval (PMA)",
             new AuthorityId(GeographyAndRegulatoryIds.FDA)),
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.CdscoImport),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.CdscoImport),
             "CDSCO_IMPORT",
             "Import License",
             new AuthorityId(GeographyAndRegulatoryIds.CDSCO)),
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.CdscoManufacturing),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.CdscoManufacturing),
             "CDSCO_MANUFACTURING",
             "Manufacturing License",
             new AuthorityId(GeographyAndRegulatoryIds.CDSCO)),
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.TgaArtg),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.TgaArtg),
             "TGA_ARTG",
             "ARTG Inclusion",
             new AuthorityId(GeographyAndRegulatoryIds.TGA)),
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.HcMdl),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.HcMdl),
             "HC_MDL",
             "Medical Device Licence",
             new AuthorityId(GeographyAndRegulatoryIds.HealthCanada)),
 
-        // FDA drug (pharma) submission types.
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.FdaInd),
+        // FDA drug (pharma) application types.
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.FdaInd),
             "FDA_IND",
             "Investigational New Drug Application (IND)",
             new AuthorityId(GeographyAndRegulatoryIds.FDA)),
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.FdaNda),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.FdaNda),
             "FDA_NDA",
             "New Drug Application (NDA)",
             new AuthorityId(GeographyAndRegulatoryIds.FDA)),
 
         // Clinical-trial applications for other authorities (pharma).
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.HcCta),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.HcCta),
             "HC_CTA",
             "Clinical Trial Application (CTA)",
             new AuthorityId(GeographyAndRegulatoryIds.HealthCanada)),
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.TgaCtn),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.TgaCtn),
             "TGA_CTN",
             "Clinical Trial Notification (CTN)",
             new AuthorityId(GeographyAndRegulatoryIds.TGA)),
-        SubmissionTypeEntity.Create(
-            new SubmissionTypeId(SubmissionTypeIds.CdscoCta),
+        ApplicationTypeEntity.Create(
+            new ApplicationTypeId(ApplicationTypeIds.CdscoCta),
             "CDSCO_CTA",
             "Clinical Trial Application (Form CT-04)",
             new AuthorityId(GeographyAndRegulatoryIds.CDSCO))

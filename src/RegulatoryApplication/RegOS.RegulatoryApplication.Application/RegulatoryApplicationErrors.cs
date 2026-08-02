@@ -15,6 +15,9 @@ public static class RegulatoryApplicationErrors
 
     public const string OrganizationInactive = "Organization is inactive.";
 
+    public const string ApplicationTypeDoesNotExist =
+        "Application Type does not exist.";
+
     public const string AuthorityNotInCountry =
         "Authority does not belong to the selected country.";
 

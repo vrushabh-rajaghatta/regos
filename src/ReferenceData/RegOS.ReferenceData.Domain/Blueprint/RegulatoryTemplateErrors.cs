@@ -11,8 +11,8 @@ public static class RegulatoryTemplateErrors
     public const string AuthorityRequired =
         "Regulatory template must reference an authority.";
 
-    public const string SubmissionTypeRequired =
-        "Regulatory template must reference a submission type.";
+    public const string ApplicationTypeRequired =
+        "Regulatory template must reference an application type.";
 
     public const string SourceRequired =
         "Regulatory template source (provenance) is required.";
