@@ -1,91 +1,110 @@
 # EPIC-007a — external validation evidence
 
 **Decisions are backed by artifacts, not memories.** This directory holds the
-evidence that an independent validator accepted a RegOS-generated package —
-not a claim that it did.
+evidence that something outside RegOS checked a RegOS-generated package — not a
+claim that it did.
 
-An epic that says *"the validator passed"* and keeps nothing has produced a
-memory. One that keeps the report, the tool version and the exact package that
-was checked has produced an **architectural asset**: a later reader can see what
-was validated, by what, and when, and can tell whether it still holds.
+An epic that says *"it validated"* and keeps nothing has produced a memory. One
+that keeps the report, the tool version and the exact package that was checked
+has produced an **architectural asset**: a later reader can see what was
+validated, by what, and when, and can tell whether it still holds.
 
 ---
 
-## Task 1 — the oracle decision record
+## Task 1 — the oracle. Outcome: **partly failed, and replaced.**
+
+### What was decided, and did not survive
 
 | | |
 |---|---|
-| **Chosen oracle** | LORENZ eValidator Basic |
-| **Target profile** | US eCTD 3.2 (FDA) |
-| **Independent of RegOS** | **Yes** — separate vendor, separate implementation, validating against FDA's own published criteria |
-| **Automatable** | **Not initially.** Manual invocation, documented so it is reproducible |
-| **Licence assumption** | the free single-user edition is sufficient for development |
-| **Known limitations** | one validation profile; reduced feature set; **not part of production architecture** |
-| **Decided** | 2026-08-02, by the founder |
+| **Candidate oracle** | LORENZ eValidator Basic, US eCTD 3.2 profile |
+| **Outcome** | ✖ **not obtainable** — commercial tooling, Windows-only, and no licence available to this project |
+| **Decided** | 2026-08-02 |
 
-### Why this one
+The epic said Task 1 was allowed to fail and that the honest response was to say
+so rather than describe self-validation as external evidence. **This is that
+failure, recorded rather than worked around.**
 
-It gives four-way separation, which is the whole point:
+### What replaced it
 
-| | |
-|---|---|
-| the specification | FDA, published |
-| the validation criteria | FDA, published |
-| the implementation that checks | **LORENZ — not us** |
-| the package under test | RegOS |
+Failing to obtain eValidator does **not** collapse the epic to Level 1, because
+the founder supplied the primary sources on 2026-08-02 — including the actual
+`us-regional-v3-3.dtd`. That splits the old Level 2 into two, and only the
+second half is blocked:
 
-FDA documents that its submission standards are validated using eValidator and
-publishes the corresponding criteria and technical conformance guides. That
-makes the oracle's judgement traceable to the regulator's own rules rather than
-to a vendor's opinion — which is what
-[the epic's principle](../../product/epics/EPIC-007a-ectd-package-generation.md)
-requires:
+| | Oracle | Reachable now? |
+|---|---|---|
+| **2a — structural** | FDA's published DTD, checked by **any third-party XML parser** (`xmllint`, .NET `XmlReaderSettings.DtdProcessing`) | ✅ **yes** — free, offline, no licence |
+| **2b — business rules** | eValidator's FDA validation criteria | ✖ **no** — needs the commercial tool |
 
-> **The validator is an oracle, not a dependency.** It challenges our
-> interpretation and never defines it.
+**Level 2a is genuine external evidence.** The specification is FDA's, the DTD is
+FDA's, and the implementation doing the checking is a standard parser that knows
+nothing about RegOS. It is not the same as 2b — a package can be perfectly
+DTD-valid and still break FDA business rules — and this directory will never
+claim otherwise.
 
-### Still to be confirmed on install — and each one can fail Task 1
+**Level 3 also became reachable.** FDA publishes complete `us-regional.xml`
+examples, including two IND sequences and their amendment (#21–#24). Comparing
+our output against those is convention evidence that needs no tool at all.
 
-The table above records a **decision**, not a verified capability. The
-following are assumptions until the tool is actually in hand, and the epic said
-plainly that Task 1 is allowed to fail:
+> **The principle is unchanged, and now cheaper to honour.** *The validator is an
+> oracle, not a dependency.* A DTD held in `spec/` and read by a parser we do not
+> own is the purest form of that: it can only ever tell us we are wrong.
 
-- [ ] the Basic edition is obtainable under its current licence terms
-- [ ] it runs in an environment we have (**it is Windows software; the
-      development machine is macOS**)
-- [ ] the US eCTD 3.2 profile is included in the free edition
-- [ ] it will validate a package of the shape EPIC-007a produces
+### Carried to EPIC-007b
 
-> **If the free edition cannot validate the package we need, that is the
-> evidence of failure — not an assumption to work around.** The epic's response
-> is to say so, drop the claim to Level 1, and reconsider the priority call.
+**2b — FDA business-rule validation.** The trigger is a licence becoming
+available, or a customer engagement that supplies one. Until then no document in
+this repository may describe a RegOS package as *validated* without saying
+against which of 2a or 2b.
 
 ---
 
-## Task 2 — the specification version, pinned
+## Task 2 — the specifications, pinned
 
-> **EPIC-007a targets FDA eCTD v3.2.2.**
+> **ICH eCTD v3.2.2** (the `index.xml` backbone) **and FDA us-regional DTD v3.3**
+> (the Module 1 backbone).
 
-FDA currently supports both v3.2.2 and v4.0. v3.2.2 remains the common case and
-is the natural fit for the IND work EPIC-004 modelled.
+Task 2 was recorded as one pin and was **incomplete**. The two backbones version
+independently, and `submission-sub-type` — required on every sequence — exists
+only from regional v3.3. FDA's current pairing is eCTD 3.2.2 with regional 3.3,
+which is what every worked example in their own document uses.
 
-**v4.0 is a later capability, not an accidental side effect of package
-generation.** Supporting both here would double the surface before a single
-package has ever been validated, and would make a failure ambiguous — we would
-not know which target we had got wrong.
+**v4.0 stays out.** Supporting both would double the surface before one package
+has ever been checked, and would make a failure ambiguous — we would not know
+which target we had got wrong.
+
+The regional DTD is held at [`spec/us-regional-v3-3.dtd`](spec/us-regional-v3-3.dtd),
+which is not a convenience: **every eCTD package must ship its DTDs inside
+`util/dtd/`** (ICH Appendix 4, rows 372–376), so the file is a build input, not
+just a reference.
 
 ---
 
-## What must land here before the epic can claim Level 2
+## Task 3 — the mapping
 
-| Artifact | Why |
+[`ectd-mapping.md`](ectd-mapping.md) — element by element, with confidence marked
+per row and the gaps ordered by how much of a package is impossible without them.
+
+It found two defects in RegOS that only an external reference could find: the
+seeded FDA IND blueprint mislabels section **1.13**, and RegOS numbers sequences
+from **0000** where every FDA example starts at **0001**.
+
+It also found that **`submission-id` groups sequences into a regulatory
+activity** — which is EPIC-004's hypothesis 1, arriving from the US IND case
+rather than the EU market that was predicted to settle it.
+
+---
+
+## What must land here before the epic claims anything
+
+| Artifact | Claim it supports |
 |---|---|
-| `validator-report.*` | the oracle's actual output, not a summary of it |
-| `validator-version.txt` | tool name, edition, version, profile — a report means nothing without what produced it |
-| `package.zip` | **the exact package that was checked**, so the report can be re-run against it |
-| `how-to-reproduce.md` | the manual invocation, step by step |
+| `validator-report.*` + `validator-version.txt` | whichever of 2a / 2b produced it — **named explicitly** |
+| `package.zip` | the exact package checked, so the report can be re-run |
+| `how-to-reproduce.md` | the invocation, step by step |
+| `comparison-to-fda-examples.md` | Level 3 — where we match FDA's published XML and where we differ |
 
-**The acceptance rule:** the epic may claim independent validation only when a
-report in this directory corresponds to a package in this directory, produced by
-a tool version named in this directory. Anything less is Level 1 wearing Level
-2's clothes.
+**The acceptance rule:** a claim of external validation requires a report here
+that corresponds to a package here, produced by a tool version named here, at a
+level stated here. Anything less is Level 1 wearing Level 2's clothes.

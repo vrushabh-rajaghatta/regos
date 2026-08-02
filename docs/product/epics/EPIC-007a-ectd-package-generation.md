@@ -31,19 +31,27 @@ written up later as having proved more than it did.
 The scoping question was *"what makes a generated package right?"*, and the
 answer is that there are four different rights.
 
-| Level | Evidence | What it proves | Risk retired |
-|---|---|---|---|
-| **1** | RegOS generates XML that passes its own tests | the implementation is internally consistent | software defects |
-| **2** | XML passes an **independent** validator (DTD / schema / business rules) | the package is syntactically and structurally valid | **specification interpretation** |
-| **3** | the package matches publicly documented FDA/ICH examples and guidance | the implementation follows expected regulatory convention | **interpretation of convention** |
-| **4** | the package is accepted by a real authority gateway | it works in the real world | operational |
+| Level | Evidence | What it proves | Risk retired | Reachable |
+|---|---|---|---|---|
+| **1** | RegOS generates XML that passes its own tests | the implementation is internally consistent | software defects | ✅ |
+| **2a** | XML is **DTD-valid**, checked by a third-party parser against FDA's published DTD | the package is structurally legal | **specification interpretation** | ✅ **free, offline** |
+| **2b** | XML passes an independent validator's **FDA business rules** | the package satisfies the regulator's own criteria | interpretation of rules a DTD cannot express | ✖ needs commercial tooling |
+| **3** | the package matches FDA's **published example submissions** | the implementation follows expected regulatory convention | **interpretation of convention** | ✅ examples are published |
+| **4** | the package is accepted by a real authority gateway | it works in the real world | operational | ✖ no route |
 
-> **EPIC-007a targets Level 2, aspires to Level 3, and puts Level 4 explicitly
-> out of scope.**
+> **EPIC-007a targets 2a and 3. 2b is carried to EPIC-007b; 4 stays out of
+> scope.**
 
 Level 1 is where every previous epic already sits. It is the same reasoning that
 produced the model, checking itself — necessary, and worth nothing as external
 evidence.
+
+**The 2a/2b split is not a softening; it is a distinction the original table
+missed.** A DTD says which elements may appear where. It cannot say that an
+annual report must carry sub-type `report`, or that a `submission-id` must match
+the sequence that started the activity. Those are business rules, and only a tool
+implementing FDA's criteria checks them. Collapsing both into one "Level 2" would
+have let a DTD-valid package be described as validated.
 
 ### The principle this epic introduces
 
@@ -72,24 +80,30 @@ validator, not before it.
 
 | # | Phase 1 task | Output | |
 |---|---|---|---|
-| 1 | **Select and document the external validator** — or document why none is currently reachable | a named tool and how it is run, or a written absence | 🟡 **decided, not yet verified** |
-| 2 | **Determine the supported eCTD specification and version** | the version we target, chosen by what the oracle checks | ✅ **FDA eCTD v3.2.2** |
-| 3 | **Identify the minimal package that validates** | the smallest thing that passes — the epic's first milestone | ⚪ blocked on 1 |
-| 4 | **Produce a proof-of-concept package outside the domain model** | hand-built if necessary; proves the oracle and the target before any RegOS code | ⚪ blocked on 3 |
+| 1 | **Select and document the external validator** — or document why none is reachable | a named tool, or a written absence | ✅ **failed as scoped, replaced** |
+| 2 | **Determine the supported specification and version** | the versions we target | ✅ **eCTD 3.2.2 + regional 3.3** |
+| 3 | **Map the specification to the model** | element by element, with the gaps ordered | ✅ [`ectd-mapping.md`](../../evidence/EPIC-007a/ectd-mapping.md) |
+| 4 | **Produce a proof-of-concept package outside the domain model** | hand-built; proves the target before any RegOS code | ⚪ **next** |
 | 5 | **Only then design the generation pipeline** | Phase 2 | ⚪ |
 
-**Task 1 chose LORENZ eValidator Basic against the US eCTD 3.2 (FDA) profile,
-and the choice is recorded with its open questions in
-[docs/evidence/EPIC-007a/](../../evidence/EPIC-007a/README.md).** It is
-*decided* rather than *verified*: the tool is Windows software, the development
-machine is macOS, and whether the free edition includes the profile and accepts
-a package of our shape is unknown until it is in hand. Each of those can fail
-Task 1, and the record lists them as checkboxes rather than assertions.
+**Task 1 failed as scoped, and the failure is recorded rather than worked
+around.** LORENZ eValidator Basic is commercial, Windows-only, and no licence is
+available to this project. What the epic said would happen if Task 1 failed was
+to say so — not to describe self-validation as external evidence.
 
-**Task 2 pins FDA eCTD v3.2.2**, deliberately not v4.0 as well. FDA supports
-both; supporting both here would double the surface before one package has ever
-validated, and would make a failure ambiguous — we would not know which target
-we had got wrong.
+It did not collapse the epic to Level 1, because the primary sources arrived
+instead: **FDA's actual `us-regional-v3-3.dtd`**, the ICH v3.2.2 specification,
+FDA's worked example submissions, and the submission type/sub-type tables. A DTD
+plus any third-party parser is Level 2a, free and offline; published examples are
+Level 3. Only FDA's business rules (2b) remain blocked, and they are carried.
+
+**Task 2 was incomplete as first recorded.** It pinned one version where there
+are two: the ICH backbone and the FDA regional backbone version independently,
+and `submission-sub-type` — required on every sequence — exists only from
+regional v3.3.
+
+**Task 3 found more than a mapping**, and its findings are what Phase 2 must
+answer. They are summarised below.
 
 ### Evidence is archived, not summarised
 
@@ -108,6 +122,49 @@ package that was checked. The acceptance rule is written there:
 is reachable, this epic's central claim collapses to Level 1 and the honest
 response is to say so in the DoD and reconsider the priority call — not to
 proceed and describe self-validation as external evidence.
+
+### What Task 3 found
+
+The mapping was written to be falsified. Reading it against the primary sources
+changed three things and broke two.
+
+**1. `submission-id` groups sequences into a regulatory activity — and the DTD
+makes it mandatory.** `submission-type` attaches to the activity;
+`submission-sub-type` attaches to the sequence. FDA's own IND examples show
+sequences 0001–0002 as one activity and 0003–0004 as another.
+
+> **That is EPIC-004's hypothesis 1**, which the retro carried with *the first EU
+> market or US supplement* as its milestone. It arrived from the plain US IND
+> case instead. On this evidence the activity owns a fact neither neighbour can:
+> an application has many activities, a sequence has exactly one.
+>
+> **It is not settled.** RegOS could carry the type on the submission and derive
+> the grouping; whether that is a contradiction or a denormalisation is the
+> question Phase 2 now gets to ask with evidence in hand rather than in the
+> abstract.
+
+**2. `Unchanged` is dropped, and that is ADR-045 working.** The ICH operation
+enumeration is exhaustive — `new | append | replace | delete` — with no
+*unchanged*. A RegOS sequence holds the whole dossier; an eCTD sequence holds
+only what changed. The renderer emitting nothing for `Unchanged` **is** the
+cumulative-to-delta derivation, and the target format wants exactly the
+increment ADR-045 said RegOS would derive.
+
+**3. A withdrawal has no file, in the spec's words and ours.** ICH: *"there is no
+new file submitted… the checksum attribute value will be empty."* S006's read
+model returns a null version *"exactly when the event is a withdrawal — nothing
+was placed."* Two independent models, the same absence, the same reason.
+
+**4. The seeded FDA IND blueprint mislabels section 1.13.** Ours is
+*Investigator's Brochure*; FDA's `m1-13` is the **Annual Report**, and the IB
+lives at `m1-14-4-1`. A regulatory-accuracy defect in EPIC-001 seed data, latent
+since seeding, found only because an external reference was finally consulted.
+**Not fixed here** — changing a seeded section code moves deterministic ids and
+every blueprint-bound submission, so it needs a story and a migration.
+
+**5. RegOS numbers from 0000; every FDA example numbers from 0001.** ICH's own
+example uses 0000, so this is legal (2a) and possibly unconventional (3) — the
+clearest argument yet that separating those levels was worth doing.
 
 ### In scope ✅
 
@@ -143,11 +200,13 @@ proceed and describe self-validation as external evidence.
 - Lifecycle operations are **rendered from the frozen values**, and a paper or
   NeeS submission is proven not to reach the eCTD renderer (ADR-047 §4 asserted
   the derivation is format-independent; this asserts the *rendering* is not).
-- **At least one representative package is accepted by an independent
-  validator.** Manual invocation is acceptable and must be documented so it is
-  reproducible.
-- Where published FDA/ICH examples cover a construct, ours is compared against
-  them and differences are explained rather than absorbed.
+- **At least one representative package is DTD-valid (Level 2a)**, checked by a
+  third-party parser against the DTDs held in `docs/evidence/EPIC-007a/spec/`,
+  with the invocation documented so it is reproducible.
+- **Compared against FDA's published example submissions (Level 3)** — where an
+  example covers a construct, ours is diffed against it and differences are
+  explained rather than absorbed.
+- **No document describes a package as "validated" without naming the level.**
 - ADR written for whatever Phase 2 decides the package *is*.
 
 **Still carried, and stated so the epic cannot be overclaimed:**
@@ -155,9 +214,15 @@ proceed and describe self-validation as external evidence.
 | # | Hypothesis | Why a validator cannot settle it |
 |---|---|---|
 | **4** | a document that moves section is `delete` + `new` | both readings produce legal XML |
-| **5** | `Append` is unexercised in FDA practice | legality says nothing about usage |
+| **5** | `Append` is unexercised in FDA practice | legality says nothing about usage — though the Tech Guide now says *"the use of 'append' is not common… consider consolidating and using replace"*, which is guidance, not usage data |
 | **6** | `modified-file` is publication metadata, not recoverable later | a validator checks the pointer resolves, not whether we could have reconstructed it |
 | **7** | lifecycle belongs to the placement, not the document | both readings validate |
+
+Plus one **added** by Task 3, and it is the largest:
+
+| # | Hypothesis | Milestone |
+|---|---|---|
+| **1** | the regulatory activity is a real object | **moved.** Was *first EU market or US supplement*; the FDA regional DTD requires `submission-id` to group sequences into one, so it is now testable in **Phase 2 of this epic** |
 
 > **A validator answers *"is this legal?"*. None of the four is a legality
 > question** — they are all *"what does industry actually do"*, which is Level 3
@@ -212,5 +277,18 @@ work already done.**
 
 ## Phase 2 — Domain design
 
-*Not started. Blocked on Phase 1 task 1 — the oracle decides the target, and the
-target decides the design.*
+*Not started. Phase 1 tasks 1–3 are closed; task 4 — a hand-built package that a
+parser accepts — comes first, because the target should be proven before any
+RegOS code assumes it.*
+
+**Phase 2 opens on the question Task 3 raised**, not on the renderer:
+
+> **Is the regulatory activity a real object, or is `submission-id` a grouping
+> RegOS can derive?**
+
+Everything the mapping lists as blocking hangs off the answer —
+`submission-type` belongs to the activity if there is one and to the submission
+if there is not, and `submission-sub-type` belongs to the sequence either way.
+That is the same shape as EPIC-004's Phase 2, which opened on *what business
+thing survives after sequence 0003 has been transmitted?* and found the answer
+was already modelled.

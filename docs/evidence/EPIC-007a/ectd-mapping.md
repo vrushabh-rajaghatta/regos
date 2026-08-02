@@ -1,136 +1,298 @@
-# eCTD v3.2.2 → RegOS mapping
+# eCTD → RegOS mapping
 
-**Status: draft, unvalidated.** Every row is a claim that the oracle can refute.
-That is the point — this is an evidence-producing artifact, not a design
-proposal, and it is written to be **falsifiable** rather than to be right.
+**Target: ICH eCTD v3.2.2 backbone + FDA us-regional DTD v3.3.**
 
-## How to read the confidence column
+Grounded in the primary sources: the ICH specification (16-July-2008), FDA's
+[us-regional-v3-3.dtd](spec/us-regional-v3-3.dtd) — held in this repository
+because **every package must ship it in `util/dtd/`** — FDA's *Example
+Submissions using the eCTD Backbone Files Specification for Module 1* v1.4, the
+*eCTD Submission Types and Subtypes* tables, and the *eCTD Technical Conformance
+Guide* v1.8.
+
+## Confidence
 
 | | |
 |---|---|
-| **spec** | confirmed against a cited FDA/ICH source |
+| **spec** | read off the DTD or a cited specification passage |
 | **model** | confirmed against the RegOS codebase |
-| **assumed** | my reading of eCTD, **not yet checked against the specification** — the rows most likely to be wrong |
+| **assumed** | still my reading — the rows most likely to be wrong |
 
-> **Nothing here is confirmed by a validator.** Task 1 has not produced a run.
-> Until it does, this document's status is *"what we believe we must emit"*,
-> which is Level 1 — and the epic is explicit that Level 1 is not evidence.
+> **No validator has run.** Structural conformance to the DTD is checkable
+> offline with any parser and is the epic's near-term evidence; FDA's *business*
+> rules are not, and nothing here claims otherwise.
 
 ---
 
-## 1. The finding that changes the model
+## 1. The finding that is not about the mapping
 
-FDA requires **two** attributes on every sequence, and they are independent
-axes:
+**`submission-id` groups sequences into a regulatory activity, and the DTD makes
+it mandatory.**
 
-> *"A Submission type attribute is required for every sequence, and an
-> additional attribute of submission-sub-type is required when utilizing M1 DTD
-> v3.3."* — FDA eCTD Technical Conformance Guide
+```
+submission-information (submission-id, sequence-number, form?)
+  submission-id    @submission-type      #REQUIRED
+  sequence-number  @submission-sub-type  #REQUIRED
+```
 
-| | Answers | RegOS |
+The two attributes are **not both per-sequence**, which is what I assumed before
+reading the DTD. They hang off different elements:
+
+| | Attaches to | Answers |
 |---|---|---|
-| `SubmissionType` (ours) | **what regulatory application is this?** — IND, NDA, BLA, 510(k) | ✔ seeded reference data |
-| `submission-type` (eCTD) | **what kind of sequence is this?** — original-application, amendment, supplement, report | ✖ **no field** |
-| `submission-sub-type` (eCTD) | **which stage within that?** — e.g. presubmission vs application | ✖ **no field** |
+| `submission-type` | `submission-id` — **the activity** | what regulatory activity is this? (`fdast1` original-application, `fdast5` annual-report, `fdast9` IND safety report) |
+| `submission-sub-type` | `sequence-number` — **the sequence** | what is this sequence doing to that activity? (`fdasst3` application, `fdasst4` amendment, `fdasst6` report) |
 
-**This is [ADR-047 §6](../../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md)'s
-deferred sub-type, and it resolves the question S004 refused to guess at.**
+FDA's own IND examples show the grouping directly:
 
-S004 could not choose between two readings — a *taxonomy* beneath
-`SubmissionType`, or an *independent axis*. FDA answers it: `submission-type`
-sits beside our `SubmissionType`, not beneath it, and `submission-sub-type` is a
-third level beneath *that*. Neither is a refinement of what we already hold.
+| Example | Description | submission-id | sequence | type / sub-type |
+|---|---|---|---|---|
+| #21 | Initial IND | **0001** | 0001 | original-application / application |
+| #22 | Protocol Amendment | **0001** | 0002 | original-application / **amendment** |
+| #23 | Initial Safety Report | **0003** | 0003 | IND safety report / report |
+| #24 | Safety Report Follow-up | **0003** | 0004 | IND safety report / **amendment** |
 
-> S004's refusal was correct, and this is why: **had we guessed, we would have
-> guessed the taxonomy** — the reading that puts a sub-type under
-> `SubmissionType`. FDA's model is the other one.
+> Sequences 0001 and 0002 are **one** regulatory activity. 0003 and 0004 are
+> another. The `submission-id` is the sequence number that *started* the
+> activity, and every later sequence amending it repeats that number.
 
-FDA publishes the controlled vocabulary as a dedicated document
-([eCTD Submission Types and Subtypes](https://www.fda.gov/media/111237/download)),
-which makes this **reference data**, not an enum.
+### Why this matters beyond eCTD
+
+**This is EPIC-004's hypothesis 1** — *the regulatory activity is a real object* —
+and it now has evidence. The epic recorded it as carried, falsified or confirmed
+**at the first EU market or US supplement**. It arrived earlier, and from the
+plain US IND case the model was built on.
+
+The founder's test for a tier was that it must **own a business fact neither
+neighbour can own without contradiction**. On this evidence it owns one:
+`submission-type` is a property of the activity, not of the sequence, and not of
+the application — an application has many activities, and a sequence has exactly
+one.
+
+**This does not settle it.** RegOS could carry `submission-type` on the
+submission and derive the grouping, and whether that is a contradiction or merely
+a denormalisation is a Phase 2 question, not a Phase 1 conclusion. What has
+changed is that the hypothesis is now **testable here** rather than waiting for a
+market we do not serve.
+
+### Correction to record
+
+My earlier note said the eCTD vocabulary values were words like
+`original-application`. They are not. **The attribute values are opaque tokens** —
+`fdast1`, `fdasst4`, `fdaat4` — and the readable phrase appears only in an XML
+comment beside them. Anything RegOS seeds must store the token; the phrase is a
+label.
 
 ---
 
 ## 2. Backbone element → RegOS source
 
-### `index.xml` — the ICH backbone
+Two backbone files per sequence, two DTDs, one placement model. Module 1 leaves
+live in `us-regional.xml`; Modules 2–5 live in `index.xml`. `index.xml`'s m1
+element holds exactly one leaf pointing at the regional file, and per ICH
+Appendix 6 **its operation is always `new`**.
 
-| eCTD | RegOS source | Confidence | |
+### `index.xml` — the ICH backbone (Modules 2–5)
+
+| eCTD | RegOS source | | |
 |---|---|---|---|
-| module elements `m1`…`m5` | `TemplateSection.Code` (`1.1`, `2.3`, `3.2.S.2`) | model | ✔ |
-| `leaf/@operation` | `SubmissionDocument.Operation` — **frozen at publish**, never recomputed | model | ✔ |
-| `leaf/@modified-file` | `SubmissionDocument.ReplacesSubmissionDocumentId` | model | ✔ |
-| `leaf/@checksum`, `@checksum-type` | derived from `IFileStorage.OpenRead` (MD5) | model | ✔ |
-| `leaf/@xlink:href` | derived — the path within the sequence folder | assumed | ⚠ |
-| `leaf/title` | `ProductDocument` name | model | ✔ |
-| `leaf/@ID` | **no stable source.** `SubmissionDocumentId` is per-submission; an eCTD leaf ID must be stable *across* sequences for `modified-file` to resolve | assumed | ✖ **open** |
-| `@dtd-version` | constant for the pinned version | spec | ✔ |
+| module/section elements | `TemplateSection.Code` → `m2-3-quality-overall-summary` etc. | spec | ✔ |
+| `leaf/@operation` `(new\|append\|replace\|delete)` | `SubmissionDocument.Operation`, frozen at publish | spec | ✔ |
+| `leaf/@modified-file` | `ReplacesSubmissionDocumentId` + the prior `SequenceNumber` | spec | ✔ |
+| `leaf/@checksum`, `@checksum-type` | MD5 over the stored bytes via `IFileStorage` | spec | ✔ |
+| `leaf/@xlink:href` | relative path within the sequence folder | spec | ✔ |
+| `leaf/title` | `ProductDocument` name — ≤512 chars, no section number | spec | ✔ |
+| `leaf/@ID` | `SubmissionDocumentId`, **prefixed** — see §3.1 | spec | ✔ |
+| `@dtd-version` | fixed `"3.2"` | spec | ✔ |
+| `index-md5.txt` | MD5 of `index.xml`, beside it | spec | ✔ |
 
 ### `us-regional.xml` — FDA Module 1
 
-| eCTD | RegOS source | Confidence | |
+| eCTD | RegOS source | | |
 |---|---|---|---|
-| application number | `RegulatoryApplication.ApplicationNumber` | model | ⚠ **nullable, and no fixture sets one** |
-| sequence number | `Submission.SequenceNumber` | model | ✔ |
-| `submission-type` | — | spec | ✖ **gap** |
-| `submission-sub-type` | — | spec | ✖ **gap** |
-| `submission-id` | relates to sequence number, rules differ by regulatory activity | assumed | ⚠ |
-| applicant / sponsor | `RegulatoryApplication.ApplicantOrganizationId` → `Organization` | model | ⚠ attribute-level mapping unchecked |
-| contacts | **`SubmissionRole`** (EPIC-004 S005) | assumed | ⚠ **worth checking** |
+| `applicant-info/id` | **DUNS number** — no field | spec | ✖ **gap** (`999999999` permitted, Tech Guide 3.1.1) |
+| `applicant-info/company-name` | `Organization.LegalName` of the applicant | model | ✔ |
+| `submission-description?` | `Submission.Title` | model | ⚠ optional; ours is free text |
+| `application-number` `@application-type` | `RegulatoryApplication.ApplicationNumber`; type from `SubmissionType` → `fdaat4` (IND) | model | ⚠ **nullable, no fixture sets one** |
+| `cross-reference-application-number*` | — | spec | ✖ gap (DMF references; not needed for MVP) |
+| `submission-id` `@submission-type` | **the regulatory activity** — see §1 | spec | ✖ **gap** |
+| `sequence-number` `@submission-sub-type` | `Submission.SequenceNumber` + sub-type | model/spec | ⚠ number ✔, sub-type ✖ |
+| `application-containing-files` | `true` — grouped submissions are out of scope | spec | ✔ |
+| `form?` `@form-type` | the primary form; **`fdaft1` = Form FDA 1571 for an IND** | spec | ✖ gap — no form concept |
 
-> The contacts row is the one I most want the spec to confirm. S005 modelled
-> *the people named on a filing, frozen at publication* without any eCTD input.
-> If the regional envelope's contact elements are what it maps to, that is
-> independent corroboration of a design decision made for entirely internal
-> reasons. If it maps to nothing, S005 is still correct and simply not
-> rendered — but the claim should not be made either way until checked.
+### `applicant-contacts` — and S005
 
----
+```
+applicant-contacts (applicant-contact+)              ← at least one, mandatory
+  applicant-contact (applicant-contact-name, telephones, emails)
+    applicant-contact-name  @applicant-contact-type  #REQUIRED
+    telephones (telephone+) @telephone-number-type   #REQUIRED
+    emails (email+)
+```
 
-## 3. Open questions this raises
+**S005 is corroborated.** The regional envelope requires **at least one named
+person, each carrying a required role type**, in every sequence's own file —
+which is precisely *the people named on a filing, frozen at publication*. That
+design was reached for entirely internal reasons (ADR-048), with no eCTD input,
+and the spec independently demands the same shape.
 
-1. **Leaf ID stability.** `modified-file` in sequence 0003 points at a leaf filed
-   in 0001. Our `SubmissionDocumentId` is per-submission, so the pointer
-   resolves *within our model* (ADR-045 stores the prior `SubmissionDocumentId`)
-   — but whether the **emitted XML** needs an ID stable across sequences is
-   unchecked. If it does, the ID we emit is not the ID we store.
-2. **The application number is nullable and unset.** Whether the validator
-   requires one syntactically, checks it against a pattern, or accepts a
-   documented placeholder is a Task 1 question — **not** something to hard-code
-   as `000000` in advance.
-3. **Two versions are pinned, not one.** Task 2 pinned *eCTD v3.2.2*, but the
-   regional Module 1 DTD carries its **own** version (v3.3 in current FDA
-   guidance), and `submission-sub-type` is conditional on it. **Task 2 is
-   incomplete as recorded** and needs the M1 DTD version pinned separately.
-4. **`Unchanged` has no eCTD equivalent.** ADR-045 kept it deliberately — a
-   cumulative filing carries documents forward untouched, and *nothing happened
-   to it* must be distinguishable from *not filed yet*. eCTD emits no operation
-   for those leaves. **The renderer must drop them, and dropping them must not
-   look like a bug.**
+Two honest qualifications:
+
+- **The vocabulary is not ours.** FDA's types are `fdaact1` regulatory,
+  `fdaact2` technical, `fdaact4` promotional. RegOS seeds *Qualified Person*,
+  *Regulatory Contact*. `ContactRole` is a real controlled vocabulary — it is
+  simply **a different one**, and a mapping is owed.
+- **Telephone and email are mandatory** (`telephones (telephone+)`,
+  `emails (email+)`). `Contact` must be checked for both; if either is optional
+  or absent, a package cannot be built from a contact that lacks it.
 
 ---
 
-## 4. What would falsify this document
+## 3. What the specification settled
 
-- the validator rejects a package built to this mapping
-- the M1 DTD's actual element names or cardinalities differ from the rows above
-- `submission-type` turns out to be derivable from something we already hold
-  *(would collapse the gap in §1 and make ADR-047 §6 moot)*
-- leaf IDs turn out to need no cross-sequence stability
-  *(would close open question 1)*
+### 3.1 Leaf IDs — resolved, and simpler than feared
+
+The open question was whether an eCTD leaf ID must be stable *across* sequences.
+It must not. ICH Appendix 6:
+
+> `modified-file="../0001/index.xml#a1234567"`
+
+The pointer carries **the sequence folder and the target leaf's ID**. Each leaf
+gets its own ID in its own sequence; nothing is reused. So
+`SubmissionDocumentId` — per placement, exactly what a leaf is — can be the
+emitted ID.
+
+One constraint: an XML `ID` must begin with a letter or underscore, and the spec
+says so explicitly. A GUID beginning with a digit is invalid, so the emitted
+value needs a fixed prefix. **The ID we emit is the ID we store, with a letter in
+front of it.**
+
+### 3.2 `Unchanged` is dropped — and that is the product thesis working
+
+The ICH DTD is exhaustive: `operation (new | append | replace | delete)
+#REQUIRED`. There is no *unchanged*.
+
+Under ADR-045 a RegOS sequence 0001 holds the **whole dossier**, most of it
+`Unchanged`. An eCTD sequence 0001 holds **only what changed**. So the renderer
+emits a leaf for `New`, `Replace` and `Delete`, and emits nothing at all for
+`Unchanged`.
+
+> That is not an impedance mismatch to work around. **It is the reason the
+> cumulative model can produce eCTD at all**: the user maintains regulatory
+> state, RegOS derives the increment, and the increment is exactly what the
+> specification wants. ADR-045's central claim is confirmed by the shape of the
+> target format.
+
+### 3.3 A withdrawal has no file, and the spec says so in our words
+
+ICH Appendix 6, Table 6-3, on `delete`:
+
+> *"There is no new file submitted in this case… As there is no file being
+> submitted, the checksum attribute value will be empty i.e., double quotation
+> marks with no entry between."*
+
+S006's read model returns `versionNumber: null` and `attachedOnUtc: null`
+"exactly when the event is a withdrawal — nothing was placed." The spec emits
+`checksum=""` and `xlink:href=""` for the same reason. **Two independent models,
+the same absence, for the same stated reason.**
+
+### 3.4 Folder structure and naming
+
+```
+<application>/            e.g. ctd-123456 — same across all sequences
+  0000/                   4-digit sequence folder
+    index.xml
+    index-md5.txt
+    m1/us/us-regional.xml
+    m2/ m3/ m4/ m5/
+    util/dtd/  util/style/
+```
+
+| Rule | Source |
+|---|---|
+| lowercase only; `[a-z0-9-]`; no space, dot, underscore | ICH App 2 |
+| ≤64 chars per folder/file name | ICH App 2 |
+| **≤150 chars for the whole path** | FDA Tech Guide 2.4 *(stricter than ICH's 230)* |
+| leaf title ≤512 chars, and **must not contain the section number** | FDA Tech Guide 2.4 |
+
+---
+
+## 4. Two defects this comparison found in RegOS
+
+### 4.1 The seeded FDA IND blueprint mislabels section 1.13
+
+`RegulatoryTemplates.cs` seeds Module 1 as
+`1.1 Forms · 1.2 Cover Letter · 1.3 Administrative Information · 1.4 References ·
+1.13 Investigator's Brochure · 1.14 Labeling`.
+
+Against the FDA DTD:
+
+| Ours | FDA regional element | |
+|---|---|---|
+| 1.1 Forms | `m1-1-forms` | ✔ |
+| 1.2 Cover Letter | `m1-2-cover-letters` | ✔ |
+| 1.3 Administrative Information | `m1-3-administrative-information` | ✔ |
+| 1.4 References | `m1-4-references` | ✔ |
+| **1.13 Investigator's Brochure** | `m1-13-annual-report` | ✖ **wrong** |
+| 1.14 Labeling | `m1-14-labeling` | ✔ |
+
+FDA's 1.13 is the **Annual Report**. The Investigator's Brochure lives at
+`m1-14-4-1-investigational-brochure`, beneath Labeling.
+
+This is EPIC-001 seed data — a regulatory-accuracy defect, not a code defect, and
+exactly the kind only an external reference can find. It has been latent since
+the blueprint was seeded, and every FDA IND fixture in the test suite carries it.
+
+**Not fixed here.** Correcting a seeded section code changes deterministic ids
+and every blueprint-bound submission in the database; it belongs in a story with
+a migration, not in a Phase 1 documentation pass.
+
+### 4.2 Sequence numbering starts in a different place
+
+RegOS numbers the first sequence **0000** (ADR-044). ICH's own example does the
+same (`ctd-123456/0000` = Original Submission). But **every FDA example numbers
+from 0001**, and the Tech Guide says *"begin with sequence number 0001"*.
+
+A Level 2 question (is 0000 legal?) and a Level 3 question (is it what FDA
+expects?) with possibly different answers — which is the clearest argument yet
+that the two levels are worth separating.
+
+---
+
+## 5. What RegOS does not have
+
+Ordered by how much of a package is impossible without it:
+
+| Missing | Needed for | Weight |
+|---|---|---|
+| `submission-type` / `submission-sub-type` | every sequence | **blocking** |
+| the regulatory activity that `submission-id` names | every sequence | **blocking** |
+| DUNS number on the applicant organization | every sequence | blocking (placeholder permitted) |
+| an application number that is actually set | every sequence | blocking (nullable today) |
+| the FDA form (1571/356h) as a first-class placement | every sequence | blocking |
+| contact telephone and email | every sequence | blocking if `Contact` lacks them |
+| a mapping from `ContactRole` to `applicant-contact-type` | every sequence | blocking |
+| cross-reference application numbers (DMF) | some | deferrable |
+| STF | Modules 4–5 study reports | **EPIC-007b** |
+
+---
+
+## 6. What would falsify this document
+
+- a parser rejects a package built to this mapping against the DTDs in `spec/`
+- FDA's published example XML differs structurally from what we emit
+- `submission-type` turns out to be derivable from `SubmissionType` + context
+  *(would collapse §1 and make ADR-047 §6 moot)*
+- the regulatory activity turns out to own nothing a submission cannot
+  *(would leave hypothesis 1 carried, and §1 would be a denormalisation note)*
 
 ---
 
 ## Sources
 
-- [eCTD Technical Conformance Guide — Technical Specifications Document](https://www.fda.gov/media/93818/download)
-- [eCTD Submission Types and Subtypes](https://www.fda.gov/media/111237/download)
-- [Example Submissions using the eCTD Backbone Files Specification for Module 1](https://www.fda.gov/media/83809/download)
-- [Electronic Common Technical Document (eCTD) — FDA](https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/electronic-common-technical-document-ectd)
+Supplied by the founder 2026-08-02 and read in full:
 
-> **Two fetches failed while writing this** — `accessdata.fda.gov/static/eCTD/us-regional-v3-3.dtd`
-> and the eCTD v3.2.2 submission-standards page both returned 404. The DTD's
-> actual declarations are therefore **unread**, which is why every
-> `us-regional.xml` row above is marked *assumed* rather than *spec*. Retrieving
-> that DTD is the next thing that would raise this document's confidence, and it
-> needs no validator.
+- ICH, *Electronic Common Technical Document Specification v3.2.2*, 16-July-2008 — Appendices 2, 4, 6, 8
+- FDA, `us-regional-v3-3.dtd` — held at [`spec/us-regional-v3-3.dtd`](spec/us-regional-v3-3.dtd)
+- FDA, *Example Submissions using the eCTD Backbone Files Specification for Module 1*, v1.4
+- FDA, *eCTD Submission Types and Subtypes* — Tables 1 and 2
+- FDA, *eCTD Technical Conformance Guide*, v1.8, November 2022
