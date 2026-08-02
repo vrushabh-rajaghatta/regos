@@ -26,6 +26,13 @@ public static class RegulatoryTemplateErrors
     public const string VersionAlreadyPublished =
         "The version is already published.";
 
+    public const string OnlyPublishedVersionsCanBeDeprecated =
+        "Only a published version can be deprecated — a draft that should not "
+        + "be used is discarded, not deprecated.";
+
+    public const string VersionAlreadyDeprecated =
+        "The version is already deprecated.";
+
     public const string SectionCodeRequired =
         "Template section code is required.";
 

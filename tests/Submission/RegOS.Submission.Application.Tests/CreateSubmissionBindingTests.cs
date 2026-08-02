@@ -136,6 +136,61 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
         detail!.BoundTemplate.Should().BeNull();
     }
 
+    [Fact]
+    public async Task Create_BindsToThePublishedVersion_NeverADeprecatedOne()
+    {
+        await using var ctx = New();
+        var applicationId = await IndApplicationAsync(ctx);
+
+        var submission = await CreateAsync(ctx, applicationId, "IND not deprecated");
+
+        var bound = await ctx.RegulatoryTemplates
+            .AsNoTracking()
+            .Include(t => t.Versions)
+            .Where(t => t.Id == FdaIndCtd)
+            .SelectMany(t => t.Versions)
+            .SingleAsync(v => v.Id == submission.BoundTemplateVersionId!.Value);
+
+        // EPIC-007a S002: v1 of this blueprint mislocated the Investigator's
+        // Brochure and was superseded rather than edited. A new submission must
+        // never bind to it — that is what deprecation is for.
+        bound.Status.Should().Be(TemplateVersionStatus.Published);
+        bound.VersionNumber.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task ADeprecatedVersion_StaysIntactAndAttractsNothingNew()
+    {
+        await using var ctx = New();
+
+        var deprecated = await ctx.RegulatoryTemplates
+            .AsNoTracking()
+            .Include(t => t.Versions)
+                .ThenInclude(v => v.Sections)
+            .Where(t => t.Id == FdaIndCtd)
+            .SelectMany(t => t.Versions)
+            .Where(v => v.Status == TemplateVersionStatus.Deprecated)
+            .ToListAsync();
+
+        deprecated.Should().NotBeEmpty(
+            "S002 superseded v1 of the FDA IND blueprint rather than editing it");
+
+        // Retained, not emptied or removed (ES-018). A filing made against this
+        // version has to stay explicable, so its structure survives verbatim —
+        // including the 1.13 that sent it here.
+        deprecated.Should().AllSatisfy(v => v.Sections.Should().NotBeEmpty());
+        deprecated.SelectMany(v => v.Sections)
+            .Should().Contain(s => s.Code == "1.13"
+                && s.Title == "Investigator's Brochure");
+
+        // What deprecation actually stops.
+        var applicationId = await IndApplicationAsync(ctx);
+        var submission = await CreateAsync(ctx, applicationId, "IND post-deprecation");
+
+        deprecated.Select(v => v.Id)
+            .Should().NotContain(submission.BoundTemplateVersionId!.Value);
+    }
+
     private async Task<SubmissionAggregate> CreateAsync(
         RegOSDbContext ctx,
         RegulatoryApplicationId applicationId,

@@ -15,7 +15,7 @@ import { test, api, collectErrors, sessionCookies, API_URL } from "./support";
  * because that is what this story added.
  */
 const FDA_IND_CTD = "60000000-0000-0000-0000-000000000001";
-const FDA_IND_SUBMISSION_TYPE = "40000000-0000-0000-0000-000000000008";
+const FDA_IND_APPLICATION_TYPE = "40000000-0000-0000-0000-000000000008";
 const FDA = "20000000-0000-0000-0000-000000000001";
 const UNITED_STATES = "10000000-0000-0000-0000-000000000001";
 
@@ -38,7 +38,10 @@ test.describe("Submission content plan", () => {
       await api(`/reference-data/templates/${FDA_IND_CTD}`)
     ).json();
 
-    const version = template.versions[0];
+    // The version in force, not whichever came back first: the FDA IND
+    // blueprint carries a deprecated v1 alongside the published v2
+    // (EPIC-007a S002), and a submission binds to the published one.
+    const version = template.versions.find((v: { status: string }) => v.status === "Published");
     const requirements: Requirement[] = version.requiredDocuments.filter(
       (d: Requirement) => d.isMandatory,
     );
@@ -126,16 +129,15 @@ test.describe("Submission content plan", () => {
     const errors = collectErrors(page);
     const unique = Date.now();
 
-    // A device type under the same authority: no blueprint targets it.
+    // A device-type APPLICATION under the same authority: no blueprint
+    // targets it. Since EPIC-007a S001 the classification belongs to the
+    // application, so an unbound submission needs an unbound application to
+    // live under — a submission can no longer pick a type of its own.
     const FDA_510K = "40000000-0000-0000-0000-000000000001";
 
     const globalProductId = await createProduct(unique);
-    const applicationId = await createApplication(globalProductId);
-    const submissionId = await createSubmission(
-      applicationId,
-      unique,
-      FDA_510K,
-    );
+    const applicationId = await createApplication(globalProductId, FDA_510K);
+    const submissionId = await createSubmission(applicationId, unique);
 
     await page.goto(
       `/regulatory/products/${globalProductId}/applications/${applicationId}` +
@@ -177,7 +179,10 @@ async function createProduct(unique: number): Promise<string> {
   return (await response.json()).id;
 }
 
-async function createApplication(globalProductId: string): Promise<string> {
+async function createApplication(
+  globalProductId: string,
+  applicationTypeId: string = FDA_IND_APPLICATION_TYPE,
+): Promise<string> {
   const organizations = await (await api("/api/organizations")).json();
 
   const applicant = organizations.find(
@@ -191,6 +196,7 @@ async function createApplication(globalProductId: string): Promise<string> {
     body: JSON.stringify({
       countryId: UNITED_STATES,
       authorityId: FDA,
+      applicationTypeId,
       applicantOrganizationId: applicant.id,
       name: "Browser Content Plan Application",
     }),
@@ -204,12 +210,10 @@ async function createApplication(globalProductId: string): Promise<string> {
 async function createSubmission(
   applicationId: string,
   unique: number,
-  submissionTypeId: string = FDA_IND_SUBMISSION_TYPE,
 ): Promise<string> {
   const response = await api(`/applications/${applicationId}/submissions`, {
     method: "POST",
     body: JSON.stringify({
-      submissionTypeId,
       title: `Browser Content Plan Submission ${unique}`,
     }),
   });

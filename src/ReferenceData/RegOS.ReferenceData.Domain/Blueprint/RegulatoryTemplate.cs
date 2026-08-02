@@ -144,6 +144,19 @@ public sealed class RegulatoryTemplate
     }
 
     /// <summary>Publishes (freezes) one of this template's versions.</summary>
+    /// <summary>
+    /// Marks a published version superseded. Nothing new binds to it; every
+    /// submission already bound keeps working against it.
+    /// </summary>
+    public void DeprecateVersion(RegulatoryTemplateVersionId versionId)
+    {
+        var version = _versions.FirstOrDefault(v => v.Id == versionId)
+            ?? throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.VersionNotFound);
+
+        version.Deprecate();
+    }
+
     public void PublishVersion(
         RegulatoryTemplateVersionId versionId,
         DateOnly? effectiveFrom,

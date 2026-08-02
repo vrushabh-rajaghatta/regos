@@ -445,3 +445,58 @@ exactly what a per-sequence classification permitted.
 **Two grandfathered lists shrank and neither grew.** The new query folder
 satisfies SC-003 outright, and `/submission-types` came off the SC-001 route
 exemption by moving under `/api`.
+
+---
+
+## S002 — FDA Module 1 corrected, through the versioning mechanism ✅
+
+Shipped 2026-08-02. 624 domain/architecture tests, 91 browser tests.
+
+It looked like fixing a typo. **The aggregate refused the shortcut, and that
+refusal turned out to be the story.**
+
+`AddSection` requires a **Draft**; the seeded version is **Published**. So the
+correction could not edit the blueprint — it had to *supersede* it. The
+mechanism was already there and had simply never been exercised.
+
+| | |
+|---|---|
+| **v1** | retained verbatim, defect included, **Deprecated** |
+| **v2** | corrected, **Published** — 1.13 becomes *Annual Report*, the brochure moves to **1.14.4.1** |
+
+**Not a caption fix.** FDA's DTD (line 99) gives `m1-13-annual-report`, so a
+v1-bound submission would render the Investigator's Brochure *into the annual
+report node*. A wrong package, not a wrong label. `1.14` was always right.
+
+**Three things this proved, none of which was the 1.13 correction:**
+
+1. **Zero placement rows moved.** The 36 submissions bound to v1 keep pointing
+   at v1's sections. Deprecation removes a version from *future* binding and
+   touches nothing already bound — no FK rewrite anywhere.
+2. **A clean clone and an upgraded database are identical.** The seed reproduces
+   history — wrong v1, then corrected v2 — because a silently-fixed v1 would
+   give two installations two different pasts. Verified by diffing a fresh
+   database against a clone of the dev one: same versions, same statuses, same
+   section counts.
+3. **The initializer is now idempotent per *version*, not per template.** It
+   used to skip any template whose id already existed, which meant a blueprint
+   could never be corrected after its first insert. Existing databases now
+   receive new versions from the same code a fresh clone runs — one source of
+   truth, so the two cannot drift.
+
+**Section ids are generated, not deterministic**, so nothing addresses "the 1.13
+row" by id. Seed and database share exactly one stable identity: the version
+*number*.
+
+**Depth was the real implementation risk, and it was checked rather than
+assumed.** `1.14.4.1` is RegOS's first four-deep section. Both the server's tree
+builder and `ContentPlanSectionTree` proved genuinely recursive — and the
+browser suite confirmed it renders, by failing first on a count of 40 where a
+stale spec still expected 38.
+
+### Deferred, deliberately
+
+**Rebinding a draft to the current blueprint** is its own story. 33 drafts sit
+on v1; moving them automatically would change what someone's draft means
+underneath them. That is a user's decision, not a side effect of correcting
+reference data.

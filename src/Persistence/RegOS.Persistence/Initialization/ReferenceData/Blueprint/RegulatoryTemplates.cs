@@ -34,9 +34,41 @@ internal static class RegulatoryTemplates
             new ApplicationTypeId(ApplicationTypeIds.FdaInd),
             "ICH eCTD / FDA");
 
+        // ── v1 — as first published, including its defect ────────────────────
+        //
+        // This version is WRONG: it places the Investigator's Brochure at 1.13,
+        // which FDA's us-regional DTD defines as m1-13-annual-report (evidence
+        // E9). It is reproduced here exactly as it shipped, and deprecated
+        // below rather than corrected.
+        //
+        // The seed reproduces history because history has to be reproducible:
+        // a freshly cloned database and an upgraded one must contain the same
+        // blueprint evolution. Silently fixing v1 here would give two
+        // installations two different pasts — and would edit a published
+        // version, which the aggregate refuses anyway.
         var v1 = template.StartDraftVersion();
+        AddFdaIndModule1AsFirstPublished(template);
+        AddHarmonizedCtdModules(template, "FDA-IND");
+        template.PublishVersion(v1.Id, new DateOnly(2026, 1, 1), DateTime.UtcNow);
 
-        // Regional Module 1 (FDA) — administrative essentials for an IND.
+        // ── v2 — corrected against FDA's DTD ─────────────────────────────────
+        var v2 = template.StartDraftVersion();
+        AddFdaIndModule1Corrected(template);
+        AddHarmonizedCtdModules(template, "FDA-IND");
+        template.PublishVersion(v2.Id, new DateOnly(2026, 8, 2), DateTime.UtcNow);
+
+        // Existing submissions keep v1; nothing new binds to it.
+        template.DeprecateVersion(v1.Id);
+
+        return template;
+    }
+
+    /// <summary>
+    /// FDA Module 1 as it was first published — <b>with the 1.13 defect</b>.
+    /// Do not correct this; correct <see cref="AddFdaIndModule1Corrected"/>.
+    /// </summary>
+    private static void AddFdaIndModule1AsFirstPublished(RegulatoryTemplate template)
+    {
         var m1 = template.AddSection(
             "M1", "Administrative Information and Prescribing Information", null, 1);
         var forms = template.AddSection("1.1", "Forms", m1.Id, 1);
@@ -46,6 +78,59 @@ internal static class RegulatoryTemplates
         var ib = template.AddSection("1.13", "Investigator's Brochure", m1.Id, 5);
         template.AddSection("1.14", "Labeling", m1.Id, 6);
 
+        AddFdaIndModule1Documents(template, forms, coverLetter, ib);
+    }
+
+    /// <summary>
+    /// FDA Module 1, corrected against
+    /// <c>docs/evidence/EPIC-007a/spec/us-regional-v3-3.dtd</c> (evidence E9).
+    /// </summary>
+    /// <remarks>
+    /// The DTD's Module 1 tree gives <c>m1-13-annual-report</c> and
+    /// <c>m1-14-labeling</c>, and puts the brochure three levels down at
+    /// <c>m1-14-4-1-investigational-brochure</c>. So 1.14 was always right;
+    /// 1.13 was not; and the brochure needs the two intermediate levels that
+    /// give RegOS its first four-deep section.
+    /// <para>
+    /// This is not a label correction. A submission bound to v1 would render
+    /// the brochure into the annual-report node — a wrong package, not a wrong
+    /// caption.
+    /// </para>
+    /// </remarks>
+    private static void AddFdaIndModule1Corrected(RegulatoryTemplate template)
+    {
+        var m1 = template.AddSection(
+            "M1", "Administrative Information and Prescribing Information", null, 1);
+        var forms = template.AddSection("1.1", "Forms", m1.Id, 1);
+        var coverLetter = template.AddSection("1.2", "Cover Letter", m1.Id, 2);
+        template.AddSection("1.3", "Administrative Information", m1.Id, 3);
+        template.AddSection("1.4", "References", m1.Id, 4);
+
+        // m1-13-annual-report — what 1.13 actually is.
+        template.AddSection("1.13", "Annual Report", m1.Id, 5);
+
+        // m1-14-labeling → m1-14-4-investigational-drug-labeling
+        //               → m1-14-4-1-investigational-brochure
+        var labeling = template.AddSection("1.14", "Labeling", m1.Id, 6);
+        var investigationalLabeling = template.AddSection(
+            "1.14.4", "Investigational Drug Labeling", labeling.Id, 4);
+        var ib = template.AddSection(
+            "1.14.4.1", "Investigator's Brochure", investigationalLabeling.Id, 1);
+
+        AddFdaIndModule1Documents(template, forms, coverLetter, ib);
+    }
+
+    /// <summary>
+    /// The documents and rules Module 1 expects. Identical across versions —
+    /// only <b>where</b> the brochure belongs changed, never <b>that</b> it is
+    /// required.
+    /// </summary>
+    private static void AddFdaIndModule1Documents(
+        RegulatoryTemplate template,
+        TemplateSection forms,
+        TemplateSection coverLetter,
+        TemplateSection investigatorsBrochure)
+    {
         template.AddRequiredDocument(
             coverLetter.Id, new DocumentTypeId(DocumentTypeIds.CoverLetter), true, 1);
         template.AddRequiredDocument(
@@ -55,7 +140,8 @@ internal static class RegulatoryTemplates
         template.AddRequiredDocument(
             forms.Id, new DocumentTypeId(DocumentTypeIds.FormFda3674), true, 3);
         template.AddRequiredDocument(
-            ib.Id, new DocumentTypeId(DocumentTypeIds.InvestigatorsBrochure), true, 1);
+            investigatorsBrochure.Id,
+            new DocumentTypeId(DocumentTypeIds.InvestigatorsBrochure), true, 1);
 
         template.AddValidationRule(
             "FDA-IND-1.1-FORMS-NONEMPTY",
@@ -65,12 +151,6 @@ internal static class RegulatoryTemplates
             sectionId: forms.Id,
             parameters: null,
             order: 2);
-
-        AddHarmonizedCtdModules(template, "FDA-IND");
-
-        template.PublishVersion(v1.Id, new DateOnly(2026, 1, 1), DateTime.UtcNow);
-
-        return template;
     }
 
     // ── Canada · Health Canada · CTA ─────────────────────────────────────────

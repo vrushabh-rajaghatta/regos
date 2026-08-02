@@ -52,6 +52,25 @@ public sealed class RegulatoryTemplateVersion
     public IReadOnlyCollection<ValidationRule> ValidationRules
         => _validationRules.AsReadOnly();
 
+    /// <summary>
+    /// Published, then superseded. Structure stays frozen and readable; the
+    /// version simply stops being eligible for new bindings.
+    /// </summary>
+    internal void Deprecate()
+    {
+        if (Status == TemplateVersionStatus.Deprecated)
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.VersionAlreadyDeprecated);
+
+        // A draft nobody should use is discarded. Deprecation is a statement
+        // about something that was in force.
+        if (Status != TemplateVersionStatus.Published)
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.OnlyPublishedVersionsCanBeDeprecated);
+
+        Status = TemplateVersionStatus.Deprecated;
+    }
+
     internal void Publish(DateOnly? effectiveFrom, DateTime publishedOnUtc)
     {
         if (Status == TemplateVersionStatus.Published)
