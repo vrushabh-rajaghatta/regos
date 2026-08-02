@@ -254,6 +254,7 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
 | **6** | Regulatory evidence | **`modified-file` is publication metadata** — frozen, not recoverable later. | it proves derivable post hoc from data we already keep | EPIC-007 |
 | **7** | Regulatory evidence | **Lifecycle belongs to the placement**, not the document. | a real sequence where one document carries one operation across two sections | EPIC-007 |
 | **8** | Architecture | ~~**The filtered unique index plus bounded retry is sufficient** for concurrent publishes.~~ | the concurrent-publish test failing within a bounded retry count | ~~S001~~ **RESOLVED — falsified**, see the S001 note below |
+| **9** | Architecture | **Serialising publication per application with `pg_advisory_xact_lock` gives acceptable throughput while preserving aggregate invariants and without requiring broader transaction ownership.** | it needs transaction ownership beyond the publish path, or it does not close the same-submission double-publish window it widens | **S002, and only if** it needs transaction ownership anyway — otherwise not until real usage shows *"click Publish again"* is unacceptable |
 
 **Why 4–7 are carried rather than settled now:**
 
@@ -410,15 +411,35 @@ fixture runs out before the design does**, which makes that case flaky rather
 than stronger. It was measured, it agreed with the trend, and the finding was
 already complete at two.
 
+### The candidate principle S001 produced
+
+> **A uniqueness constraint is not a serialisation strategy.** It protects
+> correctness; it does not coordinate work. Under contention every competing
+> writer except one loses — which is the index doing its job exactly, and is a
+> different responsibility from deciding who goes next.
+
+**One demonstrated instance. Not promoted.** The restraint that applied to
+EPIC-006's *identity over convenience facts* applies here: a principle with a
+single occurrence is an observation with a citation. If a second, independent
+case arrives — anywhere a constraint is reached for where coordination was
+meant — it earns a place in ADR-045.
+
 ### Discovered while building
 
 - **A reference-type id makes an EF shadow foreign key optional**, and an
   optional FK severs the relationship instead of deleting the orphan. Caught by
   an existing test, not by review, during the ADR-043 conversion. Both shadow FKs
-  are now explicitly `IsRequired` with the reason inline.
-- **One shared fixture application across parallel test classes became a test
-  isolation defect** the moment numbering existed — the classes were sharing a
-  numbering space and contending on the index for reasons unrelated to what they
-  assert. Harmless before this story; wrong after it.
+  are now explicitly `IsRequired` with the reason inline — **and the migration
+  guidance in `IdentityConventionTests` was corrected**, because 15 ids remain
+  and it had described the conversion as mechanical without naming this.
+- **One shared fixture application across parallel test classes stopped being
+  valid.** Before numbering, a shared application was a convenience; after it,
+  the same fixture is **shared mutable numbering state**, and the classes were
+  contending on the index for reasons unrelated to what they assert. *The fixture
+  was not flaky — it had become architecturally invalid*, which is the more
+  useful kind of test failure: a false assumption in the test infrastructure
+  rather than in the production code.
 - **S001 added exactly one DIA attribute** — *Submission Number*. Everything else
-  in the story is invariant, policy, index, screens and the id conversion.
+  in the story is invariant, policy, index, screens and the id conversion. The
+  story was not spent adding columns; it was spent making one piece of state mean
+  something.
