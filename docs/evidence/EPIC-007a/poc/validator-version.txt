@@ -1,0 +1,15 @@
+Tool        : xmllint (libxml2)
+Version     : 20913
+Source      : bundled with macOS (Darwin 24.6.0)
+Capability  : DTDValid — confirmed present in `xmllint --version` feature list
+Independent : yes — third-party parser, no knowledge of RegOS
+
+Specification validated against
+  FDA us-regional DTD v3.3
+  held at docs/evidence/EPIC-007a/spec/us-regional-v3-3.dtd
+  and copied to the package's own util/dtd/ as the specification requires
+
+Level      : 2a (structural / DTD)
+NOT level  : 2b — no FDA business rule was evaluated. A DTD cannot express them.
+
+Run on     : 2026-08-02

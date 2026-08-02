@@ -83,7 +83,7 @@ validator, not before it.
 | 1 | **Select and document the external validator** — or document why none is reachable | a named tool, or a written absence | ✅ **failed as scoped, replaced** |
 | 2 | **Determine the supported specification and version** | the versions we target | ✅ **eCTD 3.2.2 + regional 3.3** |
 | 3 | **Map the specification to the model** | element by element, with the gaps ordered | ✅ [`ectd-mapping.md`](../../evidence/EPIC-007a/ectd-mapping.md) |
-| 4 | **Produce a proof-of-concept package outside the domain model** | hand-built; proves the target before any RegOS code | ⚪ **next** |
+| 4 | **Produce a proof-of-concept package outside the domain model** | hand-built; proves the target before any RegOS code | ✅ **Level 2a reached** |
 | 5 | **Only then design the generation pipeline** | Phase 2 | ⚪ |
 
 **Task 1 failed as scoped, and the failure is recorded rather than worked
@@ -165,6 +165,34 @@ every blueprint-bound submission, so it needs a story and a migration.
 **5. RegOS numbers from 0000; every FDA example numbers from 0001.** ICH's own
 example uses 0000, so this is legal (2a) and possibly unconventional (3) — the
 clearest argument yet that separating those levels was worth doing.
+
+### Task 4 — the first external check RegOS has ever had
+
+A hand-built FDA Module 1 backbone is **DTD-valid** against FDA's own published
+DTD, checked by libxml2 — a parser that knows nothing about RegOS.
+[`poc/how-to-reproduce.md`](../../evidence/EPIC-007a/poc/how-to-reproduce.md).
+
+**Two negative controls make the pass mean something.** A validator that accepts
+everything proves nothing, so both mutations were chosen to test a finding rather
+than to fail arbitrarily:
+
+| Control | Parser's verdict |
+|---|---|
+| the mandatory contact removed | *"content does not follow the DTD, expecting … `applicant-contacts`"* — **S005's requirement, enforced from outside** |
+| `operation="unchanged"` | *"not among the enumerated set"* — **ADR-045, machine-checked** |
+
+> The second is the one worth keeping. eCTD's operation enumeration is closed,
+> and a parser will now say so on demand: **there is nowhere in the target format
+> to express what ADR-045 refuses to transmit.** The cumulative model is not
+> merely compatible with deriving the delta — the format admits nothing else.
+
+It also settled the numbering question at the right level: the file validates
+with sequence `0000`, so ADR-044 is legal (2a) and *FDA-starts-at-0001* is
+convention (3). Without the split, one would have been mistaken for the other.
+
+**What it did not do:** nothing in `index.xml` (the ICH DTD is not yet in
+`spec/`), no FDA business rule, and nothing RegOS generated — deliberately.
+Prove the target, then model the path to it.
 
 ### In scope ✅
 

@@ -34,7 +34,7 @@ second half is blocked:
 
 | | Oracle | Reachable now? |
 |---|---|---|
-| **2a — structural** | FDA's published DTD, checked by **any third-party XML parser** (`xmllint`, .NET `XmlReaderSettings.DtdProcessing`) | ✅ **yes** — free, offline, no licence |
+| **2a — structural** | FDA's published DTD, checked by **any third-party XML parser** | ✅ **achieved 2026-08-02** — libxml2 20913, [`poc/how-to-reproduce.md`](poc/how-to-reproduce.md) |
 | **2b — business rules** | eValidator's FDA validation criteria | ✖ **no** — needs the commercial tool |
 
 **Level 2a is genuine external evidence.** The specification is FDA's, the DTD is
@@ -98,12 +98,24 @@ rather than the EU market that was predicted to settle it.
 
 ## What must land here before the epic claims anything
 
-| Artifact | Claim it supports |
-|---|---|
-| `validator-report.*` + `validator-version.txt` | whichever of 2a / 2b produced it — **named explicitly** |
-| `package.zip` | the exact package checked, so the report can be re-run |
-| `how-to-reproduce.md` | the invocation, step by step |
-| `comparison-to-fda-examples.md` | Level 3 — where we match FDA's published XML and where we differ |
+| Artifact | Claim it supports | |
+|---|---|---|
+| [`poc/validator-version.txt`](poc/validator-version.txt) | tool, version, level claimed **and level not claimed** | ✅ |
+| [`poc/ctd-987654/`](poc/ctd-987654/) | the exact package checked, re-runnable | ✅ |
+| [`poc/how-to-reproduce.md`](poc/how-to-reproduce.md) | the invocation, the output, **and the negative controls** | ✅ |
+| `poc/negative-controls/` | proof the parser rejects — without which a pass means nothing | ✅ |
+| `comparison-to-fda-examples.md` | Level 3 — where we match FDA's published XML and where we differ | ⚪ |
+| a 2b report | FDA business rules | ✖ carried |
+
+> **The first external check RegOS has ever had.** It is narrow — one backbone
+> file, structure only, hand-built — and it is real: the specification is FDA's,
+> the DTD is FDA's, and the parser is not ours.
+>
+> Two negative controls make the pass mean something. One proves a sequence with
+> no named contact is rejected (S005's requirement, enforced externally). The
+> other proves `operation="unchanged"` is *"not among the enumerated set"* —
+> **ADR-045's thesis, machine-checked: eCTD has nowhere to say what RegOS
+> refuses to transmit.**
 
 **The acceptance rule:** a claim of external validation requires a report here
 that corresponds to a package here, produced by a tool version named here, at a

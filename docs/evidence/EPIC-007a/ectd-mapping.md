@@ -140,7 +140,14 @@ Two honest qualifications:
 - **The vocabulary is not ours.** FDA's types are `fdaact1` regulatory,
   `fdaact2` technical, `fdaact4` promotional. RegOS seeds *Qualified Person*,
   *Regulatory Contact*. `ContactRole` is a real controlled vocabulary — it is
-  simply **a different one**, and a mapping is owed.
+  simply **a different one**.
+
+  > **Decided 2026-08-02: map it, do not distort `ContactRole` to match.** The
+  > internal taxonomy answers *who is this person to us*; FDA's answers *which
+  > box does this go in on their side*. Reshaping ours to theirs would let one
+  > authority's format redefine the domain model, and the next authority would
+  > redefine it again. The translation belongs in the renderer — an
+  > anti-corruption layer, not a schema change.
 - **Telephone and email are mandatory** (`telephones (telephone+)`,
   `emails (email+)`). `Contact` must be checked for both; if either is optional
   or absent, a package cannot be built from a contact that lacks it.
