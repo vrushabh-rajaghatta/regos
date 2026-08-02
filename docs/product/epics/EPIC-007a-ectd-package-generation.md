@@ -500,3 +500,119 @@ stale spec still expected 38.
 on v1; moving them automatically would change what someone's draft means
 underneath them. That is a user's decision, not a side effect of correcting
 reference data.
+
+---
+
+## S003 — the regulatory activity ⚪ designed, signed off, not started
+
+**Design approved 2026-08-02. No code.** An earlier attempt was reverted
+deliberately: the domain shape was written before the database shape, which is
+the opposite of the order S001 and S002 succeeded in. Restart from here, from a
+clean compiling baseline.
+
+**The first story in this epic that adds business facts rather than correcting
+them.** Everything before it moved ownership, fixed lifecycle, corrected
+reference data or proved versioning.
+
+### What the DTD does *not* say, and why it decides the design
+
+```
+<!ATTLIST submission-id     submission-type      CDATA #REQUIRED >
+<!ATTLIST sequence-number   submission-sub-type  CDATA #REQUIRED >
+```
+
+`CDATA`, **not an enumeration** — unlike `operation`, which is what let E2's
+negative control prove `unchanged` unrepresentable. So the DTD proves only that
+both are *required* (evidence **E12**). It will accept `fdast99` happily.
+
+> **Requiredness is Level 2a; the vocabulary is Level 3 and unverifiable by any
+> parser we own.** A wrong token is DTD-valid and gateway-rejected.
+
+That places the constraint squarely in the domain: **curated reference data, not
+strings on the aggregate**, because nothing downstream will catch a typo.
+
+### The model
+
+Three authority-scoped catalogues, one shape — `Code`, `Name`, **`Token`**:
+
+| Catalogue | Business meaning | Wire token |
+|---|---|---|
+| `ApplicationType` | application classification | `fdaat*` |
+| `SubmissionType` | the regulatory activity | `fdast*` |
+| `SubmissionSubType` | what a sequence does to it | `fdasst*` |
+
+`Token` is **stored, never derived from `Code`** (E8 — the readable phrase lives
+only in an XML comment), and **nullable**, with a precise meaning:
+
+> **A null token means *this authority's wire vocabulary has not yet been
+> modelled*.** Not "unknown", and emphatically not "derive it". Only FDA's
+> vocabulary is in hand; a TGA or CDSCO row has none because this project has
+> never read those DTDs.
+
+On `Submission`:
+
+```
+OriginatingSubmissionId : SubmissionId?        null ⇒ opens an activity
+SubmissionTypeId        : SubmissionTypeId?    required iff Originating is null, forbidden otherwise
+SubmissionSubTypeId     : SubmissionSubTypeId  required on every sequence
+```
+
+All three **frozen at publication**, as ADR-047 does for `Format`.
+
+### Four invariants — and one theorem
+
+1. **XOR**: `OriginatingSubmissionId is null ⇔ SubmissionTypeId is not null`.
+   One fact, one home: a continuing sequence must not carry a second copy of its
+   activity's type, because two copies can only differ by one being wrong.
+2. The origin belongs to the **same `RegulatoryApplication`**.
+3. The origin is **published** — eCTD renders `submission-id` as the origin's
+   *sequence number*, and a draft has none.
+4. The origin **is itself an origin**. FDA example #22 carries
+   `submission-id="0001"`, pointing at the opener rather than a predecessor, so
+   chains would need transitive resolution to render. This makes one
+   unconstructible.
+
+**Not an invariant:** *the origin's sequence number is lower*. It cannot be
+checked at creation — the new submission has no number yet (ADR-044 assigns at
+publish) — and it does not need to be. Rule 3 forces the origin to be published
+and numbers are assigned monotonically at publish, so a lower origin number
+follows. **A theorem of the publish lifecycle, not a validation rule.**
+
+### Rendering, and how it fails
+
+```
+submission-id        = (Originating ?? this).SequenceNumber
+submission-type      = (Originating ?? this).SubmissionType.Token
+submission-sub-type  = this.SubmissionSubType.Token
+```
+
+No recursion, because of invariant 4.
+
+**A package renders only if every wire token the target authority needs exists.**
+Otherwise a domain error naming the gap — *"ApplicationType 'TGA_ARTG' has no
+eCTD token defined"* — never malformed XML. The same philosophy as S001's
+migration refusing to invent a classification.
+
+### Sub-type is supplied, never inferred
+
+The tempting rule — *opener ⇒ application, continuer ⇒ amendment* — is falsified
+by FDA example #23, an **opener** whose sub-type is `report` (evidence **E13**).
+
+So the UI asks, and records regulatory intent rather than guessing it:
+
+```
+Regulatory activity
+  (•) Start a new activity
+  ( ) Continue an existing activity  [ Activity opened by 0001 — Original IND ▾ ]
+```
+
+Activities are listed in business language, not bare sequence numbers.
+
+### Implementation order
+
+**Database shape first — that is the lesson of S001 and S002.** Once the schema
+is right and seeded, everything above it is ordinary propagation; if the
+migration is wrong, everything built on it is harder to reason about.
+
+1. EF configuration 2. migration 3. seeds (FDA tokens only)
+4. freeze-at-publish 5. API 6. UI 7. tests

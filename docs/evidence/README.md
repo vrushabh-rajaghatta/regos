@@ -57,10 +57,9 @@ conflating them would cause a mistake.
 | **E9** | FDA's Module 1 **1.13 is the Annual Report**; the Investigator's Brochure is at `m1-14-4-1` | [DTD](EPIC-007a/spec/us-regional-v3-3.dtd) | **2a** | **contradicts** the seeded FDA IND blueprint (EPIC-001) — an open defect, see [the mapping §4.1](EPIC-007a/ectd-mapping.md) | EPIC-007a |
 | **E10** | FDA discourages `append`: *"the use of 'append' is not common… consider consolidating and using replace"* | FDA *eCTD Technical Conformance Guide* v1.8 §2.5 | **3** | EPIC-004 **hypothesis 5** — guidance, **not usage data**; the hypothesis stays carried | EPIC-007a |
 | **E11** | `application-type` and `submission-type` are **different attributes on different elements**. `application-type` (`fdaat4` IND, NDA, 510(k)) classifies the **application**; `submission-type` (`fdast1` original-application, `fdast5` annual-report) classifies the **regulatory activity** | [DTD](EPIC-007a/spec/us-regional-v3-3.dtd) + FDA *Submission Types and Subtypes* | **2a** / **3** | **[ADR-050](../adr/ADR-050-application-type-classifies-the-application.md)** — the catalogue was named for eCTD's `submission-type` while enumerating its `application-type`, and hung off `Submission` one tier too low. Renamed and moved in EPIC-007a S001; eCTD's actual `submission-type` still has **no home in RegOS**, and the name is reserved for it | EPIC-007a |
+| **E12** | `submission-type` and `submission-sub-type` are `CDATA #REQUIRED` — **required but not enumerated**, unlike `operation`. A DTD-valid package can carry a meaningless token | [DTD](EPIC-007a/spec/us-regional-v3-3.dtd) lines 87–94 | **2a** | **EPIC-007a S003** *(designed, not yet shipped)* — the token vocabulary is Level 3 only and no parser we own can check it, so RegOS constrains it as curated reference data rather than free text | EPIC-007a |
+| **E13** | Sub-type is **not derivable** from an activity's position. The tempting rule *opener ⇒ application, continuer ⇒ amendment* is falsified by FDA example #23: an **opener** whose sub-type is `report` | FDA, *Example Submissions … for Module 1* v1.4, examples #21–#24 | **3** | **EPIC-007a S003** *(designed, not yet shipped)* — sub-type is a business fact the user supplies, never inferred | EPIC-007a |
 
----
-
-## Adding a row
 
 1. **It must be checkable by someone who does not trust you.** A row whose source
    is "we reasoned that…" is a decision — write an ADR.
