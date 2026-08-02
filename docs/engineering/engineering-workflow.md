@@ -208,10 +208,21 @@ A capability is considered complete only when:
 - [ ] Business behavior is implemented.
 - [ ] Engineering standards are satisfied.
 - [ ] Automated tests pass.
+- [ ] **If the story changed an API contract, the browser suite has passed.**
 - [ ] Architecture remains consistent.
 - [ ] Documentation is updated where required.
 - [ ] Code Review is approved.
 - [ ] The capability is ready for production deployment.
+
+> **Why the browser suite is called out separately.** It is not a stricter
+> restatement of *"automated tests pass"* — the .NET suites can be entirely
+> green while the browser suite is broken, because the browser suite is the only
+> place a request body is composed the way a client composes it.
+>
+> This is not hypothetical. **EPIC-007a S001** moved a field from one endpoint's
+> body to another's, shipped with 1,019 passing tests, and left eight browser
+> specs posting the old shapes. S002 found them. The contract had changed; only
+> the tests that speak the contract noticed.
 
 ---
 
