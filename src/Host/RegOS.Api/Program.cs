@@ -245,11 +245,11 @@ submissions.MapAttachProductDocument();
 submissions.MapRemoveProductDocument();
 submissions.MapPlaceSubmissionDocument();
 submissions.MapGetSubmissionContentPlan();
+submissions.MapGetSubmissionChanges();
 submissions.MapListSubmissionDocuments();
 submissions.MapListAttachableProductDocuments();
 submissions.MapValidateSubmission();
 submissions.MapPublishSubmission();
-submissions.MapGetSubmissionSnapshot();
 
 var registrations = app.MapGroup("").WithTags("Registrations");
 registrations.MapCreateRegistration();
@@ -293,6 +293,7 @@ inspections.MapRecordInspectionFindings();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();
+productDocuments.MapUploadDocumentVersion();
 productDocuments.MapListProductDocuments();
 productDocuments.MapGetProductDocument();
 productDocuments.MapActivateProductDocument();
