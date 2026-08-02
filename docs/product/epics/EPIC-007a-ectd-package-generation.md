@@ -70,13 +70,39 @@ oracle: which DTD versions we target, which validation rules we satisfy, what
 *accepted* means, and which outputs we must emit are all decided **by** the
 validator, not before it.
 
-| # | Phase 1 task | Output |
-|---|---|---|
-| 1 | **Select and document the external validator** — or document why none is currently reachable | a named tool and how it is run, or a written absence |
-| 2 | **Determine the supported eCTD specification and version** | ICH / regional / (STF, if 007b) versions we target, chosen by what the oracle checks |
-| 3 | **Identify the minimal package that validates** | the smallest thing that passes — the epic's first milestone |
-| 4 | **Produce a proof-of-concept package outside the domain model** | hand-built if necessary; proves the oracle and the target before any RegOS code |
-| 5 | **Only then design the generation pipeline** | Phase 2 |
+| # | Phase 1 task | Output | |
+|---|---|---|---|
+| 1 | **Select and document the external validator** — or document why none is currently reachable | a named tool and how it is run, or a written absence | 🟡 **decided, not yet verified** |
+| 2 | **Determine the supported eCTD specification and version** | the version we target, chosen by what the oracle checks | ✅ **FDA eCTD v3.2.2** |
+| 3 | **Identify the minimal package that validates** | the smallest thing that passes — the epic's first milestone | ⚪ blocked on 1 |
+| 4 | **Produce a proof-of-concept package outside the domain model** | hand-built if necessary; proves the oracle and the target before any RegOS code | ⚪ blocked on 3 |
+| 5 | **Only then design the generation pipeline** | Phase 2 | ⚪ |
+
+**Task 1 chose LORENZ eValidator Basic against the US eCTD 3.2 (FDA) profile,
+and the choice is recorded with its open questions in
+[docs/evidence/EPIC-007a/](../../evidence/EPIC-007a/README.md).** It is
+*decided* rather than *verified*: the tool is Windows software, the development
+machine is macOS, and whether the free edition includes the profile and accepts
+a package of our shape is unknown until it is in hand. Each of those can fail
+Task 1, and the record lists them as checkboxes rather than assertions.
+
+**Task 2 pins FDA eCTD v3.2.2**, deliberately not v4.0 as well. FDA supports
+both; supporting both here would double the surface before one package has ever
+validated, and would make a failure ambiguous — we would not know which target
+we had got wrong.
+
+### Evidence is archived, not summarised
+
+Phase 1's deliverables are architectural assets even with **zero production
+code**: validator selected, specification pinned, minimal passing package
+identified, proof-of-concept assembled, and **the validator's own report kept**.
+
+`docs/evidence/EPIC-007a/` holds the report, the tool version, and the exact
+package that was checked. The acceptance rule is written there:
+
+> The epic may claim independent validation only when a report in that directory
+> corresponds to a package in that directory, produced by a tool version named
+> in that directory. **Anything less is Level 1 wearing Level 2's clothes.**
 
 **Task 1 can fail, and a failure is a real result.** If no independent validator
 is reachable, this epic's central claim collapses to Level 1 and the honest
