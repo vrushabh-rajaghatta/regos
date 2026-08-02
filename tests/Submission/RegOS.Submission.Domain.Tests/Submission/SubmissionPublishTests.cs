@@ -40,7 +40,7 @@ public class SubmissionPublishTests
         submission.Publish(0, null, [], PublishedAt);
 
         submission.Status.Should().Be(SubmissionStatus.Published);
-        submission.PublishedAt.Should().Be(PublishedAt);
+        submission.PublishedAt.Should().Be(PublishedAt.UtcDateTime);
     }
 
     // --- Sequence numbering (ADR-044) ----------------------------------------
@@ -130,7 +130,7 @@ public class SubmissionPublishTests
         act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.SubmissionNotDraft);
         // The original publication timestamp is unchanged.
-        submission.PublishedAt.Should().Be(PublishedAt);
+        submission.PublishedAt.Should().Be(PublishedAt.UtcDateTime);
     }
 
     [Fact]

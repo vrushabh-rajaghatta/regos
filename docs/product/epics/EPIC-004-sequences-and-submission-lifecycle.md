@@ -248,7 +248,7 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
 |---|---|---|---|---|
 | **1** | Architecture | **The regulatory activity is a real object.** | It owns a business fact that neither `RegulatoryApplication` nor `Submission` can own without contradiction. *Grouping is not ownership.* | the first **EU market** or the first **US supplement** — deliberately **not** EPIC-007 |
 | **2** | Architecture | ~~**The snapshot is the publication record.**~~ | — | ~~S002~~ **RESOLVED — split in two, see the S002 note** |
-| **3** | Architecture | **The authority's status is correspondence, not a field.** `HaStatus` + `HaStatusDate` should not exist. | A fact about what the authority did that cannot be expressed as an `HaCorrespondence` anchored to the submission. | **S003** |
+| **3** | Architecture | ~~**The authority's status is correspondence, not a field.**~~ | — | ~~S003~~ **RESOLVED — supported**, see the S003 note |
 | **4** | Regulatory evidence | A document that **moves section** is `delete` + `new`, not `replace`. | a real sequence showing otherwise | EPIC-007 |
 | **5** | Regulatory evidence | **`Append` is unexercised** in FDA practice — enum value, no derivation. | a seeded blueprint or real sequence that uses it | EPIC-007 |
 | **6** | Regulatory evidence | **`modified-file` is publication metadata** — frozen, not recoverable later. | it proves derivable post hoc from data we already keep | EPIC-007 |
@@ -319,7 +319,7 @@ early; ship the inert data late.**
 |---|---|---|
 | **S001** | ✅ **A submission is a sequence** — `SequenceNumber`, assigned at publish, application-scoped, contiguity enforced in the aggregate; *"Sequence 0003"* on screen and the vocabulary pair in [docs/domain-model/submission.md](../../domain-model/submission.md). **ADR-044.** Folds in the four ADR-043 id conversions. | domain → persistence → API → UI → test |
 | **S002** | ✅ **What changed since last time** — the placement diff, operation computed at publish and frozen, the replace pointer; first sequence is all-`New`, asserted. **Resolved hypothesis 2 — the snapshot went. ADR-045.** | full slice |
-| **S003** | **The lifecycle we own** — the states beyond `Draft`/`Published`, dated history per the cross-cutting status rule, permitted transitions. **Resolves hypothesis 3** by trying to express the authority's side as correspondence. | full slice |
+| **S003** | ✅ **The lifecycle we own** — three states, dated history per the cross-cutting status rule. **Resolved hypothesis 3 — supported.** Amends ADR-044. **ADR-046.** | full slice |
 | **S004** | **Submission identity** — format, DTD versions (ICH/Regional/STF), gateway format, sub-type, submission countries | full slice |
 | **S005** | **`SubmissionRole`** — named contacts with roles on a submission *(EPIC-016 ✅)* | full slice |
 | **S006** | **Capstone** — one document's lifecycle across an application's sequences; browser proof of publish → replace → publish; the register resolved; retro | UI → test → docs |
@@ -535,3 +535,86 @@ not yet a refactor.
 > the fixture architecture needs changing** — rather than fixing a third
 > instance and moving on. Recorded here so the third one is recognised as a
 > third rather than as a fresh surprise.
+
+---
+
+## S003 — the lifecycle we own *(2026-08-02)*
+
+### What the code said before the argument
+
+`SubmissionStatus` had **eight readers and all eight asked `!= Draft`**. It was a
+boolean in disguise, so adding states to it was the first time the value would
+mean anything — which is why it was worth asking what belongs in it rather than
+which RIM statuses to copy.
+
+### Hypothesis 3 — supported
+
+No `HaStatus`. The burden was to find one authority-side fact correspondence
+cannot carry, and there is none: an acknowledgement is an inbound
+`HaCorrespondence` anchored to the submission, a refuse-to-file is a letter, an
+approval is a letter *and* a `Registration` that already holds `Approved`,
+`UnderReview`, `Withdrawn` and `Refused`. **Under review** is the persuasive
+case, because it looks most like a status and is in fact a read over two facts.
+
+Three of RIM's nine candidate states survived. `Withdrawn` was refused outright:
+you cannot un-file a sequence, so withdrawal is a relationship between
+submissions — EPIC-006's threading argument, third outing.
+
+### `Filed`, and the amendment it forced
+
+ADR-044 said a null sequence number means *"never transmitted"*. `Publish` only
+freezes. **The ADR's word was stronger than the code's behaviour**, and the fix
+is not to weaken the code: `Filed` is defined, nothing transitions into it, and
+ADR-046 amends ADR-044 to say *published within RegOS* until EPIC-007 transmits.
+
+The case for building it now was real — EPIC-006 records meetings without
+holding them — and lost twice over. A letter someone types **is** the letter that
+arrived; a RegOS submission is **not** the package that was sent. And deferring
+costs one transition later against a button recording a dubious date now.
+
+### The seventh history — measured, threshold met
+
+[ADR-042](../../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md)
+named its own reopening condition. `SubmissionStatusEntry` is the seventh:
+
+| Shape | Count | Size |
+|---|---|---|
+| `OwnsMany`, owner is the root | **4** | **22 lines each, line-for-line identical** |
+| `OwnsMany`, nested one deeper | 1 (question) | 26 |
+| standalone configuration class | 2 (market, registration) | different shape |
+
+**Five blocks, four identical.** ADR-042's bar was *"revisit at five
+configurations, and extract only the configuration"* — met. The verdict is
+recorded in ADR-046 decision 6; **the extraction is its own change**, across four
+configurations in three contexts, and is not folded into a story about lifecycle.
+
+### Discovered while building
+
+- **`PublishedAt` was already in the history.** It is the `RecordedOnUtc` of the
+  `Published` entry, so it stopped being a column. `Commitment.GivenOn` a second
+  time, and discovered the same way — by writing the history and noticing.
+- **The migration had to backfill before dropping.** The scaffold dropped the
+  column first; every existing filing would have lost its date. A history that
+  began the day the migration ran would be a worse record than the one it
+  replaced.
+- **No new cross-context edge was needed.** `ListCorrespondence` gained a
+  `SubmissionId` filter — exposing an anchor `HaCorrespondence` has carried since
+  EPIC-006 S001 — and the page composes the two lifecycles from two projections.
+  Neither context learned anything about the other.
+
+### The pattern these three stories share
+
+Each one found that a single term was concealing two independent facts:
+
+| Story | One concept | Turned out to be two |
+|---|---|---|
+| S001 | publication | **numbering at publication**, and transmission later |
+| S002 | a document in a filing | the document, and **the publication's interpretation of it** |
+| S003 | a submission's status | **our lifecycle**, and the regulatory conversation |
+
+> **One overloaded term concealed two independent facts.** Once they are
+> separated, the extra object or status almost always disappears — which is why
+> these stories keep deleting concepts instead of adding them.
+
+**Explanatory, not prescriptive.** It is a recurring discovery, not a rule, and
+a future story should not be forced into the shape.

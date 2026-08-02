@@ -7,6 +7,8 @@ export interface ListCorrespondenceFilters {
   correspondenceTypeId?: string;
   direction?: string;
   regulatoryApplicationId?: string;
+  /** What the authority said about one sequence. */
+  submissionId?: string;
 }
 
 export async function listCorrespondence(
@@ -20,6 +22,7 @@ export async function listCorrespondence(
   if (filters.direction) params.set("direction", filters.direction);
   if (filters.regulatoryApplicationId)
     params.set("regulatoryApplicationId", filters.regulatoryApplicationId);
+  if (filters.submissionId) params.set("submissionId", filters.submissionId);
 
   const query = params.toString();
 

@@ -3,6 +3,7 @@ using RegOS.Interaction.Domain.Correspondence;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.ReferenceData.Domain.Regulatory.Correspondence;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.Submission.Domain.Submission;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Api.Endpoints.Correspondence;
@@ -23,7 +24,8 @@ public static class ListCorrespondenceEndpoint
         Guid? authorityId = null,
         Guid? correspondenceTypeId = null,
         string? direction = null,
-        Guid? regulatoryApplicationId = null)
+        Guid? regulatoryApplicationId = null,
+        Guid? submissionId = null)
     {
         CorrespondenceDirection? parsedDirection = null;
 
@@ -48,6 +50,9 @@ public static class ListCorrespondenceEndpoint
                 parsedDirection,
                 regulatoryApplicationId is { } applicationId
                     ? new RegulatoryApplicationId(applicationId)
+                    : null,
+                submissionId is { } submission
+                    ? SubmissionId.From(submission)
                     : null),
             cancellationToken);
 

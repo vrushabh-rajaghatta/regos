@@ -12,6 +12,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
 {
     private readonly List<SubmissionDocument> _documents = [];
     private readonly List<SubmissionDeletion> _deletions = [];
+    private readonly List<SubmissionStatusEntry> _history = [];
 
     // EF materialisation only.
     private Submission()
@@ -59,9 +60,27 @@ public sealed class Submission : AggregateRoot<SubmissionId>
 
     public DateTime CreatedOn { get; private set; }
 
-    // Null while Draft; set when the submission is published. PublishedBy is
-    // deferred until the project has a current-user identity to record.
-    public DateTimeOffset? PublishedAt { get; private set; }
+    /// <summary>
+    /// Every step this submission has taken, oldest first. Never empty — a
+    /// submission is created as a draft, and that is a step.
+    /// </summary>
+    public IReadOnlyCollection<SubmissionStatusEntry> History
+        => _history.AsReadOnly();
+
+    /// <summary>
+    /// When this was published, or null while a draft. **Derived, never
+    /// stored** — it is the moment the <c>Published</c> entry was recorded.
+    /// </summary>
+    /// <remarks>
+    /// It was a column until S003 added the history beside it, at which point
+    /// it became a copy that could disagree with the record next to it. Same
+    /// call as <c>Commitment.GivenOn</c> (ADR-042), and reached the same way:
+    /// by writing the history and noticing the field was already in it.
+    /// </remarks>
+    public DateTime? PublishedAt
+        => _history
+            .LastOrDefault(x => x.Status == SubmissionStatus.Published)
+            ?.RecordedOnUtc;
 
     /// <summary>
     /// What this submission was filed as — sequence <c>0000</c>, <c>0001</c>, …
@@ -114,14 +133,27 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         if (string.IsNullOrWhiteSpace(title))
             throw new DomainException(SubmissionErrors.TitleRequired);
 
-        return new Submission(
+        var createdOn = DateTime.UtcNow;
+
+        var submission = new Submission(
             SubmissionId.New(),
             tenantId,
             applicationId,
             submissionTypeId,
             boundTemplateVersionId,
             title.Trim(),
-            DateTime.UtcNow);
+            createdOn);
+
+        // Becoming a draft is a step, so the history starts here rather than at
+        // publication — otherwise a submission's record would begin midway
+        // through its own life. The clock is read once, in Create, and used for
+        // both facts rather than read twice and risk them disagreeing.
+        submission.RecordStatus(
+            SubmissionStatus.Draft,
+            DateOnly.FromDateTime(createdOn),
+            createdOn);
+
+        return submission;
     }
 
     /// <summary>
@@ -333,8 +365,28 @@ public sealed class Submission : AggregateRoot<SubmissionId>
 
         Status = SubmissionStatus.Published;
         SequenceNumber = sequenceNumber;
-        PublishedAt = publishedAt;
+
+        RecordStatus(
+            SubmissionStatus.Published,
+            DateOnly.FromDateTime(publishedAt.UtcDateTime),
+            publishedAt.UtcDateTime);
     }
+
+    /// <summary>
+    /// Appends a step. Append-only: the history is what happened, so there is
+    /// no amend and no remove.
+    /// </summary>
+    private void RecordStatus(
+        SubmissionStatus status,
+        DateOnly occurredOn,
+        DateTime recordedOnUtc,
+        string? note = null)
+        => _history.Add(new SubmissionStatusEntry(
+            SubmissionStatusEntryId.New(),
+            status,
+            occurredOn,
+            recordedOnUtc,
+            note));
 
     /// <summary>
     /// Computes what this filing did to each placement, and freezes it.

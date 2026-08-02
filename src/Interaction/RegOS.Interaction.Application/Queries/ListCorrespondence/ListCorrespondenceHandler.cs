@@ -37,6 +37,9 @@ public sealed class ListCorrespondenceHandler
             correspondence = correspondence
                 .Where(x => x.RegulatoryApplicationId == applicationId);
 
+        if (query.SubmissionId is { } submissionId)
+            correspondence = correspondence.Where(x => x.SubmissionId == submissionId);
+
         // The names come from reference data and from the application; the
         // correspondence stores ids only (ES-014). Composing them here is a
         // read model, which crosses contexts freely — projection is not write

@@ -18,7 +18,22 @@ public sealed record SubmissionDetailDto(
     // application. A projection, stored nowhere, and deliberately distinct from
     // SequenceNumber: one is a fact, the other an expectation. Sent for
     // published submissions too, and simply not shown.
-    int NextSequenceNumber);
+    int NextSequenceNumber,
+    // Its own lifecycle, oldest first. Only steps we are the actor of — what
+    // the authority did arrives as correspondence anchored to this submission
+    // (ADR-046), and the page composes the two rather than the backend joining
+    // across bounded contexts.
+    IReadOnlyList<SubmissionStatusStep> History);
+
+/// <param name="OccurredOn">
+/// When the step happened, as a regulator would date it — which for a migrated
+/// filing is years before RegOS was told.
+/// </param>
+public sealed record SubmissionStatusStep(
+    string Status,
+    DateOnly OccurredOn,
+    DateTime RecordedOnUtc,
+    string? Note);
 
 /// <summary>
 /// The published template version a submission is bound to, carrying the names

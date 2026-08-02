@@ -61,9 +61,9 @@ public sealed class SubmissionConfiguration
             .HasColumnType("timestamp with time zone")
             .IsRequired();
 
-        // Null until published.
-        builder.Property(x => x.PublishedAt)
-            .HasColumnType("timestamp with time zone");
+        // PublishedAt is not mapped: it is the RecordedOnUtc of the Published
+        // entry in the history below, and a stored copy could disagree with the
+        // record beside it (ADR-046).
 
         // What this was filed as. Null until published (ADR-044 decision 4).
         builder.Property(x => x.SequenceNumber);
@@ -144,5 +144,34 @@ public sealed class SubmissionConfiguration
         builder.Metadata
             .FindNavigation(nameof(SubmissionAggregate.Deletions))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // The seventh append-only history in RegOS, and the fifth written as an
+        // OwnsMany block — which is the threshold ADR-042 named for extracting
+        // the *configuration* (not the entry type, and not the behaviour). See
+        // the epic's S003 note for the measurement.
+        builder.OwnsMany(x => x.History, entry =>
+        {
+            entry.ToTable("SubmissionStatusEntries");
+
+            entry.WithOwner().HasForeignKey("SubmissionId");
+
+            entry.HasKey(x => x.Id);
+
+            entry.Property(x => x.Id)
+                .HasColumnName("Id")
+                .HasConversion(
+                    id => id.Value, value => SubmissionStatusEntryId.From(value));
+
+            entry.Property(x => x.Status).HasConversion<int>().IsRequired();
+            entry.Property(x => x.OccurredOn).IsRequired();
+            entry.Property(x => x.RecordedOnUtc).IsRequired();
+
+            entry.Property(x => x.Note)
+                .HasMaxLength(SubmissionStatusEntry.NoteMaxLength);
+
+            entry.HasIndex("SubmissionId");
+        });
+
+        builder.Navigation(x => x.History).AutoInclude();
     }
 }

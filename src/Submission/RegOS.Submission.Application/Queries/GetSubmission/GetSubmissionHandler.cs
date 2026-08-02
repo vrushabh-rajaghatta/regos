@@ -42,6 +42,12 @@ public sealed class GetSubmissionHandler
                 submission.CreatedOn,
                 submission.BoundTemplateVersionId,
                 submission.SequenceNumber,
+                History = submission.History
+                    .OrderBy(h => h.OccurredOn)
+                    .ThenBy(h => h.RecordedOnUtc)
+                    .Select(h => new SubmissionStatusStep(
+                        h.Status.ToString(), h.OccurredOn, h.RecordedOnUtc, h.Note))
+                    .ToList(),
             }).SingleOrDefaultAsync(cancellationToken);
 
         if (row is null)
@@ -69,7 +75,8 @@ public sealed class GetSubmissionHandler
             await LoadBoundTemplateAsync(
                 row.BoundTemplateVersionId, cancellationToken),
             row.SequenceNumber,
-            (highestPublished ?? -1) + 1);
+            (highestPublished ?? -1) + 1,
+            row.History);
     }
 
     /// <summary>
