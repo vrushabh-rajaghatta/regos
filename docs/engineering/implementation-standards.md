@@ -193,6 +193,34 @@ Infrastructure implements contracts defined by the business architecture.
 
 It never defines business behavior.
 
+## A repository hydrates what the aggregate needs to enforce its invariants
+
+> **A repository must load every collection the aggregate reads to enforce a
+> rule.** Not every navigation — the criterion is invariant enforcement, and
+> some collections genuinely are not needed on the write path.
+
+An aggregate's rules are written against its own state. `_roles.Any(...)`,
+`_history[^1].OccurredOn`, `_documents.FirstOrDefault(...)` all assume **my
+collection represents my state**. A repository that omits one does not break a
+rule loudly; it makes the rule *vacuous*:
+
+| Rule reads a collection that was not loaded | What happens |
+|---|---|
+| a duplicate check | passes silently, and the unique index fails the insert instead |
+| a "find mine and remove it" | finds nothing, and returns not-found for something that exists |
+| an ordering rule over history | compares against nothing |
+
+**The database becomes the first line of defence instead of the domain**, and a
+business rule surfaces as a 500 or a 404. That is precisely the failure
+aggregates exist to prevent.
+
+Found in EPIC-004 S005: `SubmissionRepository` included `Documents` but not
+`Roles`, so `RemoveRole` searched an empty list and `AssignRole`'s duplicate
+check was vacuously true. See
+[testing.md Principle 9](testing.md) for the test class that catches it —
+no unit test can, because an in-memory aggregate always has its collection
+populated.
+
 ---
 
 # Cross-Cutting Standards

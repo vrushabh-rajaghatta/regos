@@ -320,8 +320,8 @@ early; ship the inert data late.**
 | **S001** | ✅ **A submission is a sequence** — `SequenceNumber`, assigned at publish, application-scoped, contiguity enforced in the aggregate; *"Sequence 0003"* on screen and the vocabulary pair in [docs/domain-model/submission.md](../../domain-model/submission.md). **ADR-044.** Folds in the four ADR-043 id conversions. | domain → persistence → API → UI → test |
 | **S002** | ✅ **What changed since last time** — the placement diff, operation computed at publish and frozen, the replace pointer; first sequence is all-`New`, asserted. **Resolved hypothesis 2 — the snapshot went. ADR-045.** | full slice |
 | **S003** | ✅ **The lifecycle we own** — three states, dated history per the cross-cutting status rule. **Resolved hypothesis 3 — supported.** Amends ADR-044. **ADR-046.** | full slice |
-| **S004** | **Submission identity** — format, DTD versions (ICH/Regional/STF), gateway format, sub-type, submission countries | full slice |
-| **S005** | **`SubmissionRole`** — named contacts with roles on a submission *(EPIC-016 ✅)* | full slice |
+| **S004** | ✅ **What a filing is rendered as** — `SubmissionFormat`, frozen at publication; operation derivation proved format-independent. **Four of the six sketched fields refused, one shown unmodellable. ADR-047.** | full slice |
+| **S005** | ✅ **The people on a filing** — `SubmissionRole`, frozen at publication; an application's contacts **derived** from the latest published sequence, with no application-level model. **ADR-048.** | full slice |
 | **S006** | **Capstone** — one document's lifecycle across an application's sequences; browser proof of publish → replace → publish; the register resolved; retro | UI → test → docs |
 
 **Two ADRs, both written when the decision is made rather than at the capstone:**
@@ -647,3 +647,336 @@ Each one found that a single term was concealing two independent facts:
 
 **Explanatory, not prescriptive.** It is a recurring discovery, not a rule, and
 a future story should not be forced into the shape.
+
+---
+
+## S004 — the story whose most valuable work was refusing to build *(2026-08-02)*
+
+S004 was scoped in Phase 2, before S001–S003 existed. Sorted by the tests those
+stories produced, its six sketched fields turned out not to be one kind of thing.
+
+| Sketched | Verdict |
+|---|---|
+| `Format` | **built** — true from the moment a filing is planned, and the filer makes it true |
+| `DtdVersionIch/Regional/Stf` | **EPIC-007** — no fact until a package is built |
+| `GatewayFormat` | **EPIC-007** — no fact until it is transmitted |
+| `SubmissionCountries` | **hypothesis 1** — an application is already exactly one country |
+| `ReasonForDelay` | **impossible** — `Submission` has no planned date to be late against |
+| `SubTypeId` | **unresolved, and that is the answer** |
+
+### The distinction that made it decidable
+
+ADR-046 defined `Filed` and made nothing reach it, which looks like a licence for
+four nullable columns. It is not, and naming why is what unblocked the story:
+
+> **An enum value is vocabulary** — it names a state the model acknowledges
+> exists, and a reader learns something true from it. **A null column is not
+> vocabulary; it is an empty container**, and shipping one is a promise rather
+> than a model.
+
+A column reaches the schema, the DTO, the form and the screen. The first user who
+finds a *DTD Version* field concludes it is needed and fills it in, and RegOS
+then holds a regulatory attribute of unknown provenance.
+
+### The sub-type is unresolved, not deferred
+
+Two incompatible readings, and the model cannot distinguish them: a **taxonomy**
+(`SubmissionType` gains parent/child, and nothing new belongs on `Submission` at
+all) or an **independent axis** (type `IND`, sub-type `Annual Report`, both on
+the submission). `SubmissionType` is flat today, so there is nothing for a
+sub-type to hang from.
+
+> **S004 deliberately does not introduce a sub-type model, because doing so
+> would commit RegOS to one of two incompatible structures without evidence.**
+
+That is stronger than *"later"* — it names what later is **for**.
+
+### The finding that defends ADR-045
+
+`Format` collided with S002 in a way the sketch did not anticipate: if a
+submission is paper, does the operation derivation still run?
+
+**Yes — and it matters that the answer is yes.** ADR-045 records the cumulative
+dossier as the *product thesis*. If derivation ran only for eCTD, that thesis
+would quietly become an eCTD implementation detail. A paper sequence still
+changed something; it renders as a cover letter rather than an XML backbone.
+
+Asserted at both levels rather than argued: a domain `Theory` over all three
+formats, and a browser spec that publishes two **paper** sequences and reads
+back exactly the one `Replace` the eCTD spec asserts.
+
+### Three questions, now a modelling test
+
+The publication-boundary rule began in ADR-045 as an implementation heuristic —
+*a field meaningful only after transmission stays null until publication.* By
+S004 it decides **whether the field exists at all**:
+
+1. **When does this fact first become true?**
+2. **Who makes it true?**
+3. **Can the system honestly make it true today?**
+
+Between them they have now removed `SubmissionSnapshot`, the HA status field,
+the DTD columns and the gateway metadata.
+
+### Discovered while building
+
+- **The scaffolded migration would have written an invalid enum.** EF defaulted
+  the new non-nullable column to `0`, which is not a defined `SubmissionFormat`
+  — every existing row would have held a value the domain rejects on next write.
+  Backfilled to `1` (`Ectd`), then the database default dropped, so an insert
+  that omits the format fails loudly instead of silently becoming eCTD. The same
+  trap as S003's `PublishedAt` migration, in the other direction.
+- **Format continuity is recorded, not enforced.** Whether 0004 may be paper
+  when 0003 was eCTD is unknown. No evidence, so no invariant — the third time
+  this epic has declined to invent a rule, after ADR-044's contiguity limit and
+  ADR-046's `Filed`.
+- **Required, not defaulted, in the domain.** eCTD is the only format an FDA IND
+  accepts today, which is exactly what would have made a default look harmless.
+  The API states the default; the aggregate takes none.
+
+---
+
+## S005 — shared vocabulary is not a shared fact *(2026-08-02)*
+
+The role is additive. **Where it lives is not**, and this was the first new
+cross-context decision since the submission work began.
+
+### The question the three questions did not answer
+
+S004's three questions (*when does this fact become true, who makes it true, can
+we honestly make it true*) eliminated nothing here — the story really was
+additive, as predicted. A different question bit instead:
+
+> **Shared vocabulary, or shared fact?**
+
+`Contact` already carried roles, and EPIC-016 had anticipated *"an application's
+QP"*. So there appeared to be one fact in three places. There are three facts:
+
+| | Subject | Fact |
+|---|---|---|
+| `ContactRole` | — | **the vocabulary** — what roles exist |
+| `Contact.Roles` | a person | what they are, in general |
+| `SubmissionRole` | **a filing** | who was named on it, and as what |
+
+**Reference data names concepts; aggregates record facts.** Easy to confuse with
+S001–S003's *one fact or two?* — and not the same question.
+
+*One occurrence. Recorded beside the earlier observation rather than promoted:
+if another story finds the same distinction, it may be a heuristic.*
+
+### The absence is the decision
+
+There is no `ApplicationContact`, and ADR-048 exists to say why. Under the
+cumulative model the latest published sequence **is** the current regulatory
+state, so an application-level copy and "the contact on the latest sequence" are
+one fact stored twice — and two copies can only differ by one being stale.
+
+**The same argument that removed `SubmissionSnapshot` in S002**, applied to
+people instead of documents. That symmetry is the strongest evidence the design
+is internally consistent: in both cases the temptation was a convenient copy of
+current state, and in both the cumulative model already had a single source.
+
+The cost is accepted knowingly: an application that has published nothing has no
+contacts. That is the absence of a filing, not missing data.
+
+### Discovered while building
+
+- **The repository did not load the collection the aggregate reasons over.**
+  `SubmissionRepository` included `Documents` but not `Roles`, so `RemoveRole`
+  searched an empty list and returned a silent 404, and `AssignRole`'s duplicate
+  check was **vacuously true** — leaving the unique index to fail what the domain
+  should have refused, as a 500 rather than a business rule.
+
+  **No unit test could see it**: an in-memory aggregate always has its collection
+  populated. It took the browser spec, and it was only *diagnosable* because the
+  API returned 404 to a direct call — the page rendered `assign` errors but not
+  `remove` ones, so a failed removal looked exactly like a successful one that had
+  not refreshed. Both are fixed, and two round-trip tests now assert what the
+  unit tests structurally cannot.
+
+- **SC-003 caught a new query folder with no `<Name>Query.cs`.** Copied from
+  `ListSubmissionDocuments`, which is on the grandfathered list. The fix was to
+  write the query record, never to grow the list.
+
+- **Carry-forward was left unbuilt on purpose.** Most sequences will name the
+  same people, so inheriting them is closer to remembering regulatory state than
+  to planning — but carry-forward was identified in S002 as its own capability,
+  and adding it for contacts alone would leave two mechanisms and two mental
+  models.
+
+---
+
+## S006 — the capstone *(2026-08-02)*
+
+S006 introduced **no aggregate, no invariant, no column and no route**.
+`Program.cs` is unchanged. That was the point: the capstone's job was to show
+that S001–S005 compose, and a capstone that expands the model cannot show that.
+
+`ListProductDocumentUsage` was **extended rather than duplicated** — checked
+first, on the principle that inventing a parallel query would have been the
+signal to stop. Its own note had named *sequence number* and *status* as the
+fields it expected to grow, and that prediction held.
+
+### The withdrawal asymmetry — predicted, and not friction
+
+| | Write | Read |
+|---|---|---|
+| a placement | `SubmissionDocument`, frozen at publish | one row |
+| an absence | **cannot be frozen** → `SubmissionDeletion` | one row |
+
+Two tables and two shapes, because S002 found that *an absence cannot be
+frozen*. Reading backwards they merge into one chronological stream, and the
+merge is clean because **both carry the diff key** — `(ProductDocumentId,
+TemplateSectionId)`. Nothing is reconstructed; nothing is matched by guesswork.
+
+> **The write model splits them; the read reunifies them.** That is a read
+> composing, not architectural debt.
+
+### Discovered while building
+
+- **Every slot in the seeded FDA IND blueprint is mandatory (48 of 48).** So a
+  document the blueprint requires **can never be withdrawn** — the validator
+  refuses the next filing for an incomplete dossier. Correct rather than
+  friction: you cannot withdraw what the dossier is required to contain. It does
+  mean a withdrawal is only expressible for a *supporting* document, which is
+  what the capstone spec follows.
+- **"Usage" became "In filings".** The document workspace already had a
+  *History* page for its own audit trail, and two things called history on one
+  screen is the muddle this project avoids.
+
+---
+
+# Phase 5 — Retro
+
+**Six stories, three ADRs, one behaviour-neutral refactor, one engineering
+standard and three conventions. Four persisted facts.**
+
+## What shipped, against the Phase-1 Definition of Done
+
+| Criterion | |
+|---|---|
+| A submission is a numbered sequence within its application | ✅ S001 — assigned at publish, contiguous, arbitrated by a filtered unique index |
+| Every piece of content declares its operation against the previous sequence | ✅ S002 — derived at publish and frozen; `New` / `Unchanged` / `Replace` / withdrawal |
+| A submission records its format and applicable DTD versions | **⚠️ half.** Format shipped (S004). **DTD versions deliberately do not exist** — ADR-047 |
+| The submission's state stops being a two-value enum | ✅ S003 — three states, and `Filed` defined but unreachable |
+| A user can see one document's lifecycle across an application's filings | ✅ S006 |
+
+The one partial criterion is a **decision, not a shortfall**, and ADR-047 is
+where it is answered.
+
+## 1. Questions that sharpened the model
+
+The epic's most reliable output was not an answer but a **better question**.
+Two of the three headline results came from a question being reformulated rather
+than resolved.
+
+| | The question as asked | The question that worked |
+|---|---|---|
+| S001 | should numbering happen at creation or publish? | **what facts can the aggregate honestly own, and what belongs to workflow?** |
+| S002 | *is* `SubmissionSnapshot` the publication record? | **can `SubmissionSnapshot` express publication facts?** |
+| S003 | which statuses belong on `Submission`? | **which facts can change independently of anything the submission does?** |
+
+Three diagnostics came out of it, in the order they were found:
+
+1. **Is this one thing, or one name for two facts?** — S001, S002, S003 each
+   found two. *(Now in FEATURE-DEVELOPMENT-FLOW Phase 2.)*
+2. **When does this fact first become true? Who makes it true? Can the system
+   honestly make it true today?** — S004. Eliminated four fields and one
+   impossible one.
+3. **Shared vocabulary, or shared fact?** — S005. One occurrence; recorded, not
+   promoted.
+
+## 2. Rules that removed structure
+
+Every one of these **deleted a concept** rather than adding one.
+
+| Rule | First stated | What it removed |
+|---|---|---|
+| **The cumulative dossier** — a submission is the whole dossier at publication; the delta is derived | ADR-045 | the user-maintained delta, and with it an entire authoring-tool model |
+| **The publication boundary** — a fact meaningful only after publication stays null until then, and is immutable after | ADR-045 → **ADR-047** | `SubmissionSnapshot`; then, generalised, the DTD and gateway columns entirely |
+| **Our lifecycle is only what we did** | ADR-046 | `HaStatus`, `HaStatusDate`, and `PublishedAt` |
+| **The latest published sequence is the current state** | ADR-048 | `ApplicationContact`, before it was written |
+
+**ADR-047 is the one that changed register.** It began as an implementation
+heuristic about how a field behaves and became a test of **whether the field
+exists at all** — *an enum value is vocabulary; a null column is an empty
+container.*
+
+## 3. Hypotheses — counted separately, as the register requires
+
+### Architecture — these belong to EPIC-004 and get a verdict
+
+| # | Hypothesis | Verdict |
+|---|---|---|
+| **2** | The snapshot is the publication record | **Split.** Publication facts exist (supported); the snapshot is where they belong (falsified). The aggregate was deleted |
+| **3** | The authority's status is correspondence, not a field | **Supported**, by attempting falsification and finding no authority fact correspondence cannot express |
+| **8** | A filtered unique index plus bounded retry is sufficient | **Falsified**, twice — the implementation falsifier bit before the throughput one |
+| **1** | The regulatory activity is a real object | **Carried by design.** Its milestone was never this epic: the first **EU market** or **US supplement** |
+| **9** | `pg_advisory_xact_lock` gives acceptable throughput | **Not exercised.** Its trigger was "if transaction ownership is needed anyway" — it was not |
+
+### Regulatory evidence — these were never EPIC-004's to resolve
+
+| # | Hypothesis | |
+|---|---|---|
+| **4** | A document that moves section is `delete` + `new` | **Carried to EPIC-007** |
+| **5** | `Append` is unexercised in FDA practice | **Carried to EPIC-007** |
+| **6** | `modified-file` is publication metadata, not recoverable later | **Carried to EPIC-007** |
+| **7** | Lifecycle belongs to the placement, not the document | **Carried to EPIC-007** |
+
+> **Carried is not unresolved and is not failed.** These resolve when a real
+> filing supplies the evidence, and being wrong about one means *updating
+> evidence, not architecture*. Counting them as EPIC-004 failures would make the
+> epic look incomplete when it honoured its own scope exactly.
+
+**Five architecture hypotheses, three resolved, two carried with named
+milestones. Four regulatory-evidence hypotheses, all carried to EPIC-007.**
+
+## What the change-case analysis got right, and wrong
+
+- **Right:** *"eCTD package generation reads these fields"* — freezing the
+  operation and the replace pointer at publish is the seam EPIC-007 needs.
+- **Right:** *"region-specific numbering rules"* dissolved exactly as predicted —
+  an application is already `(product, country, authority)`.
+- **Wrong, and usefully:** *"multi-country submissions — `SubmissionCountries` is
+  a collection from day one"* was **not built**. An application is one country,
+  so the collection would have had nothing to hold. It returns with hypothesis 1.
+- **Missed entirely:** nothing anticipated that **numbering would make a shared
+  test fixture architecturally invalid**, or that a **reference-type id makes an
+  EF shadow FK optional**. Both were found by tests, not review.
+
+## Decisions to promote
+
+Already promoted during the epic, each with its evidence:
+
+- **ES-021** — a persistence refactor proves neutrality with EF's model differ.
+- **Testing Principle 9** — a reloaded aggregate still enforces its rules.
+- **SC-106** — a failed mutation is visible, and distinguishable from a stale read.
+- **implementation-standards** — a repository hydrates what the aggregate needs
+  to enforce its invariants.
+- **FEATURE-DEVELOPMENT-FLOW Phase 2** — *is this one thing, or one name for two
+  facts?*
+
+Deliberately **not** promoted: *a uniqueness constraint is not a serialisation
+strategy* (one demonstrated instance), and *shared vocabulary or shared fact?*
+(one occurrence).
+
+## Carry-forward
+
+| | |
+|---|---|
+| **EPIC-007** | hypotheses 4–7; DTD versions, gateway format; the transition that makes `Filed` reachable and ADR-046's amendment to ADR-044 expire |
+| **EPIC-020** | contacts *intended* for a future filing — planning, not regulatory state |
+| **first EU market / US supplement** | hypothesis 1, and `SubmissionCountries` with it |
+| **unscheduled** | the sub-type taxonomy (ADR-047 §6); general carry-forward, which contacts and documents must join together (ADR-048 §6); hypothesis 9 |
+| **still open** | 15 legacy `record struct` ids; the nine-form EPIC-016 maintenance epic |
+
+## The number worth keeping
+
+Across six stories the model gained **four persisted facts** — `SequenceNumber`,
+`Operation`, `ReplacesSubmissionDocumentId`, `Format` — plus two child tables
+(`SubmissionStatusEntries`, `SubmissionRoles`) and **lost** one aggregate,
+one snapshot table and three columns.
+
+The submission domain was substantially reshaped. Almost none of that was new
+data. **The stories mostly added meaning.**
+

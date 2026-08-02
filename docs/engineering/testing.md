@@ -158,6 +158,43 @@ which story owns it.
 
 ---
 
+## Principle 9 — A Reloaded Aggregate Still Enforces Its Rules
+
+Domain tests build an aggregate in memory, where **every collection is
+populated by construction**. That is exactly the condition a repository can
+fail to reproduce, so an entire class of defect is structurally invisible to
+them:
+
+> **A persisted aggregate, reloaded, must be able to enforce every rule its
+> in-memory version enforces.**
+
+EPIC-004 S005 shipped `SubmissionRepository` including `Documents` but not
+`Roles`. Eleven domain tests passed. Removing a naming returned a silent 404,
+and the duplicate check was vacuously true — the unique index refused what the
+domain should have (see
+[implementation-standards.md](implementation-standards.md)).
+
+**Neither existing layer could see it.** The domain tests were correct and the
+browser test was correct; the missing class was between them:
+
+```csharp
+var submission = await repository.GetByIdAsync(id, default);
+
+submission!.Roles.Should().ContainSingle(
+    "the repository must load the collection the aggregate reasons over");
+
+var act = () => submission.AssignRole(person, sameRole);
+act.Should().Throw<BusinessRuleViolationException>();   // the domain, not 23505
+```
+
+Not many of these. **One per aggregate rule that reads a collection** — enough
+to prove the round trip preserves what the rules depend on.
+
+> The tell that you need one: an aggregate rule whose body mentions a private
+> collection. If a repository could omit it, a test should say so.
+
+---
+
 # Confidence Levels
 
 RegOS organizes testing by confidence rather than by framework.

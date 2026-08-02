@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 
 import { useSubmission } from "../hooks/useSubmission";
 import { SubmissionStatusBadge } from "../components/SubmissionStatusBadge";
+import { SubmissionFormatField } from "../components/SubmissionFormatField";
 
 export function SubmissionOverviewPage() {
   const { submissionId } = useParams();
@@ -57,6 +58,12 @@ export function SubmissionOverviewPage() {
           <div className="text-sm text-muted-foreground">Submission Type</div>
           <div className="font-medium">{submission.submissionTypeName}</div>
         </div>
+
+        <SubmissionFormatField
+          submissionId={submission.id}
+          format={submission.format}
+          status={submission.status}
+        />
       </section>
 
       <section className="space-y-4 border-t pt-8">

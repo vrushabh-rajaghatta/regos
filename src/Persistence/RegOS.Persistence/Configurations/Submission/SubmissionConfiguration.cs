@@ -57,6 +57,14 @@ public sealed class SubmissionConfiguration
             .HasConversion<int>()
             .IsRequired();
 
+        // What this filing is rendered as (ADR-047). Not nullable: every
+        // submission has a format from the moment it is created, unlike the
+        // DTD and gateway metadata that only becomes true at publication and
+        // is therefore not modelled here at all.
+        builder.Property(x => x.Format)
+            .HasConversion<int>()
+            .IsRequired();
+
         builder.Property(x => x.CreatedOn)
             .HasColumnType("timestamp with time zone")
             .IsRequired();
@@ -143,6 +151,18 @@ public sealed class SubmissionConfiguration
 
         builder.Metadata
             .FindNavigation(nameof(SubmissionAggregate.Deletions))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // Ownership: Submission (1) -> SubmissionRoles (N). Who was named on
+        // this filing (ADR-048). Cascade, like the other children: the naming
+        // has no meaning apart from the filing it appears on.
+        builder.HasMany(x => x.Roles)
+            .WithOne()
+            .HasForeignKey("SubmissionId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(SubmissionAggregate.Roles))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
         // The seventh append-only history in RegOS, and the fifth written as an

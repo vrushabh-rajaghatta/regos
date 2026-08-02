@@ -1,5 +1,7 @@
+using RegOS.Organization.Domain.Aggregates.Contact;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
+using RegOS.ReferenceData.Domain.Organization;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Abstractions;
@@ -13,6 +15,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     private readonly List<SubmissionDocument> _documents = [];
     private readonly List<SubmissionDeletion> _deletions = [];
     private readonly List<SubmissionStatusEntry> _history = [];
+    private readonly List<SubmissionRole> _roles = [];
 
     // EF materialisation only.
     private Submission()
@@ -26,6 +29,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         SubmissionTypeId submissionTypeId,
         RegulatoryTemplateVersionId? boundTemplateVersionId,
         string title,
+        SubmissionFormat format,
         DateTime createdOn)
     {
         Id = id;
@@ -34,6 +38,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         SubmissionTypeId = submissionTypeId;
         BoundTemplateVersionId = boundTemplateVersionId;
         Title = title;
+        Format = format;
         Status = SubmissionStatus.Draft;
         CreatedOn = createdOn;
     }
@@ -55,6 +60,24 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     public RegulatoryTemplateVersionId? BoundTemplateVersionId { get; private set; }
 
     public string Title { get; private set; } = default!;
+
+    /// <summary>
+    /// What this filing will be rendered as. Chosen while drafting and
+    /// <b>frozen at publication</b> — you cannot change what sequence 0002 was
+    /// filed as (ADR-047).
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not derived from the application: real applications moved
+    /// from paper to eCTD mid-life, so format belongs to the sequence rather
+    /// than to the thing the sequence belongs to.
+    /// <para>
+    /// Whether a later sequence may regress — eCTD at 0003, paper at 0004 — is
+    /// <b>recorded, not enforced</b>. Regulators may well forbid it, but no
+    /// evidence in hand says so, and inventing the rule would be the mistake
+    /// this epic has avoided five times over.
+    /// </para>
+    /// </remarks>
+    public SubmissionFormat Format { get; private set; }
 
     public SubmissionStatus Status { get; private set; }
 
@@ -109,16 +132,29 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     public IReadOnlyCollection<SubmissionDeletion> Deletions
         => _deletions.AsReadOnly();
 
+    /// <summary>
+    /// Who is named on this filing, and as what (ADR-048). Empty is legitimate
+    /// — a sequence that names nobody is unusual, not invalid.
+    /// </summary>
+    public IReadOnlyCollection<SubmissionRole> Roles => _roles.AsReadOnly();
+
     /// <param name="boundTemplateVersionId">
     /// The published template version that governs this submission, resolved by
     /// the application layer. Optional: when no published blueprint targets the
     /// submission type, the submission is created unbound rather than rejected.
+    /// </param>
+    /// <param name="format">
+    /// Required rather than defaulted. eCTD is the only format an FDA IND
+    /// accepts today, which would make a default look harmless — but the filer
+    /// chooses the format, and a default would let a caller omit a real
+    /// decision and have the model answer for them.
     /// </param>
     public static Submission Create(
         TenantId tenantId,
         RegulatoryApplicationId applicationId,
         SubmissionTypeId submissionTypeId,
         string title,
+        SubmissionFormat format,
         RegulatoryTemplateVersionId? boundTemplateVersionId = null)
     {
         if (tenantId is null)
@@ -133,6 +169,9 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         if (string.IsNullOrWhiteSpace(title))
             throw new DomainException(SubmissionErrors.TitleRequired);
 
+        if (!Enum.IsDefined(format))
+            throw new DomainException(SubmissionErrors.FormatNotRecognised);
+
         var createdOn = DateTime.UtcNow;
 
         var submission = new Submission(
@@ -142,6 +181,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             submissionTypeId,
             boundTemplateVersionId,
             title.Trim(),
+            format,
             createdOn);
 
         // Becoming a draft is a step, so the history starts here rather than at
@@ -370,6 +410,86 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             SubmissionStatus.Published,
             DateOnly.FromDateTime(publishedAt.UtcDateTime),
             publishedAt.UtcDateTime);
+    }
+
+    /// <summary>
+    /// Names a person on this filing.
+    /// </summary>
+    /// <remarks>
+    /// <b>One assignment per (person, role)</b> — naming the same person as the
+    /// same thing twice would say it twice, not doubly. Two people may share a
+    /// role, and one person may hold several; neither is unusual, and the same
+    /// call <c>Contact.AddRole</c> already made.
+    /// <para>
+    /// Whether the contact exists, is active, and belongs to this tenant is the
+    /// application layer's to check — the aggregate enforces only what it can
+    /// see from its own state. It deliberately does <em>not</em> check that the
+    /// contact's profile lists this role (ADR-048).
+    /// </para>
+    /// </remarks>
+    public SubmissionRole AssignRole(ContactId contactId, ContactRoleId roleId)
+    {
+        ArgumentNullException.ThrowIfNull(contactId);
+
+        if (roleId == default)
+            throw new DomainException(SubmissionErrors.ContactRoleRequired);
+
+        // The freeze: who was named on a published sequence is a fact about a
+        // filing already made (ADR-048), and the draft guard is the whole
+        // mechanism — the same call ChangeFormat makes.
+        if (Status != SubmissionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.RolesLockedUnlessDraft);
+
+        if (_roles.Any(x => x.ContactId == contactId && x.RoleId == roleId))
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.ContactAlreadyNamedInThatRole);
+
+        var role = new SubmissionRole(SubmissionRoleId.New(), contactId, roleId);
+
+        _roles.Add(role);
+
+        return role;
+    }
+
+    /// <summary>
+    /// Removes a naming from a draft. Not a lifecycle event — a draft that
+    /// named the wrong person is corrected, not amended.
+    /// </summary>
+    public void RemoveRole(SubmissionRoleId submissionRoleId)
+    {
+        ArgumentNullException.ThrowIfNull(submissionRoleId);
+
+        if (Status != SubmissionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.RolesLockedUnlessDraft);
+
+        var role = _roles.FirstOrDefault(x => x.Id == submissionRoleId)
+            ?? throw new NotFoundException(SubmissionErrors.RoleNotOnSubmission);
+
+        _roles.Remove(role);
+    }
+
+    /// <summary>
+    /// Changes what this filing will be rendered as, while it is still a draft.
+    /// </summary>
+    /// <remarks>
+    /// The draft guard <em>is</em> the freeze required by ADR-047: a published
+    /// sequence's format is a fact about a filing that has already been made,
+    /// and no later decision can reach back and alter it. No separate
+    /// immutability mechanism is needed, and adding one would give the same
+    /// rule two places to live.
+    /// </remarks>
+    public void ChangeFormat(SubmissionFormat format)
+    {
+        if (!Enum.IsDefined(format))
+            throw new DomainException(SubmissionErrors.FormatNotRecognised);
+
+        if (Status != SubmissionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.FormatLockedOncePublished);
+
+        Format = format;
     }
 
     /// <summary>

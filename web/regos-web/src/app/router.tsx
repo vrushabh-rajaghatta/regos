@@ -20,6 +20,7 @@ import { SubmissionValidationPage } from "@/features/regulatory/submissions/page
 import { SubmissionPublishingPage } from "@/features/regulatory/submissions/pages/SubmissionPublishingPage";
 import { SubmissionChangesPage } from "@/features/regulatory/submissions/pages/SubmissionChangesPage";
 import { SubmissionHistoryPage } from "@/features/regulatory/submissions/pages/SubmissionHistoryPage";
+import { SubmissionPeoplePage } from "@/features/regulatory/submissions/pages/SubmissionPeoplePage";
 import { ProductDocumentsListPage } from "@/features/regulatory/documents/pages/ProductDocumentsListPage";
 import { DocumentWorkspaceLayout } from "@/features/regulatory/documents/layout/DocumentWorkspaceLayout";
 import { DocumentOverviewPage } from "@/features/regulatory/documents/pages/DocumentOverviewPage";
@@ -252,6 +253,10 @@ export const router = createBrowserRouter([
                       {
                         path: "publishing",
                         element: <SubmissionPublishingPage />,
+                      },
+                      {
+                        path: "people",
+                        element: <SubmissionPeoplePage />,
                       },
                       {
                         path: "changes",

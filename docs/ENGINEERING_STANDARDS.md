@@ -257,3 +257,52 @@ The id form is enforced; this base-class rule is still review-time.
 > Both lists above are asserted to hold no stale entries, so an exemption cannot
 > outlive the thing it excused. The lists there are the authority; this table is
 > a summary.
+
+---
+
+## ES-021 — A Persistence Refactor Proves Neutrality With EF's Model Differ
+
+> A refactor that changes only EF configuration is behaviour-neutral **only if
+> `dotnet ef migrations add` against the refactored model produces an empty `Up`
+> and `Down`**, and regenerates `RegOSDbContextModelSnapshot.cs` unchanged.
+> Green tests are supporting evidence, not the primary proof.
+
+### Why tests are the weaker evidence
+
+Tests can only demonstrate the behaviours they exercise. A configuration change
+that alters a column type, drops an index, loosens a foreign key or renames a
+table will pass every test that never happens to touch that column — and then
+surface as a silent schema drift, or as a migration somebody else generates
+later and cannot explain.
+
+The model differ has no such gap. It compares **every** table, column, key,
+index and conversion in the model EF would persist, against the snapshot of what
+it persisted before. An empty diff is EF itself stating that nothing it knows
+how to store has changed.
+
+### The procedure
+
+```bash
+dotnet ef migrations add __VerifyNoModelChange \
+  --project src/Persistence/RegOS.Persistence \
+  --startup-project src/Host/RegOS.Api
+# Up and Down must both be empty. Then delete both scaffolded files.
+git status --short src/Persistence/RegOS.Persistence/Migrations/   # must be clean
+```
+
+The second check is not redundant. `migrations add` rewrites the model snapshot
+as a side effect; if the snapshot comes back byte-identical, the model is
+identical for reasons independent of how the differ chose to describe it.
+
+### What it does not prove
+
+**Query behaviour is outside the model diff.** `AutoInclude()`, query filters,
+split-query settings and `PropertyAccessMode` do not appear in a migration, so
+an empty diff says nothing about them. Those need a test that actually loads the
+data — and if the only such coverage is a browser spec, say so rather than
+letting the empty migration imply more than it shows.
+
+> **First applied** by the EPIC-004 status-history configuration extraction
+> ([ADR-046](adr/ADR-046-a-submissions-lifecycle-is-only-what-we-did.md)
+> decision 6), which moved five owned-history mappings and had to demonstrate it
+> moved nothing else.

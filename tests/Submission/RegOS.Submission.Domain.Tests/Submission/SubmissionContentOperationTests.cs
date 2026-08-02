@@ -36,7 +36,8 @@ public class SubmissionContentOperationTests
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
             new SubmissionTypeId(Guid.NewGuid()),
-            "Protocol amendment");
+            "Protocol amendment",
+            SubmissionFormat.Ectd);
 
     // --- The first filing ----------------------------------------------------
 
@@ -210,6 +211,65 @@ public class SubmissionContentOperationTests
     }
 
     // --- Helpers -------------------------------------------------------------
+
+    // --- Format does not reach the derivation --------------------------------
+
+    /// <summary>
+    /// <b>The delta is domain; the format is rendering</b> (ADR-047 decision 4).
+    /// </summary>
+    /// <remarks>
+    /// A paper sequence still changed something relative to the one before it —
+    /// it simply renders as a cover letter listing the changes rather than an
+    /// XML backbone. This is asserted rather than assumed because the obvious
+    /// future "simplification" is to skip derivation for anything that is not
+    /// eCTD, and that would quietly turn ADR-045's cumulative model from the
+    /// product thesis into an eCTD implementation detail.
+    /// </remarks>
+    [Theory]
+    [InlineData(SubmissionFormat.Ectd)]
+    [InlineData(SubmissionFormat.Nees)]
+    [InlineData(SubmissionFormat.Paper)]
+    public void OperationDerivation_IsIndependentOfFormat(SubmissionFormat format)
+    {
+        var carried = Document(1);
+        var replaced = Document(2);
+        var added = Document(3);
+        var withdrawn = Document(4);
+
+        var submission = SubmissionAggregate.Create(
+            TenantId.New(),
+            new RegulatoryApplicationId(Guid.NewGuid()),
+            new SubmissionTypeId(Guid.NewGuid()),
+            "Protocol amendment",
+            format);
+
+        var unchanged = Place(submission, carried, Version(1), Module32S2);
+        var replacement = Place(submission, replaced, Version(9), Module11);
+        var addition = Place(submission, added, Version(1), Module11);
+
+        var previous = Placement(replaced, Version(2), Module11);
+
+        submission.Publish(
+            1,
+            0,
+            [
+                Placement(carried, Version(1), Module32S2),
+                previous,
+                Placement(withdrawn, Version(1), Module32S2)
+            ],
+            PublishedAt);
+
+        // Every operation the eCTD case produces, produced identically.
+        unchanged.Operation.Should().Be(SubmissionContentOperation.Unchanged);
+        replacement.Operation.Should().Be(SubmissionContentOperation.Replace);
+        replacement.ReplacesSubmissionDocumentId.Should().Be(previous.Id);
+        addition.Operation.Should().Be(SubmissionContentOperation.New);
+
+        submission.Deletions.Should().ContainSingle()
+            .Which.ProductDocumentId.Should().Be(withdrawn);
+
+        submission.Format.Should().Be(format);
+    }
 
     private static SubmissionDocument Place(
         SubmissionAggregate submission,

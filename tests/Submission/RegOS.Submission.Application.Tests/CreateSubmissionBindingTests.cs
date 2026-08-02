@@ -149,7 +149,8 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
         var handler = new CreateSubmissionHandler(ctx, new SubmissionRepository(ctx));
 
         var result = await handler.HandleAsync(
-            new CreateSubmissionCommand(applicationId, submissionTypeId, title),
+            new CreateSubmissionCommand(
+                applicationId, submissionTypeId, title, SubmissionFormat.Ectd),
             CancellationToken.None);
 
         _submissionIds.Add(result.Id.Value);

@@ -7,6 +7,13 @@
     <!-- Cross-context IDs only (ProductDocumentId, DocumentVersionId), held by
          value. No navigation into the Product Document aggregate. -->
     <ProjectReference Include="..\..\ProductDocument\RegOS.ProductDocument.Domain\RegOS.ProductDocument.Domain.csproj" />
+    <!-- ContactId, for the people named on a filing (ADR-048). A new edge, but
+         not a new kind of edge: Interaction.Domain already references
+         Organization.Domain for OrganizationSiteId. Deliberately a direct
+         reference rather than an Organization.Contracts project — the Platform
+         precedent exists because authentication is not part of the regulatory
+         model, and Organization is. -->
+    <ProjectReference Include="..\..\Organization\RegOS.Organization.Domain\RegOS.Organization.Domain.csproj" />
   </ItemGroup>
 
 </Project>

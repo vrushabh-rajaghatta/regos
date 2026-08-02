@@ -20,8 +20,10 @@ export function DocumentWorkspaceNavigation() {
         Versions
       </NavLink>
 
+      {/* Not "History": that is this document's own audit trail. This is
+          where it went — the sequences that placed or withdrew it. */}
       <NavLink to="usage" className={linkClass}>
-        Usage
+        In filings
       </NavLink>
 
       <NavLink to="history" className={linkClass}>

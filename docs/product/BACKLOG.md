@@ -36,7 +36,7 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-**EPIC-004 is planned and ready to cut** — Phases 2–3 approved 2026-08-01, 6 stories, ADR-044 and ADR-045 scheduled. The **maintenance epic** (nine forms carrying the EPIC-016 mutation defect) is **deferred, deliberately**: EPIC-004 is invasive, and behavioural change does not share a branch with repository housekeeping.
+**EPIC-004 is complete** — six stories, five ADRs (044–048), one behaviour-neutral refactor. Three architecture hypotheses resolved, two carried with named milestones; four regulatory-evidence hypotheses carried to EPIC-007, which is where their evidence first exists. The **maintenance epic** (nine forms carrying the EPIC-016 mutation defect) is still **deferred, deliberately**, and 15 legacy `record struct` ids still await ADR-043 migration.
 
 **EPIC-006 is complete** — 8 stories, [ADR-040](../adr/ADR-040-the-health-authority-interaction-context.md) · [ADR-041](../adr/ADR-041-platform-contracts-and-the-identity-that-crosses.md) · [ADR-042](../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md).
 
@@ -53,7 +53,7 @@ model; the retro records each with the story it came from.
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 1 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | ⚪ Not Started · **Phases 2–3 approved** | EPIC-003 ✅ (placement makes a sequence a diff of placements, not an inference) · EPIC-016 ✅ (S005) → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
+| 1 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | 🟢 **Complete** · retro done 2026-08-02 | [ADR-044](../adr/ADR-044-a-submission-is-a-transmitted-sequence.md) · [045](../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md) · [046](../adr/ADR-046-a-submissions-lifecycle-is-only-what-we-did.md) · [047](../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md) · [048](../adr/ADR-048-the-people-on-a-filing-belong-to-the-filing.md) · DTD/gateway deferred to EPIC-007 **by decision** → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
 
 > **What Phase 2 settled, 2026-08-01.** It opened on *"what business thing
 > survives after sequence 0003 has been transmitted?"* and found the answer was

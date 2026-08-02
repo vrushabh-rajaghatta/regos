@@ -8,6 +8,9 @@ public sealed record SubmissionDetailDto(
     Guid SubmissionTypeId,
     string SubmissionTypeName,
     string Status,
+    // What this will be rendered as when it leaves RegOS. Editable while a
+    // draft, frozen once published (ADR-047).
+    string Format,
     DateTime CreatedOn,
     // The blueprint this submission is judged against, pinned at creation.
     // Null when no published template governs its submission type.

@@ -33,6 +33,7 @@ public sealed class ListSubmissionsHandler
                 submission.Title,
                 submission.Status,
                 SubmissionTypeName = submissionType.Name,
+                submission.Format,
                 submission.CreatedOn,
                 submission.SequenceNumber,
             }).ToListAsync(cancellationToken);
@@ -43,6 +44,7 @@ public sealed class ListSubmissionsHandler
                 row.Title,
                 row.Status.ToString(),
                 row.SubmissionTypeName,
+                row.Format.ToString(),
                 row.CreatedOn,
                 row.SequenceNumber))
             .ToList();

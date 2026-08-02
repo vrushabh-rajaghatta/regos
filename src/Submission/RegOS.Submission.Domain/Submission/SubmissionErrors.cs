@@ -53,4 +53,25 @@ public static class SubmissionErrors
     public const string FirstSequenceHasNoBaseline =
         "The first sequence in an application has nothing to be compared "
         + "against.";
+
+    // People named on the filing (ADR-048)
+    public const string ContactRoleRequired =
+        "A role is required to name someone on a submission.";
+
+    public const string RolesLockedUnlessDraft =
+        "Who is named on a submission can only be changed while it is a draft.";
+
+    public const string ContactAlreadyNamedInThatRole =
+        "That person is already named on this submission in that role.";
+
+    public const string RoleNotOnSubmission =
+        "That naming is not on this submission.";
+
+    // Format (ADR-047)
+    public const string FormatNotRecognised =
+        "That is not a submission format RegOS recognises.";
+
+    public const string FormatLockedOncePublished =
+        "The format of a published sequence cannot be changed — it is what "
+        + "the filing was made as.";
 }

@@ -17,7 +17,8 @@ public class SubmissionDocumentTests
         SubmissionAggregate.Create(TenantId.New(), 
             new RegulatoryApplicationId(Guid.NewGuid()),
             new SubmissionTypeId(Guid.NewGuid()),
-            "Initial 510(k)");
+            "Initial 510(k)",
+            SubmissionFormat.Ectd);
 
     private static (ProductDocumentId Doc, DocumentVersionId Version) NewRef() =>
         (ProductDocumentId.New(), DocumentVersionId.New());

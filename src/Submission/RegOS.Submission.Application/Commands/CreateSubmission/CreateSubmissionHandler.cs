@@ -78,6 +78,7 @@ public sealed class CreateSubmissionHandler
             command.ApplicationId,
             command.SubmissionTypeId,
             command.Title,
+            command.Format,
             boundTemplateVersionId);
 
         await _repository.AddAsync(submission, cancellationToken);

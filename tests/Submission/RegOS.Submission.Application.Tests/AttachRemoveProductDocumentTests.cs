@@ -110,7 +110,8 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
         RegOSDbContext ctx, RegulatoryApplicationId appId)
     {
         var sub = SubmissionAggregate.Create(TestTenant.Id, 
-            appId, SeededSubmissionType, "19.3 Sub " + Guid.NewGuid());
+            appId, SeededSubmissionType, "19.3 Sub " + Guid.NewGuid(),
+            SubmissionFormat.Ectd);
 
         ctx.Submissions.Add(sub);
         await ctx.SaveChangesAsync();

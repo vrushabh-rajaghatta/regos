@@ -1622,6 +1622,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("Format")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("SequenceNumber")
                         .HasColumnType("integer");
 
@@ -1727,6 +1730,34 @@ namespace RegOS.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("SubmissionDocuments", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Submission.Domain.Submission.SubmissionRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContactId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SubmissionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.HasIndex("SubmissionId", "ContactId", "RoleId")
+                        .IsUnique();
+
+                    b.ToTable("SubmissionRoles", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.Interaction.Domain.Commitments.Commitment", b =>
@@ -2513,6 +2544,27 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("RegOS.Submission.Domain.Submission.SubmissionRole", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.Contact.Contact", null)
+                        .WithMany()
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Organization.ContactRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Submission.Domain.Submission.Submission", null)
+                        .WithMany("Roles")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
                 {
                     b.Navigation("Emails");
@@ -2568,6 +2620,8 @@ namespace RegOS.Persistence.Migrations
                     b.Navigation("Deletions");
 
                     b.Navigation("Documents");
+
+                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }
