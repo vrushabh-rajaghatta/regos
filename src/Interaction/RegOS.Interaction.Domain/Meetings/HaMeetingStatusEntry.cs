@@ -8,6 +8,11 @@ namespace RegOS.Interaction.Domain.Meetings;
 /// extraction decision.</b> See the epic's extraction ledger: S003 found the
 /// entry type and the chronology rule cost almost nothing to duplicate, and the
 /// EF configuration is where the maintenance actually lives.
+/// <para>
+/// The decision came in EPIC-004 S003 and went the way this measurement
+/// pointed: <c>StatusHistoryMapping</c> now carries the configuration, and this
+/// type is untouched by it.
+/// </para>
 /// </remarks>
 public sealed class HaMeetingStatusEntry
 {

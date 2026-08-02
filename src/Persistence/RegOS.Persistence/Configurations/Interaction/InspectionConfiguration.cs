@@ -64,29 +64,12 @@ public sealed class InspectionConfiguration : IEntityTypeConfiguration<Inspectio
             .HasForeignKey(x => x.OrganizationSiteId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.OwnsMany(x => x.History, entry =>
-        {
-            entry.ToTable("InspectionStatusEntries");
-
-            entry.WithOwner().HasForeignKey("InspectionId");
-
-            entry.HasKey(x => x.Id);
-
-            entry.Property(x => x.Id)
-                .HasColumnName("Id")
-                .HasConversion(
-                    id => id.Value, value => new InspectionStatusEntryId(value));
-
-            entry.Property(x => x.Status).HasConversion<int>().IsRequired();
-            entry.Property(x => x.OccurredOn).IsRequired();
-            entry.Property(x => x.RecordedOnUtc).IsRequired();
-
-            entry.Property(x => x.Note)
-                .HasMaxLength(InspectionStatusEntry.NoteMaxLength);
-
-            entry.HasIndex("InspectionId");
-        });
-
-        builder.Navigation(x => x.History).AutoInclude();
+        builder.OwnsStatusHistory(
+            x => x.History,
+            "InspectionStatusEntries",
+            "InspectionId",
+            (InspectionStatusEntryId id) => id.Value,
+            value => new InspectionStatusEntryId(value),
+            InspectionStatusEntry.NoteMaxLength);
     }
 }

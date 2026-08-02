@@ -20,6 +20,13 @@ namespace RegOS.Interaction.Domain.Correspondence;
 /// three <em>demonstrated</em> consumers, not the third consumer — so this one
 /// is written out so the extraction can be argued from measurements rather than
 /// from a prediction. See the S003 extraction review in the epic.
+/// <para>
+/// The measurement arrived in EPIC-004 S003 and drew the line through the
+/// persistence layer, not this one: the <em>mapping</em> is shared
+/// (<c>StatusHistoryMapping</c>), and the type is still written out. The two it
+/// is field-for-field identical to are mapped as standalone configurations with
+/// a different shape, and were deliberately left alone.
+/// </para>
 /// </para>
 /// </remarks>
 public sealed class HaQuestionStatusEntry

@@ -188,34 +188,15 @@ public sealed class HaCorrespondenceConfiguration
             question.HasIndex("HaCorrespondenceId");
             question.HasIndex(x => new { x.CurrentStatus, x.TargetResponseOn });
 
-            question.OwnsMany(x => x.History, entry =>
-            {
-                entry.ToTable("HaQuestionStatusEntries");
-
-                entry.WithOwner().HasForeignKey("HaQuestionId");
-
-                entry.HasKey(x => x.Id);
-
-                entry.Property(x => x.Id)
-                    .HasColumnName("Id")
-                    .HasConversion(
-                        id => id.Value,
-                        value => new HaQuestionStatusEntryId(value));
-
-                entry.Property(x => x.Status)
-                    .HasConversion<int>()
-                    .IsRequired();
-
-                entry.Property(x => x.OccurredOn).IsRequired();
-                entry.Property(x => x.RecordedOnUtc).IsRequired();
-
-                entry.Property(x => x.Note)
-                    .HasMaxLength(HaQuestionStatusEntry.NoteMaxLength);
-
-                entry.HasIndex("HaQuestionId");
-            });
-
-            question.Navigation(x => x.History).AutoInclude();
+            // The one history owned by an entity that is itself owned. Its
+            // mapping was never different — only wrapped one level deeper.
+            question.OwnsStatusHistory(
+                x => x.History,
+                "HaQuestionStatusEntries",
+                "HaQuestionId",
+                (HaQuestionStatusEntryId id) => id.Value,
+                value => new HaQuestionStatusEntryId(value),
+                HaQuestionStatusEntry.NoteMaxLength);
         });
 
         builder.Navigation(x => x.Questions).AutoInclude();

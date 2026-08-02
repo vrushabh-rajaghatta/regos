@@ -146,32 +146,14 @@ public sealed class SubmissionConfiguration
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
         // The seventh append-only history in RegOS, and the fifth written as an
-        // OwnsMany block — which is the threshold ADR-042 named for extracting
-        // the *configuration* (not the entry type, and not the behaviour). See
-        // the epic's S003 note for the measurement.
-        builder.OwnsMany(x => x.History, entry =>
-        {
-            entry.ToTable("SubmissionStatusEntries");
-
-            entry.WithOwner().HasForeignKey("SubmissionId");
-
-            entry.HasKey(x => x.Id);
-
-            entry.Property(x => x.Id)
-                .HasColumnName("Id")
-                .HasConversion(
-                    id => id.Value, value => SubmissionStatusEntryId.From(value));
-
-            entry.Property(x => x.Status).HasConversion<int>().IsRequired();
-            entry.Property(x => x.OccurredOn).IsRequired();
-            entry.Property(x => x.RecordedOnUtc).IsRequired();
-
-            entry.Property(x => x.Note)
-                .HasMaxLength(SubmissionStatusEntry.NoteMaxLength);
-
-            entry.HasIndex("SubmissionId");
-        });
-
-        builder.Navigation(x => x.History).AutoInclude();
+        // OwnsMany block — the threshold ADR-042 named. The mapping is shared
+        // now (ADR-046 decision 6); the entry type and its rules are not.
+        builder.OwnsStatusHistory(
+            x => x.History,
+            "SubmissionStatusEntries",
+            "SubmissionId",
+            (SubmissionStatusEntryId id) => id.Value,
+            value => SubmissionStatusEntryId.From(value),
+            SubmissionStatusEntry.NoteMaxLength);
     }
 }
