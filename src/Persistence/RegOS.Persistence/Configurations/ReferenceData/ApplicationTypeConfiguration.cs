@@ -34,6 +34,16 @@ public sealed class ApplicationTypeConfiguration
             .HasMaxLength(200)
             .IsRequired();
 
+        // The eCTD wire token. Nullable, and the null is load-bearing: it means
+        // this authority's vocabulary has not been modelled, which is true of
+        // every authority but FDA.
+        builder.Property(x => x.Token)
+            .HasMaxLength(50);
+
+        builder.HasIndex(x => new { x.AuthorityId, x.Token })
+            .IsUnique()
+            .HasFilter("\"Token\" IS NOT NULL");
+
         builder.Property(x => x.AuthorityId)
             .HasConversion(
                 id => id.Value,

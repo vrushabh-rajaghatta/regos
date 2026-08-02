@@ -19,7 +19,8 @@ public class SubmissionPublishTests
         SubmissionAggregate.Create(TenantId.New(), 
             new RegulatoryApplicationId(Guid.NewGuid()),
             "Initial 510(k)",
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            SubmissionClassifications.Any());
 
     [Fact]
     public void Draft_HasNoPublicationMetadata()

@@ -503,12 +503,13 @@ reference data.
 
 ---
 
-## S003 — the regulatory activity ⚪ designed, signed off, not started
+## S003 — the regulatory activity 🟡 built, awaiting the dev-database migration
 
-**Design approved 2026-08-02. No code.** An earlier attempt was reverted
-deliberately: the domain shape was written before the database shape, which is
-the opposite of the order S001 and S002 succeeded in. Restart from here, from a
-clean compiling baseline.
+**Design approved 2026-08-02; built the same day, schema first.** An earlier
+attempt was reverted deliberately: the domain shape was written before the
+database shape, which is the opposite of the order S001 and S002 succeeded in.
+This build followed the signed-off order and the design below is what shipped —
+with three departures, recorded at the end of this section.
 
 **The first story in this epic that adds business facts rather than correcting
 them.** Everything before it moved ownership, fixed lifecycle, corrected
@@ -616,6 +617,97 @@ migration is wrong, everything built on it is harder to reason about.
 
 1. EF configuration 2. migration 3. seeds (FDA tokens only)
 4. freeze-at-publish 5. API 6. UI 7. tests
+
+### Three departures from the signed-off design
+
+Each changed how a rule is enforced. **None changed which rules exist**, and
+each is here because a reader comparing the design above with the code would
+otherwise think one of them had drifted.
+
+#### 1. The exclusive-or became unconstructible instead of checked
+
+Invariant 1 is not a rule the aggregate applies. `SubmissionClassification` has
+two factories — `Opens(type, subType)` and `Continues(origin, subType)` — and
+neither can produce both facts, so *"a continuing sequence must not carry its
+own activity type"* is a shape rather than a check.
+
+> **This is the reasoning invariant 4 was already chosen for**, applied one
+> level up: *"This makes one unconstructible"* is what the design says about
+> pointing at an opener rather than a predecessor. The same argument reaches
+> the pair itself.
+
+There is therefore **no test for a violated XOR** — it cannot be written. What
+the database does about rows that never pass through C# is a CHECK constraint,
+verified against a real Postgres across all seven combinations.
+
+#### 2. `SubmissionSubTypeId` is nullable in storage, required in behaviour
+
+The design listed it non-nullable. **Every sequence filed before this story has
+no sub-type, and none is recoverable** — E13 is precisely the finding that
+position does not give it. So there was no honest backfill, and inventing one
+would have put a value in front of a regulator that nobody chose.
+
+| The three nulls, and what each means | |
+|---|---|
+| `OriginatingSubmissionId` null | this sequence **opens** an activity |
+| `SubmissionTypeId` null | this sequence **continues** one |
+| `SubmissionSubTypeId` null | this sequence **predates the model** |
+
+Only the third is a gap. `Submission.Create` requires the value, so it can only
+ever arise from history — and `IsClassified` names that state rather than
+leaving callers to test a null. **The CHECK constraint treats it as a legitimate
+fourth state, not a violation**, which is what stops the migration having to
+choose between failing on real data and inventing a classification.
+
+> This is the nullable-field smell the DoD discussion named — *a nullable field
+> introduced after an aggregate refusal deserves explanation, not rejection.*
+> The explanation is E13: the field is null exactly where the evidence says
+> nothing can be known.
+
+#### 3. Two rules live in the handler, not among the four invariants
+
+A submission holds an `ApplicationId`, not an `AuthorityId`, so the aggregate
+cannot see whether its chosen activity belongs to the right regulator. **An FDA
+annual report filed under a TGA application is not a data-entry slip — it is not
+a filing**, and it is the same rule S001 moved *onto* `RegulatoryApplication.Create`,
+landing here in the one place it can be checked.
+
+The second is narrower: **an unclassified sequence cannot be continued**, kept
+apart from the aggregate's *"is it an opener?"* rule because the two failures
+differ. One is about history; the other is about shape.
+
+### What shipped
+
+| | |
+|---|---|
+| Domain | `SubmissionType`, `SubmissionSubType` (three-catalogue shape with `Token`), `SubmissionClassification`, `OriginatingSubmission`, `Submission.Reclassify` |
+| Schema | additive migration — two tables, three nullable columns, a self-referencing FK and `CK_Submissions_ActivityClassification` |
+| Seeds | FDA only, and **only the rows whose token is in evidence** — 3 types, 3 sub-types, plus `fdaat4` on `FDA_IND` |
+| API | `GET /api/reference-data/submission-types`, `…/submission-sub-types`, `GET /api/applications/{id}/submissions/continuable`; create takes the classification |
+| UI | `RegulatoryActivityField` — start-or-continue, then what the sequence does, asked never inferred |
+| ADR | **[ADR-051](../../adr/ADR-051-two-more-lookups-and-what-a-lookup-is.md)** — the identity carve-out could not grow without one |
+
+**Verified against a real Postgres, on a throwaway database:** all seven
+classification combinations against the CHECK constraint (3 accepted, 4
+rejected); the migration applied, rolled back and re-applied; and a fresh clone
+and an upgraded database converging on identical reference data — the S002
+guarantee, re-proved for the token.
+
+**Not yet verified:** every suite that reaches a database, because they all
+hard-code the development connection string. See *Blocked* below.
+
+### Blocked: the integration suites can only run against the dev database
+
+`Database=regos` is a `const` in roughly twenty test files, so there is no way
+to point them at a throwaway database. **635 tests across ten database-free
+suites pass; the eight database-backed suites and the browser suite cannot run
+until the development database is migrated.** The migration is additive and its
+`Down` was exercised, so this is a decision about *when*, not about risk.
+
+> Worth separating from this story: **a test suite that can only run against one
+> named database is a test suite that cannot run twice at once**, and it is why
+> the S003 schema had to be proved by hand-written SQL rather than by the suite
+> that will eventually own that proof. Candidate for EPIC-016.
 
 ---
 

@@ -50,11 +50,22 @@ internal static class ApplicationTypes
             new AuthorityId(GeographyAndRegulatoryIds.HealthCanada)),
 
         // FDA drug (pharma) application types.
+        //
+        // FDA_IND is the only row in this table with a wire token, because it is
+        // the only one this project has seen written down — `fdaat4`, read out
+        // of FDA's worked examples #21-#24 and recorded in
+        // docs/evidence/EPIC-007a/ectd-mapping.md (Level 3).
+        //
+        // Every other null here means "the token for this row is not in
+        // evidence", which is a smaller and more honest claim than "this
+        // authority is unmodelled": FDA's own NDA and 510(k) tokens are just as
+        // absent as CDSCO's. Rendering fails by name either way.
         ApplicationTypeEntity.Create(
             new ApplicationTypeId(ApplicationTypeIds.FdaInd),
             "FDA_IND",
             "Investigational New Drug Application (IND)",
-            new AuthorityId(GeographyAndRegulatoryIds.FDA)),
+            new AuthorityId(GeographyAndRegulatoryIds.FDA),
+            "fdaat4"),
         ApplicationTypeEntity.Create(
             new ApplicationTypeId(ApplicationTypeIds.FdaNda),
             "FDA_NDA",

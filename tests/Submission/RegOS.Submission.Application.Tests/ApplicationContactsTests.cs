@@ -293,7 +293,8 @@ public sealed class ApplicationContactsTests : IAsyncLifetime
             TestTenant.Id,
             applicationId,
             "Contacts Sub " + Guid.NewGuid(),
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            TestSubmissionClassification.Opens());
 
         submission.AssignRole(contactId, QualifiedPerson);
 

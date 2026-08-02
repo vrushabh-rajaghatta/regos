@@ -18,6 +18,7 @@ using RegOS.Submission.Application.Queries.ListProductDocumentUsage;
 using RegOS.Submission.Application.Queries.ListSubmissionDocuments;
 using RegOS.Submission.Application.Queries.ListSubmissionRoles;
 using RegOS.Submission.Application.Queries.ListSubmissions;
+using RegOS.Submission.Application.Queries.ListContinuableSubmissions;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Application.Validation;
 
@@ -51,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<GetSubmissionChangesHandler>();
 
         services.AddScoped<ListSubmissionsHandler>();
+        services.AddScoped<ListContinuableSubmissionsHandler>();
 
         services.AddScoped<GetSubmissionHandler>();
 

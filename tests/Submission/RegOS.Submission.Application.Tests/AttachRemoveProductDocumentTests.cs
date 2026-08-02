@@ -111,7 +111,8 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
     {
         var sub = SubmissionAggregate.Create(TestTenant.Id, 
             appId, "19.3 Sub " + Guid.NewGuid(),
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            TestSubmissionClassification.Opens());
 
         ctx.Submissions.Add(sub);
         await ctx.SaveChangesAsync();

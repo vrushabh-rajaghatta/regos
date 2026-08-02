@@ -28,7 +28,8 @@ public class SubmissionPlacementTests
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
             "Initial IND",
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            SubmissionClassifications.Any());
 
     private static (ProductDocumentId Doc, DocumentVersionId Version) NewRef() =>
         (ProductDocumentId.New(), DocumentVersionId.New());

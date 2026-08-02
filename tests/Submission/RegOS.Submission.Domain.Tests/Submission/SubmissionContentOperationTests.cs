@@ -36,7 +36,8 @@ public class SubmissionContentOperationTests
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
             "Protocol amendment",
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            SubmissionClassifications.Any());
 
     // --- The first filing ----------------------------------------------------
 
@@ -239,7 +240,8 @@ public class SubmissionContentOperationTests
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
             "Protocol amendment",
-            format);
+            format,
+            SubmissionClassifications.Any());
 
         var unchanged = Place(submission, carried, Version(1), Module32S2);
         var replacement = Place(submission, replaced, Version(9), Module11);

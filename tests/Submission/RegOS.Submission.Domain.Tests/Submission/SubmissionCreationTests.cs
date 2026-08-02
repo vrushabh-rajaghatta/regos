@@ -16,7 +16,8 @@ public class SubmissionCreationTests
         SubmissionAggregate.Create(TenantId.New(), 
             new RegulatoryApplicationId(Guid.NewGuid()),
             "Initial 510(k)",
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            SubmissionClassifications.Any());
 
     [Fact]
     public void Create_StartsInDraft()
@@ -48,6 +49,7 @@ public class SubmissionCreationTests
             new RegulatoryApplicationId(Guid.NewGuid()),
             "Initial IND",
             SubmissionFormat.Ectd,
+            SubmissionClassifications.Any(),
             versionId);
 
         submission.BoundTemplateVersionId.Should().Be(versionId);

@@ -175,5 +175,6 @@ public class SubmissionRoleTests
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
             "Original IND",
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            SubmissionClassifications.Any());
 }

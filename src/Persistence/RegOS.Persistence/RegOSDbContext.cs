@@ -14,6 +14,10 @@ using OrganizationAggregate =
     RegOS.Organization.Domain.Aggregates.Organization.Organization;
 using ApplicationTypeAggregate =
     RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
+using SubmissionTypeAggregate =
+    RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
+using SubmissionSubTypeAggregate =
+    RegOS.ReferenceData.Domain.SubmissionSubType.SubmissionSubType;
 using SubmissionAggregate =
     RegOS.Submission.Domain.Submission.Submission;
 using DocumentTypeAggregate =
@@ -130,6 +134,21 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<ApplicationTypeAggregate> ApplicationTypes =>
         Set<ApplicationTypeAggregate>();
+
+    /// <summary>
+    /// What a regulatory activity is — eCTD's <c>submission-type</c>. Global
+    /// world fact, so no tenant filter, like the catalogue above it.
+    /// </summary>
+    public DbSet<SubmissionTypeAggregate> SubmissionTypes =>
+        Set<SubmissionTypeAggregate>();
+
+    /// <summary>
+    /// What a sequence does to its activity — eCTD's
+    /// <c>submission-sub-type</c>. An independent axis, not a taxonomy beneath
+    /// <see cref="SubmissionTypes"/> (ADR-047 §6).
+    /// </summary>
+    public DbSet<SubmissionSubTypeAggregate> SubmissionSubTypes =>
+        Set<SubmissionSubTypeAggregate>();
 
     public DbSet<SubmissionAggregate> Submissions =>
         Set<SubmissionAggregate>();

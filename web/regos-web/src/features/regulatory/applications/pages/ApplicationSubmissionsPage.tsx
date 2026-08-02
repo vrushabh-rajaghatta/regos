@@ -33,6 +33,7 @@ export function ApplicationSubmissionsPage() {
         <CreateSubmissionDialog
           globalProductId={globalProductId!}
           applicationId={applicationId!}
+          authorityId={application.authorityId}
           open={dialogOpen}
           onOpenChange={setDialogOpen}
         />

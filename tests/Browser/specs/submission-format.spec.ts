@@ -1,6 +1,9 @@
 import { expect } from "@playwright/test";
 
-import { test, api, collectErrors, sessionCookies, API_URL } from "./support";
+import { test, api, collectErrors, sessionCookies, API_URL,
+  FDA_ORIGINAL_APPLICATION,
+  FDA_SUBTYPE_APPLICATION,
+} from "./support";
 
 /**
  * **EPIC-004 S004 — what a filing will be rendered as, and what that does not
@@ -239,6 +242,9 @@ async function createSubmission(
     body: JSON.stringify({
       title,
       format,
+      // Required on every sequence since S003; not inferred (E13).
+      submissionTypeId: FDA_ORIGINAL_APPLICATION,
+      submissionSubTypeId: FDA_SUBTYPE_APPLICATION,
     }),
   });
 

@@ -25,6 +25,7 @@ import {
   formatLabel,
 } from "../utils/formatLabel";
 import { useCreateSubmission } from "../hooks/useCreateSubmission";
+import { RegulatoryActivityField } from "./RegulatoryActivityField";
 import {
   createSubmissionSchema,
   type CreateSubmissionFormValues,
@@ -33,12 +34,15 @@ import {
 interface Props {
   globalProductId: string;
   applicationId: string;
+  /** The application's authority — the activity vocabulary is scoped to it. */
+  authorityId: string;
   onSuccess: () => void;
 }
 
 export function CreateSubmissionForm({
   globalProductId,
   applicationId,
+  authorityId,
   onSuccess,
 }: Props) {
   const navigate = useNavigate();
@@ -51,6 +55,7 @@ export function CreateSubmissionForm({
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<CreateSubmissionFormValues>({
     resolver: zodResolver(createSubmissionSchema),
@@ -59,8 +64,17 @@ export function CreateSubmissionForm({
       // Shown selected rather than assumed silently: eCTD is the only format
       // an FDA IND accepts today, and the user can see and change it.
       format: "Ectd",
+      // Most sequences open something; the alternative is one click away and
+      // is disabled until a published filing exists to continue.
+      activityChoice: "start",
+      submissionTypeId: "",
+      originatingSubmissionId: "",
+      // No default: unlike format, no value here is the obvious one.
+      submissionSubTypeId: "",
     },
   });
+
+  const activityChoice = watch("activityChoice");
 
   const formatItems = useMemo(
     () =>
@@ -74,6 +88,17 @@ export function CreateSubmissionForm({
     const { id } = await mutation.mutateAsync({
       title: values.title,
       format: values.format,
+      submissionSubTypeId: values.submissionSubTypeId,
+      // Exactly one of these is sent. The schema has already refused the
+      // other combinations, and the domain type could not represent them.
+      submissionTypeId:
+        values.activityChoice === "start"
+          ? values.submissionTypeId
+          : undefined,
+      originatingSubmissionId:
+        values.activityChoice === "continue"
+          ? values.originatingSubmissionId
+          : undefined,
     });
 
     reset();
@@ -135,6 +160,14 @@ export function CreateSubmissionForm({
               <FieldError errors={[errors.format]} />
             </Field>
           )}
+        />
+
+        <RegulatoryActivityField
+          control={control}
+          errors={errors}
+          applicationId={applicationId}
+          authorityId={authorityId}
+          activityChoice={activityChoice}
         />
       </FieldGroup>
 

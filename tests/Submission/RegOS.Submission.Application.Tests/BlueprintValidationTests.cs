@@ -405,7 +405,9 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         var result = await handler.HandleAsync(
             new CreateSubmissionCommand(
                 applicationId, title + " " + Guid.NewGuid(),
-                SubmissionFormat.Ectd),
+                SubmissionFormat.Ectd,
+                TestSubmissionClassification.FdaApplication,
+                TestSubmissionClassification.FdaOriginalApplication),
             default);
 
         _submissionIds.Add(result.Id.Value);

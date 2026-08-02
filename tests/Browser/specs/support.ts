@@ -17,6 +17,20 @@ export const DEV_PASSWORD = "development-password";
  */
 export const TENANT = "30000000-0000-0000-0000-000000000003";
 
+/**
+ * The seeded FDA regulatory-activity vocabulary (EPIC-007a S003).
+ *
+ * Every sequence RegOS creates must say which activity it belongs to and what
+ * it does to that activity, so every spec that posts a submission sends these.
+ * Written out rather than looked up: a spec that resolved them by code would
+ * pass while the seed was wrong, and proving the seed is what
+ * blueprint-seed-integrity.spec.ts is for.
+ */
+export const FDA_ORIGINAL_APPLICATION =
+  "70000000-0000-0000-0000-000000000001";
+export const FDA_SUBTYPE_APPLICATION = "71000000-0000-0000-0000-000000000001";
+export const FDA_SUBTYPE_AMENDMENT = "71000000-0000-0000-0000-000000000002";
+
 let cachedCookies: Promise<string> | undefined;
 
 /**

@@ -104,5 +104,6 @@ public class SubmissionFormatTests
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
             "Original IND",
-            format);
+            format,
+            SubmissionClassifications.Any());
 }

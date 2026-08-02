@@ -64,6 +64,37 @@ public static class SubmissionErrors
     public const string RoleNotOnSubmission =
         "That naming is not on this submission.";
 
+    // The regulatory activity (EPIC-007a S003).
+    //
+    // These messages say "regulatory activity" while no type in the model does.
+    // That is deliberate: the screen's word and the domain's word may differ and
+    // both are binding, and an error message is a label. The model has no
+    // Activity concept — an activity is derived from a chain of submissions —
+    // but the person reading the message files activities for a living.
+    public const string SubmissionTypeRequired =
+        "A sequence that starts a new regulatory activity must say what that "
+        + "activity is.";
+
+    public const string SubmissionSubTypeRequired =
+        "What this sequence does to its regulatory activity is required — it "
+        + "cannot be worked out from where the sequence sits.";
+
+    public const string OriginatingSubmissionDifferentApplication =
+        "A regulatory activity cannot span two applications — the sequence that "
+        + "opened it belongs to a different one.";
+
+    public const string OriginatingSubmissionNotPublished =
+        "A regulatory activity is identified by the sequence number of the "
+        + "filing that opened it, and a draft has none.";
+
+    public const string OriginatingSubmissionIsNotAnOrigin =
+        "That sequence continues someone else's regulatory activity rather than "
+        + "opening one. Point at the sequence that opened it.";
+
+    public const string ClassificationLockedOncePublished =
+        "What a published sequence was filed under cannot be changed — it is "
+        + "what the authority received.";
+
     // Format (ADR-047)
     public const string FormatNotRecognised =
         "That is not a submission format RegOS recognises.";

@@ -1068,12 +1068,20 @@ namespace RegOS.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("Token")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorityId");
 
                     b.HasIndex("Code")
                         .IsUnique();
+
+                    b.HasIndex("AuthorityId", "Token")
+                        .IsUnique()
+                        .HasFilter("\"Token\" IS NOT NULL");
 
                     b.ToTable("ApplicationTypes", (string)null);
                 });
@@ -1476,6 +1484,84 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("CorrespondenceTypes", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.SubmissionSubType.SubmissionSubType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Token")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("AuthorityId", "Token")
+                        .IsUnique()
+                        .HasFilter("\"Token\" IS NOT NULL");
+
+                    b.ToTable("SubmissionSubTypes", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.SubmissionType.SubmissionType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Token")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorityId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("AuthorityId", "Token")
+                        .IsUnique()
+                        .HasFilter("\"Token\" IS NOT NULL");
+
+                    b.ToTable("SubmissionTypes", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.Registration", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1630,11 +1716,20 @@ namespace RegOS.Persistence.Migrations
                     b.Property<int>("Format")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("OriginatingSubmissionId")
+                        .HasColumnType("uuid");
+
                     b.Property<int?>("SequenceNumber")
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<Guid?>("SubmissionSubTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SubmissionTypeId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
@@ -1650,13 +1745,22 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasIndex("BoundTemplateVersionId");
 
+                    b.HasIndex("OriginatingSubmissionId");
+
+                    b.HasIndex("SubmissionSubTypeId");
+
+                    b.HasIndex("SubmissionTypeId");
+
                     b.HasIndex("TenantId");
 
                     b.HasIndex("ApplicationId", "SequenceNumber")
                         .IsUnique()
                         .HasFilter("\"SequenceNumber\" IS NOT NULL");
 
-                    b.ToTable("Submissions", (string)null);
+                    b.ToTable("Submissions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Submissions_ActivityClassification", "(\"SubmissionSubTypeId\" IS NULL\n     AND \"SubmissionTypeId\" IS NULL\n     AND \"OriginatingSubmissionId\" IS NULL)\nOR (\"SubmissionSubTypeId\" IS NOT NULL\n     AND ((\"SubmissionTypeId\" IS NULL)\n           <> (\"OriginatingSubmissionId\" IS NULL)))");
+                        });
                 });
 
             modelBuilder.Entity("RegOS.Submission.Domain.Submission.SubmissionDeletion", b =>
@@ -2399,6 +2503,24 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.SubmissionSubType.SubmissionSubType", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.SubmissionType.SubmissionType", b =>
+                {
+                    b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.Registration", b =>
                 {
                     b.HasOne("RegOS.ReferenceData.Domain.Regulatory.Authority.Authority", null)
@@ -2478,6 +2600,21 @@ namespace RegOS.Persistence.Migrations
                     b.HasOne("RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplateVersion", null)
                         .WithMany()
                         .HasForeignKey("BoundTemplateVersionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.Submission.Domain.Submission.Submission", null)
+                        .WithMany()
+                        .HasForeignKey("OriginatingSubmissionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.ReferenceData.Domain.SubmissionSubType.SubmissionSubType", null)
+                        .WithMany()
+                        .HasForeignKey("SubmissionSubTypeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.ReferenceData.Domain.SubmissionType.SubmissionType", null)
+                        .WithMany()
+                        .HasForeignKey("SubmissionTypeId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.OwnsMany("RegOS.Submission.Domain.Submission.SubmissionStatusEntry", "History", b1 =>

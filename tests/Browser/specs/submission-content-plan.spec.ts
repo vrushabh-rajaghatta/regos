@@ -1,6 +1,9 @@
 import { expect } from "@playwright/test";
 
-import { test, api, collectErrors, sessionCookies, API_URL } from "./support";
+import { test, api, collectErrors, sessionCookies, API_URL,
+  FDA_ORIGINAL_APPLICATION,
+  FDA_SUBTYPE_APPLICATION,
+} from "./support";
 
 /**
  * The dossier builder: the blueprint's structure as a working surface.
@@ -215,6 +218,9 @@ async function createSubmission(
     method: "POST",
     body: JSON.stringify({
       title: `Browser Content Plan Submission ${unique}`,
+      // Required on every sequence since S003; not inferred (E13).
+      submissionTypeId: FDA_ORIGINAL_APPLICATION,
+      submissionSubTypeId: FDA_SUBTYPE_APPLICATION,
     }),
   });
 

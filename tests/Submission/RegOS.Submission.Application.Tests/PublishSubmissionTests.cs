@@ -110,7 +110,8 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
     {
         var sub = SubmissionAggregate.Create(TestTenant.Id, 
             appId, "Publish Sub " + Guid.NewGuid(),
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            TestSubmissionClassification.Opens());
 
         if (document is not null)
             sub.AttachDocument(document.Id, document.CurrentVersionId!.Value);

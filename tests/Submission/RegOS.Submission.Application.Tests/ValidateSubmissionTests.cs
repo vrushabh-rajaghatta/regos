@@ -111,7 +111,8 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
     {
         var sub = SubmissionAggregate.Create(TestTenant.Id, 
             appId, "Validation Sub " + Guid.NewGuid(),
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            TestSubmissionClassification.Opens());
 
         if (document is not null)
             sub.AttachDocument(document.Id, document.CurrentVersionId!.Value);

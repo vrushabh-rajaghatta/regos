@@ -200,7 +200,9 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
 
         var result = await handler.HandleAsync(
             new CreateSubmissionCommand(
-                applicationId, title, SubmissionFormat.Ectd),
+                applicationId, title, SubmissionFormat.Ectd,
+                TestSubmissionClassification.FdaApplication,
+                TestSubmissionClassification.FdaOriginalApplication),
             CancellationToken.None);
 
         _submissionIds.Add(result.Id.Value);
