@@ -37,7 +37,7 @@ public class SubmissionPublishTests
     {
         var submission = NewDraft();
 
-        submission.Publish(0, null, PublishedAt);
+        submission.Publish(0, null, [], PublishedAt);
 
         submission.Status.Should().Be(SubmissionStatus.Published);
         submission.PublishedAt.Should().Be(PublishedAt);
@@ -55,7 +55,7 @@ public class SubmissionPublishTests
     {
         var submission = NewDraft();
 
-        submission.Publish(0, previousPublishedSequenceNumber: null, PublishedAt);
+        submission.Publish(0, previousPublishedSequenceNumber: null, [], PublishedAt);
 
         submission.SequenceNumber.Should().Be(0);
     }
@@ -65,7 +65,7 @@ public class SubmissionPublishTests
     {
         var submission = NewDraft();
 
-        var act = () => submission.Publish(1, null, PublishedAt);
+        var act = () => submission.Publish(1, null, [], PublishedAt);
 
         act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.SequenceNumberNotContiguous);
@@ -78,7 +78,7 @@ public class SubmissionPublishTests
     {
         var submission = NewDraft();
 
-        submission.Publish(3, previousPublishedSequenceNumber: 2, PublishedAt);
+        submission.Publish(3, previousPublishedSequenceNumber: 2, [], PublishedAt);
 
         submission.SequenceNumber.Should().Be(3);
     }
@@ -98,7 +98,7 @@ public class SubmissionPublishTests
     {
         var submission = NewDraft();
 
-        var act = () => submission.Publish(sequenceNumber, previous, PublishedAt);
+        var act = () => submission.Publish(sequenceNumber, previous, [], PublishedAt);
 
         act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.SequenceNumberNotContiguous);
@@ -112,7 +112,7 @@ public class SubmissionPublishTests
     {
         var submission = NewDraft();
 
-        var act = () => submission.Publish(-1, null, PublishedAt);
+        var act = () => submission.Publish(-1, null, [], PublishedAt);
 
         act.Should().Throw<DomainException>()
             .WithMessage(SubmissionErrors.SequenceNumberNotNegative + "*");
@@ -123,9 +123,9 @@ public class SubmissionPublishTests
     public void Publish_WhenAlreadyPublished_ThrowsAndKeepsOriginalPublishedAt()
     {
         var submission = NewDraft();
-        submission.Publish(0, null, PublishedAt);
+        submission.Publish(0, null, [], PublishedAt);
 
-        var act = () => submission.Publish(1, 0, PublishedAt.AddDays(1));
+        var act = () => submission.Publish(1, 0, [], PublishedAt.AddDays(1));
 
         act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(SubmissionErrors.SubmissionNotDraft);
@@ -138,7 +138,7 @@ public class SubmissionPublishTests
     {
         var submission = NewDraft();
 
-        var act = () => submission.Publish(0, null, default);
+        var act = () => submission.Publish(0, null, [], default);
 
         act.Should().Throw<DomainException>()
             .WithMessage(SubmissionErrors.PublishedAtRequired + "*");

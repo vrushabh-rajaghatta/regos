@@ -68,8 +68,45 @@ public sealed class SubmissionDocument : Entity<SubmissionDocumentId>
     /// </remarks>
     public TemplateSectionId? TemplateSectionId { get; private set; }
 
+    /// <summary>
+    /// What this filing did to this placement, relative to the previously
+    /// published sequence. **Null until the submission is published**, and null
+    /// afterwards for a document that was never placed.
+    /// </summary>
+    /// <remarks>
+    /// The second case is not an omission. <b>An operation is a fact about a
+    /// placement, not about an attachment</b> — a document sitting nowhere in
+    /// the dossier is in no section, produces no leaf, and did nothing to the
+    /// previous sequence. Publishing with unplaced documents is permitted (the
+    /// validator reports it as information, not an error), so the invariant
+    /// worth stating is the narrower one: <em>a published submission has an
+    /// operation for every placed document.</em>
+    /// </remarks>
+    public SubmissionContentOperation? Operation { get; private set; }
+
+    /// <summary>
+    /// The placement in the previous sequence this supersedes — eCTD's
+    /// <c>modified-file</c>. Set only alongside
+    /// <see cref="SubmissionContentOperation.Replace"/>.
+    /// </summary>
+    /// <remarks>
+    /// Derivable only at publish and meaningless afterwards without it: the
+    /// pointer names one specific prior leaf, and which leaf that was depends on
+    /// the derivation rule in force at the time.
+    /// </remarks>
+    public SubmissionDocumentId? ReplacesSubmissionDocumentId { get; private set; }
+
     // Only the aggregate may move a document; callers go through
     // Submission.PlaceDocument / ClearPlacement so the invariants are enforced.
     internal void PlaceIn(TemplateSectionId? templateSectionId)
         => TemplateSectionId = templateSectionId;
+
+    // Only Submission.Publish may set this, and only once.
+    internal void RecordOperation(
+        SubmissionContentOperation operation,
+        SubmissionDocumentId? replaces = null)
+    {
+        Operation = operation;
+        ReplacesSubmissionDocumentId = replaces;
+    }
 }

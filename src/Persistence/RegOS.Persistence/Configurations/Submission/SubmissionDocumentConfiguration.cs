@@ -42,6 +42,20 @@ public sealed class SubmissionDocumentConfiguration
             .HasColumnType("timestamp with time zone")
             .IsRequired();
 
+        // What this filing did to this placement, frozen at publish (ADR-045).
+        // Null while a draft, and null for an attachment that was never placed —
+        // an operation is a fact about a placement.
+        builder.Property(x => x.Operation)
+            .HasConversion<int>();
+
+        // The placement superseded by a Replace. Held, never navigated to: it
+        // names a child of a *different* Submission aggregate, and a foreign key
+        // would let deleting one submission cascade into another's history.
+        builder.Property(x => x.ReplacesSubmissionDocumentId)
+            .HasConversion(
+                id => id!.Value,
+                value => SubmissionDocumentId.From(value));
+
         // Where the document sits in the dossier. Nullable: attached but not
         // yet placed is a legitimate state, and a submission bound to no
         // blueprint has no sections to place into at all.

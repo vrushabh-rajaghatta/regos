@@ -247,7 +247,7 @@ Per the register in [FEATURE-DEVELOPMENT-FLOW](../FEATURE-DEVELOPMENT-FLOW.md).
 | # | Type | Hypothesis | Falsifier | Resolved at |
 |---|---|---|---|---|
 | **1** | Architecture | **The regulatory activity is a real object.** | It owns a business fact that neither `RegulatoryApplication` nor `Submission` can own without contradiction. *Grouping is not ownership.* | the first **EU market** or the first **US supplement** — deliberately **not** EPIC-007 |
-| **2** | Architecture | **The snapshot is the publication record.** | It acquires no publication-only fact when the operation and the replace pointer arrive. | **S002** |
+| **2** | Architecture | ~~**The snapshot is the publication record.**~~ | — | ~~S002~~ **RESOLVED — split in two, see the S002 note** |
 | **3** | Architecture | **The authority's status is correspondence, not a field.** `HaStatus` + `HaStatusDate` should not exist. | A fact about what the authority did that cannot be expressed as an `HaCorrespondence` anchored to the submission. | **S003** |
 | **4** | Regulatory evidence | A document that **moves section** is `delete` + `new`, not `replace`. | a real sequence showing otherwise | EPIC-007 |
 | **5** | Regulatory evidence | **`Append` is unexercised** in FDA practice — enum value, no derivation. | a seeded blueprint or real sequence that uses it | EPIC-007 |
@@ -318,7 +318,7 @@ early; ship the inert data late.**
 | # | Story | Slice |
 |---|---|---|
 | **S001** | ✅ **A submission is a sequence** — `SequenceNumber`, assigned at publish, application-scoped, contiguity enforced in the aggregate; *"Sequence 0003"* on screen and the vocabulary pair in [docs/domain-model/submission.md](../../domain-model/submission.md). **ADR-044.** Folds in the four ADR-043 id conversions. | domain → persistence → API → UI → test |
-| **S002** | **What changed since last time** — the placement diff, operation computed at publish and frozen, the replace pointer; first sequence is all-`New`, asserted. **Resolves hypothesis 2 — the snapshot grows or goes. ADR-045.** | full slice |
+| **S002** | ✅ **What changed since last time** — the placement diff, operation computed at publish and frozen, the replace pointer; first sequence is all-`New`, asserted. **Resolved hypothesis 2 — the snapshot went. ADR-045.** | full slice |
 | **S003** | **The lifecycle we own** — the states beyond `Draft`/`Published`, dated history per the cross-cutting status rule, permitted transitions. **Resolves hypothesis 3** by trying to express the authority's side as correspondence. | full slice |
 | **S004** | **Submission identity** — format, DTD versions (ICH/Regional/STF), gateway format, sub-type, submission countries | full slice |
 | **S005** | **`SubmissionRole`** — named contacts with roles on a submission *(EPIC-016 ✅)* | full slice |
@@ -443,3 +443,72 @@ meant — it earns a place in ADR-045.
   in the story is invariant, policy, index, screens and the id conversion. The
   story was not spent adding columns; it was spent making one piece of state mean
   something.
+
+---
+
+## S002 — what a publication means *(2026-08-02)*
+
+### The question, and the assumption it exposed
+
+Opened on *what becomes true exactly once, at the instant of publication?*, with
+one falsifier: **can this be reconstructed from immutable published sequences and
+documents, with no loss of historical meaning?**
+
+Three candidates fell out cleanly — the baseline is `SequenceNumber - 1`, the
+document set is already frozen on an immutable `Submission`. The operation did
+not, and **not for the reason expected**: every input survives, but the
+*derivation rule* is not immutable. Hypotheses 4–7 are open and land at EPIC-007,
+so a filing recomputed later under a changed rule would say something other than
+what it said — and after EPIC-007 transmits, the operation is a fact the
+authority holds too.
+
+Then the question exposed something nobody had written down: **what a
+submission's document set means.** `RequiredDocumentCoverageEvaluator` requires
+every mandatory placeholder filled *per submission*, so a RegOS submission is the
+**cumulative dossier**, not a delta. That was true by accident of the validator
+and is now a decision — [ADR-045](../../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md)
+decision 1, the epic's product thesis.
+
+### Hypothesis 2 — resolved by splitting, not by choosing
+
+| Statement | Verdict |
+|---|---|
+| Publication facts exist that cannot safely be recomputed | ✅ **Supported** |
+| `SubmissionSnapshot` is where those facts belong | ❌ **Falsified** |
+
+*"Does the snapshot contain publication facts?"* turned out to be the weaker
+question. The better one is **could it express them** — and without
+`ProductDocumentId` and `TemplateSectionId` it has no identity that compares
+across sequences. Giving it those does not evolve it; it duplicates
+`SubmissionDocument`, and **duplication is not preservation**. `SubmissionSnapshot`
+and its table are deleted.
+
+### Discovered while building
+
+- **`Unchanged` had to become a real operation value**, though eCTD has none.
+  The publication-boundary rule requires null to mean exactly one thing, and in a
+  cumulative dossier *"carried forward untouched"* must be distinguishable from
+  *"not filed yet"*. The rule produced a modelling consequence within a day of
+  being written.
+- **A deletion had to be written down.** Under the cumulative model a withdrawal
+  is only an absence, and **an absence cannot be frozen** — so `SubmissionDeletion`
+  records it. Not a `SubmissionDocument` with a flag: that entity means *this
+  dossier contains this document*.
+- **An operation is a fact about a placement, not an attachment.** Publishing
+  with unplaced documents is permitted (the validator reports information, not an
+  error), so the invariant is narrower than it first looked. This is hypothesis 7
+  appearing as a modelling consequence rather than as a regulatory question.
+- **`AddNewVersion` had no endpoint.** The aggregate has carried it since
+  EPIC-003 with a comment saying it was modelled but not exposed — so a revised
+  document could not be recorded at all. Under the cumulative model that is not a
+  missing convenience but **the most common gesture a sequence makes**, and the
+  DoD's browser proof is unreachable without it. Added as
+  `UploadDocumentVersion`; **scope this story added deliberately, and worth
+  reversing if it should have been its own story.**
+- **`ISubmissionNumberingPolicy` became `ISubmissionPublicationBaseline`.** The
+  number and the baseline are one question — *what does the next filing follow?*
+  — and two services asking it would be two chances to disagree.
+- **Test cleanup outlived its schema.** Two classes deleted from tables this
+  story dropped, so cleanup threw, rows leaked, and 52 unrelated tests failed on
+  the sequence index. The same shape as S001's fixture finding: *the test
+  infrastructure encoded an assumption that stopped being true.*

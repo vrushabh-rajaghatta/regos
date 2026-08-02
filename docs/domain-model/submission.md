@@ -46,3 +46,27 @@ A draft labelled *"0004"* would assert a fact it has not earned: the number is
 claimed at publish, and whichever draft publishes first takes it. Two drafts in
 one application therefore show the same next number, which is true rather than
 a defect.
+
+## A submission is the whole dossier; the delta is derived
+
+> **A `Submission` represents the complete regulatory dossier at the moment of
+> publication. The transmitted delta is derived from successive cumulative
+> submissions** ([ADR-045](../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md)).
+
+A real eCTD sequence 0001 carries one protocol. A RegOS sequence 0001 carries the
+**whole dossier again**, one document of which is at a new version — and RegOS
+works out that only one thing moved. The user maintains the regulatory state; the
+system derives the increment.
+
+This is why every mandatory placeholder must be filled in *every* sequence, and
+why a placement the previous sequence had and this one lacks is a **withdrawal**
+rather than an omission.
+
+| Screen | Domain |
+|---|---|
+| **"What changed"** | `SubmissionDocument.Operation` + `Submission.Deletions` |
+| "carried forward unchanged" | `SubmissionContentOperation.Unchanged` |
+
+`Unchanged` exists although eCTD has no such operation: a carried-forward
+document is genuinely in the filing, and *nothing happened to it* has to be
+distinguishable from *not filed yet*.

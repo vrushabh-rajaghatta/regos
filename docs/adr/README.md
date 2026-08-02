@@ -79,6 +79,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [042](ADR-042-what-the-interaction-context-turned-out-to-be.md) | What the interaction context turned out to be | Accepted | Current |
 | [043](ADR-043-entity-identity-derives-from-the-kernel.md) | Entity identity derives from the kernel, and master data does not | Accepted | Direction |
 | [044](ADR-044-a-submission-is-a-transmitted-sequence.md) | A submission is a transmitted sequence, not a regulatory conversation | Accepted | Current |
+| [045](ADR-045-the-cumulative-dossier-and-the-derived-delta.md) | The cumulative dossier, and the delta we derive from it | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

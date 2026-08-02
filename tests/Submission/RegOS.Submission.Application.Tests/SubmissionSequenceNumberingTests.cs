@@ -70,11 +70,7 @@ public sealed class SubmissionSequenceNumberingTests : IAsyncLifetime
         {
             var subIds = _submissionIds.ToArray();
             await ctx.Database.ExecuteSqlRawAsync(
-                "DELETE FROM \"SubmissionSnapshotDocuments\" WHERE \"SubmissionSnapshotId\" IN "
-                + "(SELECT \"Id\" FROM \"SubmissionSnapshots\" WHERE \"SubmissionId\" = ANY({0}))",
-                new object[] { subIds });
-            await ctx.Database.ExecuteSqlRawAsync(
-                "DELETE FROM \"SubmissionSnapshots\" WHERE \"SubmissionId\" = ANY({0})",
+                "DELETE FROM \"SubmissionDeletions\" WHERE \"SubmissionId\" = ANY({0})",
                 new object[] { subIds });
             await ctx.Database.ExecuteSqlRawAsync(
                 "DELETE FROM \"SubmissionDocuments\" WHERE \"SubmissionId\" = ANY({0})",
@@ -142,7 +138,7 @@ public sealed class SubmissionSequenceNumberingTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task TheNumberingPolicy_ReportsTheNextNumberAndWhatItFollows()
+    public async Task ThePublicationBaseline_ReportsTheNextNumberAndWhatItFollows()
     {
         var submissionId = await SeedPublishableAsync();
         RegulatoryApplicationId appId;
@@ -151,20 +147,31 @@ public sealed class SubmissionSequenceNumberingTests : IAsyncLifetime
         {
             (appId, _) = await TestApplications.EnsureAsync(ctx, Fixture);
 
-            var before = await new SubmissionNumberingPolicy(ctx)
-                .GetNextPublishSequenceNumberAsync(appId, default);
+            var before = await new SubmissionPublicationBaseline(ctx)
+                .GetAsync(appId, default);
 
-            before.Should().Be(new NextSequence(0, null));
+            before.NextSequenceNumber.Should().Be(0);
+            before.PreviousPublishedSequenceNumber.Should().BeNull();
+            before.Placements.Should().BeEmpty();
         }
 
         await PublishAsync(submissionId);
 
         await using (var ctx = New())
         {
-            var after = await new SubmissionNumberingPolicy(ctx)
-                .GetNextPublishSequenceNumberAsync(appId, default);
+            var after = await new SubmissionPublicationBaseline(ctx)
+                .GetAsync(appId, default);
 
-            after.Should().Be(new NextSequence(1, 0));
+            after.NextSequenceNumber.Should().Be(1);
+            after.PreviousPublishedSequenceNumber.Should().Be(0);
+
+            // Still empty, and that is the rule rather than a gap: this
+            // fixture's documents are attached but never placed, and **an
+            // unplaced attachment is not a placement** — it sits in no section,
+            // so there is nothing for the next filing to be measured against.
+            // The two facts are carried separately for exactly this reason: a
+            // previous sequence exists, and it placed nothing.
+            after.Placements.Should().BeEmpty();
         }
     }
 
@@ -257,9 +264,8 @@ public sealed class SubmissionSequenceNumberingTests : IAsyncLifetime
     private static PublishSubmissionHandler HandlerFor(RegOSDbContext ctx) =>
         new(
             new SubmissionValidator(new SubmissionRepository(ctx), ctx),
-            new SubmissionNumberingPolicy(ctx),
-            new SubmissionRepository(ctx),
-            new SubmissionSnapshotRepository(ctx));
+            new SubmissionPublicationBaseline(ctx),
+            new SubmissionRepository(ctx));
 
     private async Task PublishAsync(SubmissionId submissionId)
     {

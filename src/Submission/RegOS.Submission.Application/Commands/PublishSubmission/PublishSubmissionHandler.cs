@@ -1,14 +1,13 @@
 using RegOS.SharedKernel.Exceptions;
 using RegOS.Submission.Application.Services;
 using RegOS.Submission.Application.Validation;
-using RegOS.Submission.Domain.Snapshot;
 using RegOS.Submission.Domain.Submission;
 
 namespace RegOS.Submission.Application.Commands.PublishSubmission;
 
 /// <summary>
-/// Publishes a submission once it is ready, under the next sequence number in its
-/// application, and captures its immutable snapshot in the same operation. The
+/// Publishes a submission once it is ready: under the next sequence number in
+/// its application, and against the dossier that application last filed. The
 /// handler orchestrates but owns no business rules.
 /// </summary>
 /// <remarks>
@@ -35,20 +34,17 @@ namespace RegOS.Submission.Application.Commands.PublishSubmission;
 public sealed class PublishSubmissionHandler
 {
     private readonly SubmissionValidator _validator;
-    private readonly ISubmissionNumberingPolicy _numbering;
+    private readonly ISubmissionPublicationBaseline _baseline;
     private readonly ISubmissionRepository _submissions;
-    private readonly ISubmissionSnapshotRepository _snapshots;
 
     public PublishSubmissionHandler(
         SubmissionValidator validator,
-        ISubmissionNumberingPolicy numbering,
-        ISubmissionRepository submissions,
-        ISubmissionSnapshotRepository snapshots)
+        ISubmissionPublicationBaseline baseline,
+        ISubmissionRepository submissions)
     {
         _validator = validator;
-        _numbering = numbering;
+        _baseline = baseline;
         _submissions = submissions;
-        _snapshots = snapshots;
     }
 
     public async Task<PublishSubmissionResult> HandleAsync(
@@ -87,29 +83,21 @@ public sealed class PublishSubmissionHandler
             return new PublishSubmissionResult(Published: false, validation);
         }
 
-        // What this gets filed as. Read here rather than chosen by the aggregate:
-        // a Submission is a root, so the other sequences in its application sit
-        // outside its consistency boundary (ADR-044 decision 6).
-        var next = await _numbering.GetNextPublishSequenceNumberAsync(
+        // What this gets filed as, and what it follows. Read here rather than
+        // chosen by the aggregate: a Submission is a root, so the other
+        // sequences in its application sit outside its consistency boundary
+        // (ADR-044 decision 6).
+        var baseline = await _baseline.GetAsync(
             submission.ApplicationId, cancellationToken);
 
-        // The application layer supplies both facts — the number and the
-        // timestamp — and the aggregate enforces the rules over them.
-        submission.Publish(next.Number, next.PreviousPublished, DateTimeOffset.UtcNow);
+        // The application layer supplies the facts — number, baseline, clock —
+        // and the aggregate owns every rule over them, including the diff.
+        submission.Publish(
+            baseline.NextSequenceNumber,
+            baseline.PreviousPublishedSequenceNumber,
+            baseline.Placements,
+            DateTimeOffset.UtcNow);
 
-        // Capture the published dossier. The application translates the submission
-        // into the snapshot's input — the aggregate never sees a SubmissionSnapshot,
-        // and the snapshot never sees a Submission.
-        var snapshot = SubmissionSnapshot.Create(
-            submission.TenantId,
-            submission.Id,
-            submission.Documents
-                .OrderBy(d => d.DisplayOrder)
-                .Select(d => (d.DocumentVersionId, d.DisplayOrder)));
-
-        // Stage the snapshot, then commit both aggregates in one SaveChanges (one
-        // transaction): if snapshot persistence fails, the publish rolls back too.
-        await _snapshots.AddAsync(snapshot, cancellationToken);
         await _submissions.UpdateAsync(submission, cancellationToken);
 
         return new PublishSubmissionResult(Published: true, Validation: null);

@@ -133,5 +133,16 @@ public sealed class SubmissionConfiguration
         builder.Metadata
             .FindNavigation(nameof(SubmissionAggregate.Documents))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // Ownership: Submission (1) -> SubmissionDeletions (N). What this filing
+        // withdrew from the sequence before it — written at publish, never after.
+        builder.HasMany(x => x.Deletions)
+            .WithOne()
+            .HasForeignKey("SubmissionId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(SubmissionAggregate.Deletions))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

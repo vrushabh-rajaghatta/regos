@@ -51,7 +51,7 @@ components.
 Read in this order when the question is "how should this work":
 
 1. **[docs/adr/](docs/adr/)** — the single immutable decision series, ADR-001
-   onward. Next number is **ADR-045**. Never edit an accepted ADR; supersede it.
+   onward. Next number is **ADR-046**. Never edit an accepted ADR; supersede it.
 2. **[docs/engineering/slice-conventions.md](docs/engineering/slice-conventions.md)** — mechanical file/folder rules.
 3. **[docs/engineering/implementation-standards.md](docs/engineering/implementation-standards.md)** — principles behind them.
 4. **[docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md)** — cross-cutting platform standards (ES-001…).
@@ -81,9 +81,12 @@ sufficient — `readonly record struct <X>Id(Guid Value)` cannot satisfy the
 `Entity<TId>` constraint, so those entities have no base class, no identity
 equality, and no empty-guid guard. Copy
 [CommitmentId.cs](src/Interaction/RegOS.Interaction.Domain/Commitments/CommitmentId.cs),
-never the nearest id — 19 record-struct ids are still pending migration
-(`SubmissionId`, `RegistrationId`, all of Blueprint, every `*StatusEntry`) and
-copying one propagates it. `IdentityConventionTests` enforces this.
+never the nearest id — 15 record-struct ids are still pending migration
+(`RegistrationId`, all of Blueprint, `ProductDocument`, every `*StatusEntry`) and
+copying one propagates it. `IdentityConventionTests` enforces this, and carries
+the one step of the conversion the compiler cannot find: a **shadow foreign key
+declared with the id type becomes optional** once that id is a reference type,
+and an optional FK severs instead of deleting.
 
 The exception is **flat master data** (`CountryId`, `AuthorityId`,
 `DocumentTypeId` and five more): deterministic ids, no children, no lifecycle,

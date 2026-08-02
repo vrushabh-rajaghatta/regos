@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Submission.Application.Services;
-using RegOS.Submission.Domain.Snapshot;
 using RegOS.Submission.Domain.Submission;
 using RegOS.Submission.Infrastructure.Repositories;
 using RegOS.Submission.Infrastructure.Services;
@@ -15,9 +14,7 @@ public static class DependencyInjection
     {
         services.AddScoped<ISubmissionRepository, SubmissionRepository>();
 
-        services.AddScoped<ISubmissionSnapshotRepository, SubmissionSnapshotRepository>();
-
-        services.AddScoped<ISubmissionNumberingPolicy, SubmissionNumberingPolicy>();
+        services.AddScoped<ISubmissionPublicationBaseline, SubmissionPublicationBaseline>();
 
         return services;
     }

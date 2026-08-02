@@ -16,8 +16,6 @@ using SubmissionTypeAggregate =
     RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
 using SubmissionAggregate =
     RegOS.Submission.Domain.Submission.Submission;
-using SubmissionSnapshotAggregate =
-    RegOS.Submission.Domain.Snapshot.SubmissionSnapshot;
 using DocumentTypeAggregate =
     RegOS.ReferenceData.Domain.DocumentType.DocumentType;
 using RegulatoryTemplateAggregate =
@@ -136,9 +134,6 @@ public sealed class RegOSDbContext : DbContext
     public DbSet<SubmissionAggregate> Submissions =>
         Set<SubmissionAggregate>();
 
-    public DbSet<SubmissionSnapshotAggregate> SubmissionSnapshots =>
-        Set<SubmissionSnapshotAggregate>();
-
     /// <summary>
     /// Correspondence with a health authority. Tenant-owned and fail-closed,
     /// like every other record of what the business did (ADR-031).
@@ -247,8 +242,7 @@ public sealed class RegOSDbContext : DbContext
     /// <item><b>Fail-closed tenant-owned</b> — <c>x.TenantId == CurrentTenant</c>.
     /// The tenant owns the data. <c>Users</c>, <c>Products</c>,
     /// <c>MedicinalProducts</c>,
-    /// <c>RegulatoryApplications</c>, <c>Submissions</c>,
-    /// <c>SubmissionSnapshots</c>, <c>ProductDocuments</c>,
+    /// <c>RegulatoryApplications</c>, <c>Submissions</c>, <c>ProductDocuments</c>,
     /// <c>Registrations</c>, <c>Organizations</c>, <c>OrganizationSites</c>,
     /// <c>Contacts</c>, <c>OrganizationDivisions</c>.</item>
     /// <item><b>Shared plus extensible</b> — <c>TenantId == null || == CurrentTenant</c>.
@@ -263,7 +257,7 @@ public sealed class RegOSDbContext : DbContext
     /// <c>RefreshTokens</c>, <c>Invitations</c>, <c>PasswordResets</c>,
     /// <c>Sessions</c>), which carry no tenant and are reachable only by user
     /// id or token hash. Child entities (<c>SubmissionDocuments</c>,
-    /// <c>DocumentVersions</c>, <c>SnapshotDocuments</c>,
+    /// <c>DocumentVersions</c>, <c>SubmissionDeletions</c>,
     /// <c>RegistrationStatusHistory</c>, <c>SiteIdentifiers</c>,
     /// <c>ContactRoleAssignments</c>, <c>ContactEmails</c>, <c>ContactPhones</c>,
     /// <c>OrganizationIdentifiers</c>)
@@ -294,9 +288,6 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<SubmissionAggregate>().HasQueryFilter(
-            x => CurrentTenant != null && x.TenantId == CurrentTenant);
-
-        modelBuilder.Entity<SubmissionSnapshotAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<ProductDocumentAggregate>().HasQueryFilter(

@@ -48,4 +48,9 @@ public static class SubmissionErrors
     public const string SequenceNumberNotContiguous =
         "A sequence must follow the previously published one — the first "
         + "sequence in an application is 0000.";
+
+    // Content operation (ADR-045)
+    public const string FirstSequenceHasNoBaseline =
+        "The first sequence in an application has nothing to be compared "
+        + "against.";
 }

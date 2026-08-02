@@ -53,24 +53,11 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
     {
         await using var ctx = New();
 
-        // Publishing now creates a snapshot per submission. Remove snapshots first
-        // (RESTRICT FKs to both the submission and the versions) before the rest.
-        if (_submissionIds.Count > 0)
-        {
-            var subIds = _submissionIds.ToArray();
-            await ctx.Database.ExecuteSqlRawAsync(
-                "DELETE FROM \"SubmissionSnapshotDocuments\" WHERE \"SubmissionSnapshotId\" IN " +
-                "(SELECT \"Id\" FROM \"SubmissionSnapshots\" WHERE \"SubmissionId\" = ANY({0}))",
-                new object[] { subIds });
-            await ctx.Database.ExecuteSqlRawAsync(
-                "DELETE FROM \"SubmissionSnapshots\" WHERE \"SubmissionId\" = ANY({0})",
-                new object[] { subIds });
-        }
-
         foreach (var id in _submissionIds)
         {
             var sub = await ctx.Submissions
                 .Include(s => s.Documents)
+                .Include(s => s.Deletions)
                 .FirstOrDefaultAsync(s => s.Id == new SubmissionId(id));
             if (sub is not null)
                 ctx.Submissions.Remove(sub);
@@ -136,9 +123,8 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
     private static PublishSubmissionHandler PublishHandlerFor(RegOSDbContext ctx) =>
         new(
             new SubmissionValidator(new SubmissionRepository(ctx), ctx),
-            new SubmissionNumberingPolicy(ctx),
-            new SubmissionRepository(ctx),
-            new SubmissionSnapshotRepository(ctx));
+            new SubmissionPublicationBaseline(ctx),
+            new SubmissionRepository(ctx));
 
     // --- Publish: validation gate --------------------------------------------
 

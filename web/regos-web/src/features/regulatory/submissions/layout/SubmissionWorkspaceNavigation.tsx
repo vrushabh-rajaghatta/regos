@@ -36,6 +36,12 @@ export function SubmissionWorkspaceNavigation() {
         Publishing
       </NavLink>
 
+      {/* What this filing did to the sequence before it — frozen at publish,
+          so it is a record rather than a live comparison. */}
+      <NavLink to="changes" className={linkClass}>
+        What changed
+      </NavLink>
+
       <NavLink to="history" className={linkClass}>
         History
       </NavLink>

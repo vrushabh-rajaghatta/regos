@@ -11,6 +11,7 @@ namespace RegOS.Submission.Domain.Submission;
 public sealed class Submission : AggregateRoot<SubmissionId>
 {
     private readonly List<SubmissionDocument> _documents = [];
+    private readonly List<SubmissionDeletion> _deletions = [];
 
     // EF materialisation only.
     private Submission()
@@ -81,6 +82,13 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     // changed through the aggregate's own behaviors.
     public IReadOnlyCollection<SubmissionDocument> Documents
         => _documents.AsReadOnly();
+
+    /// <summary>
+    /// What this filing withdrew from the previous sequence. Empty until
+    /// published, and empty for most filings.
+    /// </summary>
+    public IReadOnlyCollection<SubmissionDeletion> Deletions
+        => _deletions.AsReadOnly();
 
     /// <param name="boundTemplateVersionId">
     /// The published template version that governs this submission, resolved by
@@ -284,11 +292,19 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// we filed, and the audit history will need to tell them apart.
     /// </para>
     /// </remarks>
+    /// <param name="previousPlacements">
+    /// Every placement the previous published sequence carried, or empty when
+    /// this is the first. The diff is computed against it and frozen — see
+    /// <see cref="RecordOperations"/>.
+    /// </param>
     public void Publish(
         int sequenceNumber,
         int? previousPublishedSequenceNumber,
+        IReadOnlyCollection<PublishedPlacement> previousPlacements,
         DateTimeOffset publishedAt)
     {
+        ArgumentNullException.ThrowIfNull(previousPlacements);
+
         // The application supplies the timestamp — the aggregate never reads the
         // clock, keeping Publish deterministic and testable.
         if (publishedAt == default)
@@ -307,8 +323,85 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             throw new BusinessRuleViolationException(
                 SubmissionErrors.SequenceNumberNotContiguous);
 
+        // A first sequence has nothing behind it, so a baseline would be a
+        // caller's mistake rather than a filing's history.
+        if (previousPublishedSequenceNumber is null && previousPlacements.Count > 0)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.FirstSequenceHasNoBaseline);
+
+        RecordOperations(previousPlacements);
+
         Status = SubmissionStatus.Published;
         SequenceNumber = sequenceNumber;
         PublishedAt = publishedAt;
+    }
+
+    /// <summary>
+    /// Computes what this filing did to each placement, and freezes it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The identity that survives across sequences is (document, section)</b>
+    /// — <em>the same document, in the same place</em>. A
+    /// <c>SubmissionDocumentId</c> belongs to one submission and cannot compare
+    /// across two.
+    /// <para>
+    /// The rule is deliberately literal, and the two things it does <em>not</em>
+    /// decide are open regulatory questions rather than oversights (EPIC-004
+    /// hypotheses 4 and 5). A document that moved section reads here as a delete
+    /// plus a new, because that is what the key says happened; whether a
+    /// regulator would call it a replace is a question a real filing answers, at
+    /// EPIC-007. Nothing produces <c>Append</c>.
+    /// </para>
+    /// <para>
+    /// Unplaced attachments are skipped and keep a null operation: an operation
+    /// is a fact about a placement.
+    /// </para>
+    /// </remarks>
+    private void RecordOperations(
+        IReadOnlyCollection<PublishedPlacement> previousPlacements)
+    {
+        var baseline = previousPlacements.ToDictionary(
+            p => (p.ProductDocumentId, p.TemplateSectionId));
+
+        foreach (var document in _documents)
+        {
+            if (document.TemplateSectionId is not { } section)
+                continue;
+
+            var key = (document.ProductDocumentId, section);
+
+            if (!baseline.TryGetValue(key, out var previous))
+            {
+                document.RecordOperation(SubmissionContentOperation.New);
+                continue;
+            }
+
+            document.RecordOperation(
+                previous.DocumentVersionId == document.DocumentVersionId
+                    ? SubmissionContentOperation.Unchanged
+                    : SubmissionContentOperation.Replace,
+                previous.DocumentVersionId == document.DocumentVersionId
+                    ? null
+                    : previous.Id);
+        }
+
+        // What the previous sequence carried and this one does not. Written down
+        // rather than left as an absence: an absence cannot be frozen, and a
+        // later recomputation under a changed rule would rewrite what this
+        // filing said.
+        var current = _documents
+            .Where(d => d.TemplateSectionId is not null)
+            .Select(d => (d.ProductDocumentId, Section: d.TemplateSectionId!.Value))
+            .ToHashSet();
+
+        foreach (var withdrawn in previousPlacements
+            .Where(p => !current.Contains((p.ProductDocumentId, p.TemplateSectionId))))
+        {
+            _deletions.Add(new SubmissionDeletion(
+                SubmissionDeletionId.New(),
+                withdrawn.ProductDocumentId,
+                withdrawn.TemplateSectionId,
+                withdrawn.Id));
+        }
     }
 }

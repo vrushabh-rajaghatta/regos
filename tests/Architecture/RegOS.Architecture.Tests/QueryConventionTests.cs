@@ -45,7 +45,6 @@ public sealed class QueryConventionTests
         "src/RegulatoryApplication/RegOS.RegulatoryApplication.Application/Queries/ListRegulatoryApplications",
         "src/Submission/RegOS.Submission.Application/Queries/GetSubmission",
         "src/Submission/RegOS.Submission.Application/Queries/GetSubmissionContentPlan",
-        "src/Submission/RegOS.Submission.Application/Queries/GetSubmissionSnapshot",
         "src/Submission/RegOS.Submission.Application/Queries/ListAttachableProductDocuments",
         "src/Submission/RegOS.Submission.Application/Queries/ListProductDocumentUsage",
         "src/Submission/RegOS.Submission.Application/Queries/ListSubmissionDocuments",
