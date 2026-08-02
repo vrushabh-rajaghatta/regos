@@ -280,6 +280,29 @@ utils/formatFileSize.ts          ✅   pure functions
 components/statusLabel.ts        ❌   not a component
 ```
 
+## SC-106 — A failed mutation is visible, and distinguishable from a stale read
+
+Every mutation hook's error state is rendered. A screen that shows a list and
+offers actions on it has **two ways to look wrong and one appearance**:
+
+```tsx
+{remove.isError && (                                    // ✅
+  <p className="text-sm text-destructive">{remove.error.message}</p>
+)}
+```
+
+```tsx
+<Button onClick={() => remove.mutate(role.id)}>Remove</Button>   // ❌ alone
+```
+
+Without it, a rejected mutation and a projection that has not refreshed look
+identical — the row is simply still there. **The user cannot tell, and neither
+can the developer**: EPIC-004 S005 spent a debugging cycle on refresh behaviour
+before a direct API call revealed a 404.
+
+The rule is not "better error handling". It is that **a mutation failure and a
+stale view must never be the same pixels**, because they have opposite fixes.
+
 ## Frontend slice shape
 
 ```
