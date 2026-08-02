@@ -50,9 +50,22 @@ priority decision — see below.
 
 ## Next
 
-**Order in this table is priority, and the top row is a decision the founder
-owns.** Everything below is a recommendation with its reasoning, not a plan
-already made.
+**Order in this table is priority.**
+
+> **Call made 2026-08-02 — EPIC-007a before EPIC-018.** Stated as a lean rather
+> than a certainty, and the reasoning is worth keeping because it is not the
+> reasoning that recommended it:
+>
+> **The project's biggest unknowns are no longer modelling questions. They are
+> integration questions.** Submission identity, sequence history, lifecycle,
+> validation, placement, content and withdrawals are all built. The next thing
+> worth knowing is whether that architecture can emit a regulator-ready package
+> — and if it cannot, that is far cheaper to discover now than after ten more
+> RIM objects are layered on top.
+>
+> **What reverses it:** a customer waiting on labeling, or a decision that
+> breadth of platform capability is the risk to retire first. EPIC-018 needs no
+> new argument if so — it is next in the table either way.
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
