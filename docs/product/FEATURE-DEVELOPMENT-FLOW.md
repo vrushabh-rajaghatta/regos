@@ -156,6 +156,31 @@ hypothesis; a hypothesis can only go looking for confirmation.** *"Should there
 be an `X`?"* has already conceded the noun. Phase 2 still **ends** with entities
 and columns — it just does not start there.
 
+### The second question, added 2026-08-02 from EPIC-004
+
+> **Is this concept genuinely one thing, or are we using one name for two
+> facts?**
+
+Ask it of every concept the design leans on, including the ones that arrived
+from a reference model and look settled. Three consecutive stories in EPIC-004
+found the same thing, each time by accident:
+
+| | One term | Two facts |
+|---|---|---|
+| S001 | publication | **numbering at publication**, and transmission later |
+| S002 | a document in a filing | the document, and **the publication's interpretation of it** |
+| S003 | a submission's status | **our lifecycle**, and the regulatory conversation |
+
+**Once the two are separated, the object or status that existed only to hold the
+ambiguity usually disappears** — which is why those stories kept deleting
+concepts instead of adding them. `SubmissionSnapshot` went; `HaStatus` was never
+built; `Withdrawn` turned out to be a relationship.
+
+**This is a question, not a pattern to satisfy.** The answer does not have to be
+*two*, and a story forced into the shape would be worse than one that never
+asked. It earns its place here because it is cheap to ask and the failure it
+prevents — a name quietly meaning two things — is expensive to find later.
+
 Then design the data. For each entity:
 
 1. **Entity + columns** — name, fields, types, ownership (global vs tenant-scoped — see ADR-030/031), identity (strongly-typed id), invariants.
