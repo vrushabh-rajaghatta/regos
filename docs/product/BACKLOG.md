@@ -30,64 +30,72 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | **EPIC-006** | **Health-authority interactions** — correspondence, Q&A, meetings, commitments, inspections; the "what's due" view | 🟢 Complete | 8 stories; [ADR-040](../adr/ADR-040-the-health-authority-interaction-context.md) · [ADR-041](../adr/ADR-041-platform-contracts-and-the-identity-that-crosses.md) · [ADR-042](../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) → [`epics/EPIC-006-health-authority-interactions.md`](epics/EPIC-006-health-authority-interactions.md) |
 | **EPIC-005** | **Registration tracking** — what the business *holds*: a product's market authorisations, their status over time, licence numbers and key dates (the RIM core) | 🟢 Complete | 4 stories; [ADR-037](../adr/ADR-037-registrations-are-regulatory-assets-with-derived-visibility.md) → `epics/EPIC-005-registration-tracking.md` |
 | **EPIC-016** | **Organization depth** — sites, contacts, divisions; deepen Organization itself | 🟢 Complete | [ADR-038](../adr/ADR-038-organization-depth-roots-and-the-three-filter-shapes.md) · deactivation deferred with a reason → [`epics/EPIC-016-organization-depth.md`](epics/EPIC-016-organization-depth.md) |
+| **EPIC-004** | **Sequences & submission lifecycle** — a submission is a numbered sequence; content operation derived and frozen at publish; lifecycle beyond Draft/Published; format; the people named on a filing | 🟢 Complete | 6 stories; [ADR-044](../adr/ADR-044-a-submission-is-a-transmitted-sequence.md) · [045](../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md) · [046](../adr/ADR-046-a-submissions-lifecycle-is-only-what-we-did.md) · [047](../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md) · [048](../adr/ADR-048-the-people-on-a-filing-belong-to-the-filing.md) · **DTD versions and gateway format deliberately absent** (ADR-047) → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
 | **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier (**"Markets"** in the UI), + trade names and market status | 🟢 Complete | 7 stories, 7/7 DoD; [ADR-039](../adr/ADR-039-the-market-local-product-tier.md) → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
 
 ---
 
 ## Now
 
-**EPIC-004 is complete** — six stories, five ADRs (044–048), one behaviour-neutral refactor. Three architecture hypotheses resolved, two carried with named milestones; four regulatory-evidence hypotheses carried to EPIC-007, which is where their evidence first exists. The **maintenance epic** (nine forms carrying the EPIC-016 mutation defect) is still **deferred, deliberately**, and 15 legacy `record struct` ids still await ADR-043 migration.
+**Nothing in progress.** EPIC-004 closed 2026-08-02 and the next epic is a
+priority decision — see below.
 
-**EPIC-006 is complete** — 8 stories, [ADR-040](../adr/ADR-040-the-health-authority-interaction-context.md) · [ADR-041](../adr/ADR-041-platform-contracts-and-the-identity-that-crosses.md) · [ADR-042](../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md).
+**Standing debt, carried deliberately and not attached to any epic:**
 
-Its Phase 2 opened on the domain question rather than the entity list and
-**falsified its own central hypothesis** — the spanning question is real, but it
-is a read model, not an aggregate. Across eight stories the process prevented an
-incorrect dependency, an incorrect ownership model, two speculative
-abstractions, one premature extraction and one business status from entering the
-model; the retro records each with the story it came from.
+| | |
+|---|---|
+| the nine-form EPIC-016 mutation defect | its own maintenance epic, still unscheduled |
+| 15 legacy `record struct` ids | ADR-043 migration, **a whole context at a time, when that context is being worked on anyway** |
+| a clean-clone CI check | EPIC-015 — the rule is fixed, the class of defect is not |
 
 ## Next
 
-**Planned to Phase 1–2 depth.** Order in this table is priority.
+**Order in this table is priority, and the top row is a decision the founder
+owns.** Everything below is a recommendation with its reasoning, not a plan
+already made.
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 1 | **EPIC-004** | **Sequences & submission lifecycle** — eCTD sequence numbering, content operation (new/replace/append/delete), lifecycle beyond Draft/Published | 🟢 **Complete** · retro done 2026-08-02 | [ADR-044](../adr/ADR-044-a-submission-is-a-transmitted-sequence.md) · [045](../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md) · [046](../adr/ADR-046-a-submissions-lifecycle-is-only-what-we-did.md) · [047](../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md) · [048](../adr/ADR-048-the-people-on-a-filing-belong-to-the-filing.md) · DTD/gateway deferred to EPIC-007 **by decision** → [`epics/EPIC-004-sequences-and-submission-lifecycle.md`](epics/EPIC-004-sequences-and-submission-lifecycle.md) |
+| 1 | **EPIC-007a** | **eCTD package generation** — the XML backbone, folder structure, checksums, and the `Filed` transition. *Split from EPIC-007: STF and xEVMPD/IDMP messages stay in 7b* | ⚪ Not Started · **needs Phase 1** | EPIC-004 ✅ — and **only** EPIC-004, once split |
+| 2 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations | ⚪ Not Started · planned | EPIC-017 ✅ |
+| 3 | **EPIC-019** | **Study registry** — clinical & non-clinical studies, cited by applications and submission content | ⚪ Not Started · planned | none |
 
-> **What Phase 2 settled, 2026-08-01.** It opened on *"what business thing
-> survives after sequence 0003 has been transmitted?"* and found the answer was
-> already modelled: **the application is the enduring regulatory conversation; a
-> `Submission` is one transmitted sequence** (screen word *"Sequence 0003"*). The
-> candidate *regulatory activity* tier failed the test that a tier must own a
-> business fact neither neighbour can own without contradiction — it owns nothing
-> in US·FDA·IND — so it is a **live hypothesis**, falsified or confirmed at the
-> first EU market or US supplement, not a model element.
->
-> The epic's central architectural hypothesis is **whether `SubmissionSnapshot`
-> is the publication record at all**: today it stores strictly less than the
-> submission it snapshots, and S002 either gives it publication-only facts or
-> ends it.
+### Why EPIC-007a is recommended over the runway's next step
 
-> **Call made 2026-08-01 — EPIC-006 before EPIC-004.** Both are unblocked and
-> genuinely independent: sequences live inside `Submission` and never touch
-> `ProductId`; interactions never touch submission internals. `EPIC-020` needs
-> both, so the order costs nothing downstream — it is a **value** decision.
->
-> It goes to EPIC-006 because RegOS today knows *what we submitted* and *what we
-> hold*, and still does not know **what is happening with the authority** — the
-> operational half of a RIM, and where a regulatory affairs team actually spends
-> its day. EPIC-004 deepens an area that is already coherent; EPIC-006 opens one
-> that is absent. It is also the largest single block of RIM coverage available
-> in one epic (**+5 objects**), and the epic that **tests ADR-039's central
-> prediction** — the bitemporal-history extraction — while the reasoning is still
-> fresh.
->
-> **The one thing that reverses this:** a paying customer waiting on eCTD
-> sequence management. Revenue outranks sequencing; nothing else here does.
->
-> The [RIM runway](#the-runway) has ordered it `006 → 004` since it was written.
-> Only this table disagreed.
+The [runway](#the-runway) says **EPIC-018**, and by RIM coverage it is plainly
+right — 10 objects against 7a's zero. Three things outweigh that:
+
+1. **Four carried hypotheses resolve there and nowhere else.** Hypotheses 4–7
+   are *regulatory evidence*: whether a moved document is `delete`+`new`,
+   whether `Append` is ever exercised, whether `modified-file` is recoverable
+   after the fact, whether lifecycle belongs to the placement. **No amount of
+   thinking settles them** — only a generated package does. They are the only
+   debt in the project that cannot be paid down by reasoning.
+2. **The product thesis is unproven until something renders it.** ADR-045 says
+   RegOS owns cumulative regulatory state and *derives* the transmitted
+   increment. Nothing has ever transmitted one. Until a backbone exists, the
+   central claim of EPIC-004 is a well-tested assertion about a file nobody has
+   produced.
+3. **Two decisions are currently defined-and-unreachable**, waiting on exactly
+   this: `SubmissionStatus.Filed` (ADR-046 §2, which also expires ADR-044's
+   amendment) and the DTD/gateway metadata (ADR-047 §5). Both were deferred
+   *with EPIC-007 named as the milestone*.
+
+**The split is what makes this possible.** EPIC-007 as written consumes
+EPIC-004, 010 and 019 — but only STF and the xEVMPD/IDMP messages need 010 and
+019. The eCTD backbone needs EPIC-004 alone, which is now shipped.
+
+**What would reverse it:** a customer waiting on labeling, or a judgement that
+breadth of RIM coverage beats depth of proof right now. Both are value calls,
+and value calls are the founder's.
+
+> **Historical — the ordering call made 2026-08-01.** EPIC-006 was taken before
+> EPIC-004 on the argument that RegOS knew *what we submitted* and *what we
+> hold*, but not *what is happening with the authority*. Both are now complete
+> and the call is recorded rather than live. The reasoning is still the test to
+> apply: **where does a regulatory affairs team actually spend its day, and
+> which epic opens an area that is absent rather than deepening one that is
+> already coherent?**
 
 ## Later
 
@@ -97,7 +105,7 @@ model; the retro records each with the story it came from.
 | **EPIC-019** | **Study registry** — clinical & non-clinical studies, cited by applications and submission content | ⚪ Not Started | no dependencies — good filler when a larger epic needs breaking up · planned → [`epics/EPIC-019-study-registry.md`](epics/EPIC-019-study-registry.md) |
 | **EPIC-010** | **IDMP / product data depth** — substances, ingredients, strength, presentation, packaging, manufacturing | ⚪ Not Started | needs EPIC-016 + EPIC-017 · **split into 10a/10b/10c before cutting a branch** · planned → [`epics/EPIC-010-idmp-product-data-depth.md`](epics/EPIC-010-idmp-product-data-depth.md) |
 | **EPIC-020** | **Regulatory process & planning** — objectives, plan/step templates, live plans and dated steps; RIM's spine | ⚪ Not Started | needs EPIC-004 + EPIC-006 + EPIC-017 · deliberately last · planned → [`epics/EPIC-020-regulatory-process-and-planning.md`](epics/EPIC-020-regulatory-process-and-planning.md) |
-| **EPIC-007** | **Publishing & eCTD export** — package builder, technical validation, output formats, STF, xEVMPD/IDMP messages | ⚪ Not Started | consumes EPIC-004, 010, 019 |
+| **EPIC-007b** | **Publishing — STF & message formats** — study tagging files, xEVMPD/IDMP messages, the output formats that need product and study depth | ⚪ Not Started | needs EPIC-010 + EPIC-019 · **7a (the eCTD backbone) is split out and promoted — see Next** |
 | **EPIC-008** | **Review & approval workflow** — internal review, comments, approvals, e-signatures; the QC/publishing/compilation/validation status pipelines deferred from EPIC-004 | ⚪ Not Started | |
 | **EPIC-009** | **Regulatory intelligence / requirements** — what's required per market & product type; keeps the blueprint current | ⚪ Not Started | feeds EPIC-001 |
 | **EPIC-011** | **Reporting & dashboards** — portfolio status, submission readiness, activity, cross-market label divergence, Gantt | ⚪ Not Started | consumes EPIC-017, 018, 020 |
@@ -126,16 +134,24 @@ Three divergences are **not** gaps and should be defended, not closed:
 
 ### The runway
 
-| # | Epic | RIM objects closed | Running coverage |
-|---|---|---|---|
-| 1 | **EPIC-016** Organization depth | 3 | 16% → ~21% |
-| 2 | **EPIC-017** Market-local product tier | 3 | → ~28% |
-| 3 | **EPIC-006** HA interactions | 5 | → ~37% |
-| 4 | **EPIC-004** Sequences & lifecycle | deepens Submission (13% → high) + 1 | → ~39% |
-| 5 | **EPIC-018** Labeling & product information | 10 | → ~55% |
-| 6 | **EPIC-019** Study registry | 2 | → ~59% |
-| 7 | **EPIC-010** IDMP depth (10a/10b/10c) | 16 | → ~87% |
-| 8 | **EPIC-020** Process & planning | 6 | → ~98% |
+| # | Epic | RIM objects closed | Running coverage | |
+|---|---|---|---|---|
+| 1 | **EPIC-016** Organization depth | 3 | 16% → ~21% | 🟢 |
+| 2 | **EPIC-017** Market-local product tier | 3 | → ~28% | 🟢 |
+| 3 | **EPIC-006** HA interactions | 5 | → ~37% | 🟢 |
+| 4 | **EPIC-004** Sequences & lifecycle | deepens Submission (13% → high) + 1 | **→ ~39%** | 🟢 |
+| 5 | **EPIC-018** Labeling & product information | 10 | → ~55% | ⚪ |
+| 6 | **EPIC-019** Study registry | 2 | → ~59% | ⚪ |
+| 7 | **EPIC-010** IDMP depth (10a/10b/10c) | 16 | → ~87% | ⚪ |
+| 8 | **EPIC-020** Process & planning | 6 | → ~98% | ⚪ |
+
+> **EPIC-007a closes no RIM objects, and that is the honest cost of
+> recommending it.** RIM is an object model; a package builder produces a
+> *file*. Coverage measures how much of the domain we can describe — it says
+> nothing about whether what we describe is correct, and the four
+> regulatory-evidence hypotheses EPIC-004 carried are exactly the part this
+> table cannot see. Taking 007a first trades a coverage step for the first
+> external check on work already done.
 
 Remaining after all eight: `Product Family` (deliberately deferred — inserting a tier *above* a root is cheap) and a handful of RIM relational artifacts we model differently.
 

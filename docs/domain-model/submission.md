@@ -62,6 +62,26 @@ This is why every mandatory placeholder must be filled in *every* sequence, and
 why a placement the previous sequence had and this one lacks is a **withdrawal**
 rather than an omission.
 
+### A mandatory document cannot be withdrawn — and that is correct
+
+The two rules above meet, and the result surprises people demonstrating the
+feature:
+
+> **If the blueprint requires a document, no later sequence can withdraw it.**
+> Omitting it makes the dossier incomplete, and the validator refuses to publish.
+
+So a withdrawal is only expressible for a **supporting** document — one placed
+in a section the blueprint knows, but not answering a required-document slot.
+Every one of the 48 slots in the seeded FDA IND blueprint is mandatory, which
+means *nothing in the seed data can demonstrate a withdrawal* unless an extra
+document is placed alongside the required set. EPIC-004 S006's browser spec does
+exactly that.
+
+**This is the model being right, not a limitation.** You cannot withdraw what
+the dossier is required to contain; the regulatory act would be refused on the
+other side too. Written down here because the alternative is someone concluding
+withdrawals are broken.
+
 | Screen | Domain |
 |---|---|
 | **"What changed"** | `SubmissionDocument.Operation` + `Submission.Deletions` |
