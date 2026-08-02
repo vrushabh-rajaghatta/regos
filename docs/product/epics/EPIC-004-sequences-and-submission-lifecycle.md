@@ -498,17 +498,40 @@ and its table are deleted.
   with unplaced documents is permitted (the validator reports information, not an
   error), so the invariant is narrower than it first looked. This is hypothesis 7
   appearing as a modelling consequence rather than as a regulatory question.
-- **`AddNewVersion` had no endpoint.** The aggregate has carried it since
-  EPIC-003 with a comment saying it was modelled but not exposed — so a revised
-  document could not be recorded at all. Under the cumulative model that is not a
-  missing convenience but **the most common gesture a sequence makes**, and the
-  DoD's browser proof is unreachable without it. Added as
-  `UploadDocumentVersion`; **scope this story added deliberately, and worth
-  reversing if it should have been its own story.**
+- **Latent domain behaviour, surfaced by a downstream capability.** `AddNewVersion`
+  has sat on the `ProductDocument` aggregate since EPIC-003 with a comment saying
+  it was modelled but not exposed; nothing reached it, so a revised document
+  could not be recorded at all. Under the cumulative model that is **the most
+  common gesture a sequence makes**, and the DoD's browser proof is unreachable
+  without it. Added as `UploadDocumentVersion`, and kept in S002 deliberately.
+
+  > The distinction worth preserving: this is not *adding capability because it
+  > seems useful*. It is **exposing capability that the domain already owned,
+  > because a story made it a prerequisite**. The aggregate owned the behaviour;
+  > the story only made it reachable. That is why it did not become its own
+  > epic — and ADR-018 is satisfied because nothing speculative was created.
 - **`ISubmissionNumberingPolicy` became `ISubmissionPublicationBaseline`.** The
   number and the baseline are one question — *what does the next filing follow?*
   — and two services asking it would be two chances to disagree.
 - **Test cleanup outlived its schema.** Two classes deleted from tables this
   story dropped, so cleanup threw, rows leaked, and 52 unrelated tests failed on
-  the sequence index. The same shape as S001's fixture finding: *the test
-  infrastructure encoded an assumption that stopped being true.*
+  the sequence index.
+
+### Watch: the test harness carries implicit schema knowledge
+
+**Two independent instances, one shape.** Not a defect pattern — a structural
+observation about the fixtures:
+
+| Story | What the harness assumed | What made it false |
+|---|---|---|
+| S001 | one shared fixture application is harmless | a sequence number turned it into shared mutable numbering state |
+| S002 | cleanup can name tables directly in SQL | the story dropped two of them |
+
+In both cases the production code was correct and the **test infrastructure
+encoded an assumption that stopped being true**. Two examples is not an ADR and
+not yet a refactor.
+
+> **If a third story reveals the same shape, that is the trigger to ask whether
+> the fixture architecture needs changing** — rather than fixing a third
+> instance and moving on. Recorded here so the third one is recognised as a
+> third rather than as a fresh surprise.

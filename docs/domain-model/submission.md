@@ -70,3 +70,16 @@ rather than an omission.
 `Unchanged` exists although eCTD has no such operation: a carried-forward
 document is genuinely in the filing, and *nothing happened to it* has to be
 distinguishable from *not filed yet*.
+
+### The invariant, in the narrow form it actually holds
+
+> **A published submission has an operation for every *placed* document.**
+
+Not *every document*. An operation is a fact about a **placement** — a document
+attached but never placed sits in no section, produces no leaf, and did nothing
+to the previous sequence. Publishing with unplaced attachments is permitted (the
+validator reports it as information, not an error), so the broader sentence would
+be false the first time someone published one.
+
+This is the kind of invariant that gets accidentally widened later. It is written
+down narrow on purpose.

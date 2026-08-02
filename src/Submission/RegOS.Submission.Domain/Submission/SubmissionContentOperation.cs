@@ -17,11 +17,18 @@ public enum SubmissionContentOperation
     /// same section, same version.
     /// </summary>
     /// <remarks>
-    /// eCTD has no such operation: an unchanged leaf simply does not appear in
-    /// the backbone. RegOS needs the value anyway, because a submission is the
-    /// <b>cumulative</b> dossier — the document is genuinely in this filing, and
-    /// "nothing happened to it" has to be distinguishable from "not filed yet",
-    /// which is what a null operation means. EPIC-007 emits nothing for these.
+    /// <b>Do not remove this because eCTD has no such operation.</b> It does
+    /// not, and that is not the point: RegOS is not modelling the transmitted
+    /// backbone, it is modelling the publication state of a cumulative dossier
+    /// (ADR-045). EPIC-007 emits nothing for these when it writes the XML.
+    /// <para>
+    /// The value exists to keep an invariant, not to describe a wire format.
+    /// <b>A null operation means exactly one thing — not yet published</b>
+    /// (ADR-045 decision 4). Deleting <c>Unchanged</c> would make null mean
+    /// that <em>or</em> "published and carried forward untouched", and a
+    /// published filing would no longer freeze a complete interpretation of
+    /// every placed document.
+    /// </para>
     /// </remarks>
     Unchanged = 1,
 
