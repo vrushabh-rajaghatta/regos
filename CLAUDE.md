@@ -59,6 +59,14 @@ Read in this order when the question is "how should this work":
 Where code and docs disagree, **the code is the truth** — then fix the doc in
 the same PR.
 
+**[docs/evidence/](docs/evidence/README.md) is not part of that series and does
+not answer "how should this work".** It records **facts that came from outside
+RegOS** — a regulator's DTD, a published example, a parser's verdict — each with
+an evidence level and the decisions relying on it. An ADR is ours and changes
+when we change our minds; an external fact can simply be *wrong*, and then every
+decision resting on it has to be re-examined. Cite an evidence level (2a, 3, …)
+rather than restating what a specification says.
+
 ### Decisions you will otherwise re-derive
 
 - **[ADR-016](docs/adr/ADR-016-persistence-access-model.md)** — repositories for writes, `RegOSDbContext` + `AsNoTracking()` for reads. A query handler never loads an aggregate.

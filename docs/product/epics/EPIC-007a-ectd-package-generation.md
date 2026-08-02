@@ -42,6 +42,10 @@ answer is that there are four different rights.
 > **EPIC-007a targets 2a and 3. 2b is carried to EPIC-007b; 4 stays out of
 > scope.**
 
+**The taxonomy has been promoted out of this epic** to
+[docs/evidence/](../../evidence/README.md), which is now its canonical home and
+where ADRs cite it from. It was worked out here; it is not about eCTD.
+
 Level 1 is where every previous epic already sits. It is the same reasoning that
 produced the model, checking itself — necessary, and worth nothing as external
 evidence.
