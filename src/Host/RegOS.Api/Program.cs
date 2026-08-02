@@ -244,6 +244,7 @@ submissions.MapGetSubmission();
 submissions.MapAttachProductDocument();
 submissions.MapRemoveProductDocument();
 submissions.MapPlaceSubmissionDocument();
+submissions.MapChangeSubmissionFormat();
 submissions.MapGetSubmissionContentPlan();
 submissions.MapGetSubmissionChanges();
 submissions.MapListSubmissionDocuments();

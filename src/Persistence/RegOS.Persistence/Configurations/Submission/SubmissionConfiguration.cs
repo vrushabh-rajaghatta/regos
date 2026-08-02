@@ -57,6 +57,14 @@ public sealed class SubmissionConfiguration
             .HasConversion<int>()
             .IsRequired();
 
+        // What this filing is rendered as (ADR-047). Not nullable: every
+        // submission has a format from the moment it is created, unlike the
+        // DTD and gateway metadata that only becomes true at publication and
+        // is therefore not modelled here at all.
+        builder.Property(x => x.Format)
+            .HasConversion<int>()
+            .IsRequired();
+
         builder.Property(x => x.CreatedOn)
             .HasColumnType("timestamp with time zone")
             .IsRequired();

@@ -6,6 +6,9 @@ export interface SubmissionDetail {
   submissionTypeId: string;
   submissionTypeName: string;
   status: string;
+  /** What it will be rendered as. Editable while a draft, frozen once
+   *  published (ADR-047). The domain's word — see `formatLabel`. */
+  format: string;
   createdOn: string;
   /** What it was filed as. Null while a draft. */
   sequenceNumber: number | null;

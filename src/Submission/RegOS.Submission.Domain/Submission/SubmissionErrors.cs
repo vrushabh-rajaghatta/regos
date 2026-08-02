@@ -53,4 +53,12 @@ public static class SubmissionErrors
     public const string FirstSequenceHasNoBaseline =
         "The first sequence in an application has nothing to be compared "
         + "against.";
+
+    // Format (ADR-047)
+    public const string FormatNotRecognised =
+        "That is not a submission format RegOS recognises.";
+
+    public const string FormatLockedOncePublished =
+        "The format of a published sequence cannot be changed — it is what "
+        + "the filing was made as.";
 }

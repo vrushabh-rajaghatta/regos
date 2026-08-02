@@ -435,7 +435,8 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
 
         var result = await handler.HandleAsync(
             new CreateSubmissionCommand(
-                applicationId, submissionTypeId, title + " " + Guid.NewGuid()),
+                applicationId, submissionTypeId, title + " " + Guid.NewGuid(),
+                SubmissionFormat.Ectd),
             default);
 
         _submissionIds.Add(result.Id.Value);

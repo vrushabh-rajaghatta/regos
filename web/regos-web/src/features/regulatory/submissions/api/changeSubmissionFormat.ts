@@ -1,24 +1,25 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
-export interface CreateSubmissionRequest {
-  submissionTypeId: string;
-  title: string;
+export interface ChangeSubmissionFormatRequest {
   /** `Ectd` | `Nees` | `Paper`. The domain's word, never the screen's. */
   format: string;
 }
 
-export interface CreateSubmissionResponse {
-  id: string;
-}
-
-export async function createSubmission(
-  applicationId: string,
-  request: CreateSubmissionRequest
-): Promise<CreateSubmissionResponse> {
+/**
+ * PUT, not PATCH: the body states the whole value, so sending it twice lands
+ * in the same place.
+ *
+ * There is no equivalent for a published sequence — the server refuses it,
+ * because a filing's format is a fact about something already filed (ADR-047).
+ */
+export async function changeSubmissionFormat(
+  submissionId: string,
+  request: ChangeSubmissionFormatRequest
+): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/applications/${applicationId}/submissions`),
+    buildUrl(`/api/submissions/${submissionId}/format`),
     {
-      method: "POST",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
@@ -27,12 +28,8 @@ export async function createSubmission(
   );
 
   if (!response.ok) {
-    // Surface the backend's business-rule message (ProblemDetails.detail),
-    // e.g. "Application is closed." — falling back to a generic message.
     throw new Error(await extractErrorMessage(response));
   }
-
-  return response.json();
 }
 
 async function extractErrorMessage(response: Response): Promise<string> {
@@ -46,5 +43,5 @@ async function extractErrorMessage(response: Response): Promise<string> {
     // Response body was not JSON; fall through to the generic message.
   }
 
-  return "Failed to create Submission.";
+  return "Failed to change the submission format.";
 }

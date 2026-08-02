@@ -1,6 +1,8 @@
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.SharedKernel.Exceptions;
 using RegOS.Submission.Application.Commands.CreateSubmission;
+using RegOS.Submission.Domain.Submission;
 
 namespace RegOS.Api.Endpoints.Submissions;
 
@@ -22,11 +24,21 @@ public static class CreateSubmissionEndpoint
         CreateSubmissionHandler handler,
         CancellationToken cancellationToken)
     {
+        var format = SubmissionFormat.Ectd;
+
+        if (request.Format is { } supplied
+            && !Enum.TryParse(supplied, ignoreCase: true, out format))
+        {
+            throw new DomainException(
+                "Format must be one of Ectd, Nees or Paper.");
+        }
+
         var result = await handler.HandleAsync(
             new CreateSubmissionCommand(
                 new RegulatoryApplicationId(applicationId),
                 new SubmissionTypeId(request.SubmissionTypeId),
-                request.Title),
+                request.Title,
+                format),
             cancellationToken);
 
         return Results.Created(

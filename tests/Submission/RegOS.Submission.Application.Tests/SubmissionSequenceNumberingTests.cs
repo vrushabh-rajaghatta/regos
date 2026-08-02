@@ -314,7 +314,8 @@ public sealed class SubmissionSequenceNumberingTests : IAsyncLifetime
 
         var submission = SubmissionAggregate.Create(
             TestTenant.Id, appId, SeededSubmissionType,
-            "Sequence Sub " + Guid.NewGuid());
+            "Sequence Sub " + Guid.NewGuid(),
+            SubmissionFormat.Ectd);
 
         submission.AttachDocument(doc.Id, doc.CurrentVersionId!.Value);
 

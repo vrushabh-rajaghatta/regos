@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Persistence;
 using RegOS.Submission.Application.Commands.AttachProductDocument;
+using RegOS.Submission.Application.Commands.ChangeSubmissionFormat;
 using RegOS.Submission.Application.Commands.CreateSubmission;
 using RegOS.Submission.Application.Commands.PlaceSubmissionDocument;
 using RegOS.Submission.Application.Commands.PublishSubmission;
@@ -30,6 +31,8 @@ public static class DependencyInjection
         services.AddScoped<RemoveProductDocumentHandler>();
 
         services.AddScoped<PlaceSubmissionDocumentHandler>();
+
+        services.AddScoped<ChangeSubmissionFormatHandler>();
 
         services.AddScoped<GetSubmissionContentPlanHandler>();
 

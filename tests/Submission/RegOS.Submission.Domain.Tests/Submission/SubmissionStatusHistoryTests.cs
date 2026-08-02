@@ -22,7 +22,8 @@ public class SubmissionStatusHistoryTests
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
             new SubmissionTypeId(Guid.NewGuid()),
-            "Original IND");
+            "Original IND",
+            SubmissionFormat.Ectd);
 
     /// <summary>
     /// The history begins at creation, not at publication — otherwise a

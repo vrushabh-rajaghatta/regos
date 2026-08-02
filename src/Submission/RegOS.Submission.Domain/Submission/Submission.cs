@@ -26,6 +26,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         SubmissionTypeId submissionTypeId,
         RegulatoryTemplateVersionId? boundTemplateVersionId,
         string title,
+        SubmissionFormat format,
         DateTime createdOn)
     {
         Id = id;
@@ -34,6 +35,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         SubmissionTypeId = submissionTypeId;
         BoundTemplateVersionId = boundTemplateVersionId;
         Title = title;
+        Format = format;
         Status = SubmissionStatus.Draft;
         CreatedOn = createdOn;
     }
@@ -55,6 +57,24 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     public RegulatoryTemplateVersionId? BoundTemplateVersionId { get; private set; }
 
     public string Title { get; private set; } = default!;
+
+    /// <summary>
+    /// What this filing will be rendered as. Chosen while drafting and
+    /// <b>frozen at publication</b> — you cannot change what sequence 0002 was
+    /// filed as (ADR-047).
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not derived from the application: real applications moved
+    /// from paper to eCTD mid-life, so format belongs to the sequence rather
+    /// than to the thing the sequence belongs to.
+    /// <para>
+    /// Whether a later sequence may regress — eCTD at 0003, paper at 0004 — is
+    /// <b>recorded, not enforced</b>. Regulators may well forbid it, but no
+    /// evidence in hand says so, and inventing the rule would be the mistake
+    /// this epic has avoided five times over.
+    /// </para>
+    /// </remarks>
+    public SubmissionFormat Format { get; private set; }
 
     public SubmissionStatus Status { get; private set; }
 
@@ -114,11 +134,18 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// the application layer. Optional: when no published blueprint targets the
     /// submission type, the submission is created unbound rather than rejected.
     /// </param>
+    /// <param name="format">
+    /// Required rather than defaulted. eCTD is the only format an FDA IND
+    /// accepts today, which would make a default look harmless — but the filer
+    /// chooses the format, and a default would let a caller omit a real
+    /// decision and have the model answer for them.
+    /// </param>
     public static Submission Create(
         TenantId tenantId,
         RegulatoryApplicationId applicationId,
         SubmissionTypeId submissionTypeId,
         string title,
+        SubmissionFormat format,
         RegulatoryTemplateVersionId? boundTemplateVersionId = null)
     {
         if (tenantId is null)
@@ -133,6 +160,9 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         if (string.IsNullOrWhiteSpace(title))
             throw new DomainException(SubmissionErrors.TitleRequired);
 
+        if (!Enum.IsDefined(format))
+            throw new DomainException(SubmissionErrors.FormatNotRecognised);
+
         var createdOn = DateTime.UtcNow;
 
         var submission = new Submission(
@@ -142,6 +172,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             submissionTypeId,
             boundTemplateVersionId,
             title.Trim(),
+            format,
             createdOn);
 
         // Becoming a draft is a step, so the history starts here rather than at
@@ -370,6 +401,28 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             SubmissionStatus.Published,
             DateOnly.FromDateTime(publishedAt.UtcDateTime),
             publishedAt.UtcDateTime);
+    }
+
+    /// <summary>
+    /// Changes what this filing will be rendered as, while it is still a draft.
+    /// </summary>
+    /// <remarks>
+    /// The draft guard <em>is</em> the freeze required by ADR-047: a published
+    /// sequence's format is a fact about a filing that has already been made,
+    /// and no later decision can reach back and alter it. No separate
+    /// immutability mechanism is needed, and adding one would give the same
+    /// rule two places to live.
+    /// </remarks>
+    public void ChangeFormat(SubmissionFormat format)
+    {
+        if (!Enum.IsDefined(format))
+            throw new DomainException(SubmissionErrors.FormatNotRecognised);
+
+        if (Status != SubmissionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.FormatLockedOncePublished);
+
+        Format = format;
     }
 
     /// <summary>

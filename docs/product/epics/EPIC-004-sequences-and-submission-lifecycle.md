@@ -320,7 +320,7 @@ early; ship the inert data late.**
 | **S001** | ✅ **A submission is a sequence** — `SequenceNumber`, assigned at publish, application-scoped, contiguity enforced in the aggregate; *"Sequence 0003"* on screen and the vocabulary pair in [docs/domain-model/submission.md](../../domain-model/submission.md). **ADR-044.** Folds in the four ADR-043 id conversions. | domain → persistence → API → UI → test |
 | **S002** | ✅ **What changed since last time** — the placement diff, operation computed at publish and frozen, the replace pointer; first sequence is all-`New`, asserted. **Resolved hypothesis 2 — the snapshot went. ADR-045.** | full slice |
 | **S003** | ✅ **The lifecycle we own** — three states, dated history per the cross-cutting status rule. **Resolved hypothesis 3 — supported.** Amends ADR-044. **ADR-046.** | full slice |
-| **S004** | **Submission identity** — format, DTD versions (ICH/Regional/STF), gateway format, sub-type, submission countries | full slice |
+| **S004** | ✅ **What a filing is rendered as** — `SubmissionFormat`, frozen at publication; operation derivation proved format-independent. **Four of the six sketched fields refused, one shown unmodellable. ADR-047.** | full slice |
 | **S005** | **`SubmissionRole`** — named contacts with roles on a submission *(EPIC-016 ✅)* | full slice |
 | **S006** | **Capstone** — one document's lifecycle across an application's sequences; browser proof of publish → replace → publish; the register resolved; retro | UI → test → docs |
 
@@ -647,3 +647,89 @@ Each one found that a single term was concealing two independent facts:
 
 **Explanatory, not prescriptive.** It is a recurring discovery, not a rule, and
 a future story should not be forced into the shape.
+
+---
+
+## S004 — the story whose most valuable work was refusing to build *(2026-08-02)*
+
+S004 was scoped in Phase 2, before S001–S003 existed. Sorted by the tests those
+stories produced, its six sketched fields turned out not to be one kind of thing.
+
+| Sketched | Verdict |
+|---|---|
+| `Format` | **built** — true from the moment a filing is planned, and the filer makes it true |
+| `DtdVersionIch/Regional/Stf` | **EPIC-007** — no fact until a package is built |
+| `GatewayFormat` | **EPIC-007** — no fact until it is transmitted |
+| `SubmissionCountries` | **hypothesis 1** — an application is already exactly one country |
+| `ReasonForDelay` | **impossible** — `Submission` has no planned date to be late against |
+| `SubTypeId` | **unresolved, and that is the answer** |
+
+### The distinction that made it decidable
+
+ADR-046 defined `Filed` and made nothing reach it, which looks like a licence for
+four nullable columns. It is not, and naming why is what unblocked the story:
+
+> **An enum value is vocabulary** — it names a state the model acknowledges
+> exists, and a reader learns something true from it. **A null column is not
+> vocabulary; it is an empty container**, and shipping one is a promise rather
+> than a model.
+
+A column reaches the schema, the DTO, the form and the screen. The first user who
+finds a *DTD Version* field concludes it is needed and fills it in, and RegOS
+then holds a regulatory attribute of unknown provenance.
+
+### The sub-type is unresolved, not deferred
+
+Two incompatible readings, and the model cannot distinguish them: a **taxonomy**
+(`SubmissionType` gains parent/child, and nothing new belongs on `Submission` at
+all) or an **independent axis** (type `IND`, sub-type `Annual Report`, both on
+the submission). `SubmissionType` is flat today, so there is nothing for a
+sub-type to hang from.
+
+> **S004 deliberately does not introduce a sub-type model, because doing so
+> would commit RegOS to one of two incompatible structures without evidence.**
+
+That is stronger than *"later"* — it names what later is **for**.
+
+### The finding that defends ADR-045
+
+`Format` collided with S002 in a way the sketch did not anticipate: if a
+submission is paper, does the operation derivation still run?
+
+**Yes — and it matters that the answer is yes.** ADR-045 records the cumulative
+dossier as the *product thesis*. If derivation ran only for eCTD, that thesis
+would quietly become an eCTD implementation detail. A paper sequence still
+changed something; it renders as a cover letter rather than an XML backbone.
+
+Asserted at both levels rather than argued: a domain `Theory` over all three
+formats, and a browser spec that publishes two **paper** sequences and reads
+back exactly the one `Replace` the eCTD spec asserts.
+
+### Three questions, now a modelling test
+
+The publication-boundary rule began in ADR-045 as an implementation heuristic —
+*a field meaningful only after transmission stays null until publication.* By
+S004 it decides **whether the field exists at all**:
+
+1. **When does this fact first become true?**
+2. **Who makes it true?**
+3. **Can the system honestly make it true today?**
+
+Between them they have now removed `SubmissionSnapshot`, the HA status field,
+the DTD columns and the gateway metadata.
+
+### Discovered while building
+
+- **The scaffolded migration would have written an invalid enum.** EF defaulted
+  the new non-nullable column to `0`, which is not a defined `SubmissionFormat`
+  — every existing row would have held a value the domain rejects on next write.
+  Backfilled to `1` (`Ectd`), then the database default dropped, so an insert
+  that omits the format fails loudly instead of silently becoming eCTD. The same
+  trap as S003's `PublishedAt` migration, in the other direction.
+- **Format continuity is recorded, not enforced.** Whether 0004 may be paper
+  when 0003 was eCTD is unknown. No evidence, so no invariant — the third time
+  this epic has declined to invent a rule, after ADR-044's contiguity limit and
+  ADR-046's `Filed`.
+- **Required, not defaulted, in the domain.** eCTD is the only format an FDA IND
+  accepts today, which is exactly what would have made a default look harmless.
+  The API states the default; the aggregate takes none.

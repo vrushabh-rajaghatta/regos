@@ -39,6 +39,7 @@ public sealed class GetSubmissionHandler
                 submission.SubmissionTypeId,
                 SubmissionTypeName = submissionType.Name,
                 submission.Status,
+                submission.Format,
                 submission.CreatedOn,
                 submission.BoundTemplateVersionId,
                 submission.SequenceNumber,
@@ -71,6 +72,7 @@ public sealed class GetSubmissionHandler
             row.SubmissionTypeId.Value,
             row.SubmissionTypeName,
             row.Status.ToString(),
+            row.Format.ToString(),
             row.CreatedOn,
             await LoadBoundTemplateAsync(
                 row.BoundTemplateVersionId, cancellationToken),

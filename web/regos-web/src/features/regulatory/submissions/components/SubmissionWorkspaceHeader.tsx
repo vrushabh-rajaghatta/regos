@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 
 import { useSubmission } from "../hooks/useSubmission";
+import { formatLabel } from "../utils/formatLabel";
 import { nextSequenceLabel, sequenceLabel } from "../utils/sequenceLabel";
 import { SubmissionStatusBadge } from "./SubmissionStatusBadge";
 
@@ -22,7 +23,10 @@ export function SubmissionWorkspaceHeader() {
           <h1 className="text-xl font-semibold">{submission.title}</h1>
 
           <p className="text-sm text-muted-foreground">
-            {submission.submissionTypeName}
+            {submission.submissionTypeName} &middot;{" "}
+            <span data-testid="header-format">
+              {formatLabel(submission.format)}
+            </span>
           </p>
         </div>
 

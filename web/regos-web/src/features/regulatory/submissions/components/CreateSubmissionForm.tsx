@@ -19,6 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import {
+  FORMAT_DESCRIPTIONS,
+  SUBMISSION_FORMATS,
+  formatLabel,
+} from "../utils/formatLabel";
 import { useSubmissionTypes } from "../hooks/useSubmissionTypes";
 import { useCreateSubmission } from "../hooks/useCreateSubmission";
 import {
@@ -57,8 +62,19 @@ export function CreateSubmissionForm({
     defaultValues: {
       title: "",
       submissionTypeId: "",
+      // Shown selected rather than assumed silently: eCTD is the only format
+      // an FDA IND accepts today, and the user can see and change it.
+      format: "Ectd",
     },
   });
+
+  const formatItems = useMemo(
+    () =>
+      Object.fromEntries(
+        SUBMISSION_FORMATS.map((format) => [format, formatLabel(format)])
+      ),
+    []
+  );
 
   // Value->label map so the Select trigger displays the type name rather
   // than the raw id.
@@ -74,6 +90,7 @@ export function CreateSubmissionForm({
     const { id } = await mutation.mutateAsync({
       title: values.title,
       submissionTypeId: values.submissionTypeId,
+      format: values.format,
     });
 
     reset();
@@ -131,6 +148,40 @@ export function CreateSubmissionForm({
               </Select>
 
               <FieldError errors={[errors.submissionTypeId]} />
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="format"
+          render={({ field }) => (
+            <Field data-invalid={!!errors.format}>
+              <FieldLabel htmlFor="format">Submission Format</FieldLabel>
+
+              <Select
+                items={formatItems}
+                value={field.value}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger id="format" className="w-full">
+                  <SelectValue placeholder="Select submission format" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {SUBMISSION_FORMATS.map((format) => (
+                    <SelectItem key={format} value={format}>
+                      {formatLabel(format)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <p className="text-sm text-muted-foreground">
+                {FORMAT_DESCRIPTIONS[field.value]}
+              </p>
+
+              <FieldError errors={[errors.format]} />
             </Field>
           )}
         />
