@@ -503,7 +503,7 @@ reference data.
 
 ---
 
-## S003 — the regulatory activity 🟡 built, awaiting the dev-database migration
+## S003 — the regulatory activity ✅
 
 **Design approved 2026-08-02; built the same day, schema first.** An earlier
 attempt was reverted deliberately: the domain shape was written before the
@@ -693,21 +693,33 @@ rejected); the migration applied, rolled back and re-applied; and a fresh clone
 and an upgraded database converging on identical reference data — the S002
 guarantee, re-proved for the token.
 
-**Not yet verified:** every suite that reaches a database, because they all
-hard-code the development connection string. See *Blocked* below.
+**Then verified on the development database**, which the founder authorised
+migrating on 2026-08-02:
 
-### Blocked: the integration suites can only run against the dev database
+| | |
+|---|---|
+| **1,039 tests, 17 suites, 0 failures** | counted by *reporting* suites, because a failure count of zero also means nothing ran |
+| **91 browser specs pass** | including the eight that post a submission and had to learn the new contract |
+| 45 existing submissions | all retained, all in the legacy unclassified state the constraint permits |
+| reference data | converged on the fresh-clone state exactly — `fdaat4` reconciled onto a row seeded before the column existed |
 
-`Database=regos` is a `const` in roughly twenty test files, so there is no way
-to point them at a throwaway database. **635 tests across ten database-free
-suites pass; the eight database-backed suites and the browser suite cannot run
-until the development database is migrated.** The migration is additive and its
-`Down` was exercised, so this is a decision about *when*, not about risk.
+**The browser suite is the half that mattered.** The .NET suites were green
+while eight specs still posted the old body shape; only the tests that speak the
+contract could find that, which is the defect the Definition of Done was
+amended for after S001.
 
-> Worth separating from this story: **a test suite that can only run against one
-> named database is a test suite that cannot run twice at once**, and it is why
-> the S003 schema had to be proved by hand-written SQL rather than by the suite
-> that will eventually own that proof. Candidate for EPIC-016.
+### An observation, not part of this story
+
+`Database=regos` is a `const` in roughly twenty test files, so the
+database-backed suites can only ever run against the development database. That
+is why S003's schema had to be proved by hand-written SQL on a throwaway
+database rather than by the suite that should own that proof, and why nothing
+could be verified until the founder's own database had been migrated.
+
+> **A test suite that can only run against one named database cannot run twice
+> at once**, and it makes every schema change a decision about someone's working
+> environment rather than about the change. Candidate for EPIC-016 — recorded
+> here because this story is where the cost was actually paid.
 
 ---
 
