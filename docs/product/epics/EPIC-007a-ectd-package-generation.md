@@ -616,3 +616,63 @@ migration is wrong, everything built on it is harder to reason about.
 
 1. EF configuration 2. migration 3. seeds (FDA tokens only)
 4. freeze-at-publish 5. API 6. UI 7. tests
+
+---
+
+## What EPIC-007a has proved so far
+
+*Recorded 2026-08-02, after S002. **This is neither a decision nor evidence** —
+it is a conclusion drawn from the evidence gathered, and it is written down
+because the next reader would otherwise infer a stronger one from the story
+sequence.*
+
+> **EPIC-007a has shown that RegOS's current submission model is stable enough
+> to be tested against an external regulatory specification without collapsing
+> into ad hoc changes. It has not shown that the model is complete.** Later
+> epics (for example, process, studies, labeling and broader RIM coverage)
+> remain expected to introduce new domain concepts. The evidence gathered so far
+> is about the resilience of the existing submission model under external
+> scrutiny, not the end of domain discovery.
+
+**Why the narrower claim.** The stories so far read like a shift from *"what
+concepts does RegOS need?"* to *"which apparent concepts are derivable?"*, which
+invites the conclusion that discovery is ending. It is not: **EPIC-007a is a
+format-mapping epic**, and mapping an existing model onto a fixed external
+specification structurally produces derivability questions, because the target
+cannot move and the model is what is under test. That is a property of this
+epic's work, not of the domain's maturity — and
+[BACKLOG.md](../BACKLOG.md) disagrees with the wider reading: EPIC-018, EPIC-019,
+EPIC-010 and EPIC-020 are expansion, and EPIC-020 is RIM's spine.
+
+### An observation, deliberately left as one
+
+Three times in this epic the model refused a change **before any code was
+written**, and each refusal contained the answer:
+
+| Story | The shortcut | What refused | What the story became |
+|---|---|---|---|
+| S001 | invent an authority invariant | it already existed, in the wrong aggregate | relocation, not invention |
+| S002 | edit the published blueprint | `AddSection` requires a draft | versioning, not mutation |
+| S003 | validate ordering | the sequence number does not exist yet | a theorem, not a rule |
+
+**Not a rule, and not a heuristic** — an observation attached to this epic. Every
+instance so far has resolved the same way, which means the sample only shows one
+side. The next refusal has two possible outcomes:
+
+1. the refusal again reveals the correct design; or
+2. **the correct answer is to change the aggregate.**
+
+Only after the second has been seen is this a modelling practice rather than a
+description of how one part of RegOS happened to behave. The same standard
+[ADR-049 §6](../../adr/ADR-049-generation-derives-transmission-creates.md)
+applies to its own test, and for the same reason.
+
+**The condition under which it stops reporting:** a story that adds a nullable
+field to get *past* an objection rather than to answer it. Provenance is the
+signal — a nullable field introduced after a refusal deserves an explanation,
+not rejection. S003's `SubmissionTypeId?` is the immediate case, and it is
+legitimate: null is one side of an exclusive-or and means *this sequence
+continues an activity*, which is a state rather than an absence. The same is
+true of `OriginatingSubmissionId` (null ⇒ opens an activity) and `Token`
+(null ⇒ this authority's wire vocabulary has not been modelled). None of those
+is a missing value.
