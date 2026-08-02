@@ -406,3 +406,42 @@ aggregate root. eCTD's actual `submission-type` has no home in RegOS at all.
 **Its own story, its own migration**, ahead of any eCTD work: domain, seed data,
 reference data, APIs, migration, UI. Only once the name is vacated does the real
 eCTD submission type get introduced. **One migration, one story.**
+
+---
+
+## S001 — Application classification belongs to the application ✅
+
+Shipped 2026-08-02. [ADR-050](../../adr/ADR-050-application-type-classifies-the-application.md).
+1,019 tests across 17 suites.
+
+**The invariant was not added — it moved.** `CreateSubmissionHandler` already
+enforced *"the type belongs to the application's authority"*, per sequence,
+against a value that never varied, after the application existed. It now runs
+once, in `RegulatoryApplication.Create`. **A textbook aggregate refactoring, not
+a new rule** — worth recording because the first framing ("the rule had no
+home") was wrong, and the correction is the more interesting fact: it had the
+*wrong* home.
+
+**What the scaffolder could not judge.** EF proposed dropping and recreating the
+seeded reference table, and defaulting the new foreign key to all-zeros. Both
+encode falsehoods — *"these rows are new"*, *"this application's type is
+unknown"* — and neither is true. Replaced by a rename that preserves the rows
+and a backfill that refuses to invent one.
+
+> **A migration can assert a domain invariant.** An application with no
+> submission to infer a type from aborts the run *by id*, rather than being
+> given a meaningless value. It fired on the real dev database — 8 of 15
+> applications — which is the guard working, not the guard failing.
+
+**The `Down` is honestly lossy**, and says so: a sequence that carried a type
+differing from its application's cannot be restored, because after the move that
+information does not exist. A down migration cannot recreate what was
+deliberately discarded.
+
+**The backfill made the old defect visible.** Applications whose earliest
+sequence disagreed with their own identity now carry the disagreement as data —
+exactly what a per-sequence classification permitted.
+
+**Two grandfathered lists shrank and neither grew.** The new query folder
+satisfies SC-003 outright, and `/submission-types` came off the SC-001 route
+exemption by moving under `/api`.
