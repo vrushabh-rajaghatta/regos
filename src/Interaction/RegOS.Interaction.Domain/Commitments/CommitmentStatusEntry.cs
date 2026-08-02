@@ -4,11 +4,12 @@ namespace RegOS.Interaction.Domain.Commitments;
 /// One dated point in a commitment's history.
 /// </summary>
 /// <remarks>
-/// <b>The fourth append-only history, and still not extracted.</b> S003
-/// measured the three that existed: the entry type is ~30 lines of code, the
-/// chronology rule is one line, and the real duplication is the EF
-/// configuration. This makes the configuration count four; five is the point to
-/// extract, and to extract <em>only</em> the configuration.
+/// <b>The fourth append-only history, and still not extracted — the type,
+/// that is.</b> S003 measured the three that existed: the entry type is ~30
+/// lines of code, the chronology rule is one line, and the real duplication is
+/// the EF configuration. That measurement held. The configuration is now shared
+/// (<c>StatusHistoryMapping</c>, ADR-046 decision 6); this type and its rules
+/// stayed exactly where they were, which is what the measurement asked for.
 /// </remarks>
 public sealed class CommitmentStatusEntry
 {

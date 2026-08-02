@@ -588,6 +588,35 @@ configurations, and extract only the configuration"* — met. The verdict is
 recorded in ADR-046 decision 6; **the extraction is its own change**, across four
 configurations in three contexts, and is not folded into a story about lifecycle.
 
+#### The ledger is closed
+
+Done after the epic branch merged and before S004, so that a story about
+submission identity carries no persistence cleanup.
+`StatusHistoryMapping.OwnsStatusHistory` now maps **all five** owned histories —
+the nested question block joined them, because its 26 lines were the same nine
+statements wrapped one level deeper, and leaving one copy behind is the one
+outcome worse than not extracting at all.
+
+What did **not** move, and why:
+
+| | Left alone | Because |
+|---|---|---|
+| the six entry types | ADR-042 stands: structural similarity is not behavioural similarity | an `InspectionStatus` is not a `CommitmentStatus` |
+| the chronology rule | one line, six copies, measured as not worth it in S003 | extracting it would buy a call and cost a domain dependency |
+| `MarketStatusEntry`, `RegistrationStatusEntry` | standalone configurations, not owned navigations | different shape — explicit column types and a chronological index the owned blocks do not have |
+
+**The neutrality proof is the point.** `dotnet ef migrations add` against the
+refactored model produced an **empty `Up` and `Down`**, and regenerated
+`RegOSDbContextModelSnapshot.cs` byte-identical. A configuration refactor that
+cannot demonstrate that is not behaviour-neutral; it is an untested schema
+change.
+
+One thing was traded: the four shared property names are matched by **string**
+rather than by expression. The entry types share no interface, and giving them
+one would have meant changing the entry types — the exact thing the extraction
+refused. A rename now fails at model-build time, which every integration test
+does before its first assertion.
+
 ### Discovered while building
 
 - **`PublishedAt` was already in the history.** It is the `RecordedOnUtc` of the
