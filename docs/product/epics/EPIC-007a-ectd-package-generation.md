@@ -619,6 +619,40 @@ migration is wrong, everything built on it is harder to reason about.
 
 ---
 
+## A backbone is a contract, not a shared ruleset
+
+*Recorded 2026-08-02, when both backbones were pinned. **A prediction about a
+defect not yet written**, placed here so that if it is written anyway, this
+paragraph is what identifies it.*
+
+A package ships **two** backbone files, and it is natural to read them as one
+format rendered twice. Evidence **E16** says they are not:
+
+| | `checksum` on a leaf |
+|---|---|
+| ICH `index.xml` | **`#REQUIRED`** |
+| FDA `us-regional.xml` | **`#IMPLIED`** |
+
+A single `renderLeaf(...)` satisfying the looser rule produces a `us-regional.xml`
+that validates beside an `index.xml` that does not — **and the package fails as a
+whole while the file under test passes.** That is the worst shape a defect can
+have: the evidence points at the wrong file.
+
+> **So each backbone owns its own rendering rules, and shares only the
+> projection beneath them** — the dossier, the placements, the derived
+> operations. What is *in* the sequence is one question and is common; how a
+> given backbone is obliged to state it is another, and is not.
+
+**This is a prediction, not yet a decision.** It rests on exactly one observed
+divergence, and [ADR-018](../../adr/ADR-018-rule-of-three.md) forbids abstracting
+a boundary on one instance. If rendering is built and a second divergence never
+appears, a shared renderer with one conditional may well be the honest answer —
+and this note will have cost nothing. **What it must not do is pass silently:**
+the two DTDs are both in `spec/`, so any rendering story validates against both
+or claims neither.
+
+---
+
 ## What EPIC-007a has proved so far
 
 *Recorded 2026-08-02, after S002. **This is neither a decision nor evidence** —

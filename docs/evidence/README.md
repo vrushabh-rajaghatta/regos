@@ -61,8 +61,39 @@ conflating them would cause a mistake.
 | **E13** | Sub-type is **not derivable** from an activity's position. The tempting rule *opener ⇒ application, continuer ⇒ amendment* is falsified by FDA example #23: an **opener** whose sub-type is `report` | FDA, *Example Submissions … for Module 1* v1.4, examples #21–#24 | **3** | **EPIC-007a S003** *(designed, not yet shipped)* — sub-type is a business fact the user supplies, never inferred | EPIC-007a |
 | **E14** | The operation enumeration is closed in the **ICH backbone too**, not only FDA's regional one — `operation="unchanged"` is rejected as *"not among the enumerated set"* by `ich-ectd-3-2.dtd` | [DTD](EPIC-007a/spec/ich-ectd-3-2.dtd) + `xmllint` · [reproduce](EPIC-007a/poc/how-to-reproduce.md) | **2a** | **[ADR-045](../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md)** — E2 proved this for Module 1 only. Both backbones now refuse to say *unchanged*, so the derived delta is forced by the format everywhere, not just regionally | EPIC-007a |
 | **E15** | FDA states the activity-grouping rule in prose: *"the submission-id should match the sequence number of the transition sequence"*; *"All subsequent amendment to the original application should have a sub-type of 'amendment' and sub-id = 0001"*; *"If the submission … is creating a new regulatory activity, the submission-id should match the sequence number"* | FDA, *eCTD Submission Types and Subtypes*, Tables 1–2 | **3** | **EPIC-007a S003** — upgrades **E6** from inference-off-worked-examples to the authority saying it outright. It is the `OriginatingSubmissionId` design, in FDA's own words | EPIC-007a |
-| **E16** | The two backbones disagree on `checksum`: **`#REQUIRED`** in ICH `index.xml`, **`#IMPLIED`** in FDA `us-regional.xml` | [ICH DTD](EPIC-007a/spec/ich-ectd-3-2.dtd) + [FDA DTD](EPIC-007a/spec/us-regional-v3-3.dtd) | **2a** | nothing yet — the renderer must not assume one rule covers both files | EPIC-007a |
+| **E16** | The two backbones disagree on `checksum`: **`#REQUIRED`** in ICH `index.xml`, **`#IMPLIED`** in FDA `us-regional.xml` | [ICH DTD](EPIC-007a/spec/ich-ectd-3-2.dtd) + [FDA DTD](EPIC-007a/spec/us-regional-v3-3.dtd) | **2a** | **EPIC-007a's rendering design** — a backbone is a contract, not a shared ruleset; see [the epic](../product/epics/EPIC-007a-ectd-package-generation.md#a-backbone-is-a-contract-not-a-shared-ruleset) | EPIC-007a |
 
+---
+
+## Which decisions rest on which evidence
+
+The register above reads **evidence → decisions**: *if this is wrong, what
+breaks?* This reads the other way — **decision → evidence** — because a reader
+who arrives at an ADR cannot otherwise tell what external facts hold it up, or
+that the support has since grown.
+
+> **This index is where a decision's evidential basis is maintained.** An
+> accepted ADR is never edited (repository canon), so when evidence broadens the
+> support for a decision already made, the change is recorded here. The decision
+> did not change; what we can prove about it did.
+
+| Decision | Rests on | |
+|---|---|---|
+| [**ADR-044**](../adr/ADR-044-a-submission-is-a-transmitted-sequence.md) — a submission is a transmitted sequence | **E4** | numbering from 0000 is legal |
+| [**ADR-045**](../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md) — the cumulative dossier and the derived delta | **E2**, **E7**, **E14** | **E14 broadened this from one backbone to both.** E2 alone supported *"the regional backbone cannot say `unchanged`"*; with E14 the claim is *"the eCTD format cannot say it anywhere"* |
+| [**ADR-047 §6**](../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md) — sub-type is an independent axis | **E8** | |
+| [**ADR-048**](../adr/ADR-048-the-people-on-a-filing-belong-to-the-filing.md) — the people on a filing belong to the filing | **E3** | reached independently, then corroborated |
+| [**ADR-050**](../adr/ADR-050-application-type-classifies-the-application.md) — application-type classifies the application | **E11** | |
+| **EPIC-007a S003** — the regulatory activity | **E12**, **E13**, **E15** | E15 arrived last and is the strongest: FDA states the grouping rule in prose rather than leaving it to be inferred from examples |
+| **EPIC-007a rendering** *(not yet started)* | **E16** | |
+
+**A row moving from *inferred* to *stated by the authority* is worth recording
+even though nothing is rebuilt.** E6 → E15 is that: the design did not change,
+the confidence did, and only this register would ever show it.
+
+---
+
+## Adding a row
 
 1. **It must be checkable by someone who does not trust you.** A row whose source
    is "we reasoned that…" is a decision — write an ADR.
