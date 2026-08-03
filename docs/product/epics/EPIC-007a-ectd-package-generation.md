@@ -1,6 +1,6 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 shipped · S005 schema + seed shipped; the renderer is what remains** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 shipped · S005 shipped — `index.xml` renders and validates; S006 is next** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 > **The epic's named capability has begun, and only just.** RegOS now writes a
 > sequence folder — the directory tree, the files, the MD5s, `util/dtd/` — and
@@ -1063,10 +1063,52 @@ FDA's, from the regional DTD, and all 147 `m1-*` elements are there).
 element, 9 with a regional one, and Module 1's sub-sections carrying an *empty*
 ICH element because ICH's `m1` is `(leaf*)` and says they have none.
 
-**What remains of S005 is the renderer**: group leaves into an element tree,
-merging shared prefixes so three sections under `4.2` emit `m4-2-study-reports`
-once; then `index.xml` and `index-md5.txt`, validated by `xmllint` against the
-pinned DTD.
+**Shipped.** `IchBackboneRenderer` groups leaves into an element tree merging
+shared prefixes, and `index.xml` + `index-md5.txt` are validated by `xmllint`
+against the DTD **the package itself carries**, read out of the assembly that
+embeds it rather than off disk.
+
+#### What S005 found that reading the section list could not
+
+**1. The DTD caught an encoding defect on the first run.** `XmlWriter` over a
+`StringBuilder` ignores the configured encoding and declares `utf-16`, because
+that is what a .NET string is — so the file announced an encoding its own bytes
+contradicted. Rendering to a stream fixes it. **Nothing in RegOS would have
+noticed**; the file was well-formed, the leaves were right, and every assertion
+about content passed. A third-party parser reading the declaration is what
+failed it.
+
+**2. Four backbone elements are keyed, repeatable nodes — not sections
+(evidence E17).** `m3-2-s-drug-substance` is declared `*` and requires
+`substance` **and** `manufacturer`; `m5-3-5-…` and `m2-7-3-…` require
+`indication`. A dossier holds one such node *per substance*, *per manufacturer*,
+*per claimed indication*. RegOS's blueprint models 3.2.S as **one** section —
+the smallest faithful model of the CTD's outline — and **the outline is not what
+the backbone encodes**.
+
+> The asymmetry is worth keeping in view: the drug **product** equivalents
+> declare the same attributes `#IMPLIED`. ICH insists a substance node be
+> identified and merely permits it for a product.
+
+**This is a third kind of refusal, and it must not be filed under either
+existing one.** A historical gap is closed by asking whoever filed the sequence.
+An evidence gap is closed by reading a specification. This one is closed by
+**modelling something new** — the specification has been read, and it asks for a
+fact the domain does not carry.
+
+| | |
+|---|---|
+| `SequencePredatesTheActivityModel` | our history — unrecoverable (E13) |
+| `NoEctdTokenForClassification` / `NoEctdFolderForSection` / `NoEctdElementForSection` | their vocabulary — read a specification |
+| **`SectionNeedsAFactRegOsDoesNotHold`** | **their model — carry a fact we do not have** |
+
+Today this means **any document placed in 3.2.S is refused**, by name, before
+anything is written. That is the honest position: the alternative is keying a
+regulator-facing node with an invented substance.
+
+> **Deliberately not solved here.** Whether 3.2.S becomes a repeatable section,
+> a placement-level fact, or something else is a domain-model decision that
+> outlives this story, and it needs an ADR rather than a renderer patch.
 
 ---
 
@@ -1083,6 +1125,18 @@ has reached across a boundary, and the story is over before it starts.
 
 **Validated against** `spec/ich-ectd-3-2.dtd`, whose two negative controls are
 already known to bite: a bad `operation` value and a missing `checksum`.
+
+**One departure: Module 1's cross-link moves to S006.** The mapping says
+`index.xml`'s `m1` element holds exactly one leaf pointing at the regional file.
+It is not written here, because **the file it points at does not exist until
+S006 writes it**, and a backbone that links a missing file is worse than one
+that links nothing. Every module is optional in the DTD, so what S005 emits is
+valid on its own — and this is precisely the seam S007 exists to check, since
+each half passes alone.
+
+Its practical effect is that S005 stayed literally ignorant of FDA: nothing in
+the renderer names a region, a regional file, or a wire token, and a test
+asserts so.
 
 ---
 

@@ -181,6 +181,149 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         ich.Should().Contain("<!ELEMENT ectd:ectd");
     }
 
+    // --- S005: the ICH backbone ----------------------------------------------
+
+    /// <summary>
+    /// <b>The story's outcome, end to end.</b> A real published sequence, its
+    /// real blueprint placement, and the DTD the package itself carries — with
+    /// the DOCTYPE resolved from the folder the generator built, so the path is
+    /// checked as well as the content.
+    /// </summary>
+    [Fact]
+    public async Task TheGeneratedPackage_CarriesAnIndexValidAgainstItsOwnDtd()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) =
+            await APublishedEctdSequenceAsync(ctx, sectionCode: "2.3");
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        generated.BackboneFiles.Should().Contain("index.xml");
+
+        var (exitCode, output) = ValidateIndex(generated.RootPath);
+        exitCode.Should().Be(0, "xmllint said: {0}", output);
+
+        var xml = await File.ReadAllTextAsync(
+            Path.Combine(generated.RootPath, "index.xml"));
+
+        // 2.3 sits under Module 2 in both trees: a directory on disk and an
+        // element in the backbone, resolved from the same ancestor walk.
+        xml.Should().Contain("<m2-common-technical-document-summaries>");
+        xml.Should().Contain("<m2-3-quality-overall-summary>");
+        xml.Should().Contain("operation=\"new\"");
+        xml.Should().Contain("xlink:href=\"m2/23-qos/cover-letter.pdf\"");
+    }
+
+    /// <summary>Appendix 4 #2 — the backbone's checksum, beside the backbone.</summary>
+    [Fact]
+    public async Task TheIndexChecksum_IsTheChecksumOfTheIndex()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) =
+            await APublishedEctdSequenceAsync(ctx, sectionCode: "2.3");
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        var index = await File.ReadAllBytesAsync(
+            Path.Combine(generated.RootPath, "index.xml"));
+
+        var recorded = await File.ReadAllTextAsync(
+            Path.Combine(generated.RootPath, "index-md5.txt"));
+
+        recorded.Should().Be(
+            Convert.ToHexString(MD5.HashData(index)).ToLowerInvariant());
+    }
+
+    /// <summary>
+    /// <b>The story boundary, asserted.</b> ICH declares its Module 1 element
+    /// <c>(leaf*)</c> and defers the module to the regions, so a Module 1
+    /// document is written to disk and named in the <em>regional</em> backbone —
+    /// which S006 writes. It must not appear here.
+    /// </summary>
+    [Fact]
+    public async Task AModuleOneDocument_IsWrittenToDisk_AndNamedInNoIchElement()
+    {
+        await using var ctx = New();
+
+        // 1.2 Cover Letters — the default fixture, and Module 1 throughout.
+        var (submissionId, storage) = await APublishedEctdSequenceAsync(ctx);
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        generated.Leaves.Should().ContainSingle()
+            .Which.RelativePath.Should()
+            .Be("m1/us/12-cover-letters/cover-letter.pdf");
+
+        var xml = await File.ReadAllTextAsync(
+            Path.Combine(generated.RootPath, "index.xml"));
+
+        xml.Should().NotContain("<leaf");
+        xml.Should().NotContain(
+            "m1-administrative-information-and-prescribing-information");
+
+        // Still a valid document — every module is optional in the DTD, which
+        // is what lets the two backbones be written by two stories.
+        ValidateIndex(generated.RootPath).ExitCode.Should().Be(0);
+    }
+
+    /// <summary>
+    /// <b>The third refusal.</b> <c>m3-2-s-drug-substance</c> is a repeatable
+    /// node the DTD will not accept without naming its substance and
+    /// manufacturer; RegOS models 3.2.S as one section and records neither. That
+    /// is not a gap in our history, nor an unread specification — the
+    /// specification has been read and asks for a fact we do not hold.
+    /// </summary>
+    [Fact]
+    public async Task ASectionKeyedByAFactWeDoNotHold_SaysWhichFact()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) =
+            await APublishedEctdSequenceAsync(ctx, sectionCode: "3.2.S");
+
+        var act = async () => await GenerateAsync(ctx, storage, submissionId);
+
+        var thrown = await act.Should()
+            .ThrowAsync<BusinessRuleViolationException>();
+
+        thrown.Which.Message.Should().Contain("m3-2-s-drug-substance");
+        thrown.Which.Message.Should().Contain("substance and manufacturer");
+
+        // Not confused with either of the other two refusals.
+        thrown.Which.Message.Should().NotContain("eCTD token");
+        thrown.Which.Message.Should().NotContain("has not been read");
+    }
+
+    /// <summary>
+    /// <b>ADR-045's central claim, as something that can fail.</b> A RegOS
+    /// sequence holds the whole dossier; an eCTD sequence holds only what
+    /// changed, and the DTD has no <c>unchanged</c> operation. So a carried-
+    /// forward document produces no leaf — and no file either, because a file
+    /// the backbone never names is a file a regulator has to ask about.
+    /// </summary>
+    [Fact]
+    public async Task ACarriedForwardDocument_ProducesNeitherALeafNorAFile()
+    {
+        await using var ctx = New();
+
+        var (firstId, storage) =
+            await APublishedEctdSequenceAsync(ctx, sectionCode: "2.3");
+
+        var secondId = await ASequenceCarryingTheSameDocumentAsync(ctx, firstId);
+
+        var generated = await GenerateAsync(ctx, storage, secondId);
+
+        generated.Leaves.Should().BeEmpty();
+
+        Directory.Exists(Path.Combine(generated.RootPath, "m2"))
+            .Should().BeFalse();
+
+        var xml = await File.ReadAllTextAsync(
+            Path.Combine(generated.RootPath, "index.xml"));
+
+        xml.Should().NotContain("<leaf");
+        ValidateIndex(generated.RootPath).ExitCode.Should().Be(0);
+    }
+
     // --- The refusals ---------------------------------------------------------
 
     [Fact]
@@ -294,7 +437,8 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
     private async Task<(SubmissionId, InMemoryStorage)> APublishedEctdSequenceAsync(
         RegOSDbContext ctx,
         bool publish = true,
-        SubmissionFormat format = SubmissionFormat.Ectd)
+        SubmissionFormat format = SubmissionFormat.Ectd,
+        string sectionCode = "1.2")
     {
         var (applicationId, globalProductId) =
             await TestFdaApplication.EnsureAsync(ctx);
@@ -325,7 +469,7 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         await ctx.SaveChangesAsync();
         _documentIds.Add(document.Id.Value);
 
-        var coverLetterSection = await CoverLettersSectionAsync(ctx);
+        var section = await SectionAsync(ctx, sectionCode);
 
         var submission = SubmissionAggregate.Create(
             TestTenant.Id, applicationId, $"S004 {Guid.NewGuid()}", format,
@@ -333,7 +477,7 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
             await BoundVersionAsync(ctx));
 
         submission.AttachDocument(
-            document.Id, document.CurrentVersionId!.Value, coverLetterSection);
+            document.Id, document.CurrentVersionId!.Value, section);
 
         if (publish)
             submission.Publish(0, null, [], DateTimeOffset.UtcNow);
@@ -343,6 +487,50 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         _submissionIds.Add(submission.Id.Value);
 
         return (submission.Id, storage);
+    }
+
+    /// <summary>
+    /// A second sequence holding exactly what the first held — same document,
+    /// same section, same version. Under ADR-045 that is the normal case rather
+    /// than a contrived one: a cumulative dossier repeats itself, and the
+    /// increment is what the renderer has to find.
+    /// </summary>
+    private async Task<SubmissionId> ASequenceCarryingTheSameDocumentAsync(
+        RegOSDbContext ctx, SubmissionId firstId)
+    {
+        var first = await ctx.Submissions.AsNoTracking()
+            .Include(s => s.Documents)
+            .SingleAsync(s => s.Id == firstId);
+
+        var carried = first.Documents.Single();
+
+        var second = SubmissionAggregate.Create(
+            TestTenant.Id, first.ApplicationId, $"S005 {Guid.NewGuid()}",
+            SubmissionFormat.Ectd, TestSubmissionClassification.Opens(),
+            first.BoundTemplateVersionId);
+
+        second.AttachDocument(
+            carried.ProductDocumentId,
+            carried.DocumentVersionId,
+            carried.TemplateSectionId!.Value);
+
+        second.Publish(
+            1,
+            previousPublishedSequenceNumber: 0,
+            [
+                new PublishedPlacement(
+                    carried.Id,
+                    carried.ProductDocumentId,
+                    carried.TemplateSectionId!.Value,
+                    carried.DocumentVersionId),
+            ],
+            DateTimeOffset.UtcNow);
+
+        ctx.Submissions.Add(second);
+        await ctx.SaveChangesAsync();
+        _submissionIds.Add(second.Id.Value);
+
+        return second.Id;
     }
 
     private static async Task<RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplateVersionId>
@@ -356,7 +544,7 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
             .FirstAsync(v => v.Sections.Any(s => s.Code == "1.2"))).Id;
 
     private static async Task<RegOS.ReferenceData.Domain.Blueprint.TemplateSectionId>
-        CoverLettersSectionAsync(RegOSDbContext ctx)
+        SectionAsync(RegOSDbContext ctx, string code)
     {
         var versionId = await BoundVersionAsync(ctx);
 
@@ -365,7 +553,34 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
             .SelectMany(t => t.Versions)
             .Where(v => v.Id == versionId)
             .SelectMany(v => v.Sections)
-            .FirstAsync(s => s.Code == "1.2")).Id;
+            .FirstAsync(s => s.Code == code)).Id;
+    }
+
+    /// <summary>
+    /// Runs the package's own <c>index.xml</c> past xmllint, in place — so the
+    /// relative DOCTYPE resolves against the <c>util/dtd/</c> the generator
+    /// wrote, not against a copy arranged by the test.
+    /// </summary>
+    private static (int ExitCode, string Output) ValidateIndex(string root)
+    {
+        using var process = System.Diagnostics.Process.Start(
+            new System.Diagnostics.ProcessStartInfo("xmllint")
+            {
+                ArgumentList =
+                {
+                    "--noout", "--valid",
+                    Path.Combine(root, IchBackboneRenderer.FileName),
+                },
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+            })!;
+
+        var output = process.StandardError.ReadToEnd()
+            + process.StandardOutput.ReadToEnd();
+
+        process.WaitForExit();
+
+        return (process.ExitCode, output);
     }
 
     public Task InitializeAsync() => Task.CompletedTask;

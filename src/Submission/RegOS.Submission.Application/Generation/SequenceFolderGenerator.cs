@@ -108,10 +108,19 @@ public sealed class SequenceFolderGenerator
                 SequenceGenerationErrors.SubmissionIsUnbound);
         }
 
-        var folders = await ResolveSectionFoldersAsync(versionId, cancellationToken);
-        var leaves = await ResolveLeavesAsync(submission, folders, cancellationToken);
+        var placements =
+            await ResolveSectionPlacementsAsync(versionId, cancellationToken);
 
-        return new SequencePlan(sequenceNumber, leaves);
+        var priorSequences =
+            await ResolvePriorSequencesAsync(submission, cancellationToken);
+
+        var leaves = await ResolveLeavesAsync(
+            submission, placements, priorSequences, cancellationToken);
+
+        var deletions = await ResolveDeletionsAsync(
+            submission, placements, priorSequences, cancellationToken);
+
+        return new SequencePlan(sequenceNumber, leaves, deletions);
     }
 
     /// <summary>
@@ -178,8 +187,8 @@ public sealed class SequenceFolderGenerator
     /// directory row — their documents belong in 2.7's folder — so collapsing
     /// the two would make two-thirds of Module 2 unbuildable.
     /// </remarks>
-    private async Task<IReadOnlyDictionary<TemplateSectionId, string>>
-        ResolveSectionFoldersAsync(
+    private async Task<IReadOnlyDictionary<TemplateSectionId, SectionPlacement>>
+        ResolveSectionPlacementsAsync(
             RegulatoryTemplateVersionId versionId,
             CancellationToken cancellationToken)
     {
@@ -190,11 +199,12 @@ public sealed class SequenceFolderGenerator
             .ToListAsync(cancellationToken);
 
         var byId = sections.ToDictionary(s => s.Id);
-        var resolved = new Dictionary<TemplateSectionId, string>();
+        var resolved = new Dictionary<TemplateSectionId, SectionPlacement>();
 
         foreach (var section in sections)
         {
             var segments = new List<string>();
+            var elements = new List<string>();
 
             for (var node = section; node is not null;
                  node = node.ParentSectionId is { } p && byId.TryGetValue(p, out var parent)
@@ -207,25 +217,165 @@ public sealed class SequenceFolderGenerator
                         node.Code));
                 }
 
+                if (node.IchElement is not { } element)
+                {
+                    throw new BusinessRuleViolationException(string.Format(
+                        SequenceGenerationErrors.NoEctdElementForSection,
+                        node.Code));
+                }
+
                 if (folder.Length > 0)
                     segments.Insert(0, folder);
+
+                // The same chaining the folder column already does, for the
+                // same reason: RegOS's tree is coarser than the CTD's in two
+                // places, so one section carries two levels of backbone —
+                // m3-2-body-of-data/m3-2-s-drug-substance. An empty value is a
+                // section ICH gives no element at all, which is every Module 1
+                // sub-section.
+                if (element.Length > 0)
+                {
+                    elements.InsertRange(
+                        0, element.Split('/', StringSplitOptions.RemoveEmptyEntries));
+                }
             }
 
-            resolved[section.Id] = string.Join('/', segments);
+            resolved[section.Id] = new SectionPlacement(
+                section.Code, string.Join('/', segments), elements);
         }
 
         return resolved;
     }
 
+    /// <summary>
+    /// The sequence folder each superseded or withdrawn placement was filed in
+    /// — the <c>../0000/</c> half of a <c>modified-file</c> pointer.
+    /// </summary>
+    /// <remarks>
+    /// A leaf ID is unique within its own sequence and is never reused across
+    /// them (ICH Appendix 6), so the pointer needs both halves: which sequence,
+    /// and which leaf inside it.
+    /// </remarks>
+    private async Task<IReadOnlyDictionary<SubmissionDocumentId, int>>
+        ResolvePriorSequencesAsync(
+            SubmissionAggregate submission,
+            CancellationToken cancellationToken)
+    {
+        var referenced = submission.Documents
+            .Select(d => d.ReplacesSubmissionDocumentId)
+            .Concat(submission.Deletions
+                .Select(d => (SubmissionDocumentId?)d.DeletesSubmissionDocumentId))
+            .OfType<SubmissionDocumentId>()
+            .Distinct()
+            .ToList();
+
+        if (referenced.Count == 0)
+            return new Dictionary<SubmissionDocumentId, int>();
+
+        var rows = await (
+            from sequence in _dbContext.Submissions.AsNoTracking()
+            from document in sequence.Documents
+            where referenced.Contains(document.Id)
+                && sequence.SequenceNumber != null
+            select new { document.Id, sequence.SequenceNumber })
+            .ToListAsync(cancellationToken);
+
+        return rows.ToDictionary(x => x.Id, x => x.SequenceNumber!.Value);
+    }
+
+    /// <summary>
+    /// A withdrawal — the one operation with no document behind it.
+    /// </summary>
+    /// <remarks>
+    /// It produces a leaf and <b>no file</b>: ICH Appendix 6 Table 6-3 says
+    /// *"there is no new file submitted in this case… the checksum attribute
+    /// value will be empty"*. So the two things a leaf normally carries are both
+    /// the empty string, and that is the specification's own instruction rather
+    /// than a convenience.
+    /// </remarks>
+    private async Task<IReadOnlyList<BackboneLeaf>> ResolveDeletionsAsync(
+        SubmissionAggregate submission,
+        IReadOnlyDictionary<TemplateSectionId, SectionPlacement> placements,
+        IReadOnlyDictionary<SubmissionDocumentId, int> priorSequences,
+        CancellationToken cancellationToken)
+    {
+        if (submission.Deletions.Count == 0)
+            return [];
+
+        var names = await NamesOfAsync(
+            submission.Deletions.Select(d => d.ProductDocumentId),
+            cancellationToken);
+
+        foreach (var deletion in submission.Deletions)
+            RequireAWritableBackbonePosition(placements[deletion.TemplateSectionId]);
+
+        return submission.Deletions
+            .Select(deletion => new BackboneLeaf(
+                placements[deletion.TemplateSectionId].IchElements,
+                LeafId(deletion.DeletesSubmissionDocumentId),
+                names[deletion.ProductDocumentId],
+                Href: string.Empty,
+                Operation: "delete",
+                Checksum: string.Empty,
+                ModifiedFile: ModifiedFile(
+                    deletion.DeletesSubmissionDocumentId, priorSequences)))
+            .OrderBy(x => string.Join('/', x.ElementPath), StringComparer.Ordinal)
+            .ThenBy(x => x.Id, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private async Task<Dictionary<
+        RegOS.ProductDocument.Domain.IDs.ProductDocumentId, string>> NamesOfAsync(
+        IEnumerable<RegOS.ProductDocument.Domain.IDs.ProductDocumentId> ids,
+        CancellationToken cancellationToken)
+    {
+        var wanted = ids.Distinct().ToList();
+
+        return await _dbContext.ProductDocuments.AsNoTracking()
+            .Where(document => wanted.Contains(document.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+    }
+
+    /// <summary>
+    /// An XML <c>ID</c> may not begin with a digit and a GUID often does, so the
+    /// stored id is emitted with a letter in front of it and nothing else
+    /// changed — a leaf stays traceable to its placement.
+    /// </summary>
+    private static string LeafId(SubmissionDocumentId id) =>
+        $"leaf-{id.Value:D}";
+
+    private static string? ModifiedFile(
+        SubmissionDocumentId? replaces,
+        IReadOnlyDictionary<SubmissionDocumentId, int> priorSequences)
+    {
+        if (replaces is not { } target
+            || !priorSequences.TryGetValue(target, out var sequence))
+        {
+            return null;
+        }
+
+        return $"../{sequence:0000}/{IchBackboneRenderer.FileName}"
+            + $"#{LeafId(target)}";
+    }
+
     private async Task<IReadOnlyList<PlannedLeaf>> ResolveLeavesAsync(
         SubmissionAggregate submission,
-        IReadOnlyDictionary<TemplateSectionId, string> folders,
+        IReadOnlyDictionary<TemplateSectionId, SectionPlacement> placements,
+        IReadOnlyDictionary<SubmissionDocumentId, int> priorSequences,
         CancellationToken cancellationToken)
     {
         // An operation is a fact about a placement (ADR-045 §5): an attached
         // document that sits in no section produces no leaf and no file.
+        //
+        // Unchanged is dropped here, and dropping it is the whole thesis. A
+        // RegOS sequence holds the entire dossier; an eCTD sequence holds only
+        // what changed, and there is no "unchanged" operation to emit. So a
+        // carried-forward document produces no leaf — and, because a file
+        // nothing references is a file a validator asks about, no file either.
         var placed = submission.Documents
-            .Where(d => d.TemplateSectionId is not null)
+            .Where(d => d.TemplateSectionId is not null
+                && d.Operation is not null
+                && d.Operation != SubmissionContentOperation.Unchanged)
             .ToList();
 
         var versionIds = placed.Select(d => d.DocumentVersionId).ToList();
@@ -247,12 +397,17 @@ public sealed class SequenceFolderGenerator
         // contains rather than by what the database returned: two runs must
         // produce the same bytes in the same order (ADR-049).
         foreach (var document in placed
-            .OrderBy(d => folders[d.TemplateSectionId!.Value], StringComparer.Ordinal)
+            .OrderBy(d => placements[d.TemplateSectionId!.Value].Folder,
+                StringComparer.Ordinal)
             .ThenBy(d => documentNames[d.ProductDocumentId], StringComparer.Ordinal)
             .ThenBy(d => d.ProductDocumentId.Value))
         {
             var version = versions[document.DocumentVersionId];
-            var folder = folders[document.TemplateSectionId!.Value];
+            var placement = placements[document.TemplateSectionId!.Value];
+
+            RequireAWritableBackbonePosition(placement);
+
+            var folder = placement.Folder;
             var fileName = FileNameFor(version.OriginalFileName);
 
             var relativePath = folder.Length == 0
@@ -273,11 +428,62 @@ public sealed class SequenceFolderGenerator
                 relativePath,
                 document.ProductDocumentId,
                 document.DocumentVersionId,
-                version.StoragePath));
+                version.StoragePath,
+                placement.IchElements,
+                LeafId(document.Id),
+                documentNames[document.ProductDocumentId],
+                WireOperation(document.Operation!.Value),
+                ModifiedFile(
+                    document.ReplacesSubmissionDocumentId, priorSequences)));
         }
 
         return planned;
     }
+
+    /// <summary>
+    /// Refusal 3 — the specification asks for a fact RegOS does not hold.
+    /// </summary>
+    /// <remarks>
+    /// Checked while planning, so it lands before any file exists, and checked
+    /// per <em>placed</em> section rather than per seeded one: a blueprint that
+    /// merely offers 3.2.S is fine, and it is putting a document there that
+    /// cannot be written down.
+    /// </remarks>
+    private static void RequireAWritableBackbonePosition(
+        SectionPlacement placement)
+    {
+        foreach (var element in placement.IchElements)
+        {
+            if (IchBackboneRenderer.KeyedElements.TryGetValue(element, out var key))
+            {
+                throw new BusinessRuleViolationException(string.Format(
+                    SequenceGenerationErrors.SectionNeedsAFactRegOsDoesNotHold,
+                    placement.Code, element, key));
+            }
+        }
+    }
+
+    /// <summary>
+    /// <c>operation (new | append | replace | delete)</c> — the DTD's own
+    /// enumeration, closed and exhaustive (evidence E14).
+    /// </summary>
+    /// <remarks>
+    /// <b>Read, never recomputed</b> (ADR-045). The value was decided at publish
+    /// against the dossier as it then stood; deriving it again here would let a
+    /// later rule change quietly rewrite what a filed sequence said.
+    /// </remarks>
+    private static string WireOperation(SubmissionContentOperation operation)
+        => operation switch
+        {
+            SubmissionContentOperation.New => "new",
+            SubmissionContentOperation.Replace => "replace",
+            SubmissionContentOperation.Append => "append",
+
+            // Unchanged never reaches here — it produces no leaf. Delete has no
+            // SubmissionDocument behind it and arrives as a SubmissionDeletion.
+            _ => throw new InvalidOperationException(
+                $"'{operation}' does not describe a leaf in a filed sequence."),
+        };
 
     /// <summary>
     /// ICH Appendix 2 applied to a file name: lowercase, <c>a-z0-9-</c>, and the
@@ -353,8 +559,74 @@ public sealed class SequenceFolderGenerator
 
         var utilities = await WriteDtdsAsync(root, cancellationToken);
 
-        return new GeneratedSequenceFolder(root, leaves, utilities);
+        var backbones = await WriteIchBackboneAsync(
+            root, plan, leaves, cancellationToken);
+
+        return new GeneratedSequenceFolder(root, leaves, utilities, backbones);
     }
+
+    /// <summary>
+    /// <c>index.xml</c> and <c>index-md5.txt</c>, written last because the
+    /// backbone quotes the checksum of every file beneath it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Module 1 is held back for S006.</b> ICH's
+    /// <c>m1-administrative-information-and-prescribing-information</c> is
+    /// declared <c>(leaf*)</c> with no children of its own — ICH defers the
+    /// whole module to the regions — so a Module 1 document has no ICH element
+    /// to sit under. Its leaves belong to the regional backbone, and the one
+    /// leaf ICH's m1 does carry points at that file, which does not exist yet.
+    /// </remarks>
+    private static async Task<IReadOnlyList<string>> WriteIchBackboneAsync(
+        string root,
+        SequencePlan plan,
+        IReadOnlyList<GeneratedLeaf> written,
+        CancellationToken cancellationToken)
+    {
+        var checksums = written.ToDictionary(x => x.RelativePath, x => x.Md5);
+
+        var leaves = plan.Leaves
+            .Where(leaf => leaf.ElementPath.Count > 0
+                && leaf.ElementPath[0] != ModuleOneElement)
+            .Select(leaf => new BackboneLeaf(
+                leaf.ElementPath,
+                leaf.LeafId,
+                leaf.Title,
+                leaf.RelativePath,
+                leaf.Operation,
+                checksums[leaf.RelativePath],
+                leaf.ModifiedFile))
+            .Concat(plan.Deletions
+                .Where(leaf => leaf.ElementPath.Count > 0
+                    && leaf.ElementPath[0] != ModuleOneElement))
+            .ToList();
+
+        var xml = IchBackboneRenderer.Render(leaves);
+
+        // UTF-8 without a BOM. The declaration says UTF-8 and a BOM would be a
+        // second, silent claim about the same thing.
+        var bytes = new UTF8Encoding(false).GetBytes(xml);
+
+        await File.WriteAllBytesAsync(
+            Path.Combine(root, IchBackboneRenderer.FileName),
+            bytes,
+            cancellationToken);
+
+        await File.WriteAllTextAsync(
+            Path.Combine(root, IchBackboneRenderer.ChecksumFileName),
+            Convert.ToHexString(MD5.HashData(bytes)).ToLowerInvariant(),
+            cancellationToken);
+
+        return [IchBackboneRenderer.FileName, IchBackboneRenderer.ChecksumFileName];
+    }
+
+    /// <summary>
+    /// ICH's Module 1 element. Named here because index.xml is the file that has
+    /// to leave it alone, not because this renderer knows anything about a
+    /// region.
+    /// </summary>
+    private const string ModuleOneElement =
+        "m1-administrative-information-and-prescribing-information";
 
     /// <summary>
     /// <c>util/dtd/</c> — the DTDs the package must carry (Appendix 4 #371–376).
@@ -401,11 +673,26 @@ public sealed class SequenceFolderGenerator
     }
 
     private sealed record SequencePlan(
-        int SequenceNumber, IReadOnlyList<PlannedLeaf> Leaves);
+        int SequenceNumber,
+        IReadOnlyList<PlannedLeaf> Leaves,
+        IReadOnlyList<BackboneLeaf> Deletions);
 
     private sealed record PlannedLeaf(
         string RelativePath,
         RegOS.ProductDocument.Domain.IDs.ProductDocumentId ProductDocumentId,
         RegOS.ProductDocument.Domain.IDs.DocumentVersionId DocumentVersionId,
-        string StoragePath);
+        string StoragePath,
+        IReadOnlyList<string> ElementPath,
+        string LeafId,
+        string Title,
+        string Operation,
+        string? ModifiedFile);
+
+    /// <summary>
+    /// Where a section's documents go — on disk, and in the backbone. Two
+    /// answers to *"where does this belong?"*, resolved together because they
+    /// walk the same ancestor chain.
+    /// </summary>
+    private sealed record SectionPlacement(
+        string Code, string Folder, IReadOnlyList<string> IchElements);
 }

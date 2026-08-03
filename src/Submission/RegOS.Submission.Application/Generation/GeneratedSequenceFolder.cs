@@ -17,10 +17,17 @@ namespace RegOS.Submission.Application.Generation;
 /// though every FDA example begins at <c>0001</c> (E5). The business fact wins;
 /// the convention is compared, not adopted, at S008.
 /// </param>
+/// <param name="BackboneFiles">
+/// The XML that describes the rest — <c>index.xml</c> and its checksum after
+/// S005, joined by <c>m1/us/us-regional.xml</c> at S006. Listed rather than
+/// returned as content because, like every other path here, it is a projection
+/// of the submission and holds nothing the submission does not.
+/// </param>
 public sealed record GeneratedSequenceFolder(
     string RootPath,
     IReadOnlyList<GeneratedLeaf> Leaves,
-    IReadOnlyList<string> UtilityFiles);
+    IReadOnlyList<string> UtilityFiles,
+    IReadOnlyList<string> BackboneFiles);
 
 /// <summary>
 /// One document, written where the blueprint says it belongs.

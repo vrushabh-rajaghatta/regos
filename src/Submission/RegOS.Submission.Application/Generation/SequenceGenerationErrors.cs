@@ -61,6 +61,33 @@ public static class SequenceGenerationErrors
         + "documents. The section is real; where it is written on disk has not "
         + "been read from a specification yet.";
 
+    /// <remarks>
+    /// The folder's twin, and it needs its own words: a section can have a
+    /// folder and still have no element, which is exactly what every blueprint
+    /// version before v4 looks like. <b>RegOS may never invent this value</b> —
+    /// an invented element name is DTD-invalid, which is why it carries no
+    /// provenance the way a folder does (ADR-052).
+    /// </remarks>
+    public const string NoEctdElementForSection =
+        "Section {0} has no eCTD backbone element, so it cannot be written into "
+        + "index.xml. The section is real; what the specification calls it has "
+        + "not been read yet.";
+
+    // ── Refusal 3 — a fact the specification needs and RegOS does not hold ───
+
+    /// <remarks>
+    /// <b>A third kind of gap, and it is neither of the other two.</b> Nobody
+    /// can close this by asking whoever filed the sequence, and nobody can close
+    /// it by reading a specification — the specification has been read, and it
+    /// asks for a fact the domain model does not carry. Closing it means
+    /// modelling something new.
+    /// </remarks>
+    public const string SectionNeedsAFactRegOsDoesNotHold =
+        "Section {0} is written into the backbone as <{1}>, which the eCTD DTD "
+        + "will not accept without naming its {2}. That node exists once per "
+        + "{2}; RegOS records the section but not which one, so this leaf cannot "
+        + "be written down truthfully.";
+
     public const string SubmissionIsUnbound =
         "This sequence is not bound to a blueprint, so its documents sit in no "
         + "sections and there is no structure to write.";
