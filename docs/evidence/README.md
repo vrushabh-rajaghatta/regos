@@ -40,6 +40,39 @@ must name the level.
 questions, and the sequence-numbering row below is the register's own proof that
 conflating them would cause a mistake.
 
+### What no level in this table measures
+
+*Added 2026-08-03, after [ADR-054](../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md)
+found the first instance. **The observation is the founder's**, and it names a
+failure mode nothing above was built to see.*
+
+Every level answers **"was it rejected?"** — by a parser, by a rule engine, by a
+comparison, by a gateway. **None answers "was it understood?"**
+
+The levels are ordered by *who checked it*, and they shared an assumption that
+went unstated until the STF broke it: that an authority which accepts a package
+has received what the package says. A study-report leaf carrying no Study Tagging
+File is **DTD-valid (2a)**, **breaks no business rule (2b)**, **resembles a
+published example (3)**, and would be **accepted by the gateway (4)** — and FDA's
+review tool then files it under *"Not Applicable (N/A) or Unassigned Folders"*
+(**E21**). The submission arrives, passes every check this register can name, and
+silently loses its nonclinical section.
+
+> **Validity and correctness are orthogonal. Acceptance is not comprehension.**
+
+**This is not a fifth level.** A level says how strong a check is; this says what
+every check in the table is blind to. It cannot be reached by strengthening the
+oracle, because no oracle in the column is looking — only by reading what the
+authority says it will *do* with what it receives. Which is precisely why a
+conformance guide is a different kind of document from a DTD, and why holding one
+is not a weaker substitute for holding the other.
+
+**Its signature in the register**: a source that is *guidance* rather than a
+schema, and a consequence that is *filed elsewhere* rather than *rejected*. E21 is
+the first. It is unlikely to be the last — any format with a review tool behind it
+can have one, and EPIC-007b's IDMP and gateway work is where the next would come
+from.
+
 ---
 
 ## Register
@@ -63,7 +96,7 @@ conflating them would cause a mistake.
 | **E15** | FDA states the activity-grouping rule in prose: *"the submission-id should match the sequence number of the transition sequence"*; *"All subsequent amendment to the original application should have a sub-type of 'amendment' and sub-id = 0001"*; *"If the submission … is creating a new regulatory activity, the submission-id should match the sequence number"* | FDA, *eCTD Submission Types and Subtypes*, Tables 1–2 | **3** | **EPIC-007a S003** — upgrades **E6** from inference-off-worked-examples to the authority saying it outright. It is the `OriginatingSubmissionId` design, in FDA's own words | EPIC-007a |
 | **E16** | The two backbones disagree on `checksum`: **`#REQUIRED`** in ICH `index.xml`, **`#IMPLIED`** in FDA `us-regional.xml` | [ICH DTD](EPIC-007a/spec/ich-ectd-3-2.dtd) + [FDA DTD](EPIC-007a/spec/us-regional-v3-3.dtd) | **2a** | **EPIC-007a's rendering design** — a backbone is a contract, not a shared ruleset; see [the epic](../product/epics/EPIC-007a-ectd-package-generation.md#a-backbone-is-a-contract-not-a-shared-ruleset) | EPIC-007a |
 | **E29** | **An STF is a study-shaped view over leaves the backbone already holds** — `doc-content` points at `index.xml#leafID`; it carries no files. One per study *per eCTD element* per sequence, sometimes deliberately more. Needs a **study** (sponsor's id, title, and for four CTD sections species / route / duration / type-of-control) and a **`file-tag` per placement** saying what role the document plays. Lifecycle is `append`-chained, latest-`study-identifier`-wins, delete-then-reactivate | ICH M2 *[STF Specification](EPIC-007a/spec/ich-stf-2-6-1.md)* v2.6.1 §I–V | **3** | **ADR-054** — the `file-tag` is **[ADR-053](../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)'s instance qualifier arriving a fourth time**. The STF's *content* is a projection; its *lifecycle* is not, because it states things about earlier sequences. `ich-stf-v2-2.dtd` is **not held** | EPIC-007a |
-| **E28** | **The sequence number starts at 0001 — in the specification**, not merely in guidance: *"should start at 0001, and should not exceed 9999."* Appendix 2 maps the schemes: new `sequence-number` **0001** ↔ old Sequence **0000**. **`0000` is the pre-v2.0 numbering, replaced** | FDA *[M1 Backbone Spec](EPIC-007a/spec/fda-m1-backbone-2-6.md)* v2.6 §III.B.2.b + App. 2 · FDA *[eCTD TCG](EPIC-007a/spec/fda-ectd-tcg-1-8.md)* §2.3, §2.6 | **3** | **⚠ [ADR-044](../adr/ADR-044-a-submission-is-a-transmitted-sequence.md) and S008** — RegOS writes `0000` on **E4**. Three FDA statements now say otherwise for FDA filings, one of them normative. **Not resolved unilaterally**; this is the divergence S008 exists to explain, now much sharper than *"every example starts at 0001"* | EPIC-007a |
+| **E28** | **The sequence number starts at 0001 — in the specification**, not merely in guidance: *"should start at 0001, and should not exceed 9999."* Appendix 2 maps the schemes: new `sequence-number` **0001** ↔ old Sequence **0000**. **`0000` is the pre-v2.0 numbering, replaced** | FDA *[M1 Backbone Spec](EPIC-007a/spec/fda-m1-backbone-2-6.md)* v2.6 §III.B.2.b + App. 2 · FDA *[eCTD TCG](EPIC-007a/spec/fda-ectd-tcg-1-8.md)* §2.3, §2.6 | **3** | **⚠ [ADR-044](../adr/ADR-044-a-submission-is-a-transmitted-sequence.md) and S008** — RegOS writes `0000` on **E4**. **Deferred 2026-08-03 by the founder, and the reason is one word: *should*.** Not one source in either direction says **shall**. FDA's specification says a sequence number *"should start at 0001"*; ICH's own example numbers one `0000` and it validates (E4). A *should* is convention, which is Level 3, and this register's own rule is that **2a beats 3 on legality** — so nothing yet obliges RegOS to change, and nothing yet obliges it to stay. **This row remains evidence gathering, not implementation.** What would settle it: a normative *shall* from FDA, a rejected filing, or S008 finding that 0000 changes how an example behaves rather than how it reads | EPIC-007a |
 | **E27** | **In Module 1, `modified-file` points at `us-regional.xml`, not `index.xml`** — *"`modified-file="../../../0001/m1/us/us-regional.xml#id34567"`"*, and in a grouped submission it also carries the owning application folder | FDA *[M1 Backbone Spec](EPIC-007a/spec/fda-m1-backbone-2-6.md)* v2.6 §V | **3** | **EPIC-007a S006 wiring** — the generator builds `../{sequence}/index.xml#{leaf}` for *every* backbone. Right for Modules 2–5, wrong for Module 1; unreached only because the wiring is paused | EPIC-007a |
 | **E26** | **`us-regional.xml`'s header points at accessdata.fda.gov, not `util/`** — DOCTYPE and a stylesheet PI, both absolute URLs, in a header the spec calls *"always the same"*. Appendix 2 records that local `util/` references are what **v2.0 replaced** | FDA *[M1 Backbone Spec](EPIC-007a/spec/fda-m1-backbone-2-6.md)* v2.6 §II + App. 2 §E.17 | **3** | **EPIC-007a S006 — a defect in shipped code.** The renderer emitted `../../util/dtd/…` and no stylesheet, assuming a regional backbone resolves its DTD the way the ICH one does. Corrected. **It also puts FDA's network reference against the epic's offline Level 2a claim**: tests now validate a locally-rewritten copy and assert the shipped header separately | EPIC-007a |
 | **E25** | **FDA permits `999999999` when a DUNS number cannot be obtained** — *"If you are unable to acquire a DUNS number prior to submission, you may enter 999999999."* **The condition is about the applicant, not about the filing system** | FDA *[eCTD TCG](EPIC-007a/spec/fda-ectd-tcg-1-8.md)* v1.8 §3.1.1 | **3** | **EPIC-007a S006** — `applicant-info/id` is mandatory and RegOS models no DUNS field. A **recorded fallback**, not a default: emitting it unconditionally asserts the filer could not obtain one. `Organization.DunsNumber` remains the real answer. *This row exists because the claim was cited from a hand-written PoC for a year before the document was held* | EPIC-007a |
@@ -94,7 +127,7 @@ that the support has since grown.
 |---|---|---|
 | [**ADR-044**](../adr/ADR-044-a-submission-is-a-transmitted-sequence.md) — a submission is a transmitted sequence | **E4**, **E20** | numbering from 0000 is legal (E4); **E20 adds an FDA illustration that draws one** — still not a statement about first-sequence numbering, which is what E5 contests |
 | **EPIC-007a S008** — comparison against FDA's practice *(not yet started)* | **E4**, **E5**, **E20** | the epic's one known open divergence. Three sources, two directions, and S008 exists to explain rather than absorb it |
-| [**ADR-054**](../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md) — an STF is a projection over a study | **E21**, **E29** | recorded on 2026-08-03 with no decision resting on it; **the same day, the eCTD TCG turned it into a blocker and the ICH specification arrived.** The STF tests ADR-049 harder than the ZIP did — it needs facts the submission does not hold — and the thesis survives because the answer is to hold the facts, not store the file |
+| [**ADR-054**](../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md) — an STF is a projection over a study | **E21**, **E29** | recorded on 2026-08-03 with no decision resting on it; **the same day, the eCTD TCG turned it into a blocker and the ICH specification arrived.** The STF tests ADR-049 harder than the ZIP did — it needs facts the submission does not hold — and the thesis survives because the answer is to hold the facts, not store the file. **It is also the first entry to expose [what no level in this table measures](#what-no-level-in-this-table-measures)**, which is recorded above rather than in the ADR because an accepted ADR is never edited |
 | [**ADR-045**](../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md) — the cumulative dossier and the derived delta | **E2**, **E7**, **E14** | **E14 broadened this from one backbone to both.** E2 alone supported *"the regional backbone cannot say `unchanged`"*; with E14 the claim is *"the eCTD format cannot say it anywhere"* |
 | [**ADR-047 §6**](../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md) — sub-type is an independent axis | **E8** | |
 | [**ADR-048**](../adr/ADR-048-the-people-on-a-filing-belong-to-the-filing.md) — the people on a filing belong to the filing | **E3** | reached independently, then corroborated |

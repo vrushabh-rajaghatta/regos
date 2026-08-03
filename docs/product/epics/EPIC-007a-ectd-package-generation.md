@@ -225,7 +225,7 @@ Prove the target, then model the path to it.
 | Deferred | Why |
 |---|---|
 | **Gateway transmission (ESG/AS2)** and the `Filed` transition | → **EPIC-007b**. See *the two questions Phase 2 carries*, below |
-| **STF (study tagging files)** | needs EPIC-019's study registry → EPIC-007b |
+| **STF (study tagging files)** | needs [EPIC-019](EPIC-019-study-registry.md)'s study registry → EPIC-007b. ⚠ **Amended 2026-08-03: generating one is deferred; refusing to generate a package without one is not.** [ADR-054](../../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md) and the fifth refusal both landed here, because a package that omits an STF is legal and misfiled rather than rejected — the deferral would otherwise have shipped as a silent defect |
 | **xEVMPD / IDMP messages** | needs EPIC-010's product depth → EPIC-007b |
 | **DTD versions and gateway format as stored fields** | ADR-047 §5 deferred them here, but they become true when a package is *built*; whether they are stored or derived is a **Phase 2 question**, not a Phase 1 assumption |
 | **Automated validator integration in CI** | manual validation is sufficient for this milestone; automating it before we know the tool would be building a harness for an unchosen oracle |
@@ -1303,6 +1303,14 @@ been read and asks for a fact the domain does not carry*:
 
 A test asserts it is confused with neither of the other two.
 
+**What it hands to EPIC-019.** *"Where does a `Study` live?"* is now the larger
+architectural question, and it is **deliberately not answered here** — it is
+broader than STF and gets its own ADR. ADR-054 settled two of its parts on the way
+past (an STF belongs to neither the study nor the package as a stored thing; its
+lifecycle keys on the *pair*), and the rest is recorded as a brief in
+[EPIC-019 — *What EPIC-007a discovered*](EPIC-019-study-registry.md#what-epic-007a-discovered--recorded-2026-08-03),
+so the next reader does not reconstruct it from a conversation.
+
 #### What S006 found
 
 **E18 and E19, and E18 with E17 is why ADR-053 exists.** The DTDs said much the
@@ -1432,6 +1440,33 @@ cannot move and the model is what is under test. That is a property of this
 epic's work, not of the domain's maturity — and
 [BACKLOG.md](../BACKLOG.md) disagrees with the wider reading: EPIC-018, EPIC-019,
 EPIC-010 and EPIC-020 are expansion, and EPIC-020 is RIM's spine.
+
+### Restated 2026-08-03, after ADR-054 — and the claim gets stronger
+
+*The founder's, recorded because the four things built since read as
+implementation detail and are not.*
+
+| | What it taught |
+|---|---|
+| **S004** | placement is **versioned regulatory knowledge**, not renderer code |
+| **S005** | **the DTD expresses structure the CTD outline does not** — four nodes are keyed instances rather than sections |
+| **S006** | **a renderer can be complete while generation is impossible** — and the impossibility is the DTD's, not ours |
+| **ADR-054** | **validity is insufficient; authority review semantics matter** |
+
+> **Every time implementation stalled, the specification contained more domain
+> than it first appeared to.** The code followed once that domain was made
+> explicit — every time so far.
+
+**That is a diagnostic, not a consolation.** It says where to look when the next
+story stops: not at the model, and not at the renderer, but at what the
+specification is *describing* that had been read as formatting.
+
+**And it changes what this epic has already paid for.** The narrower claim above
+still stands — nothing here shows the model is complete. But eCTD generation is no
+longer *"emit some XML"*: it is an interpretation layer bounded by evidence, by
+domain modelling, and by authority-specific semantics, and **that boundary exists
+whether or not S006 is ever wired.** Completing the renderer against assumptions
+would have produced the same bytes and none of it.
 
 ### An observation, deliberately left as one
 

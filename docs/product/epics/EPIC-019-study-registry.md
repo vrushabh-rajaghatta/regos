@@ -51,6 +51,63 @@ Only two objects — but they are **peers of Application and Submission Content*
 
 ---
 
+## What EPIC-007a discovered — recorded 2026-08-03
+
+**This epic stopped being a filler.** It was scoped as *"no dependencies — good
+candidate to slot in whenever a larger epic needs breaking up"*, and that is no
+longer the whole truth.
+
+FDA requires a **Study Tagging File for every file in eCTD 4.2.x and
+5.3.1.x–5.3.5.x** (evidence **E21**). The seeded FDA IND blueprint offers 4.2.1,
+4.2.2 and 4.2.3, and every IND has nonclinical content. So:
+
+> **No package can be generated for any submission that places a document in a
+> study-report section, and RegOS refuses one by name** rather than writing a
+> package FDA would misfile
+> ([ADR-054](../../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md) §6,
+> enforced in `SequenceFolderGenerator`).
+
+That is not a rendering gap. **A study is a business entity that documents are
+*about*, and nothing in RegOS knows one exists.**
+
+### Two of the Phase-2 questions are already answered
+
+ADR-054 was written for package generation and settled two things this epic
+would otherwise have to decide from scratch:
+
+| Question | Answered by ADR-054 |
+|---|---|
+| **Does the STF belong to the Study, or to the generated package?** | **Neither stores it.** It is a *projection* over the placements in one sequence that belong to one study — ADR-049's deletion test, applied to a file that needs facts the submission does not hold. The answer is to hold the facts, not the file |
+| **Does lifecycle operate on Study identity or on documents?** | **On the pair.** The mapping is `(study, eCTD element) → STF`, not `study → STF`, because *"one study could generate more than one STF representation"* (E29 §VI). Its `new`/`append` chain is derived the way ADR-045 derives a document's operation, keyed differently |
+
+### What the Study ADR must still answer
+
+*The founder's list, 2026-08-03. It is broader than STF, which is why it does not
+belong inside ADR-054 and gets its own number.*
+
+1. **Is `Study` an aggregate?** — Phase 2 §1 leans two aggregates, and E29 gives
+   the first external reason: clinical and non-clinical carry *different*
+   STF categories (species / route / duration / type-of-control apply to
+   4.2.3.1, 4.2.3.2, 4.2.3.4.1 and 5.3.5.1 only).
+2. **Is it an entity owned by `Submission`?** — E29 says no: the `study-id` is
+   *"the internal alphanumeric code used by the sponsor"*, stable across
+   sequences, and **E24** says an instance qualifier must be identical across
+   sequences or FDA's tooling loses continuity. A per-submission entity cannot
+   promise that.
+3. **Does a document reference a Study, or does a *placement*?** — the sharper
+   form of Phase 2 §2, and **[ADR-053](../../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)
+   has already answered its sibling**: the `file-tag` — what role a document
+   plays in a study report — belongs to the placement. Whether the *study* link
+   sits at the same level is the open half.
+4. **Where does it live?** — Phase 2 §3 leans a new `src/Study/`. A new bounded
+   context needs an ADR before code either way (repository canon).
+
+> **This is the first ADR that starts defining the clinical/non-clinical
+> information model rather than package generation**, and that is the reason to
+> take it deliberately rather than as a sub-clause of an eCTD story.
+
+---
+
 ## Phase 2 — Domain design *(sketch — not approved)*
 
 ### Entities
