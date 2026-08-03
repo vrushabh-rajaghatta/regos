@@ -238,6 +238,7 @@ medicinalProducts.MapDeactivateMedicinalProduct();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();
+regulatoryApplications.MapRecordApplicationNumber();
 regulatoryApplications.MapListRegulatoryApplications();
 regulatoryApplications.MapGetApplication();
 regulatoryApplications.MapGetApplicationContacts();

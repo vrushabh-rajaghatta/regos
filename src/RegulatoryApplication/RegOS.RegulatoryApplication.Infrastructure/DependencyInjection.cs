@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<IRegulatoryApplicationCreationPolicy,
             RegulatoryApplicationCreationPolicy>();
 
+        services.AddScoped<IApplicationNumberPolicy, ApplicationNumberPolicy>();
+
         return services;
     }
 }

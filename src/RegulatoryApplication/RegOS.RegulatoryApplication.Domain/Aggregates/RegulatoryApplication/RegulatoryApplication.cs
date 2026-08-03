@@ -20,6 +20,15 @@ public sealed class RegulatoryApplication
     public const string ApplicationTypeAuthorityMismatch =
         "Application type does not belong to the application's authority.";
     public const string ApplicantOrganizationRequired = "Applicant organization is required.";
+
+    public const int ApplicationNumberMaxLength = 100;
+
+    public const string ApplicationNumberRequired =
+        "An application number is what the authority assigned. Enter it as they "
+        + "issued it.";
+
+    public const string ApplicationNumberTooLong =
+        "That application number is too long.";
     public const string NameRequired = "Name is required.";
 
     private RegulatoryApplication(
@@ -137,6 +146,44 @@ public sealed class RegulatoryApplication
             applicantOrganizationId,
             name.Trim(),
             DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// The number the authority assigned to this application.
+    /// </summary>
+    /// <remarks>
+    /// <b>Stored exactly as assigned, and constrained only by being said.</b>
+    /// An application number is not RegOS's to invent or to shape: FDA issues
+    /// six digits, and Health Canada, the EMA and the TGA each issue something
+    /// else. A format rule here would make one authority's convention every
+    /// authority's law — so the shape is checked at the boundary that cares,
+    /// which is the FDA renderer ([ADR-055](../../../../../docs/adr/ADR-055-when-an-authority-required-fact-becomes-a-domain-fact.md)).
+    /// <para>
+    /// <b>Recording it is not part of <c>Create</c></b>, because an application
+    /// exists in RegOS before the authority has answered. That is the ordinary
+    /// case, not an edge one — the number arrives with the acknowledgement.
+    /// </para>
+    /// <para>
+    /// <b>Correctable here, frozen elsewhere.</b> The aggregate permits a
+    /// correction because RegOS's record of an external fact can simply be
+    /// wrong, and refusing would force someone to delete a regulatory record to
+    /// fix a typo. What it must not do is change after a sequence has carried it
+    /// to the authority — and that is a fact about *submissions*, which this
+    /// aggregate cannot see, so the handler enforces it. The same division S003
+    /// drew for the two rules that could not live among its invariants.
+    /// </para>
+    /// </remarks>
+    public void RecordApplicationNumber(string applicationNumber)
+    {
+        if (string.IsNullOrWhiteSpace(applicationNumber))
+            throw new DomainException(ApplicationNumberRequired);
+
+        var trimmed = applicationNumber.Trim();
+
+        if (trimmed.Length > ApplicationNumberMaxLength)
+            throw new DomainException(ApplicationNumberTooLong);
+
+        ApplicationNumber = trimmed;
     }
 
     public void Rename(string name)

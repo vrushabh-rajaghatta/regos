@@ -35,6 +35,7 @@ public sealed class GetApplicationHandler
             {
                 application.Id,
                 application.Name,
+                application.ApplicationNumber,
                 application.GlobalProductId,
                 CountryId = country.Id,
                 CountryName = country.Name,
@@ -52,6 +53,7 @@ public sealed class GetApplicationHandler
         return new ApplicationDetailDto(
             row.Id.Value,
             row.Name,
+            row.ApplicationNumber,
             row.GlobalProductId.Value,
             row.CountryId.Value,
             row.CountryName,
