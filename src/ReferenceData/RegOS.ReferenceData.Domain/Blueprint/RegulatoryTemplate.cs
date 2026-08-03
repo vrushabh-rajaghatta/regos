@@ -178,7 +178,8 @@ public sealed class RegulatoryTemplate
         string title,
         TemplateSectionId? parentSectionId = null,
         int order = 0,
-        string? ectdFolder = null)
+        string? ectdFolder = null,
+        EctdFolderSource? ectdFolderSource = null)
     {
         var draft = _versions.FirstOrDefault(
                 v => v.Status == TemplateVersionStatus.Draft)
@@ -186,7 +187,7 @@ public sealed class RegulatoryTemplate
                 RegulatoryTemplateErrors.NoDraftVersion);
 
         return draft.AddSection(
-            code, title, parentSectionId, order, ectdFolder);
+            code, title, parentSectionId, order, ectdFolder, ectdFolderSource);
     }
 
     /// <summary>

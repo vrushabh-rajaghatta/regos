@@ -39,6 +39,9 @@ test.describe("Update product", () => {
     // Verify the CONSUMER of the invalidated cache, not just the page that
     // performed the mutation - the detail view holds fresh state either way.
     await page.goto("/regulatory/products");
+    // Searched rather than scanned: the directory pages its results, so
+    // asserting presence in "the list" silently asserts presence on page one.
+    await page.getByLabel("Search products").fill(code);
     await expect(page.getByTestId("product-list")).toContainText(newName);
 
     // Client-side validation keeps the dialog open with a message.

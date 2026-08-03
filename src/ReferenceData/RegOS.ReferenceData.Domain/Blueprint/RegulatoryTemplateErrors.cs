@@ -41,6 +41,13 @@ public static class RegulatoryTemplateErrors
 
     // ICH Appendix 2 — a folder name becomes a filename, so an illegal one is
     // a package a regulator's tooling rejects, not a cosmetic defect.
+    public const string SectionEctdFolderNeedsSource =
+        "An eCTD folder name must say where it came from, and a source without "
+        + "a folder claims nothing.";
+
+    public const string SectionEctdFolderSourceNotRecognised =
+        "That is not a source RegOS recognises for an eCTD folder name.";
+
     public const string SectionEctdFolderNotLegal =
         "An eCTD folder name may contain only lowercase letters, digits and "
         + "hyphens, and each part must be 64 characters or fewer.";

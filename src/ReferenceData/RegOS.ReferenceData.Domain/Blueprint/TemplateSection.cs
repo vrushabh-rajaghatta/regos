@@ -16,7 +16,8 @@ public sealed class TemplateSection
         string title,
         TemplateSectionId? parentSectionId,
         int order,
-        string? ectdFolder = null)
+        string? ectdFolder = null,
+        EctdFolderSource? ectdFolderSource = null)
     {
         if (string.IsNullOrWhiteSpace(code))
             throw new DomainException(RegulatoryTemplateErrors.SectionCodeRequired);
@@ -31,12 +32,35 @@ public sealed class TemplateSection
         ParentSectionId = parentSectionId;
         Order = order;
         EctdFolder = NormaliseFolder(ectdFolder);
+
+        // A folder without a provenance is the thing this model exists to
+        // prevent, and a provenance without a folder claims nothing.
+        if ((EctdFolder is null) != (ectdFolderSource is null))
+            throw new DomainException(
+                RegulatoryTemplateErrors.SectionEctdFolderNeedsSource);
+
+        if (ectdFolderSource is { } source && !Enum.IsDefined(source))
+            throw new DomainException(
+                RegulatoryTemplateErrors.SectionEctdFolderSourceNotRecognised);
+
+        EctdFolderSource = ectdFolderSource;
     }
 
     public TemplateSectionId Id { get; }
 
     public string Code { get; }
 
+    /// <summary>
+    /// What a regulatory user calls this section — "Annual Report",
+    /// "Investigational Brochure".
+    /// </summary>
+    /// <remarks>
+    /// <b>Display, and the authority's to change.</b> FDA restated 1.13 once
+    /// already (evidence E9), and wording can move again without a single file
+    /// moving with it. Contrast <see cref="EctdFolder"/>, which is part of a
+    /// published package's identity: a title is what a person reads, a folder is
+    /// where a regulator's tooling looks.
+    /// </remarks>
     public string Title { get; }
 
     // null => top-level module; otherwise the parent section in the same version.
@@ -58,9 +82,9 @@ public sealed class TemplateSection
     /// <para>
     /// <b>Null means the placement is not in evidence</b>, with the same force
     /// as a null <c>Token</c> on the three eCTD catalogues: not "unknown", and
-    /// emphatically not "work it out from the section code". ICH Appendix 4
-    /// carries the directory table and is not yet in this repository, so every
-    /// row is null today (EPIC-007a S004).
+    /// emphatically not "work it out from the section code" — and where RegOS
+    /// does choose a name because nothing prescribes one, the choice is labelled
+    /// as such (ADR-052).
     /// </para>
     /// <para>
     /// It is <b>one link in a chain, not a whole path</b>. A leaf's location is
@@ -94,6 +118,17 @@ public sealed class TemplateSection
     /// </para>
     /// </remarks>
     public string? EctdFolder { get; }
+
+    /// <summary>
+    /// Where <see cref="EctdFolder"/> came from — a specification, or RegOS.
+    /// Null exactly when the folder is null.
+    /// </summary>
+    /// <remarks>
+    /// <b>A folder and its provenance travel together or not at all.</b> Storing
+    /// a name without saying who chose it would let a value RegOS invented read
+    /// exactly like one ICH published — see <see cref="EctdFolderSource"/>.
+    /// </remarks>
+    public EctdFolderSource? EctdFolderSource { get; }
 
     /// <summary>
     /// Whether this section's eCTD placement is known — including "known to be

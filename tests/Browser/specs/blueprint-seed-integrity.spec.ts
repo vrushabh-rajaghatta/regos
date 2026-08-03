@@ -15,10 +15,15 @@ const FDA_IND_CTD = "60000000-0000-0000-0000-000000000001";
 // Every blueprint shares the ICH-harmonized Modules 2–5 (31 sections, 8 required
 // docs, 3 rules); the counts differ only by each one's regional Module 1.
 //
-// The FDA blueprint carries two versions, and that is the point of EPIC-007a
-// S002: v1 placed the Investigator's Brochure at 1.13, which FDA's DTD defines
-// as the Annual Report. A published version is frozen, so the correction is a
+// The FDA blueprint carries three versions, and that is the point of the
+// correction stories: a published version is frozen, so every correction is a
 // new version and the old one is deprecated — never edited, never removed.
+//
+//   v1  as first published: the Investigator's Brochure at 1.13, which FDA's
+//       DTD defines as the Annual Report (S002, evidence E9)
+//   v2  the brochure moved to 1.14.4.1 — with FDA's old caption carried across
+//   v3  FDA's own wording, and every section's eCTD folder with the provenance
+//       of that folder beside it (S004, ADR-052)
 const BLUEPRINTS = [
   {
     id: FDA_IND_CTD,
@@ -35,8 +40,16 @@ const BLUEPRINTS = [
       },
       {
         versionNumber: 2,
-        status: "Published",
+        status: "Deprecated",
         effectiveFrom: "2026-08-02",
+        sections: 40,
+        requiredDocuments: 13,
+        validationRules: 4,
+      },
+      {
+        versionNumber: 3,
+        status: "Published",
+        effectiveFrom: "2026-08-03",
         sections: 40,
         requiredDocuments: 13,
         validationRules: 4,
@@ -162,7 +175,7 @@ test.describe("Blueprint seed integrity", () => {
     });
   }
 
-  test("the FDA correction is in v2, and v1 still says what it said", async () => {
+  test("each correction is a new version, and the old ones still say what they said", async () => {
     const template = await (
       await api(`/reference-data/templates/${FDA_IND_CTD}`)
     ).json();
@@ -186,15 +199,27 @@ test.describe("Blueprint seed integrity", () => {
 
     // v2 — corrected against us-regional-v3-3.dtd (evidence E9), where
     // m1-13 is the annual report and the brochure lives three levels down at
-    // m1-14-4-1-investigational-brochure.
+    // m1-14-4-1-investigational-brochure. The placement moved; the caption
+    // did not, and that is what v3 goes on to fix.
     const v2 = byNumber(2);
     expect(section(v2, "1.13")).toMatchObject({ title: "Annual Report" });
+    expect(section(v2, "1.14.4.1")).toMatchObject({
+      title: "Investigator's Brochure",
+    });
 
-    const labeling = section(v2, "1.14");
-    const investigationalLabeling = section(v2, "1.14.4");
-    const brochure = section(v2, "1.14.4.1");
+    // v3 — FDA's own wording. Its DTD element is
+    // m1-14-4-1-investigational-brochure and its Comprehensive ToC v2.3.2 says
+    // "Investigational brochure"; two FDA sources agreeing with each other and
+    // not with RegOS is not a wording preference.
+    const v3 = byNumber(3);
+    expect(section(v3, "1.14.4.1")).toMatchObject({
+      title: "Investigational Brochure",
+    });
+    expect(section(v3, "1.2")).toMatchObject({ title: "Cover Letters" });
 
-    expect(brochure).toMatchObject({ title: "Investigator's Brochure" });
+    const labeling = section(v3, "1.14");
+    const investigationalLabeling = section(v3, "1.14.4");
+    const brochure = section(v3, "1.14.4.1");
 
     // Four levels deep — M1 → 1.14 → 1.14.4 → 1.14.4.1 — which is deeper than
     // any section RegOS carried before this correction.

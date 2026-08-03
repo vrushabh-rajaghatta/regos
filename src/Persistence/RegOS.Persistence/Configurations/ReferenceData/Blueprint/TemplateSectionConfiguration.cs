@@ -51,6 +51,15 @@ public sealed class TemplateSectionConfiguration
         builder.Property(x => x.EctdFolder)
             .HasMaxLength(256);
 
+        // Who chose the name beside it — a specification, or RegOS (ADR-052).
+        // Stored so that "ICH published this" and "we made this up because
+        // nothing prescribed one" never read alike. Null exactly when the
+        // folder is null; the aggregate enforces the pairing.
+        builder.Property(x => x.EctdFolderSource)
+            .HasConversion<int?>();
+
+        builder.Ignore(x => x.HasEctdPlacement);
+
         // Shadow FK to the owning version; the relationship binds to it in
         // RegulatoryTemplateVersionConfiguration.
         builder.Property<RegulatoryTemplateVersionId>("RegulatoryTemplateVersionId")

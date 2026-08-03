@@ -1,6 +1,6 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 paused on an evidence gap (ICH Appendix 4)** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 placement decided (ADR-052); folder materialisation not started** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 > **The epic's named capability has not begun.** Everything shipped so far is
 > preparatory: the specifications are pinned, the model has been corrected three
@@ -811,7 +811,7 @@ a prediction was for.
 
 ---
 
-### S004 — the sequence folder ⏸️ paused on ICH Appendix 4
+### S004 — the sequence folder 🟡 placement resolved, materialisation not started
 
 **Proves:** a published `Submission` materialises as a deterministic directory
 tree — `0000/m1/us/…`, `m2/`…, with `util/dtd/` populated from `spec/`, and an

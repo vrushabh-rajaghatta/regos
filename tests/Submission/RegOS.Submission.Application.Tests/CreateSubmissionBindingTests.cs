@@ -151,11 +151,25 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
             .SelectMany(t => t.Versions)
             .SingleAsync(v => v.Id == submission.BoundTemplateVersionId!.Value);
 
-        // EPIC-007a S002: v1 of this blueprint mislocated the Investigator's
-        // Brochure and was superseded rather than edited. A new submission must
-        // never bind to it — that is what deprecation is for.
+        // EPIC-007a S002 superseded v1, which mislocated the Investigator's
+        // Brochure; S004 superseded v2, which carried FDA's old wording and no
+        // eCTD placement. Both were replaced rather than edited, and a new
+        // submission must bind to neither — that is what deprecation is for.
+        //
+        // Asserted as "the only published one" rather than as a number, so the
+        // next correction does not break a test about deprecation.
         bound.Status.Should().Be(TemplateVersionStatus.Published);
-        bound.VersionNumber.Should().Be(2);
+
+        var published = await ctx.RegulatoryTemplates
+            .AsNoTracking()
+            .Include(t => t.Versions)
+            .Where(t => t.Id == FdaIndCtd)
+            .SelectMany(t => t.Versions)
+            .Where(v => v.Status == TemplateVersionStatus.Published)
+            .ToListAsync();
+
+        published.Should().ContainSingle()
+            .Which.VersionNumber.Should().Be(bound.VersionNumber);
     }
 
     [Fact]

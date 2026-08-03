@@ -87,7 +87,8 @@ public sealed class RegulatoryTemplateVersion
         string title,
         TemplateSectionId? parentSectionId,
         int order,
-        string? ectdFolder = null)
+        string? ectdFolder = null,
+        EctdFolderSource? ectdFolderSource = null)
     {
         if (Status != TemplateVersionStatus.Draft)
             throw new BusinessRuleViolationException(
@@ -96,7 +97,7 @@ public sealed class RegulatoryTemplateVersion
         // Construct first — the entity validates code/title format.
         var section = new TemplateSection(
             TemplateSectionId.New(), code, title, parentSectionId, order,
-            ectdFolder);
+            ectdFolder, ectdFolderSource);
 
         if (_sections.Any(s => string.Equals(
                 s.Code, section.Code, StringComparison.OrdinalIgnoreCase)))

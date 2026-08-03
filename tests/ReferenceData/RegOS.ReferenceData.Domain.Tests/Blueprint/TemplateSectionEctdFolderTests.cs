@@ -54,7 +54,7 @@ public class TemplateSectionEctdFolderTests
     public void ASectionThatAddsNoDirectory_IsKnown_NotMissing()
     {
         var section = NewDraftTemplate()
-            .AddSection("2.7.4", "Summary of Clinical Safety", ectdFolder: "");
+            .AddSection("2.7.4", "Summary of Clinical Safety", ectdFolder: "", ectdFolderSource: EctdFolderSource.IchAppendix4);
 
         section.EctdFolder.Should().BeEmpty();
         section.HasEctdPlacement.Should().BeTrue();
@@ -74,7 +74,8 @@ public class TemplateSectionEctdFolderTests
     {
         var section = NewDraftTemplate()
             .AddSection("3.2.S", "Drug Substance",
-                ectdFolder: "32s-drug-substance");
+                ectdFolder: "32s-drug-substance",
+                ectdFolderSource: EctdFolderSource.IchAppendix4);
 
         section.EctdFolder.Should().Be("32s-drug-substance");
     }
@@ -87,7 +88,8 @@ public class TemplateSectionEctdFolderTests
     public void AFolderMayChainSegments()
     {
         var section = NewDraftTemplate()
-            .AddSection("M1", "Administrative Information", ectdFolder: "m1/us");
+            .AddSection("M1", "Administrative Information", ectdFolder: "m1/us",
+                ectdFolderSource: EctdFolderSource.IchAppendix4);
 
         section.EctdFolder.Should().Be("m1/us");
     }
@@ -106,7 +108,8 @@ public class TemplateSectionEctdFolderTests
     public void AnIllegalFolderName_IsRefused(string folder)
     {
         var act = () => NewDraftTemplate()
-            .AddSection("M1", "Administrative Information", ectdFolder: folder);
+            .AddSection("M1", "Administrative Information", ectdFolder: folder,
+                ectdFolderSource: EctdFolderSource.RegOsConvention);
 
         act.Should().Throw<DomainException>()
             .WithMessage(RegulatoryTemplateErrors.SectionEctdFolderNotLegal);
@@ -118,7 +121,8 @@ public class TemplateSectionEctdFolderTests
         var tooLong = new string('a', TemplateSection.MaxFolderSegmentLength + 1);
 
         var act = () => NewDraftTemplate()
-            .AddSection("M1", "Administrative Information", ectdFolder: tooLong);
+            .AddSection("M1", "Administrative Information", ectdFolder: tooLong,
+                ectdFolderSource: EctdFolderSource.RegOsConvention);
 
         act.Should().Throw<DomainException>()
             .WithMessage(RegulatoryTemplateErrors.SectionEctdFolderNotLegal);
@@ -130,7 +134,8 @@ public class TemplateSectionEctdFolderTests
         var atLimit = new string('a', TemplateSection.MaxFolderSegmentLength);
 
         var section = NewDraftTemplate()
-            .AddSection("M1", "Administrative Information", ectdFolder: atLimit);
+            .AddSection("M1", "Administrative Information", ectdFolder: atLimit,
+                ectdFolderSource: EctdFolderSource.RegOsConvention);
 
         section.EctdFolder.Should().Be(atLimit);
     }
@@ -151,9 +156,61 @@ public class TemplateSectionEctdFolderTests
             publishedOnUtc: DateTime.UtcNow);
 
         var act = () => template.AddSection(
-            "M1", "Administrative Information", ectdFolder: "m1/us");
+            "M1", "Administrative Information", ectdFolder: "m1/us",
+                ectdFolderSource: EctdFolderSource.IchAppendix4);
 
         act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(RegulatoryTemplateErrors.NoDraftVersion);
+    }
+
+    // --- Provenance travels with the name (ADR-052) ---------------------------
+
+    /// <summary>
+    /// The rule the enum exists for: a name with no stated origin would let a
+    /// value RegOS chose read exactly like one ICH published.
+    /// </summary>
+    [Fact]
+    public void AFolderWithoutASource_IsRefused()
+    {
+        var act = () => NewDraftTemplate()
+            .AddSection("1.2", "Cover Letters", ectdFolder: "12-cover-letters");
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(RegulatoryTemplateErrors.SectionEctdFolderNeedsSource);
+    }
+
+    [Fact]
+    public void ASourceWithoutAFolder_IsRefused()
+    {
+        var act = () => NewDraftTemplate()
+            .AddSection("1.2", "Cover Letters",
+                ectdFolderSource: EctdFolderSource.IchAppendix4);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(RegulatoryTemplateErrors.SectionEctdFolderNeedsSource);
+    }
+
+    [Fact]
+    public void AnUnrecognisedSource_IsRefused()
+    {
+        var act = () => NewDraftTemplate()
+            .AddSection("1.2", "Cover Letters", ectdFolder: "12-cover-letters",
+                ectdFolderSource: (EctdFolderSource)99);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(
+                RegulatoryTemplateErrors.SectionEctdFolderSourceNotRecognised);
+    }
+
+    /// <summary>
+    /// A section with no placement has no source either — silence is not
+    /// attributable to anyone.
+    /// </summary>
+    [Fact]
+    public void ASectionWithNoFolder_HasNoSource()
+    {
+        var section = NewDraftTemplate().AddSection("3.2.S", "Drug Substance");
+
+        section.EctdFolderSource.Should().BeNull();
     }
 }
