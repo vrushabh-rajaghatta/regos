@@ -25,7 +25,7 @@ public sealed class CorrespondenceTypeConfiguration
             .HasMaxLength(CorrespondenceTypeEntity.CodeMaxLength)
             .IsRequired();
 
-        // Globally unique, not unique-per-authority: unlike SubmissionType,
+        // Globally unique, not unique-per-authority: unlike ApplicationType,
         // this vocabulary is not authority-scoped.
         builder.HasIndex(x => x.Code)
             .IsUnique();

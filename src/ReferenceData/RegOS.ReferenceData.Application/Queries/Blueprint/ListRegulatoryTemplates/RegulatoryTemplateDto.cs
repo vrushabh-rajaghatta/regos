@@ -5,6 +5,6 @@ public sealed record RegulatoryTemplateDto(
     string Code,
     string Name,
     Guid AuthorityId,
-    Guid SubmissionTypeId,
+    Guid ApplicationTypeId,
     string Source,
     string Status);

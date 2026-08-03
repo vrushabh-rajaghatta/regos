@@ -1,3 +1,4 @@
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
@@ -9,5 +10,6 @@ public sealed record CreateRegulatoryApplicationCommand(
     GlobalProductId GlobalProductId,
     CountryId CountryId,
     AuthorityId AuthorityId,
+    ApplicationTypeId ApplicationTypeId,
     OrganizationId ApplicantOrganizationId,
     string Name);

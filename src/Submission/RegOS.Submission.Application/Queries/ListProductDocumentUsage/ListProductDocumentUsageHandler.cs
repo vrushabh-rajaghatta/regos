@@ -47,8 +47,8 @@ public sealed class ListProductDocumentUsageHandler
                 on submission.ApplicationId equals application.Id
             join authority in _dbContext.Authorities
                 on application.AuthorityId equals authority.Id
-            join submissionType in _dbContext.SubmissionTypes
-                on submission.SubmissionTypeId equals submissionType.Id
+            join applicationType in _dbContext.ApplicationTypes
+                on application.ApplicationTypeId equals applicationType.Id
             join version in _dbContext.Set<DocumentVersion>()
                 on usage.DocumentVersionId equals version.Id
             select new
@@ -57,7 +57,7 @@ public sealed class ListProductDocumentUsageHandler
                 submission.ApplicationId,
                 ApplicationName = application.Name,
                 SubmissionTitle = submission.Title,
-                SubmissionType = submissionType.Name,
+                ApplicationType = applicationType.Name,
                 Authority = authority.Name,
                 submission.SequenceNumber,
                 submission.Status,
@@ -79,15 +79,15 @@ public sealed class ListProductDocumentUsageHandler
                 on submission.ApplicationId equals application.Id
             join authority in _dbContext.Authorities
                 on application.AuthorityId equals authority.Id
-            join submissionType in _dbContext.SubmissionTypes
-                on submission.SubmissionTypeId equals submissionType.Id
+            join applicationType in _dbContext.ApplicationTypes
+                on application.ApplicationTypeId equals applicationType.Id
             select new
             {
                 submission.Id,
                 submission.ApplicationId,
                 ApplicationName = application.Name,
                 SubmissionTitle = submission.Title,
-                SubmissionType = submissionType.Name,
+                ApplicationType = applicationType.Name,
                 Authority = authority.Name,
                 submission.SequenceNumber,
                 submission.Status,
@@ -100,7 +100,7 @@ public sealed class ListProductDocumentUsageHandler
                 row.ApplicationId.Value,
                 row.ApplicationName,
                 row.SubmissionTitle,
-                row.SubmissionType,
+                row.ApplicationType,
                 row.Authority,
                 row.SequenceNumber,
                 row.Status.ToString(),
@@ -113,7 +113,7 @@ public sealed class ListProductDocumentUsageHandler
                 row.ApplicationId.Value,
                 row.ApplicationName,
                 row.SubmissionTitle,
-                row.SubmissionType,
+                row.ApplicationType,
                 row.Authority,
                 row.SequenceNumber,
                 row.Status.ToString(),

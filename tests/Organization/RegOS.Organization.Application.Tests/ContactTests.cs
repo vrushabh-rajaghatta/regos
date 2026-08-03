@@ -124,7 +124,8 @@ public sealed class ContactTests : IAsyncLifetime
             organizationId,
             roleIds: [QualifiedPerson, RegulatoryContact],
             emails: ["priya.raman@example.com", "qp@example.com"],
-            phones: ["+91 40 1234 5678"]);
+            phones: [new ContactPhoneInput(
+                "+91 40 1234 5678", ContactPhoneKind.Business)]);
 
         await using var check = New();
         var contact = await check.Contacts
@@ -138,6 +139,10 @@ public sealed class ContactTests : IAsyncLifetime
         contact.Status.Should().Be(OrganizationStatus.Active);
         contact.Roles.Should().HaveCount(2);
         contact.Emails.Should().HaveCount(2);
+
+        // Stored as its name (see ContactPhoneConfiguration), so this is also
+        // the round-trip through the string conversion.
+        contact.Phones.Single().Kind.Should().Be(ContactPhoneKind.Business);
         contact.Phones.Should().ContainSingle();
         contact.OrganizationSiteId.Should().BeNull();
     }
@@ -388,7 +393,7 @@ public sealed class ContactTests : IAsyncLifetime
         OrganizationSiteId? siteId = null,
         IReadOnlyList<ContactRoleId>? roleIds = null,
         IReadOnlyList<string>? emails = null,
-        IReadOnlyList<string>? phones = null)
+        IReadOnlyList<ContactPhoneInput>? phones = null)
     {
         var handler = new CreateContactHandler(
             new ContactCreationPolicy(ctx),

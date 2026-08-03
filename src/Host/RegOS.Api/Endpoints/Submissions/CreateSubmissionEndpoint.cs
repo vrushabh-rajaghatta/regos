@@ -1,3 +1,4 @@
+using RegOS.ReferenceData.Domain.SubmissionSubType;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
@@ -33,12 +34,26 @@ public static class CreateSubmissionEndpoint
                 "Format must be one of Ectd, Nees or Paper.");
         }
 
+        // Stated here rather than left to bind as an empty guid, so the failure
+        // says what is missing instead of "that sub-type does not exist".
+        if (request.SubmissionSubTypeId is not { } subTypeId)
+        {
+            throw new DomainException(
+                SubmissionErrors.SubmissionSubTypeRequired);
+        }
+
         var result = await handler.HandleAsync(
             new CreateSubmissionCommand(
                 new RegulatoryApplicationId(applicationId),
-                new SubmissionTypeId(request.SubmissionTypeId),
                 request.Title,
-                format),
+                format,
+                new SubmissionSubTypeId(subTypeId),
+                request.SubmissionTypeId is { } typeId
+                    ? new SubmissionTypeId(typeId)
+                    : null,
+                request.OriginatingSubmissionId is { } originId
+                    ? SubmissionId.From(originId)
+                    : null),
             cancellationToken);
 
         return Results.Created(

@@ -28,7 +28,12 @@ public static class DependencyInjection
         // tenants they point at must exist first.
         services.AddScoped<IDataInitializer, TenantInitializer>();
         services.AddScoped<IDataInitializer, ProductInitializer>();
+        services.AddScoped<IDataInitializer, ApplicationTypeDataInitializer>();
+        // After GeographyAndRegulatoryInitializer: both reference authorities.
+        // Independent of each other — a sub-type is not a taxonomy beneath a
+        // type (ADR-047 §6), so neither ordering would mean anything.
         services.AddScoped<IDataInitializer, SubmissionTypeDataInitializer>();
+        services.AddScoped<IDataInitializer, SubmissionSubTypeDataInitializer>();
         services.AddScoped<IDataInitializer, DocumentTypeDataInitializer>();
         services.AddScoped<IDataInitializer, IdentifierSchemeDataInitializer>();
         services.AddScoped<IDataInitializer, ContactRoleDataInitializer>();
@@ -36,7 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IDataInitializer, CorrespondenceTypeDataInitializer>();
         // After GeographyAndRegulatoryInitializer: divisions reference authorities.
         services.AddScoped<IDataInitializer, AuthorityDivisionDataInitializer>();
-        // After submission types and authorities: a template references both.
+        // After application types and authorities: a template references both.
         services.AddScoped<IDataInitializer, RegulatoryTemplateDataInitializer>();
 
         return services;

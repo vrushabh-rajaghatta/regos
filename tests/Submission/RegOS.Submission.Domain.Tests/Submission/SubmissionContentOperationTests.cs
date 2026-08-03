@@ -2,7 +2,7 @@ using FluentAssertions;
 
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
@@ -35,9 +35,9 @@ public class SubmissionContentOperationTests
         SubmissionAggregate.Create(
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
             "Protocol amendment",
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            SubmissionClassifications.Any());
 
     // --- The first filing ----------------------------------------------------
 
@@ -239,9 +239,9 @@ public class SubmissionContentOperationTests
         var submission = SubmissionAggregate.Create(
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
             "Protocol amendment",
-            format);
+            format,
+            SubmissionClassifications.Any());
 
         var unchanged = Place(submission, carried, Version(1), Module32S2);
         var replacement = Place(submission, replaced, Version(9), Module11);

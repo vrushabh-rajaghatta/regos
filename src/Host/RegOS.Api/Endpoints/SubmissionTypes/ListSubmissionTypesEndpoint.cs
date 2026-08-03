@@ -8,7 +8,7 @@ public static class ListSubmissionTypesEndpoint
         this IEndpointRouteBuilder app)
     {
         app.MapGet(
-            "/submission-types",
+            "/api/reference-data/submission-types",
             HandleAsync);
 
         return app;
@@ -20,7 +20,8 @@ public static class ListSubmissionTypesEndpoint
         Guid? authorityId)
     {
         var result =
-            await handler.HandleAsync(authorityId, cancellationToken);
+            await handler.HandleAsync(
+                new ListSubmissionTypesQuery(authorityId), cancellationToken);
 
         return Results.Ok(result);
     }

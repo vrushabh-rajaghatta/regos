@@ -15,28 +15,30 @@ public sealed class ListSubmissionTypesHandler
     }
 
     public async Task<IReadOnlyList<SubmissionTypeDto>> HandleAsync(
-        Guid? authorityId,
+        ListSubmissionTypesQuery query,
         CancellationToken cancellationToken = default)
     {
-        // Read model: only active reference records, ordered by display name
-        // so lookups/dropdowns are deterministic. IsActive is not exposed.
-        // One composable query, optionally narrowed to a single Authority.
-        var query = _dbContext.SubmissionTypes
+        var authorityId = query.AuthorityId;
+
+        // Read model: only active reference records, ordered by display name so
+        // dropdowns are deterministic. IsActive is not exposed.
+        var types = _dbContext.SubmissionTypes
             .AsNoTracking()
             .Where(x => x.IsActive);
 
         if (authorityId.HasValue)
         {
             var id = new AuthorityId(authorityId.Value);
-            query = query.Where(x => x.AuthorityId == id);
+            types = types.Where(x => x.AuthorityId == id);
         }
 
-        return await query
+        return await types
             .OrderBy(x => x.Name)
             .Select(x => new SubmissionTypeDto(
                 x.Id,
                 x.Code,
                 x.Name,
+                x.Token,
                 x.AuthorityId))
             .ToListAsync(cancellationToken);
     }

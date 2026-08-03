@@ -91,17 +91,31 @@ public sealed class IdentityConventionTests
     /// pass is the failure mode the shrink-only mechanism exists to prevent —
     /// if a lookup grows children or a lifecycle, it has stopped being master
     /// data and moves to <see cref="PendingMigration"/> instead.
+    ///
+    /// <b>The two lists are not the same kind of list</b>, and ADR-051 §3
+    /// corrects ADR-043 §3 for saying they were: <see cref="PendingMigration"/>
+    /// is a backlog and only shrinks; this one records a decision that
+    /// something is not that kind of thing at all, and grows by ADR.
     /// </summary>
     private static readonly HashSet<string> MasterDataLookups =
     [
+        // ADR-043 §2.
         "CountryId",
         "DocumentTypeId",
-        "SubmissionTypeId",
+        "ApplicationTypeId",
         "AuthorityId",
         "AuthorityDivisionId",
         "CorrespondenceTypeId",
         "ContactRoleId",
-        "IdentifierSchemeId"
+        "IdentifierSchemeId",
+
+        // ADR-051 §1 — the eCTD activity vocabulary (EPIC-007a S003). Note that
+        // ADR-043 §2's own list contains the *name* "SubmissionTypeId", which
+        // after ADR-050 means ApplicationTypeId above: the name was reused for a
+        // different concept, and this entry is that concept, admitted on its own
+        // merits rather than inherited.
+        "SubmissionTypeId",
+        "SubmissionSubTypeId"
     ];
 
     [Fact]

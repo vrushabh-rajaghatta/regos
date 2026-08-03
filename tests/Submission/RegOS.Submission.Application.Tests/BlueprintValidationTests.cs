@@ -6,7 +6,7 @@ using RegOS.Product.Domain.Product;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.DocumentType;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Application.Commands.CreateSubmission;
 using RegOS.Submission.Application.Commands.PublishSubmission;
@@ -36,10 +36,6 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     private const string ConnectionString =
         "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
 
-    private static readonly SubmissionTypeId FdaInd =
-        new(Guid.Parse("40000000-0000-0000-0000-000000000008"));
-    private static readonly SubmissionTypeId Fda510k =
-        new(Guid.Parse("40000000-0000-0000-0000-000000000001"));
     private static readonly DocumentTypeId CoverLetter =
         new(Guid.Parse("50000000-0000-0000-0000-000000000009"));
 
@@ -89,7 +85,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND coverage");
+        var submissionId = await CreateAsync(ctx, appId, "IND coverage");
 
         var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
 
@@ -118,7 +114,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND unplaced");
+        var submissionId = await CreateAsync(ctx, appId, "IND unplaced");
 
         var before = await MissingCountAsync(ctx, submissionId);
 
@@ -144,7 +140,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND placed");
+        var submissionId = await CreateAsync(ctx, appId, "IND placed");
 
         var before = await MissingCountAsync(ctx, submissionId);
         var section = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
@@ -172,7 +168,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND misplaced");
+        var submissionId = await CreateAsync(ctx, appId, "IND misplaced");
 
         var before = await MissingCountAsync(ctx, submissionId);
         var expected = await SectionRequiringAsync(ctx, submissionId, CoverLetter);
@@ -198,7 +194,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND where");
+        var submissionId = await CreateAsync(ctx, appId, "IND where");
 
         var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
 
@@ -213,10 +209,11 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     public async Task UnboundSubmission_IsReportedButNotBlocked()
     {
         await using var ctx = New();
-        var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
+        // A device-type APPLICATION under the same authority: no blueprint
+        // targets it. The type moved to the application in S001.
+        var (appId, globalProductId) = await TestFdaApplication.Ensure510kAsync(ctx);
 
-        // A device type under the same authority: no blueprint targets it.
-        var submissionId = await CreateAsync(ctx, appId, Fda510k, "510(k) unbound");
+        var submissionId = await CreateAsync(ctx, appId, "510(k) unbound");
         await AttachAsync(ctx, submissionId, globalProductId, CoverLetter);
 
         await using var act = New();
@@ -237,7 +234,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND publish gate");
+        var submissionId = await CreateAsync(ctx, appId, "IND publish gate");
 
         var handler = new PublishSubmissionHandler(
             ValidatorFor(ctx),
@@ -265,7 +262,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND format");
+        var submissionId = await CreateAsync(ctx, appId, "IND format");
 
         await AttachAsync(
             ctx, submissionId, globalProductId, CoverLetter,
@@ -292,7 +289,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, globalProductId) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND format ok");
+        var submissionId = await CreateAsync(ctx, appId, "IND format ok");
 
         await AttachAsync(ctx, submissionId, globalProductId, CoverLetter);
 
@@ -314,7 +311,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND executed");
+        var submissionId = await CreateAsync(ctx, appId, "IND executed");
 
         var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
 
@@ -333,7 +330,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND disclosure");
+        var submissionId = await CreateAsync(ctx, appId, "IND disclosure");
 
         var engineWithNoEvaluators = new BlueprintValidationEvaluator(ctx, []);
 
@@ -362,7 +359,7 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     {
         await using var ctx = New();
         var (appId, _) = await TestFdaApplication.EnsureAsync(ctx);
-        var submissionId = await CreateAsync(ctx, appId, FdaInd, "IND empty section");
+        var submissionId = await CreateAsync(ctx, appId, "IND empty section");
 
         var result = await ValidatorFor(ctx).ValidateAsync(submissionId, default);
 
@@ -401,15 +398,16 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     private async Task<SubmissionId> CreateAsync(
         RegOSDbContext ctx,
         RegulatoryApplicationId applicationId,
-        SubmissionTypeId submissionTypeId,
         string title)
     {
         var handler = new CreateSubmissionHandler(ctx, new SubmissionRepository(ctx));
 
         var result = await handler.HandleAsync(
             new CreateSubmissionCommand(
-                applicationId, submissionTypeId, title + " " + Guid.NewGuid(),
-                SubmissionFormat.Ectd),
+                applicationId, title + " " + Guid.NewGuid(),
+                SubmissionFormat.Ectd,
+                TestSubmissionClassification.FdaApplication,
+                TestSubmissionClassification.FdaOriginalApplication),
             default);
 
         _submissionIds.Add(result.Id.Value);

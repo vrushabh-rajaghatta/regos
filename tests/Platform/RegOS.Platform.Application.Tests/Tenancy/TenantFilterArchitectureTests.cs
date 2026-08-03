@@ -32,7 +32,7 @@ public sealed class TenantFilterArchitectureTests
         "Tenant",
         "Country",
         "Authority",
-        "SubmissionType"
+        "ApplicationType"
     ];
 
     /// <summary>

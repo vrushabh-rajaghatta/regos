@@ -1,0 +1,216 @@
+using FluentAssertions;
+
+using RegOS.ReferenceData.Domain.ApplicationType;
+using RegOS.ReferenceData.Domain.Blueprint;
+using RegOS.ReferenceData.Domain.Regulatory.Authority;
+using RegOS.SharedKernel.Exceptions;
+
+namespace RegOS.ReferenceData.Domain.Tests.Blueprint;
+
+/// <summary>
+/// <b>EPIC-007a S004 — where a section's documents are written on disk.</b>
+///
+/// The column ships empty on purpose: ICH Appendix 4 carries the directory
+/// table and is not in this repository, and a leaf path cannot be derived from
+/// a section code without inventing a convention. <b>What is tested here is the
+/// shape and the guard, not the values</b> — because the shape is what has been
+/// established.
+/// </summary>
+public class TemplateSectionEctdFolderTests
+{
+    private static RegulatoryTemplate NewDraftTemplate()
+    {
+        var template = RegulatoryTemplate.Create(
+            "FDA_IND_CTD",
+            "FDA IND (CTD)",
+            new AuthorityId(Guid.NewGuid()),
+            new ApplicationTypeId(Guid.NewGuid()),
+            "ICH eCTD");
+
+        template.StartDraftVersion();
+
+        return template;
+    }
+
+    /// <summary>
+    /// The state every seeded row is in today, and it must be reachable without
+    /// ceremony — a blueprint whose placement is unknown is still a blueprint.
+    /// </summary>
+    [Fact]
+    public void ASectionWithNoFolder_IsLegalAndStaysNull()
+    {
+        var section = NewDraftTemplate().AddSection("3.2.S", "Drug Substance");
+
+        section.EctdFolder.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Appendix 4 gives sections 2.7.1 to 2.7.6 a file row and no directory
+    /// row — their documents go in 2.7's folder. <b>That is a known placement,
+    /// not a missing one</b>, and collapsing it into null would make two-thirds
+    /// of Module 2 unrenderable for no reason but a convenience.
+    /// </summary>
+    [Fact]
+    public void ASectionThatAddsNoDirectory_IsKnown_NotMissing()
+    {
+        var section = NewDraftTemplate()
+            .AddSection("2.7.4", "Summary of Clinical Safety", ectdFolder: "", ectdFolderSource: EctdFolderSource.IchAppendix4);
+
+        section.EctdFolder.Should().BeEmpty();
+        section.HasEctdPlacement.Should().BeTrue();
+    }
+
+    [Fact]
+    public void OnlySilenceMeansNotInEvidence()
+    {
+        var section = NewDraftTemplate().AddSection("3.2.S", "Drug Substance");
+
+        section.EctdFolder.Should().BeNull();
+        section.HasEctdPlacement.Should().BeFalse();
+    }
+
+    [Fact]
+    public void AFolderIsKeptAsGiven()
+    {
+        var section = NewDraftTemplate()
+            .AddSection("3.2.S", "Drug Substance",
+                ectdFolder: "32s-drug-substance",
+                ectdFolderSource: EctdFolderSource.IchAppendix4);
+
+        section.EctdFolder.Should().Be("32s-drug-substance");
+    }
+
+    /// <summary>
+    /// One section, two directories — FDA's Module 1 root is <c>m1/us</c>, and
+    /// the regional level has no section of its own to carry it.
+    /// </summary>
+    [Fact]
+    public void AFolderMayChainSegments()
+    {
+        var section = NewDraftTemplate()
+            .AddSection("M1", "Administrative Information", ectdFolder: "m1/us",
+                ectdFolderSource: EctdFolderSource.IchAppendix4);
+
+        section.EctdFolder.Should().Be("m1/us");
+    }
+
+    /// <summary>
+    /// ICH Appendix 2, enforced where the value is created rather than trusted
+    /// to the seed: this string becomes a filename, and an illegal one is a
+    /// package a regulator's tooling rejects.
+    /// </summary>
+    [Theory]
+    [InlineData("m1/US")]                  // uppercase
+    [InlineData("m1 us")]                  // space
+    [InlineData("m1.us")]                  // dot
+    [InlineData("m1_us")]                  // underscore
+    [InlineData("m1//us")]                 // empty segment
+    public void AnIllegalFolderName_IsRefused(string folder)
+    {
+        var act = () => NewDraftTemplate()
+            .AddSection("M1", "Administrative Information", ectdFolder: folder,
+                ectdFolderSource: EctdFolderSource.RegOsConvention);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(RegulatoryTemplateErrors.SectionEctdFolderNotLegal);
+    }
+
+    [Fact]
+    public void ASegmentLongerThanAppendix2Allows_IsRefused()
+    {
+        var tooLong = new string('a', TemplateSection.MaxFolderSegmentLength + 1);
+
+        var act = () => NewDraftTemplate()
+            .AddSection("M1", "Administrative Information", ectdFolder: tooLong,
+                ectdFolderSource: EctdFolderSource.RegOsConvention);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(RegulatoryTemplateErrors.SectionEctdFolderNotLegal);
+    }
+
+    [Fact]
+    public void ASegmentAtExactlyTheLimit_IsAccepted()
+    {
+        var atLimit = new string('a', TemplateSection.MaxFolderSegmentLength);
+
+        var section = NewDraftTemplate()
+            .AddSection("M1", "Administrative Information", ectdFolder: atLimit,
+                ectdFolderSource: EctdFolderSource.RegOsConvention);
+
+        section.EctdFolder.Should().Be(atLimit);
+    }
+
+    /// <summary>
+    /// The consequence that makes Appendix 4 a versioning event rather than a
+    /// data patch: there is no way to set a folder on a published version,
+    /// because there is no way to add a section to one (EPIC-007a S002).
+    /// </summary>
+    [Fact]
+    public void APublishedVersion_CannotAcquireFolders()
+    {
+        var template = NewDraftTemplate();
+
+        template.PublishVersion(
+            template.Versions.Single().Id,
+            effectiveFrom: null,
+            publishedOnUtc: DateTime.UtcNow);
+
+        var act = () => template.AddSection(
+            "M1", "Administrative Information", ectdFolder: "m1/us",
+                ectdFolderSource: EctdFolderSource.IchAppendix4);
+
+        act.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(RegulatoryTemplateErrors.NoDraftVersion);
+    }
+
+    // --- Provenance travels with the name (ADR-052) ---------------------------
+
+    /// <summary>
+    /// The rule the enum exists for: a name with no stated origin would let a
+    /// value RegOS chose read exactly like one ICH published.
+    /// </summary>
+    [Fact]
+    public void AFolderWithoutASource_IsRefused()
+    {
+        var act = () => NewDraftTemplate()
+            .AddSection("1.2", "Cover Letters", ectdFolder: "12-cover-letters");
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(RegulatoryTemplateErrors.SectionEctdFolderNeedsSource);
+    }
+
+    [Fact]
+    public void ASourceWithoutAFolder_IsRefused()
+    {
+        var act = () => NewDraftTemplate()
+            .AddSection("1.2", "Cover Letters",
+                ectdFolderSource: EctdFolderSource.IchAppendix4);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(RegulatoryTemplateErrors.SectionEctdFolderNeedsSource);
+    }
+
+    [Fact]
+    public void AnUnrecognisedSource_IsRefused()
+    {
+        var act = () => NewDraftTemplate()
+            .AddSection("1.2", "Cover Letters", ectdFolder: "12-cover-letters",
+                ectdFolderSource: (EctdFolderSource)99);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage(
+                RegulatoryTemplateErrors.SectionEctdFolderSourceNotRecognised);
+    }
+
+    /// <summary>
+    /// A section with no placement has no source either — silence is not
+    /// attributable to anyone.
+    /// </summary>
+    [Fact]
+    public void ASectionWithNoFolder_HasNoSource()
+    {
+        var section = NewDraftTemplate().AddSection("3.2.S", "Drug Substance");
+
+        section.EctdFolderSource.Should().BeNull();
+    }
+}

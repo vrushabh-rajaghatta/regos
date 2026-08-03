@@ -29,6 +29,16 @@ export const createContactSchema = z.object({
     .optional(),
 
   phone: z.string().trim().optional(),
-});
+
+  // Office, fax or mobile. Empty is legal and means "not said" — the server
+  // stores that as a null, which is a different thing from a wrong guess.
+  phoneKind: z.enum(["Business", "Fax", "Mobile"]).or(z.literal("")).optional(),
+})
+  // A kind without a number describes nothing. The reverse is fine: a number
+  // whose kind nobody supplied is exactly what the nullable column is for.
+  .refine((values) => !values.phoneKind || !!values.phone, {
+    message: "Enter a phone number, or clear the type.",
+    path: ["phone"],
+  });
 
 export type CreateContactFormValues = z.infer<typeof createContactSchema>;

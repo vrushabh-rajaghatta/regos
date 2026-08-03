@@ -26,18 +26,18 @@ public sealed class GetSubmissionHandler
         var row = await (
             from submission in _dbContext.Submissions.AsNoTracking()
             where submission.Id == submissionId
-            join submissionType in _dbContext.SubmissionTypes
-                on submission.SubmissionTypeId equals submissionType.Id
             join application in _dbContext.RegulatoryApplications
                 on submission.ApplicationId equals application.Id
+            join applicationType in _dbContext.ApplicationTypes
+                on application.ApplicationTypeId equals applicationType.Id
             select new
             {
                 submission.Id,
                 submission.Title,
                 submission.ApplicationId,
                 ApplicationName = application.Name,
-                submission.SubmissionTypeId,
-                SubmissionTypeName = submissionType.Name,
+                application.ApplicationTypeId,
+                ApplicationTypeName = applicationType.Name,
                 submission.Status,
                 submission.Format,
                 submission.CreatedOn,
@@ -69,8 +69,8 @@ public sealed class GetSubmissionHandler
             row.Title,
             row.ApplicationId.Value,
             row.ApplicationName,
-            row.SubmissionTypeId.Value,
-            row.SubmissionTypeName,
+            row.ApplicationTypeId.Value,
+            row.ApplicationTypeName,
             row.Status.ToString(),
             row.Format.ToString(),
             row.CreatedOn,

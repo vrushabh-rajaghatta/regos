@@ -212,6 +212,58 @@ public class ContactTests
             .Should().Be("+91 (40) 1234-5678 ext. 22");
     }
 
+    /// <summary>
+    /// <b>Office, fax or mobile is a business fact, not a wire value.</b> The
+    /// obvious next question about any number a registry holds, and one worth
+    /// answering whether or not an authority ever asks for it.
+    /// </summary>
+    [Theory]
+    [InlineData(ContactPhoneKind.Business)]
+    [InlineData(ContactPhoneKind.Fax)]
+    [InlineData(ContactPhoneKind.Mobile)]
+    public void APhoneNumberCanSayWhatKindOfLineItReaches(ContactPhoneKind kind)
+    {
+        var contact = New();
+
+        contact.AddPhone("+91 40 1234 5678", kind);
+
+        contact.Phones.Single().Kind.Should().Be(kind);
+    }
+
+    /// <summary>
+    /// <b>Null is a state, not a missing value</b> — <em>recorded before RegOS
+    /// asked</em>. Every phone stored before this property existed has one, and
+    /// so does every one added by a caller who genuinely does not know.
+    /// </summary>
+    /// <remarks>
+    /// The aggregate does not default to <c>Business</c>, and that restraint is
+    /// the point: a default would assert, for a number nobody was ever asked
+    /// about, an answer nobody gave.
+    /// </remarks>
+    [Fact]
+    public void APhoneNumberWithNoKind_IsAcceptedRatherThanGuessedAt()
+    {
+        var contact = New();
+
+        contact.AddPhone("+91 40 1234 5678");
+
+        contact.Phones.Single().Kind.Should().BeNull();
+    }
+
+    /// <summary>
+    /// A cast integer is the way an undefined enum value reaches a domain
+    /// object, and it would otherwise be stored and later written to a
+    /// regulator as a blank.
+    /// </summary>
+    [Fact]
+    public void AKindThatIsNotOneOfTheThree_IsRefused()
+    {
+        var add = () => New().AddPhone("+91 40 1234 5678", (ContactPhoneKind)9);
+
+        add.Should().Throw<DomainException>()
+            .WithMessage(ContactErrors.PhoneKindUnknown);
+    }
+
     [Fact]
     public void ABlankEmailIsRejected()
     {

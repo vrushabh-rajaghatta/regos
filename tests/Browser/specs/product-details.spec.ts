@@ -9,6 +9,11 @@ test.describe("Product details", () => {
     await page.goto("/regulatory/products");
     await expect(page.getByTestId("product-list")).toBeVisible();
 
+    // Searched, not scanned: the directory pages its results, so a seeded
+    // product is only reachable from page one until enough fixtures push it
+    // off — and then this reads as a mysterious click timeout.
+    await page.getByLabel("Search products").fill("Ozempic");
+
     await page
       .locator('[data-testid="product-list"] a', { hasText: "Ozempic" })
       .click();

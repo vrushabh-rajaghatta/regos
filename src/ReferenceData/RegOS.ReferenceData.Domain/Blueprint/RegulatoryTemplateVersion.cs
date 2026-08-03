@@ -52,6 +52,25 @@ public sealed class RegulatoryTemplateVersion
     public IReadOnlyCollection<ValidationRule> ValidationRules
         => _validationRules.AsReadOnly();
 
+    /// <summary>
+    /// Published, then superseded. Structure stays frozen and readable; the
+    /// version simply stops being eligible for new bindings.
+    /// </summary>
+    internal void Deprecate()
+    {
+        if (Status == TemplateVersionStatus.Deprecated)
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.VersionAlreadyDeprecated);
+
+        // A draft nobody should use is discarded. Deprecation is a statement
+        // about something that was in force.
+        if (Status != TemplateVersionStatus.Published)
+            throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.OnlyPublishedVersionsCanBeDeprecated);
+
+        Status = TemplateVersionStatus.Deprecated;
+    }
+
     internal void Publish(DateOnly? effectiveFrom, DateTime publishedOnUtc)
     {
         if (Status == TemplateVersionStatus.Published)
@@ -67,7 +86,11 @@ public sealed class RegulatoryTemplateVersion
         string code,
         string title,
         TemplateSectionId? parentSectionId,
-        int order)
+        int order,
+        string? ectdFolder = null,
+        EctdFolderSource? ectdFolderSource = null,
+        string? ichElement = null,
+        string? regionalElement = null)
     {
         if (Status != TemplateVersionStatus.Draft)
             throw new BusinessRuleViolationException(
@@ -75,7 +98,8 @@ public sealed class RegulatoryTemplateVersion
 
         // Construct first — the entity validates code/title format.
         var section = new TemplateSection(
-            TemplateSectionId.New(), code, title, parentSectionId, order);
+            TemplateSectionId.New(), code, title, parentSectionId, order,
+            ectdFolder, ectdFolderSource, ichElement, regionalElement);
 
         if (_sections.Any(s => string.Equals(
                 s.Code, section.Code, StringComparison.OrdinalIgnoreCase)))

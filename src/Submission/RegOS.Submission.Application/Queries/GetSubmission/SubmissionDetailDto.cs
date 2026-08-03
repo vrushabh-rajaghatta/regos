@@ -5,15 +5,15 @@ public sealed record SubmissionDetailDto(
     string Title,
     Guid ApplicationId,
     string ApplicationName,
-    Guid SubmissionTypeId,
-    string SubmissionTypeName,
+    Guid ApplicationTypeId,
+    string ApplicationTypeName,
     string Status,
     // What this will be rendered as when it leaves RegOS. Editable while a
     // draft, frozen once published (ADR-047).
     string Format,
     DateTime CreatedOn,
     // The blueprint this submission is judged against, pinned at creation.
-    // Null when no published template governs its submission type.
+    // Null when no published template governs its application type.
     BoundTemplateDto? BoundTemplate,
     // What this was filed as. Null while a draft (ADR-044 decision 4).
     int? SequenceNumber,

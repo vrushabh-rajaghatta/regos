@@ -51,13 +51,21 @@ components.
 Read in this order when the question is "how should this work":
 
 1. **[docs/adr/](docs/adr/)** — the single immutable decision series, ADR-001
-   onward. Next number is **ADR-049**. Never edit an accepted ADR; supersede it.
+   onward. Next number is **ADR-056**. Never edit an accepted ADR; supersede it.
 2. **[docs/engineering/slice-conventions.md](docs/engineering/slice-conventions.md)** — mechanical file/folder rules.
 3. **[docs/engineering/implementation-standards.md](docs/engineering/implementation-standards.md)** — principles behind them.
 4. **[docs/ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md)** — cross-cutting platform standards (ES-001…).
 
 Where code and docs disagree, **the code is the truth** — then fix the doc in
 the same PR.
+
+**[docs/evidence/](docs/evidence/README.md) is not part of that series and does
+not answer "how should this work".** It records **facts that came from outside
+RegOS** — a regulator's DTD, a published example, a parser's verdict — each with
+an evidence level and the decisions relying on it. An ADR is ours and changes
+when we change our minds; an external fact can simply be *wrong*, and then every
+decision resting on it has to be re-examined. Cite an evidence level (2a, 3, …)
+rather than restating what a specification says.
 
 ### Decisions you will otherwise re-derive
 

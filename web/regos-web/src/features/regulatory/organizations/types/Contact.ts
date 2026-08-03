@@ -4,6 +4,15 @@ export interface ContactRole {
   name: string;
 }
 
+/** Office, fax or mobile. The server sends the name, not an ordinal. */
+export type ContactPhoneKind = "Business" | "Fax" | "Mobile";
+
+export interface ContactPhone {
+  number: string;
+  /** Null means the number was recorded before RegOS asked — not "unknown". */
+  kind: ContactPhoneKind | null;
+}
+
 /**
  * A person as both the organization list and the tenant-wide directory return
  * them — one shape, because the server answers both questions with ContactRow.
@@ -22,5 +31,5 @@ export interface Contact {
   statusDate: string;
   roles: ContactRole[];
   emails: string[];
-  phones: string[];
+  phones: ContactPhone[];
 }

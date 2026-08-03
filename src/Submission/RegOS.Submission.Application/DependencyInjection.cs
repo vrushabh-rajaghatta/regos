@@ -18,6 +18,8 @@ using RegOS.Submission.Application.Queries.ListProductDocumentUsage;
 using RegOS.Submission.Application.Queries.ListSubmissionDocuments;
 using RegOS.Submission.Application.Queries.ListSubmissionRoles;
 using RegOS.Submission.Application.Queries.ListSubmissions;
+using RegOS.Submission.Application.Queries.ListContinuableSubmissions;
+using RegOS.Submission.Application.Generation;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Application.Validation;
 
@@ -51,6 +53,11 @@ public static class DependencyInjection
         services.AddScoped<GetSubmissionChangesHandler>();
 
         services.AddScoped<ListSubmissionsHandler>();
+        services.AddScoped<ListContinuableSubmissionsHandler>();
+
+        // The first RegOS code that produces part of an eCTD package (S004).
+        services.AddScoped<SequenceFolderGenerator>();
+        services.AddScoped<SequencePackageAssembler>();
 
         services.AddScoped<GetSubmissionHandler>();
 

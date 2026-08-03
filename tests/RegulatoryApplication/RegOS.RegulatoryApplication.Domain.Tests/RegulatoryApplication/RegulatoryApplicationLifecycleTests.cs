@@ -1,6 +1,7 @@
 using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Organization.Domain.Aggregates.Organization;
@@ -10,16 +11,25 @@ using RegOS.SharedKernel.Exceptions;
 
 using RegulatoryApplicationAggregate =
     RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
+using ApplicationTypeEntity =
+    RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
 
 namespace RegOS.RegulatoryApplication.Domain.Tests.RegulatoryApplication;
 
 public class RegulatoryApplicationLifecycleTests
 {
+    private static readonly AuthorityId Fda = new(Guid.NewGuid());
+
+    private static ApplicationTypeEntity Ind(AuthorityId authorityId) =>
+        ApplicationTypeEntity.Create(
+            "FDA_IND", "Investigational New Drug Application (IND)", authorityId);
+
     private static RegulatoryApplicationAggregate NewDraft() =>
-        RegulatoryApplicationAggregate.Create(TenantId.New(), 
+        RegulatoryApplicationAggregate.Create(TenantId.New(),
             new GlobalProductId(Guid.NewGuid()),
             new CountryId(Guid.NewGuid()),
-            new AuthorityId(Guid.NewGuid()),
+            Fda,
+            Ind(Fda),
             new OrganizationId(Guid.NewGuid()),
             "Test Application");
 

@@ -15,7 +15,14 @@ test.describe("Archive product", () => {
     ).json();
 
     // Visible in the directory to begin with.
+    //
+    // Searched for by code rather than looked for in the whole list: the
+    // directory shows a page of results, so "is it in the list?" quietly means
+    // "is it in the first page?" — which stops being the same question once
+    // enough products exist. Two specs failed exactly that way once the
+    // accumulated fixtures passed 20.
     await page.goto("/regulatory/products");
+    await page.getByLabel("Search products").fill(code);
     await expect(page.getByTestId("product-list")).toContainText(code);
 
     await page.goto(`/regulatory/products/${created.id}`);
@@ -41,6 +48,7 @@ test.describe("Archive product", () => {
     // But it is hidden, not deleted - the filter still finds it.
     await page.getByLabel("Filter by status").click();
     await page.getByRole("option", { name: "Archived" }).click();
+    await page.getByLabel("Search products").fill(code);
     await expect(page.getByTestId("product-list")).toContainText(code);
 
     expect(errors()).toEqual([]);

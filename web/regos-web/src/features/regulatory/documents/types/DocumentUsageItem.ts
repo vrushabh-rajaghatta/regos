@@ -10,7 +10,7 @@ export interface DocumentUsageItem {
   applicationId: string;
   applicationName: string;
   submissionTitle: string;
-  submissionType: string;
+  applicationType: string;
   authority: string;
   /** What the filing was numbered. Null while a draft. */
   sequenceNumber: number | null;

@@ -1,6 +1,9 @@
 import { expect } from "@playwright/test";
 
-import { test, api, collectErrors, sessionCookies, API_URL } from "./support";
+import { test, api, collectErrors, sessionCookies, API_URL,
+  FDA_ORIGINAL_APPLICATION,
+  FDA_SUBTYPE_APPLICATION,
+} from "./support";
 
 /**
  * The epic's end-to-end proof: reference data governs a real submission all the
@@ -19,7 +22,7 @@ import { test, api, collectErrors, sessionCookies, API_URL } from "./support";
  * keeps working as the FDA IND template grows.
  */
 const FDA_IND_CTD = "60000000-0000-0000-0000-000000000001";
-const FDA_IND_SUBMISSION_TYPE = "40000000-0000-0000-0000-000000000008";
+const FDA_IND_APPLICATION_TYPE = "40000000-0000-0000-0000-000000000008";
 const FDA = "20000000-0000-0000-0000-000000000001";
 // The authority must belong to the application's country, and the FDA is the
 // United States' — so this is pinned rather than "whichever country came back".
@@ -51,7 +54,10 @@ test.describe("Submission validation against the blueprint", () => {
       await api(`/reference-data/templates/${FDA_IND_CTD}`)
     ).json();
 
-    const version = template.versions[0];
+    // The version in force, not whichever came back first: the FDA IND
+    // blueprint carries a deprecated v1 alongside the published v2
+    // (EPIC-007a S002), and a submission binds to the published one.
+    const version = template.versions.find((v: { status: string }) => v.status === "Published");
 
     // A *placeholder* — a document type expected in a particular section — is
     // the unit of completeness, so the spec works from requirements rather than
@@ -350,6 +356,7 @@ async function createApplication(globalProductId: string): Promise<string> {
     body: JSON.stringify({
       countryId: UNITED_STATES,
       authorityId: FDA,
+      applicationTypeId: FDA_IND_APPLICATION_TYPE,
       applicantOrganizationId: applicant.id,
       name: "Browser Validation Application",
     }),
@@ -367,8 +374,10 @@ async function createSubmission(
   const response = await api(`/applications/${applicationId}/submissions`, {
     method: "POST",
     body: JSON.stringify({
-      submissionTypeId: FDA_IND_SUBMISSION_TYPE,
       title: `Browser Validation Submission ${unique}`,
+      // Required on every sequence since S003; not inferred (E13).
+      submissionTypeId: FDA_ORIGINAL_APPLICATION,
+      submissionSubTypeId: FDA_SUBTYPE_APPLICATION,
     }),
   });
 

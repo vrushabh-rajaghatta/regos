@@ -78,7 +78,8 @@ public static class ContactProjection
                             ?? string.Empty))
                     .OrderBy(x => x.Name)],
                 [.. contact.Emails.Select(x => x.Address)],
-                [.. contact.Phones.Select(x => x.Number)]))
+                [.. contact.Phones.Select(x =>
+                    new ContactPhoneDto(x.Number, x.Kind.ToString()))]))
             .ToList();
     }
 }

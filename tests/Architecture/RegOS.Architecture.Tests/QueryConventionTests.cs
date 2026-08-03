@@ -35,7 +35,6 @@ public sealed class QueryConventionTests
         "src/ReferenceData/RegOS.ReferenceData.Application/Queries/DocumentTypes/ListDocumentTypes",
         "src/ReferenceData/RegOS.ReferenceData.Application/Queries/Geography/ListCountries",
         "src/ReferenceData/RegOS.ReferenceData.Application/Queries/Regulatory/ListAuthorities",
-        "src/ReferenceData/RegOS.ReferenceData.Application/Queries/SubmissionTypes/ListSubmissionTypes",
         "src/Registration/RegOS.Registration.Application/Queries/GetRegistration",
         "src/Registration/RegOS.Registration.Application/Queries/ListExpiringRegistrations",
         "src/Registration/RegOS.Registration.Application/Queries/ListMarketRegistrations",

@@ -1,6 +1,6 @@
 using FluentAssertions;
 
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Primitives;
 using RegOS.Submission.Domain.Submission;
@@ -21,9 +21,9 @@ public class SubmissionStatusHistoryTests
         SubmissionAggregate.Create(
             TenantId.New(),
             new RegulatoryApplicationId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
             "Original IND",
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            SubmissionClassifications.Any());
 
     /// <summary>
     /// The history begins at creation, not at publication — otherwise a

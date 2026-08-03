@@ -21,4 +21,11 @@ public sealed record CreateContactCommand(
     CountryId? CountryId = null,
     IReadOnlyList<ContactRoleId>? RoleIds = null,
     IReadOnlyList<string>? Emails = null,
-    IReadOnlyList<string>? Phones = null);
+    IReadOnlyList<ContactPhoneInput>? Phones = null);
+
+/// <param name="Kind">
+/// Office, fax or mobile. <b>Optional, and a null is passed through rather than
+/// filled in</b> — a caller who does not know must not answer on the user's
+/// behalf, which is the whole reason the column is nullable.
+/// </param>
+public sealed record ContactPhoneInput(string Number, ContactPhoneKind? Kind);

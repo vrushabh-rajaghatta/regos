@@ -6,7 +6,7 @@ using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.DocumentType;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Application.Commands.AttachProductDocument;
 using RegOS.Submission.Application.Commands.RemoveProductDocument;
@@ -32,7 +32,7 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
     // Seeded reference data.
     private static readonly DocumentTypeId SeededCer =
         new(Guid.Parse("50000000-0000-0000-0000-000000000001"));
-    private static readonly SubmissionTypeId SeededSubmissionType =
+    private static readonly ApplicationTypeId SeededApplicationType =
         new(Guid.Parse("40000000-0000-0000-0000-000000000001"));
 
     private readonly List<Guid> _submissionIds = [];
@@ -110,8 +110,9 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
         RegOSDbContext ctx, RegulatoryApplicationId appId)
     {
         var sub = SubmissionAggregate.Create(TestTenant.Id, 
-            appId, SeededSubmissionType, "19.3 Sub " + Guid.NewGuid(),
-            SubmissionFormat.Ectd);
+            appId, "19.3 Sub " + Guid.NewGuid(),
+            SubmissionFormat.Ectd,
+            TestSubmissionClassification.Opens());
 
         ctx.Submissions.Add(sub);
         await ctx.SaveChangesAsync();

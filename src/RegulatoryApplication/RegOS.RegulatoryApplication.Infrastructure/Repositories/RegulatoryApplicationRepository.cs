@@ -37,6 +37,11 @@ public sealed class RegulatoryApplicationRepository
                 cancellationToken);
     }
 
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<RegulatoryApplicationAggregate>> ListByProductAsync(
         GlobalProductId globalProductId,
         CancellationToken cancellationToken)

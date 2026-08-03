@@ -11,8 +11,8 @@ public static class RegulatoryTemplateErrors
     public const string AuthorityRequired =
         "Regulatory template must reference an authority.";
 
-    public const string SubmissionTypeRequired =
-        "Regulatory template must reference a submission type.";
+    public const string ApplicationTypeRequired =
+        "Regulatory template must reference an application type.";
 
     public const string SourceRequired =
         "Regulatory template source (provenance) is required.";
@@ -26,11 +26,35 @@ public static class RegulatoryTemplateErrors
     public const string VersionAlreadyPublished =
         "The version is already published.";
 
+    public const string OnlyPublishedVersionsCanBeDeprecated =
+        "Only a published version can be deprecated — a draft that should not "
+        + "be used is discarded, not deprecated.";
+
+    public const string VersionAlreadyDeprecated =
+        "The version is already deprecated.";
+
     public const string SectionCodeRequired =
         "Template section code is required.";
 
     public const string SectionTitleRequired =
         "Template section title is required.";
+
+    // ICH Appendix 2 — a folder name becomes a filename, so an illegal one is
+    // a package a regulator's tooling rejects, not a cosmetic defect.
+    public const string SectionEctdFolderNeedsSource =
+        "An eCTD folder name must say where it came from, and a source without "
+        + "a folder claims nothing.";
+
+    public const string SectionEctdFolderSourceNotRecognised =
+        "That is not a source RegOS recognises for an eCTD folder name.";
+
+    public const string SectionElementNameNotLegal =
+        "An eCTD element name may contain only lowercase letters, digits and "
+        + "hyphens — an invented one is not merely wrong, it is invalid XML.";
+
+    public const string SectionEctdFolderNotLegal =
+        "An eCTD folder name may contain only lowercase letters, digits and "
+        + "hyphens, and each part must be 64 characters or fewer.";
 
     public const string NoDraftVersion =
         "There is no draft version to modify; start a draft first.";

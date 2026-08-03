@@ -1,10 +1,15 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 export interface CreateSubmissionRequest {
-  submissionTypeId: string;
   title: string;
   /** `Ectd` | `Nees` | `Paper`. The domain's word, never the screen's. */
   format: string;
+  /** What this sequence does to its activity. Required on every sequence. */
+  submissionSubTypeId: string;
+  /** Set this or `originatingSubmissionId` — exactly one, never both. */
+  submissionTypeId?: string;
+  /** The published sequence that opened the activity this one continues. */
+  originatingSubmissionId?: string;
 }
 
 export interface CreateSubmissionResponse {

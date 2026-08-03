@@ -79,7 +79,7 @@ public sealed class GetRegulatoryTemplateHandler
             template.Code,
             template.Name,
             template.AuthorityId,
-            template.SubmissionTypeId,
+            template.ApplicationTypeId,
             template.Source,
             template.Status.ToString(),
             versions);

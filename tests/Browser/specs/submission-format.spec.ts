@@ -1,6 +1,9 @@
 import { expect } from "@playwright/test";
 
-import { test, api, collectErrors, sessionCookies, API_URL } from "./support";
+import { test, api, collectErrors, sessionCookies, API_URL,
+  FDA_ORIGINAL_APPLICATION,
+  FDA_SUBTYPE_APPLICATION,
+} from "./support";
 
 /**
  * **EPIC-004 S004 — what a filing will be rendered as, and what that does not
@@ -17,7 +20,7 @@ import { test, api, collectErrors, sessionCookies, API_URL } from "./support";
  *    eCTD, that thesis would quietly be an eCTD implementation detail.
  */
 const FDA_IND_CTD = "60000000-0000-0000-0000-000000000001";
-const FDA_IND_SUBMISSION_TYPE = "40000000-0000-0000-0000-000000000008";
+const FDA_IND_APPLICATION_TYPE = "40000000-0000-0000-0000-000000000008";
 const FDA = "20000000-0000-0000-0000-000000000001";
 const UNITED_STATES = "10000000-0000-0000-0000-000000000001";
 
@@ -42,7 +45,10 @@ test.describe("A submission's format", () => {
       await api(`/reference-data/templates/${FDA_IND_CTD}`)
     ).json();
 
-    const requirements: Requirement[] = template.versions[0].requiredDocuments
+    // The version in force, not whichever came back first: the FDA IND
+    // blueprint carries a deprecated v1 alongside the published v2
+    // (EPIC-007a S002), and a submission binds to the published one.
+    const requirements: Requirement[] = template.versions.find((v: { status: string }) => v.status === "Published").requiredDocuments
       .filter((d: Requirement) => d.isMandatory);
 
     expect(requirements.length).toBeGreaterThan(1);
@@ -215,6 +221,7 @@ async function createApplication(
     body: JSON.stringify({
       countryId: UNITED_STATES,
       authorityId: FDA,
+      applicationTypeId: FDA_IND_APPLICATION_TYPE,
       applicantOrganizationId: applicant.id,
       name: `Browser Format Application ${unique}`,
     }),
@@ -233,9 +240,11 @@ async function createSubmission(
   const response = await api(`/applications/${applicationId}/submissions`, {
     method: "POST",
     body: JSON.stringify({
-      submissionTypeId: FDA_IND_SUBMISSION_TYPE,
       title,
       format,
+      // Required on every sequence since S003; not inferred (E13).
+      submissionTypeId: FDA_ORIGINAL_APPLICATION,
+      submissionSubTypeId: FDA_SUBTYPE_APPLICATION,
     }),
   });
 

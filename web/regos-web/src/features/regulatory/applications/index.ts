@@ -1,9 +1,11 @@
 export * from "./hooks/useRegulatoryApplications";
 export * from "./hooks/useApplication";
 export * from "./hooks/useCreateRegulatoryApplication";
+export * from "./hooks/useApplicationTypes";
 
 export * from "./types/RegulatoryApplicationSummary";
 export * from "./types/ApplicationDetail";
+export * from "./types/ApplicationTypeOption";
 
 export * from "./components/RegulatoryApplicationCard";
 export * from "./components/ApplicationStatusBadge";

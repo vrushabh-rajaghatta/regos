@@ -47,7 +47,7 @@ public sealed record SubmissionDocumentUsage(
     Guid ApplicationId,
     string ApplicationName,
     string SubmissionTitle,
-    string SubmissionType,
+    string ApplicationType,
     string Authority,
     int? SequenceNumber,
     string Status,

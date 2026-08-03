@@ -14,10 +14,10 @@ public sealed class SubmissionTypeDataInitializer : IDataInitializer
     public async Task InitializeAsync(
         CancellationToken cancellationToken = default)
     {
-        // Additive + idempotent: insert only the seed rows whose deterministic
-        // ids are not already present, so newly added reference data lands on
-        // an existing database without wiping the table. SubmissionTypes are
-        // global (no tenant query filter).
+        // Additive + idempotent, matched on deterministic id. Insert-only is
+        // sufficient here — unlike ApplicationTypes, no row of this table has
+        // ever existed without its token, so there is nothing to reconcile.
+        // SubmissionTypes are global (no tenant query filter).
         var existingIds = await _dbContext.SubmissionTypes
             .Select(x => x.Id)
             .ToListAsync(cancellationToken);

@@ -25,10 +25,11 @@ public sealed class CreateRegulatoryApplicationHandler
         CreateRegulatoryApplicationCommand command,
         CancellationToken cancellationToken)
     {
-        await _creationPolicy.EnsureCanCreateAsync(
+        var applicationType = await _creationPolicy.EnsureCanCreateAsync(
             command.GlobalProductId,
             command.CountryId,
             command.AuthorityId,
+            command.ApplicationTypeId,
             command.ApplicantOrganizationId,
             cancellationToken);
 
@@ -41,6 +42,7 @@ public sealed class CreateRegulatoryApplicationHandler
             command.GlobalProductId,
             command.CountryId,
             command.AuthorityId,
+            applicationType,
             command.ApplicantOrganizationId,
             command.Name);
 

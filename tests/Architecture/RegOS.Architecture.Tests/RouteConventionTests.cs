@@ -53,7 +53,6 @@ public sealed class RouteConventionTests
         "/registrations/{registrationId:guid}",
         "/registrations/{registrationId:guid}/approval",
         "/registrations/{registrationId:guid}/status",
-        "/submission-types",
         "/submissions/{submissionId:guid}",
         "/submissions/{submissionId:guid}/attachable-documents",
         "/submissions/{submissionId:guid}/content-plan",

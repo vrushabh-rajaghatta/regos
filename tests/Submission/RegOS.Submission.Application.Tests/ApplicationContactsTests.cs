@@ -6,7 +6,7 @@ using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Persistence;
 using RegOS.ReferenceData.Domain.Organization;
 using RegOS.SharedKernel.Exceptions;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Application.Queries.GetApplicationContacts;
 using RegOS.Submission.Application.Tests.Fixtures;
@@ -41,7 +41,7 @@ public sealed class ApplicationContactsTests : IAsyncLifetime
 
     private const string Fixture = "TEST-APPLICATION-CONTACTS";
 
-    private static readonly SubmissionTypeId SeededSubmissionType =
+    private static readonly ApplicationTypeId SeededApplicationType =
         new(Guid.Parse("40000000-0000-0000-0000-000000000001"));
 
     private static readonly OrganizationId DemoManufacturer =
@@ -292,9 +292,9 @@ public sealed class ApplicationContactsTests : IAsyncLifetime
         var submission = SubmissionAggregate.Create(
             TestTenant.Id,
             applicationId,
-            SeededSubmissionType,
             "Contacts Sub " + Guid.NewGuid(),
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            TestSubmissionClassification.Opens());
 
         submission.AssignRole(contactId, QualifiedPerson);
 

@@ -60,6 +60,7 @@ export function CreateContactForm({
       roleId: "",
       email: "",
       phone: "",
+      phoneKind: "",
     },
   });
 
@@ -74,7 +75,12 @@ export function CreateContactForm({
         organizationSiteId: values.organizationSiteId || null,
         roleIds: values.roleId ? [values.roleId] : [],
         emails: values.email ? [values.email] : [],
-        phones: values.phone ? [values.phone] : [],
+        // An unanswered type is sent as null, never defaulted to Business:
+        // the column exists so that "nobody asked" stays distinguishable from
+        // an answer someone gave.
+        phones: values.phone
+          ? [{ number: values.phone, kind: values.phoneKind || null }]
+          : [],
       });
     } catch {
       // A refusal is an outcome, not a crash — the server's reason is rendered
@@ -196,6 +202,52 @@ export function CreateContactForm({
               <Input id="contactEmail" {...field} />
 
               <FieldError errors={[errors.email]} />
+            </Field>
+          )}
+        />
+
+        {/*
+          Never rendered until 2026-08-03, though the form has carried a `phone`
+          value and submitted it since it was written — so every contact created
+          through this screen was created without one.
+        */}
+        <Controller
+          control={control}
+          name="phone"
+          render={({ field }) => (
+            <Field data-invalid={!!errors.phone}>
+              <FieldLabel htmlFor="contactPhone">Phone</FieldLabel>
+
+              <Input id="contactPhone" {...field} />
+
+              <FieldError errors={[errors.phone]} />
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="phoneKind"
+          render={({ field }) => (
+            <Field data-invalid={!!errors.phoneKind}>
+              <FieldLabel htmlFor="contactPhoneKind">Phone Type</FieldLabel>
+
+              <Select
+                value={field.value || ""}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger id="contactPhoneKind">
+                  <SelectValue placeholder="Not specified" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="Business">Office</SelectItem>
+                  <SelectItem value="Fax">Fax</SelectItem>
+                  <SelectItem value="Mobile">Mobile</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <FieldError errors={[errors.phoneKind]} />
             </Field>
           )}
         />

@@ -26,7 +26,7 @@ export function SubmissionCard({
           <h3 className="font-semibold">{submission.title}</h3>
 
           <p className="text-sm text-muted-foreground">
-            {submission.submissionTypeName}
+            {submission.applicationTypeName}
           </p>
         </div>
 

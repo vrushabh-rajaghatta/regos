@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 
 import { useSubmission } from "../hooks/useSubmission";
+import { GenerateSequencePackageButton } from "./GenerateSequencePackageButton";
 import { formatLabel } from "../utils/formatLabel";
 import { nextSequenceLabel, sequenceLabel } from "../utils/sequenceLabel";
 import { SubmissionStatusBadge } from "./SubmissionStatusBadge";
@@ -23,14 +24,14 @@ export function SubmissionWorkspaceHeader() {
           <h1 className="text-xl font-semibold">{submission.title}</h1>
 
           <p className="text-sm text-muted-foreground">
-            {submission.submissionTypeName} &middot;{" "}
+            {submission.applicationTypeName} &middot;{" "}
             <span data-testid="header-format">
               {formatLabel(submission.format)}
             </span>
           </p>
         </div>
 
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-end gap-2">
           <SubmissionStatusBadge status={submission.status} />
 
           {/* A fact once filed, an expectation before. The two are worded
@@ -44,6 +45,13 @@ export function SubmissionWorkspaceHeader() {
             <span className="text-sm text-muted-foreground">
               {nextSequenceLabel(submission.nextSequenceNumber)}
             </span>
+          )}
+
+          {/* A package is what was filed, so only a published sequence has
+              one. Offering the button on a draft would invite a refusal the
+              user could do nothing about. */}
+          {submission.sequenceNumber !== null && (
+            <GenerateSequencePackageButton submissionId={submission.id} />
           )}
         </div>
       </div>

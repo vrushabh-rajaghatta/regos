@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.ReferenceData.Domain.Blueprint;
+using RegOS.ReferenceData.Domain.SubmissionSubType;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Primitives;
@@ -9,7 +10,9 @@ using RegOS.Submission.Domain.Submission;
 
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
-using SubmissionTypeAggregate = RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
+using SubmissionTypeEntity = RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
+using SubmissionSubTypeEntity =
+    RegOS.ReferenceData.Domain.SubmissionSubType.SubmissionSubType;
 
 namespace RegOS.Persistence.Configurations.Submission;
 
@@ -33,14 +36,8 @@ public sealed class SubmissionConfiguration
                 value => new RegulatoryApplicationId(value))
             .IsRequired();
 
-        builder.Property(x => x.SubmissionTypeId)
-            .HasConversion(
-                id => id.Value,
-                value => new SubmissionTypeId(value))
-            .IsRequired();
-
         // The published blueprint version this submission is judged against.
-        // Nullable: submission types with no published template (devices today)
+        // Nullable: application types with no published template (devices today)
         // are created unbound.
         builder.Property(x => x.BoundTemplateVersionId)
             .HasConversion(
@@ -76,6 +73,91 @@ public sealed class SubmissionConfiguration
         // What this was filed as. Null until published (ADR-044 decision 4).
         builder.Property(x => x.SequenceNumber);
 
+        // The regulatory activity (EPIC-007a S003). Three columns, and each null
+        // means something different:
+        //
+        //   OriginatingSubmissionId null -> this sequence OPENS an activity
+        //   SubmissionTypeId        null -> this sequence CONTINUES one
+        //   SubmissionSubTypeId     null -> this sequence PREDATES S003
+        //
+        // Only the third is a gap, and it is one nothing can close: sub-type is
+        // not derivable from an activity's shape (evidence E13), so the rows
+        // that existed before this story keep an honest absence rather than an
+        // invented value.
+        builder.Property(x => x.OriginatingSubmissionId)
+            .HasConversion(
+                id => id != null ? id.Value : (Guid?)null,
+                value => value != null
+                    ? SubmissionId.From(value.Value)
+                    : (SubmissionId?)null);
+
+        builder.Property(x => x.SubmissionTypeId)
+            .HasConversion(
+                id => id != null ? id.Value.Value : (Guid?)null,
+                value => value != null
+                    ? new SubmissionTypeId(value.Value)
+                    : (SubmissionTypeId?)null);
+
+        builder.Property(x => x.SubmissionSubTypeId)
+            .HasConversion(
+                id => id != null ? id.Value.Value : (Guid?)null,
+                value => value != null
+                    ? new SubmissionSubTypeId(value.Value)
+                    : (SubmissionSubTypeId?)null);
+
+        // IsClassified is not mapped: it is SubmissionSubTypeId IS NOT NULL, and
+        // a stored copy could disagree with the column beside it.
+        builder.Ignore(x => x.IsClassified);
+
+        // A submission points at the one that opened its activity — a
+        // self-reference within the same table. Restrict, and deliberately:
+        // this FK is optional, and EF's default for an optional FK is
+        // ClientSetNull, which would silently sever a continuing sequence from
+        // its origin instead of refusing (the reference-type-id hazard CLAUDE.md
+        // names, arriving here as a delete behaviour rather than as a
+        // requiredness one).
+        builder.HasOne<SubmissionAggregate>()
+            .WithMany()
+            .HasForeignKey(x => x.OriginatingSubmissionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<SubmissionTypeEntity>()
+            .WithMany()
+            .HasForeignKey(x => x.SubmissionTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<SubmissionSubTypeEntity>()
+            .WithMany()
+            .HasForeignKey(x => x.SubmissionSubTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // "Every sequence in this activity" is the query that renders a package,
+        // so it gets an index rather than a scan.
+        builder.HasIndex(x => x.OriginatingSubmissionId);
+        builder.HasIndex(x => x.SubmissionTypeId);
+        builder.HasIndex(x => x.SubmissionSubTypeId);
+
+        // The exclusive-or, in the only place that governs data rather than
+        // code. SubmissionClassification already makes a violation
+        // unconstructible in C#, but a migration or a hand-written UPDATE never
+        // passes through C# — the same division of labour that puts contiguity
+        // in the aggregate and uniqueness in an index (ADR-044 decision 6).
+        //
+        // Three states are legal and no fourth is:
+        //   unclassified  — all three null; a sequence filed before S003
+        //   opens         — a type, no origin
+        //   continues     — an origin, no type
+        builder.ToTable(t => t.HasCheckConstraint(
+            "CK_Submissions_ActivityClassification",
+            """
+            ("SubmissionSubTypeId" IS NULL
+                 AND "SubmissionTypeId" IS NULL
+                 AND "OriginatingSubmissionId" IS NULL)
+            OR ("SubmissionSubTypeId" IS NOT NULL
+                 AND (("SubmissionTypeId" IS NULL)
+                       <> ("OriginatingSubmissionId" IS NULL)))
+            """));
+
         // Cross-aggregate foreign keys. The domain exposes no navigation
         // properties, but EF still models the relationships.
         //
@@ -84,13 +166,6 @@ public sealed class SubmissionConfiguration
         builder.HasOne<RegulatoryApplicationAggregate>()
             .WithMany()
             .HasForeignKey(x => x.ApplicationId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // SubmissionType is reference data. Historical Submissions stay
-        // valid even when a type is deactivated — inactive, not deleted.
-        builder.HasOne<SubmissionTypeAggregate>()
-            .WithMany()
-            .HasForeignKey(x => x.SubmissionTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // The bound blueprint version. A deliberate cross-context reference to
@@ -116,7 +191,6 @@ public sealed class SubmissionConfiguration
         builder.HasIndex(x => x.TenantId);
 
         builder.HasIndex(x => x.ApplicationId);
-        builder.HasIndex(x => x.SubmissionTypeId);
         builder.HasIndex(x => x.BoundTemplateVersionId);
 
         // Two submissions in one application can never be filed under the same

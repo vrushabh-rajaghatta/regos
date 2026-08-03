@@ -10,6 +10,7 @@ import { CreateSubmissionForm } from "./CreateSubmissionForm";
 interface CreateSubmissionDialogProps {
   globalProductId: string;
   applicationId: string;
+  /** The application's authority — the activity vocabulary is scoped to it. */
   authorityId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;

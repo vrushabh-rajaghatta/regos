@@ -30,7 +30,7 @@ public sealed class ListRegulatoryTemplatesHandler
                 x.Code,
                 x.Name,
                 x.AuthorityId,
-                x.SubmissionTypeId,
+                x.ApplicationTypeId,
                 x.Source,
                 x.Status.ToString()))
             .ToList();

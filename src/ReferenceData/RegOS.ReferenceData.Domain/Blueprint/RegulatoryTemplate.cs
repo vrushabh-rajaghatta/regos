@@ -1,6 +1,6 @@
 using RegOS.ReferenceData.Domain.DocumentType;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
 
@@ -24,7 +24,7 @@ public sealed class RegulatoryTemplate
         string code,
         string name,
         AuthorityId authorityId,
-        SubmissionTypeId submissionTypeId,
+        ApplicationTypeId applicationTypeId,
         TenantId? tenantId,
         string source,
         DateTime createdOnUtc)
@@ -33,7 +33,7 @@ public sealed class RegulatoryTemplate
         Code = code;
         Name = name;
         AuthorityId = authorityId;
-        SubmissionTypeId = submissionTypeId;
+        ApplicationTypeId = applicationTypeId;
         TenantId = tenantId;
         Source = source;
         Status = RegulatoryTemplateStatus.Active;
@@ -48,7 +48,7 @@ public sealed class RegulatoryTemplate
 
     public AuthorityId AuthorityId { get; private set; }
 
-    public SubmissionTypeId SubmissionTypeId { get; private set; }
+    public ApplicationTypeId ApplicationTypeId { get; private set; }
 
     // null  => platform-shared blueprint, visible to every tenant.
     // value => tenant-owned (cloning arrives in a later epic; the column is
@@ -71,7 +71,7 @@ public sealed class RegulatoryTemplate
         string code,
         string name,
         AuthorityId authorityId,
-        SubmissionTypeId submissionTypeId,
+        ApplicationTypeId applicationTypeId,
         string source,
         TenantId? tenantId = null)
         => Create(
@@ -79,7 +79,7 @@ public sealed class RegulatoryTemplate
             code,
             name,
             authorityId,
-            submissionTypeId,
+            applicationTypeId,
             source,
             tenantId);
 
@@ -89,7 +89,7 @@ public sealed class RegulatoryTemplate
         string code,
         string name,
         AuthorityId authorityId,
-        SubmissionTypeId submissionTypeId,
+        ApplicationTypeId applicationTypeId,
         string source,
         TenantId? tenantId = null)
     {
@@ -102,8 +102,8 @@ public sealed class RegulatoryTemplate
         if (authorityId == default)
             throw new DomainException(RegulatoryTemplateErrors.AuthorityRequired);
 
-        if (submissionTypeId == default)
-            throw new DomainException(RegulatoryTemplateErrors.SubmissionTypeRequired);
+        if (applicationTypeId == default)
+            throw new DomainException(RegulatoryTemplateErrors.ApplicationTypeRequired);
 
         if (string.IsNullOrWhiteSpace(source))
             throw new DomainException(RegulatoryTemplateErrors.SourceRequired);
@@ -113,7 +113,7 @@ public sealed class RegulatoryTemplate
             code.Trim().ToUpperInvariant(),
             name.Trim(),
             authorityId,
-            submissionTypeId,
+            applicationTypeId,
             tenantId,
             source.Trim(),
             DateTime.UtcNow);
@@ -144,6 +144,19 @@ public sealed class RegulatoryTemplate
     }
 
     /// <summary>Publishes (freezes) one of this template's versions.</summary>
+    /// <summary>
+    /// Marks a published version superseded. Nothing new binds to it; every
+    /// submission already bound keeps working against it.
+    /// </summary>
+    public void DeprecateVersion(RegulatoryTemplateVersionId versionId)
+    {
+        var version = _versions.FirstOrDefault(v => v.Id == versionId)
+            ?? throw new BusinessRuleViolationException(
+                RegulatoryTemplateErrors.VersionNotFound);
+
+        version.Deprecate();
+    }
+
     public void PublishVersion(
         RegulatoryTemplateVersionId versionId,
         DateOnly? effectiveFrom,
@@ -164,14 +177,20 @@ public sealed class RegulatoryTemplate
         string code,
         string title,
         TemplateSectionId? parentSectionId = null,
-        int order = 0)
+        int order = 0,
+        string? ectdFolder = null,
+        EctdFolderSource? ectdFolderSource = null,
+        string? ichElement = null,
+        string? regionalElement = null)
     {
         var draft = _versions.FirstOrDefault(
                 v => v.Status == TemplateVersionStatus.Draft)
             ?? throw new BusinessRuleViolationException(
                 RegulatoryTemplateErrors.NoDraftVersion);
 
-        return draft.AddSection(code, title, parentSectionId, order);
+        return draft.AddSection(
+            code, title, parentSectionId, order, ectdFolder, ectdFolderSource,
+            ichElement, regionalElement);
     }
 
     /// <summary>

@@ -3,7 +3,7 @@ export interface RegulatoryTemplateSummary {
   code: string;
   name: string;
   authorityId: string;
-  submissionTypeId: string;
+  applicationTypeId: string;
   source: string;
   status: string;
 }

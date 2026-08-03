@@ -2,7 +2,7 @@ using FluentAssertions;
 
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ReferenceData.Domain.Tests.Blueprint;
@@ -14,7 +14,7 @@ public class RegulatoryTemplateTests
             "FDA_IND_CTD",
             "FDA IND (CTD)",
             new AuthorityId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
+            new ApplicationTypeId(Guid.NewGuid()),
             "ICH eCTD");
 
     [Fact]
@@ -30,7 +30,7 @@ public class RegulatoryTemplateTests
             "  fda_ind_ctd  ",
             "FDA IND (CTD)",
             new AuthorityId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
+            new ApplicationTypeId(Guid.NewGuid()),
             "ICH eCTD");
 
         template.Code.Should().Be("FDA_IND_CTD");
@@ -45,7 +45,7 @@ public class RegulatoryTemplateTests
             code,
             "FDA IND (CTD)",
             new AuthorityId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
+            new ApplicationTypeId(Guid.NewGuid()),
             "ICH eCTD");
 
         act.Should().Throw<DomainException>()
@@ -59,7 +59,7 @@ public class RegulatoryTemplateTests
             "FDA_IND_CTD",
             "  ",
             new AuthorityId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
+            new ApplicationTypeId(Guid.NewGuid()),
             "ICH eCTD");
 
         act.Should().Throw<DomainException>()
@@ -73,7 +73,7 @@ public class RegulatoryTemplateTests
             "FDA_IND_CTD",
             "FDA IND (CTD)",
             default,
-            new SubmissionTypeId(Guid.NewGuid()),
+            new ApplicationTypeId(Guid.NewGuid()),
             "ICH eCTD");
 
         act.Should().Throw<DomainException>()
@@ -81,7 +81,7 @@ public class RegulatoryTemplateTests
     }
 
     [Fact]
-    public void Create_MissingSubmissionType_Throws()
+    public void Create_MissingApplicationType_Throws()
     {
         var act = () => RegulatoryTemplate.Create(
             "FDA_IND_CTD",
@@ -91,7 +91,7 @@ public class RegulatoryTemplateTests
             "ICH eCTD");
 
         act.Should().Throw<DomainException>()
-            .WithMessage(RegulatoryTemplateErrors.SubmissionTypeRequired);
+            .WithMessage(RegulatoryTemplateErrors.ApplicationTypeRequired);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class RegulatoryTemplateTests
             "FDA_IND_CTD",
             "FDA IND (CTD)",
             new AuthorityId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
+            new ApplicationTypeId(Guid.NewGuid()),
             "  ");
 
         act.Should().Throw<DomainException>()

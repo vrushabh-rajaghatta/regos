@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RegOS.Platform.Domain.Aggregates.Tenant;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.SharedKernel.Primitives;
 
 using AuthorityEntity = RegOS.ReferenceData.Domain.Regulatory.Authority.Authority;
-using SubmissionTypeEntity = RegOS.ReferenceData.Domain.SubmissionType.SubmissionType;
+using ApplicationTypeEntity = RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
 
 namespace RegOS.Persistence.Configurations.ReferenceData.Blueprint;
 
@@ -40,10 +40,10 @@ public sealed class RegulatoryTemplateConfiguration
                 value => new AuthorityId(value))
             .IsRequired();
 
-        builder.Property(x => x.SubmissionTypeId)
+        builder.Property(x => x.ApplicationTypeId)
             .HasConversion(
                 id => id.Value,
-                value => new SubmissionTypeId(value))
+                value => new ApplicationTypeId(value))
             .IsRequired();
 
         // Nullable strongly-typed reference: null => platform-shared template.
@@ -74,7 +74,7 @@ public sealed class RegulatoryTemplateConfiguration
 
         builder.HasIndex(x => x.TenantId);
         builder.HasIndex(x => x.AuthorityId);
-        builder.HasIndex(x => x.SubmissionTypeId);
+        builder.HasIndex(x => x.ApplicationTypeId);
 
         // Reference data is protected from deletion.
         builder.HasOne<AuthorityEntity>()
@@ -82,9 +82,9 @@ public sealed class RegulatoryTemplateConfiguration
             .HasForeignKey(x => x.AuthorityId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<SubmissionTypeEntity>()
+        builder.HasOne<ApplicationTypeEntity>()
             .WithMany()
-            .HasForeignKey(x => x.SubmissionTypeId)
+            .HasForeignKey(x => x.ApplicationTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Tenant extensions reference their owning tenant; shared templates

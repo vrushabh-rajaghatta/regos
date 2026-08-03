@@ -24,6 +24,7 @@ import {
   useOrganizations,
 } from "@/features/regulatory/masterData";
 
+import { useApplicationTypes } from "../hooks/useApplicationTypes";
 import { useCreateRegulatoryApplication } from "../hooks/useCreateRegulatoryApplication";
 import {
   registerRegulatoryApplicationSchema,
@@ -58,11 +59,19 @@ export function RegisterRegulatoryApplicationForm({
       name: "",
       countryId: "",
       authorityId: "",
+      applicationTypeId: "",
       applicantOrganizationId: "",
     },
   });
 
   const selectedCountryId = watch("countryId");
+  const selectedAuthorityId = watch("authorityId");
+
+  // Application types are scoped to the authority, and the domain enforces
+  // that: RegulatoryApplication.Create refuses a type belonging to a different
+  // authority. Fetching per-authority means the form cannot offer a choice the
+  // domain would reject.
+  const applicationTypesQuery = useApplicationTypes(selectedAuthorityId);
 
   // Authority list is filtered client-side by the selected country — no
   // backend call, since the full list is already loaded.
@@ -107,6 +116,14 @@ export function RegisterRegulatoryApplicationForm({
     [authoritiesQuery.data],
   );
 
+  const applicationTypeItems = useMemo(
+    () =>
+      Object.fromEntries(
+        (applicationTypesQuery.data ?? []).map((type) => [type.id, type.name]),
+      ),
+    [applicationTypesQuery.data],
+  );
+
   const organizationItems = useMemo(
     () =>
       Object.fromEntries(
@@ -123,6 +140,7 @@ export function RegisterRegulatoryApplicationForm({
       name: values.name,
       countryId: values.countryId,
       authorityId: values.authorityId,
+      applicationTypeId: values.applicationTypeId,
       applicantOrganizationId: values.applicantOrganizationId,
     });
 
@@ -159,8 +177,10 @@ export function RegisterRegulatoryApplicationForm({
                 value={field.value}
                 onValueChange={(value) => {
                   field.onChange(value);
-                  // Changing country invalidates the current authority.
+                  // Changing country invalidates the authority, and the
+                  // application type hanging off it.
                   setValue("authorityId", "", { shouldValidate: false });
+                  setValue("applicationTypeId", "", { shouldValidate: false });
                 }}
               >
                 <SelectTrigger id="countryId" className="w-full">
@@ -191,7 +211,10 @@ export function RegisterRegulatoryApplicationForm({
               <Select
                 items={authorityItems}
                 value={field.value}
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  setValue("applicationTypeId", "", { shouldValidate: false });
+                }}
                 disabled={!selectedCountryId}
               >
                 <SelectTrigger id="authorityId" className="w-full">
@@ -214,6 +237,50 @@ export function RegisterRegulatoryApplicationForm({
               </Select>
 
               <FieldError errors={[errors.authorityId]} />
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="applicationTypeId"
+          render={({ field }) => (
+            <Field data-invalid={!!errors.applicationTypeId}>
+              <FieldLabel htmlFor="applicationTypeId">
+                Application Type
+              </FieldLabel>
+
+              <Select
+                items={applicationTypeItems}
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={!selectedAuthorityId}
+              >
+                <SelectTrigger id="applicationTypeId" className="w-full">
+                  <SelectValue
+                    placeholder={
+                      selectedAuthorityId
+                        ? "Select application type"
+                        : "Select an authority first"
+                    }
+                  />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {(applicationTypesQuery.data ?? []).map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <p className="text-sm text-muted-foreground">
+                What kind of application this is. Every sequence filed under it
+                inherits this classification.
+              </p>
+
+              <FieldError errors={[errors.applicationTypeId]} />
             </Field>
           )}
         />

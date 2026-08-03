@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE fda-regional:fda-regional SYSTEM "../../util/dtd/us-regional-v3-3.dtd">
+<fda-regional:fda-regional dtd-version="3.3" xml:lang="en"
+    xmlns:fda-regional="http://www.ich.org/fda"
+    xmlns:xlink="http://www.w3c.org/1999/xlink">
+
+  <!--
+    EPIC-007a Task 4 — hand-built, outside RegOS.
+
+    Modelled on FDA Example #21 (Initial IND). Values are RegOS-shaped where
+    RegOS has the field, and marked GAP where the mapping says it does not.
+    Nothing here is generated; the point is to prove the target before any
+    RegOS code assumes it.
+  -->
+
+  <admin>
+    <applicant-info>
+      <!-- GAP: DUNS number. RegOS Organization has no such field.
+           999999999 is the placeholder FDA permits (Tech Guide 3.1.1). -->
+      <id>999999999</id>
+
+      <!-- Organization.LegalName of the applicant. -->
+      <company-name>Demo Manufacturer Ltd.</company-name>
+
+      <!-- Submission.Title. -->
+      <submission-description>Original IND</submission-description>
+
+      <!--
+        applicant-contacts (applicant-contact+) — MANDATORY, at least one.
+        This is SubmissionRole (EPIC-004 S005), reached independently.
+
+        GAP: applicant-contact-type is FDA's vocabulary (fdaact1 regulatory,
+        fdaact2 technical). RegOS ContactRole seeds "Regulatory Contact",
+        "Qualified Person". Mapped, never conflated — the internal taxonomy
+        is not distorted to match the target format.
+
+        GAP: telephone and email are both mandatory here
+        (telephones (telephone+), emails (email+)). RegOS Contact must be
+        checked for both.
+      -->
+      <applicant-contacts>
+        <applicant-contact>
+          <applicant-contact-name applicant-contact-type="fdaact1">Ana Ruiz</applicant-contact-name>
+          <telephones>
+            <telephone telephone-number-type="fdatnt1">1-555-0100</telephone>
+          </telephones>
+          <emails>
+            <email>ana.ruiz@example.com</email>
+          </emails>
+        </applicant-contact>
+      </applicant-contacts>
+    </applicant-info>
+
+    <application-set>
+      <application application-containing-files="true">
+        <application-information>
+          <!-- RegulatoryApplication.ApplicationNumber — nullable in RegOS and
+               unset by every fixture. fdaat4 = IND. -->
+          <application-number application-type="fdaat4">987654</application-number>
+        </application-information>
+
+        <submission-information>
+          <!--
+            GAP, and the big one. submission-id names the REGULATORY ACTIVITY;
+            submission-type is its property. RegOS has neither. For an initial
+            filing the id equals the sequence that started it — which is why
+            this looks harmless here and will not in sequence 0001.
+            fdast1 = original-application.
+          -->
+          <submission-id submission-type="fdast1">0000</submission-id>
+
+          <!--
+            Submission.SequenceNumber ✔. submission-sub-type is a GAP.
+            fdasst3 = application.
+
+            Note the value: 0000, which is RegOS's numbering (ADR-044) and
+            ICH's own example. Every FDA example starts at 0001. The DTD types
+            this as #PCDATA, so if this file validates, 0000 is legal — and the
+            0000/0001 question is Level 3 convention, not Level 2a legality.
+          -->
+          <sequence-number submission-sub-type="fdasst3">0000</sequence-number>
+
+          <!-- GAP: RegOS has no concept of the regulatory form.
+               fdaft1 = Form FDA 1571, the IND form. -->
+          <form form-type="fdaft1">
+            <leaf ID="a-form-1571-0000" operation="new" xlink:type="simple"
+                  checksum="d41d8cd98f00b204e9800998ecf8427e" checksum-type="md5"
+                  xlink:href="form-1571.pdf">
+              <title>Form FDA 1571 - Original IND</title>
+            </leaf>
+          </form>
+        </submission-information>
+      </application>
+    </application-set>
+  </admin>
+
+  <m1-regional>
+    <!--
+      Module 1 leaves live HERE, not in index.xml. RegOS places documents into
+      TemplateSection 1.2 "Cover Letter"; the regional element is
+      m1-2-cover-letters. The mapping from section code to element name is a
+      lookup, not a derivation — 1.13 is the clearest proof of that.
+    -->
+    <m1-2-cover-letters>
+      <leaf ID="a-cover-letter-0000" operation="new" xlink:type="simple"
+            checksum="d41d8cd98f00b204e9800998ecf8427e" checksum-type="md5"
+            xlink:href="cover-letter.pdf">
+        <title>Cover Letter - Original IND</title>
+      </leaf>
+    </m1-2-cover-letters>
+  </m1-regional>
+</fda-regional:fda-regional>

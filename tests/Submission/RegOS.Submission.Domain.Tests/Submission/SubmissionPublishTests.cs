@@ -1,7 +1,7 @@
 using RegOS.SharedKernel.Primitives;
 using FluentAssertions;
 
-using RegOS.ReferenceData.Domain.SubmissionType;
+using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.Submission.Domain.Submission;
 
@@ -18,9 +18,9 @@ public class SubmissionPublishTests
     private static SubmissionAggregate NewDraft() =>
         SubmissionAggregate.Create(TenantId.New(), 
             new RegulatoryApplicationId(Guid.NewGuid()),
-            new SubmissionTypeId(Guid.NewGuid()),
             "Initial 510(k)",
-            SubmissionFormat.Ectd);
+            SubmissionFormat.Ectd,
+            SubmissionClassifications.Any());
 
     [Fact]
     public void Draft_HasNoPublicationMetadata()

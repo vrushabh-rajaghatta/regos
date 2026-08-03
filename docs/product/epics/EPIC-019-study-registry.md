@@ -1,10 +1,14 @@
 # EPIC-019 — Study registry
 
-**Status:** ⚪ Not Started · **Branch:** `epic/EPIC-019-study-registry` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 **Phase 1 reopened 2026-08-03**, after EPIC-007a made it blocking · **Branch:** `epic/EPIC-019-study-registry` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Clinical and non-clinical studies as first-class records that applications and submission content can **cite** — so *"which studies support this filing?"* is a query, and Study Tagging Files become possible.
 
-> **Phase 1 below is settled.** **Phases 2–3 are a sketch**, written so this epic can be picked up months from now without re-deriving it — they are **not approved design**. Confirm, amend or replace them in the Phase-2 conversation when this epic is pulled into **Now**.
+> **Phase 1 below was settled before EPIC-007a existed, and EPIC-007a changed
+> what this epic is for.** The original outcome — *"which studies support this
+> filing?"* — still stands and is no longer the urgent half. **Phases 2–3 remain
+> a sketch and are not approved design**; the amendments are below, and the
+> section that supersedes them is [Phase 1 reopened](#phase-1-reopened--2026-08-03).
 
 ---
 
@@ -51,7 +55,184 @@ Only two objects — but they are **peers of Application and Submission Content*
 
 ---
 
-## Phase 2 — Domain design *(sketch — not approved)*
+## Phase 1 reopened — 2026-08-03
+
+### Two drivers now, and they want different models
+
+| | Driver | What it needs |
+|---|---|---|
+| **A** | **Citation** — the original. *"Which studies support this filing?"* and its inverse | a study record, plus links to `RegulatoryApplication` and `SubmissionDocument` |
+| **B** | **Study Tagging File** — EPIC-007a, **blocking today** | the sponsor's `study-id`, a `title`, a link from each *placement* to a study, and a `file-tag` per placement |
+
+**They are not the same epic's worth of work, and B is both smaller and
+blocking.** A is a capability nobody is currently waiting on; B is why
+`SequenceFolderGenerator` refuses every submission with Module 4 content.
+
+### The scoping finding: B needs two facts, not twenty-three
+
+The Phase-1 sketch lists ~23 attributes per study, taken from RIM. **Almost none
+of them is required to generate an STF**, and the difference is not a detail.
+
+ICH's STF specification requires `category` — species, route of administration,
+duration, type of control — **for exactly four CTD sections**: 4.2.3.1, 4.2.3.2,
+4.2.3.4.1 and 5.3.5.1 (**E29**).
+
+> **The FDA IND blueprint seeds none of them.** It offers 4.2.1, 4.2.2, 4.2.3,
+> 5.2 and 5.3 — and `category` applies to *none* of those. Checked against
+> `RegulatoryTemplates.cs`, not inferred.
+
+**So the minimum that unblocks Module 4 for the blueprint as it stands today is
+`study-id` and `title`.** Everything else in the sketch — phase, indication,
+therapeutic area, subject count, sponsor, dates, status history — is RIM's list
+rather than a fact anything currently demands, and *"because RIM says so"* is
+the reasoning this project does not accept.
+
+**That is not an argument for never modelling them.** It is an argument for
+letting each arrive with the thing that needs it, which is how `Token`,
+`EctdFolder` and `EctdElement` all arrived.
+
+### What blocks even the minimum
+
+| | |
+|---|---|
+| **a `Study`** | the sponsor's alphanumeric code and a title. **Nothing exists** |
+| **placement → study** | which study a *placement* reports. [ADR-053](../../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)'s shape: a fact about the placement, not the section |
+| **`file-tag` per placement** | what role the document plays — synopsis, protocol, CRF. ~40 ICH values, and **this vocabulary is held** (E29) |
+| **`ich-stf-v2-2.dtd`** | ⚠ **not held.** An STF can be modelled and written; it cannot be *validated*, so S007's per-package Level 2a would cover two files of three |
+
+**Only the last is an evidence gap**, and it does not block modelling — it
+blocks the claim. Recorded so the claim is not made by accident.
+
+## What EPIC-007a discovered — recorded 2026-08-03
+
+**This epic stopped being a filler.** It was scoped as *"no dependencies — good
+candidate to slot in whenever a larger epic needs breaking up"*, and that is no
+longer the whole truth.
+
+FDA requires a **Study Tagging File for every file in eCTD 4.2.x and
+5.3.1.x–5.3.5.x** (evidence **E21**). The seeded FDA IND blueprint offers 4.2.1,
+4.2.2 and 4.2.3, and every IND has nonclinical content. So:
+
+> **No package can be generated for any submission that places a document in a
+> study-report section, and RegOS refuses one by name** rather than writing a
+> package FDA would misfile
+> ([ADR-054](../../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md) §6,
+> enforced in `SequenceFolderGenerator`).
+
+That is not a rendering gap. **A study is a business entity that documents are
+*about*, and nothing in RegOS knows one exists.**
+
+### Two of the Phase-2 questions are already answered
+
+ADR-054 was written for package generation and settled two things this epic
+would otherwise have to decide from scratch:
+
+| Question | Answered by ADR-054 |
+|---|---|
+| **Does the STF belong to the Study, or to the generated package?** | **Neither stores it.** It is a *projection* over the placements in one sequence that belong to one study — ADR-049's deletion test, applied to a file that needs facts the submission does not hold. The answer is to hold the facts, not the file |
+| **Does lifecycle operate on Study identity or on documents?** | **On the pair.** The mapping is `(study, eCTD element) → STF`, not `study → STF`, because *"one study could generate more than one STF representation"* (E29 §VI). Its `new`/`append` chain is derived the way ADR-045 derives a document's operation, keyed differently |
+
+### What the Study ADR must still answer
+
+*The founder's list, 2026-08-03. It is broader than STF, which is why it does not
+belong inside ADR-054 and gets its own number.*
+
+1. **Is `Study` an aggregate?** — Phase 2 §1 leans two aggregates, and E29 gives
+   the first external reason: clinical and non-clinical carry *different*
+   STF categories (species / route / duration / type-of-control apply to
+   4.2.3.1, 4.2.3.2, 4.2.3.4.1 and 5.3.5.1 only).
+2. **Is it an entity owned by `Submission`?** — E29 says no: the `study-id` is
+   *"the internal alphanumeric code used by the sponsor"*, stable across
+   sequences, and **E24** says an instance qualifier must be identical across
+   sequences or FDA's tooling loses continuity. A per-submission entity cannot
+   promise that.
+3. **Does a document reference a Study, or does a *placement*?** — the sharper
+   form of Phase 2 §2, and **[ADR-053](../../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)
+   has already answered its sibling**: the `file-tag` — what role a document
+   plays in a study report — belongs to the placement. Whether the *study* link
+   sits at the same level is the open half.
+4. **Where does it live?** — Phase 2 §3 leans a new `src/Study/`. A new bounded
+   context needs an ADR before code either way (repository canon).
+
+> **This is the first ADR that starts defining the clinical/non-clinical
+> information model rather than package generation**, and that is the reason to
+> take it deliberately rather than as a sub-clause of an eCTD story.
+
+---
+
+## Phase 2 — proposed 2026-08-03 · **awaiting sign-off**
+
+*The sketch below this section predates EPIC-007a and is superseded where the two
+disagree. Four decisions, and the first is an ADR.*
+
+### 1. Where does a `Study` live? — **a new `src/Study/` context** (ADR-056)
+
+**Four contexts will cite a study**: `RegulatoryApplication`, `Submission`
+(placements), `Registration` (RIM's `License → Clinical Study`) and `Interaction`
+(post-marketing commitments). Parking it inside any one of them points three
+dependencies the wrong way.
+
+**And it is not Submission's.** A study exists whether or not anything has been
+filed about it — the sponsor's `study-id` is *"the internal alphanumeric code
+used by the sponsor"* (E29), stable across sequences, and **E24 requires it to be
+identical across sequences or FDA's review tooling loses continuity**. An entity
+owned by a submission cannot promise that.
+
+> **Canon requires an ADR before code for a new bounded context**, and this is
+> the decision ADR-054 deliberately left open. **ADR-056.**
+
+### 2. One aggregate or two? — **two**, and EPIC-007a supplies the first external reason
+
+The sketch leaned two on internal grounds (RIM has two sheets; they will
+diverge). **E29 adds a reason from outside RegOS**: the STF's `category` — species,
+route, duration, type of control — applies to **4.2.3.1, 4.2.3.2, 4.2.3.4.1** and
+**5.3.5.1**. Three nonclinical sections and one clinical, and the values a
+regulator expects differ by kind.
+
+**Cost: real duplication, and it is accepted rather than unnoticed.** ADR-018
+permits merging on a third demonstrated need; two sheets and one shared
+category vocabulary is not that.
+
+### 3. What links a placement to a study? — **the placement, not the document**
+
+A `ProductDocument` can be filed in two sequences and report the same study both
+times; what changes is the *placement*. So `SubmissionDocument` gains **two**
+facts, and this is **[ADR-053](../../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)'s
+third shape arriving with its vocabulary in hand**:
+
+| | |
+|---|---|
+| `StudyId?` | which study this placement reports |
+| `FileTag?` | what role it plays in that study's report — ICH's ~40 values, **held** |
+
+**Both nullable, and null means the ordinary thing**: a placement outside 4.2.x
+and 5.3.1.x–5.3.5.x reports no study. Generation refuses only where FDA requires
+an STF, which is the refusal that already exists.
+
+### 4. Scope — **the STF minimum first, the registry second**
+
+**One epic, sequenced so the blocking half lands first.** Splitting into 019a and
+019b would spend an epic number on a sequencing decision.
+
+| | Story | Unblocks |
+|---|---|---|
+| **S001** | **`Study`** — a new context, `study-id` + `title`, two aggregates, persistence, API, minimal UI | nothing yet |
+| **S002** | **placement → study + `file-tag`** on `SubmissionDocument`, with the UI to set them | nothing yet |
+| **S003** | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
+| **S004** | citation from `RegulatoryApplication`, both directions queryable | driver A |
+| **S005** | the RIM attributes a real user asks for, and no more | driver A |
+
+> **S003 is where this epic is worth its cost**, and S001–S002 are the two facts
+> it needs. If work stops after S003, RegOS can file an IND — which it cannot do
+> today.
+
+**What S003 cannot claim**: `ich-stf-v2-2.dtd` is not held, so the STF is
+generated and **not validated**. S007's per-package Level 2a covers two files of
+three, and that sentence goes in the epic rather than being discovered later.
+
+---
+
+## Phase 2 — Domain design *(sketch — predates EPIC-007a, superseded above where they disagree)*
 
 ### Entities
 

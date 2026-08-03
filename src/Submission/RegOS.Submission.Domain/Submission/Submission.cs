@@ -2,6 +2,7 @@ using RegOS.Organization.Domain.Aggregates.Contact;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.Organization;
+using RegOS.ReferenceData.Domain.SubmissionSubType;
 using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Abstractions;
@@ -26,7 +27,6 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         SubmissionId id,
         TenantId tenantId,
         RegulatoryApplicationId applicationId,
-        SubmissionTypeId submissionTypeId,
         RegulatoryTemplateVersionId? boundTemplateVersionId,
         string title,
         SubmissionFormat format,
@@ -35,7 +35,6 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         Id = id;
         TenantId = tenantId;
         ApplicationId = applicationId;
-        SubmissionTypeId = submissionTypeId;
         BoundTemplateVersionId = boundTemplateVersionId;
         Title = title;
         Format = format;
@@ -50,12 +49,10 @@ public sealed class Submission : AggregateRoot<SubmissionId>
 
     public RegulatoryApplicationId ApplicationId { get; private set; }
 
-    public SubmissionTypeId SubmissionTypeId { get; private set; }
-
     // The published blueprint version this submission is judged against, pinned
     // at creation so a later template version never silently changes what a
     // submission must contain. Null when no published template governs this
-    // submission type (device submissions today) — incomplete reference data
+    // application type (device submissions today) — incomplete reference data
     // must never block creating a submission.
     public RegulatoryTemplateVersionId? BoundTemplateVersionId { get; private set; }
 
@@ -138,10 +135,65 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// </summary>
     public IReadOnlyCollection<SubmissionRole> Roles => _roles.AsReadOnly();
 
+    /// <summary>
+    /// The published sequence that opened the regulatory activity this one
+    /// continues. <b>Null means this submission opens an activity of its own</b>
+    /// — and then <see cref="SubmissionTypeId"/> says what that activity is.
+    /// </summary>
+    /// <remarks>
+    /// eCTD renders it as <c>submission-id</c>, and FDA states the rule in prose
+    /// (evidence E15): <i>"If the submission … is creating a new regulatory
+    /// activity, the submission-id should match the sequence number."</i> A
+    /// continuing sequence repeats the opener's number instead of its own, which
+    /// is what groups sequences into an activity.
+    /// <para>
+    /// It points at the <em>opener</em>, never at the predecessor, so no chain is
+    /// ever walked — see <see cref="OriginatingSubmission.IsItselfAnOrigin"/>.
+    /// </para>
+    /// </remarks>
+    public SubmissionId? OriginatingSubmissionId { get; private set; }
+
+    /// <summary>
+    /// What the regulatory activity <em>is</em> — original application, annual
+    /// report, IND safety report. <b>Set only on the sequence that opens the
+    /// activity</b>, and null on every sequence that continues one.
+    /// </summary>
+    /// <remarks>
+    /// The exclusive-or with <see cref="OriginatingSubmissionId"/> is not a rule
+    /// this aggregate checks — <see cref="SubmissionClassification"/> cannot
+    /// express a violation, and a CHECK constraint covers what reaches the table
+    /// without passing through code.
+    /// </remarks>
+    public SubmissionTypeId? SubmissionTypeId { get; private set; }
+
+    /// <summary>
+    /// What this sequence does to its activity — application, amendment, report.
+    /// Required on every sequence RegOS creates.
+    /// </summary>
+    /// <remarks>
+    /// <b>Null means the sequence predates the model</b>, and nothing else. Every
+    /// submission filed before S003 was recorded without any of this, and the
+    /// value cannot be recovered: sub-type is not derivable from an activity's
+    /// shape (evidence E13), so there was no honest backfill and none was
+    /// invented. It is the same refusal S001's migration made.
+    /// <para>
+    /// It is emphatically not "unknown" and not "to be worked out later". A
+    /// package built from such a sequence fails by name rather than guessing —
+    /// see the rendering precondition in EPIC-007a.
+    /// </para>
+    /// </remarks>
+    public SubmissionSubTypeId? SubmissionSubTypeId { get; private set; }
+
+    /// <summary>
+    /// Whether this submission carries the classification S003 introduced. False
+    /// only for sequences filed before it existed.
+    /// </summary>
+    public bool IsClassified => SubmissionSubTypeId is not null;
+
     /// <param name="boundTemplateVersionId">
     /// The published template version that governs this submission, resolved by
     /// the application layer. Optional: when no published blueprint targets the
-    /// submission type, the submission is created unbound rather than rejected.
+    /// application type, the submission is created unbound rather than rejected.
     /// </param>
     /// <param name="format">
     /// Required rather than defaulted. eCTD is the only format an FDA IND
@@ -149,12 +201,19 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// chooses the format, and a default would let a caller omit a real
     /// decision and have the model answer for them.
     /// </param>
+    /// <param name="classification">
+    /// Which regulatory activity this sequence belongs to, and what it does to
+    /// it. <b>Required for the same reason <paramref name="format"/> is</b>: the
+    /// filer decides whether this opens something new or continues something
+    /// already running, and a default would answer a regulatory question on
+    /// their behalf.
+    /// </param>
     public static Submission Create(
         TenantId tenantId,
         RegulatoryApplicationId applicationId,
-        SubmissionTypeId submissionTypeId,
         string title,
         SubmissionFormat format,
+        SubmissionClassification classification,
         RegulatoryTemplateVersionId? boundTemplateVersionId = null)
     {
         if (tenantId is null)
@@ -163,14 +222,15 @@ public sealed class Submission : AggregateRoot<SubmissionId>
         if (applicationId == default)
             throw new DomainException(SubmissionErrors.ApplicationRequired);
 
-        if (submissionTypeId == default)
-            throw new DomainException(SubmissionErrors.SubmissionTypeRequired);
-
         if (string.IsNullOrWhiteSpace(title))
             throw new DomainException(SubmissionErrors.TitleRequired);
 
         if (!Enum.IsDefined(format))
             throw new DomainException(SubmissionErrors.FormatNotRecognised);
+
+        ArgumentNullException.ThrowIfNull(classification);
+
+        GuardOrigin(classification, applicationId);
 
         var createdOn = DateTime.UtcNow;
 
@@ -178,11 +238,12 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             SubmissionId.New(),
             tenantId,
             applicationId,
-            submissionTypeId,
             boundTemplateVersionId,
             title.Trim(),
             format,
             createdOn);
+
+        submission.Apply(classification);
 
         // Becoming a draft is a step, so the history starts here rather than at
         // publication — otherwise a submission's record would begin midway
@@ -490,6 +551,78 @@ public sealed class Submission : AggregateRoot<SubmissionId>
                 SubmissionErrors.FormatLockedOncePublished);
 
         Format = format;
+    }
+
+    /// <summary>
+    /// Changes which regulatory activity this sequence belongs to, or what it
+    /// does to it, while it is still a draft.
+    /// </summary>
+    /// <remarks>
+    /// The draft guard <em>is</em> the freeze, exactly as it is for
+    /// <see cref="ChangeFormat"/> (ADR-047): what a published sequence was filed
+    /// under is a fact the authority also holds, and no later decision may reach
+    /// back and alter it.
+    /// <para>
+    /// A sequence may legitimately move between activities while drafting — the
+    /// filer realises the change belongs to the annual report rather than a new
+    /// amendment — so this is a correction, not a lifecycle event.
+    /// </para>
+    /// </remarks>
+    public void Reclassify(SubmissionClassification classification)
+    {
+        ArgumentNullException.ThrowIfNull(classification);
+
+        if (Status != SubmissionStatus.Draft)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.ClassificationLockedOncePublished);
+
+        GuardOrigin(classification, ApplicationId);
+
+        Apply(classification);
+    }
+
+    /// <summary>
+    /// The three rules about the origin that the aggregate cannot see for
+    /// itself, checked against facts the application layer supplied.
+    /// </summary>
+    /// <remarks>
+    /// The fourth rule — that a submission cannot both open an activity and
+    /// continue one — is absent because
+    /// <see cref="SubmissionClassification"/> makes it unconstructible.
+    /// </remarks>
+    private static void GuardOrigin(
+        SubmissionClassification classification,
+        RegulatoryApplicationId applicationId)
+    {
+        if (classification.Origin is not { } origin)
+            return;
+
+        // An activity lives inside one application. Two applications sharing an
+        // activity would render a submission-id that means nothing in either.
+        if (origin.ApplicationId != applicationId)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.OriginatingSubmissionDifferentApplication);
+
+        // eCTD identifies the activity by the opener's sequence number, and a
+        // draft has none (ADR-044 assigns at publish). There would be nothing
+        // to write.
+        if (origin.SequenceNumber is null)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.OriginatingSubmissionNotPublished);
+
+        // Point at the opener, never at the predecessor — otherwise rendering
+        // would have to resolve a chain, and a broken link would surface as a
+        // malformed package rather than as a refusal here.
+        if (!origin.IsItselfAnOrigin)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.OriginatingSubmissionIsNotAnOrigin);
+    }
+
+    private void Apply(SubmissionClassification classification)
+    {
+        OriginatingSubmissionId = classification.Origin?.Id;
+        SubmissionTypeId = classification.SubmissionTypeId;
+        SubmissionSubTypeId = classification.SubmissionSubTypeId;
     }
 
     /// <summary>

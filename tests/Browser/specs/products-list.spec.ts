@@ -60,6 +60,10 @@ test.describe("Product directory", () => {
     await page.getByRole("option", { name: "Drug", exact: true }).click();
     await page.getByRole("button", { name: /register|save|create/i }).click();
 
+    // Searched, not scanned: the directory pages its results, so asserting
+    // presence in "the list" silently asserts presence on page one — which
+    // stops being the same thing as fixtures accumulate.
+    await page.getByLabel("Search products").fill(code);
     await expect(page.getByTestId("product-list")).toContainText(code);
 
     expect(errors()).toEqual([]);

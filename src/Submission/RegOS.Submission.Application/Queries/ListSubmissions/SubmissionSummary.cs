@@ -4,7 +4,7 @@ public sealed record SubmissionSummary(
     Guid Id,
     string Title,
     string Status,
-    string SubmissionTypeName,
+    string ApplicationTypeName,
     // What it will be rendered as — eCTD, NeeS or paper (ADR-047).
     string Format,
     DateTime CreatedOn,
