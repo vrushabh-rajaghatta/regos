@@ -269,7 +269,16 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
         // but a status taking effect before the one it replaces would make the
         // history unreadable. Discovering an earlier event later is a
         // correction, which is a separate concept.
-        if (occurredOn < _marketStatusHistory[^1].OccurredOn)
+        //
+        // Max, not [^1]. The last element of this list is the last one the
+        // database happened to return, and nothing orders it: the repository
+        // loads the collection through an Include with no OrderBy, so the
+        // "previous entry" was whichever row Postgres felt like emitting last.
+        // In memory the list is append-ordered and every unit test passed;
+        // against a real database the rule silently stopped holding. An
+        // invariant may not depend on the order its own storage hands things
+        // back in.
+        if (occurredOn < _marketStatusHistory.Max(entry => entry.OccurredOn))
             throw new DomainException(
                 MedicinalProductErrors.OccurredOnBeforePreviousEntry);
 

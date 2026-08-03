@@ -278,7 +278,11 @@ public sealed class Registration
         // migrations routinely produce that — but a status taking effect before
         // the one it replaces would make the history unreadable. Discovering an
         // earlier event later is a correction, which is a separate concept.
-        if (occurredOn < _history[^1].OccurredOn)
+        //
+        // Max, not [^1]: this collection is loaded through an unordered Include,
+        // so its last element is the last row the database returned rather than
+        // the latest event. The rule has to read the history, not the result set.
+        if (occurredOn < _history.Max(entry => entry.OccurredOn))
             throw new DomainException(
                 RegistrationErrors.OccurredOnBeforePreviousEntry);
     }

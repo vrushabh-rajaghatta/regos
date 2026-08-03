@@ -151,7 +151,11 @@ public sealed class HaQuestion
         // The chronology rule. It lives here, on the aggregate's behaviour,
         // not on the entry — which is why an extraction of the entry alone
         // would take the cheap third of the duplication and leave this.
-        if (occurredOn < _history[^1].OccurredOn)
+        //
+        // Max, not [^1]: this collection is loaded through an unordered Include,
+        // so its last element is the last row the database returned rather than
+        // the latest event. The rule has to read the history, not the result set.
+        if (occurredOn < _history.Max(entry => entry.OccurredOn))
             throw new DomainException(HaCorrespondenceErrors.QuestionHistoryOutOfOrder);
 
         if (note is { Length: > HaQuestionStatusEntry.NoteMaxLength })
