@@ -1418,6 +1418,11 @@ targets, **two** can hold a document — `m1-2-cover-letters` and
 
 **Proves the epic's outcome sentence**, and nothing before it does.
 
+> **Its character is integration assurance, not discovery** *(the founder's,
+> 2026-08-03)*. The domain work is done: S007 proves that independently correct
+> pieces **compose** correctly — which is exactly where an architecture test
+> belongs, and exactly what `m1-regional` showed a per-file check cannot see.
+
 > **Per-file validity is not package validity, and E16 is the reason.** S005 and
 > S006 each validate one file in isolation. **S007 validates both files from a
 > single generated package** — the precise thing that passes when each half is
@@ -1439,6 +1444,11 @@ reclassified in the evidence directory as what it is.
 ---
 
 ### S008 — Level 3, against FDA's own examples
+
+> **Its character is historical comparison** *(the founder's, 2026-08-03)* — not
+> specification, not modelling. It asks whether RegOS's *interpretation* produces
+> something recognisably equivalent to what FDA itself publishes, which is a
+> different question from whether it is legal or whether it is well modelled.
 
 **Proves** the generated package resembles what a regulator actually receives.
 Produces [`comparison-to-fda-examples.md`](../../evidence/EPIC-007a/README.md),
@@ -1554,6 +1564,28 @@ exactly what an independent implementation exists to find.**
 > validator is an oracle, not a dependency"* stands, and the DoD's checkable form
 > of it stands with it: **no code in `src/` reads a verdict from any validator**,
 > the seam is the filesystem, and `xmllint` lives in `tests/`.
+
+**The two shapes, because the difference is one arrow** *(the founder's, and it
+says in a diagram what a paragraph kept almost saying)*:
+
+```
+        specification                      specification
+         ╱         ╲                            │
+        ▼           ▼                           ▼
+     RegOS       parser                       RegOS
+        ╲         ╱                             │
+         ▼       ▼                              ▼
+      compare outputs                         parser
+                                                │
+                                                ▼
+      ✅ evidence                             truth
+                                       ✖ implementation dependency
+```
+
+**Left: both read the specification, and the comparison is the evidence.**
+Right: RegOS reads the parser, the parser becomes the specification, and there is
+nothing left to check against. Only the left-hand shape can catch a defect that
+is nobody's mistake — which is what `m1-regional` was.
 
 **First-class means the boundary is asserted rather than merely observed**, and
 that is a thing this epic can do without acquiring a dependency:
