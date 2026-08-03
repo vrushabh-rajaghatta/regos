@@ -47,7 +47,7 @@ EPIC-007a merged to `main` as PR #15.
 | **S001** ✅ | `Study` — a new `src/Study/` context, two aggregates, `study-id` + `title`. **[ADR-056](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)** written first, per canon |
 | **S002** ✅ | placement → study, set from the content plan |
 | **S002b** ✅ | `file-tag` per placement — 97 values across three realms, non-words refused |
-| **S003** 🟡 | **STF generation — the epic's reason to exist.** Next. Module 4, and therefore every IND |
+| **S003** ✅ | **STF generation — the epic's reason to exist.** Module 4 generates; **RegOS can file an IND** ([ADR-057](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md)) |
 | **S004** ✅ | citation from the application, both directions queryable — **driver A, done** |
 | **S005** ⬜ | RIM attributes — **nothing to build: nobody has asked** (ADR-056 §3) |
 

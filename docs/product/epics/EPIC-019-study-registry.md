@@ -1,6 +1,6 @@
 # EPIC-019 — Study registry
 
-**Status:** 🟢 **In flight, unblocked 2026-08-03** — S001, S002 and S004 shipped; the STF vocabulary arrived, so S002b and S003 are next · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 **S001–S004 shipped 2026-08-03** — Module 4 generates, so RegOS can file an IND. One item owed: the E24 continuity refusal (ADR-057 §2) · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Clinical and non-clinical studies as first-class records that applications and submission content can **cite** — so *"which studies support this filing?"* is a query, and Study Tagging Files become possible.
 
@@ -241,7 +241,7 @@ an STF, which is the refusal that already exists.
 | **S001** ✅ | **`Study`** — a new context, `study-id` + `title`, two aggregates, persistence, API, minimal UI | nothing yet |
 | **S002** ✅ | **placement → study** on `SubmissionDocument`, with the UI to set it | nothing yet |
 | **S002b** ✅ | **`file-tag` per placement** — 97 values, realm-scoped, non-words refused | S003 |
-| **S003** 🟡 | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
+| **S003** ✅ | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
 | **S004** ✅ | citation from `RegulatoryApplication`, both directions queryable | **driver A — done** |
 | **S005** ⬜ | the RIM attributes a real user asks for, and no more | **nothing to build: nobody has asked** |
 
@@ -635,6 +635,91 @@ STF writes and what a reviewer's tool matches on.
 
 18 suites, **1,176 tests**, 0 failures (9 new). **99 browser specs**, 0 failures
 (1 new), on an isolated stack.
+
+---
+
+## S003 — the Study Tagging File · ✅ **shipped 2026-08-03**
+
+**The story this epic exists for.** A document in CTD 4.2.x that names a study
+now generates rather than refusing, so **RegOS can file an IND** — which it
+could not do this morning.
+
+| | |
+|---|---|
+| Freeze | `FiledStudyIdentifier` / `FiledStudyTitle` on the placement, written once at publish |
+| Projection | `StudyTaggingFileRenderer` — one file per **(study, eCTD element)**, never per study |
+| Chain | `new` then `append`, derived by asking which earlier sequence filed one |
+| Package | `util/dtd/ich-stf-v2-2.dtd` and `util/style/` — the stylesheet **and** the vocabulary it reads |
+| Decision | **[ADR-057](../../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md)** |
+
+### The freeze boundary
+
+```
+Study (mutable)
+      │
+      ▼
+Publication            ← the snapshot is taken here, once
+      │
+      ▼
+Frozen STF projection  ← what this sequence said the study was
+      │
+      ▼
+XML
+```
+
+The renderer never touches the `Study` tables — not by discipline, but because
+the plan it is handed carries no study id it could look up with.
+`RenamingAStudyAfterFiling_DoesNotChangeWhatTheSequenceSaid` asserts it the only
+way that means anything: generate, rename, regenerate, compare bytes.
+
+### Both oracles, and why one was not enough
+
+| Oracle | Question | Verdict on `sinopsis` |
+|---|---|---|
+| `xmllint` + `ich-stf-v2-2.dtd` | is this **legal**? | **valid** |
+| `xsltproc` + stylesheet + `valid-values.xml` | is this **a word**? | **1 red row** |
+
+`AMisspelledFileTag_PassesTheDtd_AndTheStylesheetCatchesIt` asserts both halves
+in one test, because the interesting claim is the *gap between them*.
+
+### What the oracles found, immediately
+
+**The first STF ever written was invalid twice**, and neither defect was visible
+in the XML:
+
+| | |
+|---|---|
+| `encoding="utf-16"` | `XmlWriter` takes its declared encoding from the sink, and a `StringBuilder` is UTF-16 — so the file announced one encoding while the bytes on disk were another |
+| a DOCTYPE that resolved to nothing | the path to `util/dtd/` was hardcoded two levels up, and an STF sits **with the study's files** — three levels down for 4.2.3 |
+
+Both would have produced a package a reviewer's tool could not open. Both were
+found by running the parser, not by reading the code.
+
+### Three refusals, in three different categories
+
+| | Category | Why |
+|---|---|---|
+| a study-report document naming no study | **data completeness** | a user fixes it on the content plan — this refusal *changed category* in S003, from a capability gap to a missing fact |
+| a placement in **4.2.3.1, 4.2.3.2, 4.2.3.4.1 or 5.3.5.1** | **domain capability** | ICH requires species, route, duration and type-of-control there, and a `Study` holds none. `category*` is optional in the DTD, so an empty one would *validate* and tell a reviewer nothing (E23's shape again) |
+| a study identifier a filename cannot carry | **data completeness** | an STF is `stf-<study-id>.xml`, so the sponsor's code becomes a filename. **Refused, never slugged** — a slug puts a name in the package that is not the study's. The refusal S001 predicted when it declined to police the format in the domain |
+
+And a fourth, for history: a sequence published before EPIC-019 has no snapshot,
+and is **refused rather than back-filled from today's registry** — the same call
+EPIC-007a made for sequences filed before regulatory activities were recorded.
+
+### What S003 does not do
+
+**The E24 continuity refusal is not implemented.** A study named in one
+published sequence can still be renamed, and the next sequence will file the new
+title — which FDA reads as two studies. ADR-057 §2 says where the check belongs
+(the generator, from frozen columns, no new dependency) and why it is not here
+yet: it needs a second sequence filing the same study, and a message that names
+what the previous one said. **Recorded as owed rather than presented as safe.**
+
+### Verification
+
+18 suites, **1,179 tests**, 0 failures (3 new). Both oracles green on a
+generated package.
 
 ---
 
