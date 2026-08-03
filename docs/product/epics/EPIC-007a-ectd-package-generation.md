@@ -1,6 +1,6 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **Phase 3 — generator implementation not started** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 paused on an evidence gap (ICH Appendix 4)** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 > **The epic's named capability has not begun.** Everything shipped so far is
 > preparatory: the specifications are pinned, the model has been corrected three
@@ -811,7 +811,7 @@ a prediction was for.
 
 ---
 
-### S004 — the sequence folder
+### S004 — the sequence folder ⏸️ paused on ICH Appendix 4
 
 **Proves:** a published `Submission` materialises as a deterministic directory
 tree — `0000/m1/us/…`, `m2/`…, with `util/dtd/` populated from `spec/`, and an
@@ -892,8 +892,9 @@ blueprint section `3.2.S` become `m3/32-body-of-data/32s-drug-substance/`? That
 table is **ICH Appendix 4**, and only Appendix 8 — the DTD — was transcribed.
 
 **And this is not a Module 1 problem.** The seeded FDA IND blueprint covers all
-five modules — 26 · 25 · 85 · 15 · 10 sections — so 135 placements need a path
-and roughly 25 have one that can be defended.
+five modules — 26 · 25 · 85 · 15 · 10 numbered sections, plus five module roots
+per version — **186 rows needing a path**, of which the 26 in Module 1 are the
+only ones with even an inferable answer.
 
 | Route | Verdict |
 |---|---|
@@ -901,7 +902,43 @@ and roughly 25 have one that can be defended.
 | Put every leaf at its module root — `m3/file.pdf` | ⚠ **DTD-valid** — `xlink:href` is `CDATA`, so nothing rejects it — and unconventional. Legal at 2a, wrong at 3 |
 | Read the folder name out of the regional DTD's element names | ⚠ **Module 1 only, and Level 3.** `m1-2-cover-letters`, `m1-14-4-1-…` are *element* names; that FDA names folders identically is an inference from their examples, not something the DTD states |
 
-#### The recommendation, and why it is a schema question
+#### Resolved: the shape ships, the values wait
+
+*Decided and built 2026-08-03.* `TemplateSection.EctdFolder` exists — nullable,
+validated against ICH Appendix 2 per segment, and **null in all 186 seeded
+rows.**
+
+> **Approved before the values were known, because the shape was.** That is
+> exactly where `Token` stood before FDA's vocabulary arrived, and the null
+> carries the identical meaning: *the specification that says so has not been
+> read*. Not "unknown", and not "derive it from the section code".
+
+**Three consequences, one of them surprising.**
+
+1. **Filling it in is a new blueprint version, not an `UPDATE`.** The value is
+   set at construction and a published version is frozen (S002), so Appendix 4
+   arriving is a *versioning event*. That is not an inconvenience to route
+   around — it is [ADR-045](../../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md) §2's
+   reasoning applied to placement: **a package regenerated under a rule that
+   changed after transmission would put files somewhere other than where the
+   authority received them.** A test asserts a published version cannot acquire
+   folders.
+2. **The naming rules are enforced where the value is created**, not trusted to
+   the seed. This string becomes a filename; an illegal one is a package a
+   regulator's tooling rejects, not a cosmetic defect.
+3. **One section may carry two directories.** FDA's Module 1 root is `m1/us` —
+   the regional level has no section of its own — so a value is a chain, and a
+   leaf's path is the ancestor chain joined.
+
+**Prediction, recorded not acted on.** Modules 2–5's folder names are *ICH's*
+and identical for every authority, while Module 1's are the authority's own.
+Storing both on `TemplateSection` therefore duplicates the ICH half once per
+blueprint. **With one blueprint in existence that duplication does not yet
+exist**, and ADR-018 forbids abstracting it away on a prediction. *Revisit when
+a second authority's CTD blueprint is seeded* — that is the first moment the two
+version axes (a blueprint's content vs. eCTD's directory table) visibly diverge.
+
+#### The recommendation that led there, and why it is a schema question
 
 > **The section-to-folder mapping is versioned regulatory knowledge, not
 > renderer code** — which makes putting it in a `switch` statement the exact
@@ -915,11 +952,38 @@ to cover it — a nullable path segment, seeded for FDA Module 1 from the region
 DTD's element names at Level 3, and null for Modules 2–5 until ICH Appendix 4 is
 in the repository.
 
-**Held for sign-off rather than assumed.** Everything else in S004 —
-determinism, `util/dtd/`, checksums, the entry-point guards, both refusals — is
-unaffected and could be built first. But *leaf placement* is the story's middle
-name, so building around the gap would be delivering S004 in the sense that
-matters least.
+**Held for sign-off rather than assumed** — and approved. Everything else in
+S004 — determinism, `util/dtd/`, checksums, the entry-point guards, both
+refusals — is unaffected and could be built first. But *leaf placement* is the
+story's middle name, so building around the gap would be delivering S004 in the
+sense that matters least. **S004 is paused on Appendix 4**, with the schema in
+place and empty.
+
+#### Two kinds of stopping, and this is the second
+
+*The founder's observation, recorded 2026-08-03 because it names something the
+epic has been doing without a word for it.*
+
+Four stories have now stopped before their code was written, and **they did not
+stop for the same reason.**
+
+| | Stopped by | What it meant |
+|---|---|---|
+| **S001** | the model — classification sat one tier too low | a weakness in **our** thinking |
+| **S002** | the aggregate — `AddSection` refuses a published version | a weakness in **our** thinking |
+| **S003** | the aggregate again — the XOR wanted to be a shape | a weakness in **our** thinking |
+| **S004** | **missing external evidence** — Appendix 4 is not here | the edge of **our knowledge of the specification** |
+
+> **That is a healthier place to be stopped.** The project is no longer
+> discovering weaknesses in its own model; it is discovering precisely where its
+> knowledge of the outside world runs out — which is what an evidence-first
+> integration epic is *for*.
+
+The distinction also changes what "unblocked" means. A domain constraint is
+resolved by thinking harder. **An evidence gap is not**, and no amount of
+further reasoning inside this repository will produce Appendix 4's table. Three
+plausible ways to reason one up were available, and all three were rejected —
+which is the discipline working rather than the discipline being obstructive.
 
 ---
 

@@ -148,8 +148,43 @@ rather than the EU market that was predicted to settle it.
 | [`poc/how-to-reproduce.md`](poc/how-to-reproduce.md) | the invocation, the output, **and the negative controls** | ✅ |
 | `poc/negative-controls/` | proof the parser rejects — without which a pass means nothing | ✅ |
 | [`spec/ich-ectd-3-2.dtd`](spec/ich-ectd-3-2.dtd) | the ICH backbone, transcribed from Appendix 8 and verified against the spec's own examples | ✅ |
+| `spec/ich-ectd-3-2-appendix-4.md` | **the directory table** — which folder a CTD section is written to | ⚪ **blocks S004**, see below |
 | `comparison-to-fda-examples.md` | Level 3 — where we match FDA's published XML and where we differ | ⚪ |
 | a 2b report | FDA business rules | ✖ carried |
+
+### The gap that stopped S004 — Appendix 4
+
+**Appendix 8 was transcribed. Appendix 4 was not, and it is the one that says
+where a file goes.** The DTD constrains the backbone's *elements*; it types
+`xlink:href` as `CDATA` and so has no opinion at all about paths. What a leaf's
+directory should be is Appendix 4's table, and nothing in this repository
+contains it.
+
+`ectd-mapping.md` §3.4 already holds the top level (`m1/us`, `m2`…`m5`,
+`util/dtd`) and Appendix 2's naming rules. **The per-section level is what is
+missing**, and the seeded FDA IND blueprint spans all five modules — 186
+sections — so this is not a Module 1 problem.
+
+Three ways to proceed without it were considered and all three rejected, each
+for the same reason:
+
+| | |
+|---|---|
+| derive the folder from the section code | invention |
+| put every leaf at its module root | DTD-valid, and knowingly wrong at Level 3 |
+| read folder names from the regional DTD's element names | Module 1 only, and an inference from FDA's examples rather than a statement of the specification |
+
+> **Appendix 4 is preferred over FDA's example packages, and the order matters.**
+> Appendix 4 is the **specification**; the examples are **convention**. With the
+> specification in hand, `comparison-to-fda-examples.md` later asks *"did FDA
+> follow it?"* — without it, that comparison would silently become *"let us
+> infer the specification from FDA"*, and the register's whole hierarchy would
+> invert. The examples stay valuable as corroboration.
+
+**The schema is already in place and empty.** `TemplateSection.EctdFolder`
+exists, is nullable, and holds null in all 186 rows — the same *"not in
+evidence"* a null `Token` carries. The shape was established by S004; only the
+values are outstanding.
 
 > **The first external check RegOS has ever had.** It is narrow — one backbone
 > file, structure only, hand-built — and it is real: the specification is FDA's,

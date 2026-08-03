@@ -15,7 +15,8 @@ public sealed class TemplateSection
         string code,
         string title,
         TemplateSectionId? parentSectionId,
-        int order)
+        int order,
+        string? ectdFolder = null)
     {
         if (string.IsNullOrWhiteSpace(code))
             throw new DomainException(RegulatoryTemplateErrors.SectionCodeRequired);
@@ -29,6 +30,7 @@ public sealed class TemplateSection
         Title = title.Trim();
         ParentSectionId = parentSectionId;
         Order = order;
+        EctdFolder = NormaliseFolder(ectdFolder);
     }
 
     public TemplateSectionId Id { get; }
@@ -41,4 +43,74 @@ public sealed class TemplateSection
     public TemplateSectionId? ParentSectionId { get; }
 
     public int Order { get; }
+
+    /// <summary>
+    /// Where a document placed in this section is written on disk, relative to
+    /// its parent section's folder — or null when the specification that says
+    /// so has not been read.
+    /// </summary>
+    /// <remarks>
+    /// <b>A section's folder is versioned regulatory knowledge, not renderer
+    /// code.</b> Placement varies with the specification (eCTD 3.2.2 vs 4.0) and
+    /// with the authority (<c>m1/us</c> is FDA's), which is exactly the kind of
+    /// thing this project keeps as data — a <c>switch</c> in a renderer would be
+    /// the mistake RegOS exists not to make.
+    /// <para>
+    /// <b>Null means the placement is not in evidence</b>, with the same force
+    /// as a null <c>Token</c> on the three eCTD catalogues: not "unknown", and
+    /// emphatically not "work it out from the section code". ICH Appendix 4
+    /// carries the directory table and is not yet in this repository, so every
+    /// row is null today (EPIC-007a S004).
+    /// </para>
+    /// <para>
+    /// It is <b>one link in a chain, not a whole path</b>. A leaf's location is
+    /// the ancestor folders joined, so a section that inserts no directory of
+    /// its own would carry an empty value rather than repeat its parent's. The
+    /// value may itself contain <c>/</c> where the specification nests without
+    /// an intervening section — FDA's Module 1 root is <c>m1/us</c>, one section
+    /// and two directories.
+    /// </para>
+    /// <para>
+    /// <b>Set at construction and never afterwards</b>, because a published
+    /// version is frozen (EPIC-007a S002). That has a consequence worth knowing:
+    /// filling these in is a *new blueprint version*, not a data patch. It is
+    /// the same reasoning ADR-045 §2 gives for freezing the operation — a
+    /// package regenerated under a placement rule that changed after
+    /// transmission would put files somewhere other than where the authority
+    /// received them.
+    /// </para>
+    /// </remarks>
+    public string? EctdFolder { get; }
+
+    /// <summary>
+    /// ICH Appendix 2's naming rules, applied per directory segment: lowercase
+    /// <c>a-z0-9-</c> only, and at most 64 characters each.
+    /// </summary>
+    /// <remarks>
+    /// Enforced here rather than trusted to the seed, because the value's whole
+    /// purpose is to become a filename — and an illegal one is not a cosmetic
+    /// defect, it is a package a regulator's tooling rejects.
+    /// </remarks>
+    private static string? NormaliseFolder(string? folder)
+    {
+        if (string.IsNullOrWhiteSpace(folder))
+            return null;
+
+        var trimmed = folder.Trim().Trim('/');
+
+        foreach (var segment in trimmed.Split('/'))
+        {
+            if (segment.Length is 0 or > MaxFolderSegmentLength
+                || !segment.All(c => c is >= 'a' and <= 'z'
+                    or >= '0' and <= '9' or '-'))
+            {
+                throw new DomainException(
+                    RegulatoryTemplateErrors.SectionEctdFolderNotLegal);
+            }
+        }
+
+        return trimmed;
+    }
+
+    public const int MaxFolderSegmentLength = 64;
 }

@@ -39,6 +39,12 @@ public static class RegulatoryTemplateErrors
     public const string SectionTitleRequired =
         "Template section title is required.";
 
+    // ICH Appendix 2 — a folder name becomes a filename, so an illegal one is
+    // a package a regulator's tooling rejects, not a cosmetic defect.
+    public const string SectionEctdFolderNotLegal =
+        "An eCTD folder name may contain only lowercase letters, digits and "
+        + "hyphens, and each part must be 64 characters or fewer.";
+
     public const string NoDraftVersion =
         "There is no draft version to modify; start a draft first.";
 
