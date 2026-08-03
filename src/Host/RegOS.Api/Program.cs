@@ -314,6 +314,8 @@ var studies = app.MapGroup("").WithTags("Studies");
 studies.MapRegisterClinicalStudy();
 studies.MapRegisterNonClinicalStudy();
 studies.MapListStudies();
+studies.MapListStudyFilings();
+studies.MapApplicationStudyCitations();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

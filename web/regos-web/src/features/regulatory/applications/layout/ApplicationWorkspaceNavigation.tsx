@@ -22,6 +22,10 @@ export function ApplicationWorkspaceNavigation() {
         Documents
       </NavLink>
 
+      <NavLink to="studies" className={linkClass}>
+        Studies
+      </NavLink>
+
       <NavLink to="publishing" className={linkClass}>
         Publishing
       </NavLink>

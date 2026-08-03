@@ -238,8 +238,8 @@ an STF, which is the refusal that already exists.
 | **S002** ✅ | **placement → study** on `SubmissionDocument`, with the UI to set it | nothing yet |
 | **S002b** ⛔ | **`file-tag` per placement** — **blocked on an evidence gap**, see below | S003 |
 | **S003** ⛔ | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
-| **S004** | citation from `RegulatoryApplication`, both directions queryable | driver A |
-| **S005** | the RIM attributes a real user asks for, and no more | driver A |
+| **S004** ✅ | citation from `RegulatoryApplication`, both directions queryable | **driver A — done** |
+| **S005** ⬜ | the RIM attributes a real user asks for, and no more | **nothing to build: nobody has asked** |
 
 > **S002 was planned as study + `file-tag` and shipped as study alone.** The
 > `file-tag` vocabulary turned out **not to be held** — the plan said it was, and
@@ -423,6 +423,80 @@ reachable when S003 has built both halves.
 
 18 suites, **1,160 tests**, 0 failures (8 new). **96 browser specs**, 0 failures
 (2 new), on an isolated stack.
+
+---
+
+## S004 — which studies support a filing · ✅ **shipped 2026-08-03**
+
+Driver A, the question this epic was originally scoped for, and its inverse.
+
+| | |
+|---|---|
+| Domain | `ApplicationStudyCitation`, a child of `RegulatoryApplication`; `CiteClinicalStudy` / `CiteNonClinicalStudy` / `StopCitingStudy` |
+| Application | `CiteStudy` · `StopCitingStudy` · `ListApplicationStudies` · **`ListStudyFilings`** |
+| Persistence | `ApplicationStudyCitations`, cascade from the application, two filtered unique indexes |
+| API | `GET/POST /api/applications/{id}/studies`, `DELETE …/studies/{studyId}`, `GET /api/studies/{id}/filings` |
+| UI | a **Studies** tab in the application workspace, and *"Where is it filed?"* on each registry row |
+
+### A child of the citing application, not a join aggregate
+
+The Phase-1 sketch leaned toward a join aggregate *"owned by neither side,
+because both directions are queried and neither is the natural owner"*. **The
+second clause is false.** A citation is a claim the *application* makes —
+nothing about the study changes when a filing cites it, and withdrawing one is
+the application changing its mind.
+
+And a join aggregate would be built for a third citer that does not exist.
+`Registration → Clinical Study` and a commitment's study are both plausible and
+neither has been asked for; **[ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)'s
+revisit trigger names exactly that moment**, and it has not fired.
+
+### Where the inverse query lives, and why it is not obvious
+
+*"Which filings cite this study?"* spans three contexts. It cannot live beside
+`Study` — that would give the registry a dependency on both its citers, the
+inversion ADR-056 §4 exists to prevent. It cannot live in
+`RegulatoryApplication` either: reaching `Submission` from there would **close a
+cycle**, since `Submission` already depends on it.
+
+> **It lives in `Submission.Application`, the only context that already sees
+> both.** ADR-039 principle 7 at its plainest: a real question spanning three
+> contexts is a read, and a read grants nobody write ownership.
+
+Two kinds of answer, labelled, because neither implies the other: an
+**Application** cites a study, and a **Sequence** carries a placement reporting
+one. A study can be cited before anything is filed about it, and a sequence can
+report one the application never cited.
+
+### What S004 found
+
+**The repository did not `Include` the new collection**, so the aggregate's
+idempotence check read an empty list and cited the same study twice. **The
+unique index caught it** — which is the belt-and-braces pattern doing precisely
+the job S001 claimed for it, on the first occasion it was tested.
+
+### Verification
+
+18 suites, **1,167 tests**, 0 failures (7 new). **98 browser specs**, 0 failures
+(2 new), on an isolated stack. `study-citation.spec.ts` asserts the two
+directions **against each other**: a citation visible on one screen and not the
+other is the failure worth catching, and neither assertion alone would see it.
+
+---
+
+## S005 — nothing to build
+
+The story was *"the RIM attributes a real user asks for, and no more"*. **Nobody
+has asked**, so by [ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)
+§3's own rule there is nothing here to write:
+
+> *Additional attributes are admitted only when required by an external
+> regulatory workflow or a demonstrated business capability.*
+
+Building `phase`, `indication`, `therapeutic area` and `subject count` now would
+be RIM's list arriving without a demand — the exact reasoning this epic was
+re-scoped to reject. **The story stays open and empty**, which is a more useful
+record than closing it: it is the place the next demand attaches to.
 
 ---
 

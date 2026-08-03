@@ -133,5 +133,19 @@ public sealed class RegulatoryApplicationConfiguration
             x.AuthorityId
         })
         .IsUnique();
+
+        // Ownership: RegulatoryApplication (1) -> ApplicationStudyCitations (N).
+        // Cascade, because a citation has no meaning apart from the filing that
+        // makes it. The shadow FK is a record-struct id, so it is non-nullable
+        // for free — the trap IdentityConventionTests carries applies to
+        // reference-type ids, and this aggregate still has the older shape.
+        builder.HasMany(x => x.StudyCitations)
+            .WithOne()
+            .HasForeignKey("ApplicationId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata
+            .FindNavigation(nameof(RegulatoryApplicationAggregate.StudyCitations))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

@@ -106,6 +106,21 @@ Two consequences, both enforced rather than described: **taking a document out
 of the dossier takes its study with it**, and **moving it between sections keeps
 it**. Refiling changes a row on the placement and never touches this registry.
 
+## Who cites a study
+
+Two different facts, and neither implies the other:
+
+| | Says | Lives on |
+|---|---|---|
+| **Citation** | this filing rests on that study | `RegulatoryApplication` — a claim the application makes |
+| **Report** | this document is about that study | the **placement** (`SubmissionDocument`) |
+
+An application can cite a study it has filed nothing for; a sequence can report
+one the application never cited. *"Which filings cite this study?"* answers over
+both, and lives in `Submission.Application` — the only context that already sees
+both, because putting it beside `Study` would give the registry a dependency on
+its own citers.
+
 ## Owed
 
 - **`Retitle` is unreachable.** The aggregate has it; nothing calls it. It needs

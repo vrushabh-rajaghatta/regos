@@ -5,6 +5,8 @@ using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.ApplicationType;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
+using RegOS.Study.Domain.Aggregates.ClinicalStudy;
+using RegOS.Study.Domain.Aggregates.NonClinicalStudy;
 
 using ApplicationTypeEntity = RegOS.ReferenceData.Domain.ApplicationType.ApplicationType;
 
@@ -12,6 +14,8 @@ namespace RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 
 public sealed class RegulatoryApplication
 {
+    private readonly List<ApplicationStudyCitation> _studyCitations = [];
+
     public const string TenantRequired = "Tenant is required.";
     public const string ProductRequired = "Product is required.";
     public const string CountryRequired = "Country is required.";
@@ -92,6 +96,14 @@ public sealed class RegulatoryApplication
     public ApplicationStatus Status { get; private set; }
 
     public DateTime CreatedOn { get; }
+
+    /// <summary>
+    /// The studies this filing rests on — *"which studies support this
+    /// application?"*, which is the question that otherwise gets answered by
+    /// reading file names.
+    /// </summary>
+    public IReadOnlyCollection<ApplicationStudyCitation> StudyCitations
+        => _studyCitations.AsReadOnly();
 
     /// <param name="applicationType">
     /// The reference-data entity, not its id, because the factory enforces a
@@ -192,6 +204,63 @@ public sealed class RegulatoryApplication
             throw new DomainException(NameRequired);
 
         Name = name.Trim();
+    }
+
+    /// <summary>
+    /// Records that a clinical study supports this application.
+    /// </summary>
+    /// <remarks>
+    /// <b>Idempotent.</b> Citing the same study twice is one claim stated
+    /// twice, not two claims — and a UI that fired a duplicate on a double
+    /// click would otherwise leave a row nobody can tell from a real one.
+    /// <para>
+    /// Permitted in every status, including <c>Closed</c>. A citation is a
+    /// statement about what a filing rests on, and correcting the record of a
+    /// closed application is ordinary regulatory housekeeping — the lifecycle
+    /// governs what may still be *filed*, not what may still be *recorded*.
+    /// </para>
+    /// <para>
+    /// The aggregate cannot check the study exists: studies are another context
+    /// (ADR-056), so the handler owns that — the same division
+    /// <c>Submission.PlaceDocument</c> draws for template sections.
+    /// </para>
+    /// </remarks>
+    public void CiteClinicalStudy(ClinicalStudyId studyId)
+    {
+        ArgumentNullException.ThrowIfNull(studyId);
+
+        if (_studyCitations.Any(c => c.Names(studyId))) return;
+
+        _studyCitations.Add(new ApplicationStudyCitation(
+            ApplicationStudyCitationId.New(), studyId, null, DateTime.UtcNow));
+    }
+
+    /// <inheritdoc cref="CiteClinicalStudy"/>
+    public void CiteNonClinicalStudy(NonClinicalStudyId studyId)
+    {
+        ArgumentNullException.ThrowIfNull(studyId);
+
+        if (_studyCitations.Any(c => c.Names(studyId))) return;
+
+        _studyCitations.Add(new ApplicationStudyCitation(
+            ApplicationStudyCitationId.New(), null, studyId, DateTime.UtcNow));
+    }
+
+    /// <summary>
+    /// Withdraws a citation. Removed rather than deactivated: unlike a
+    /// regulatory record, a citation that was entered in error never described
+    /// anything (ES-018 retains what happened, and this did not happen).
+    /// </summary>
+    public void StopCitingStudy(Guid studyId)
+    {
+        var citation = _studyCitations
+            .SingleOrDefault(c => c.StudyId == studyId);
+
+        if (citation is null)
+            throw new BusinessRuleViolationException(
+                ApplicationErrors.StudyIsNotCited);
+
+        _studyCitations.Remove(citation);
     }
 
     /// <summary>Draft or OnHold -> Active.</summary>

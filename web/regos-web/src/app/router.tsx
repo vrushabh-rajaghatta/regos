@@ -12,6 +12,7 @@ import { ApplicationSubmissionsPage } from "@/features/regulatory/applications/p
 import { ApplicationDocumentsPage } from "@/features/regulatory/applications/pages/ApplicationDocumentsPage";
 import { ApplicationPublishingPage } from "@/features/regulatory/applications/pages/ApplicationPublishingPage";
 import { ApplicationHistoryPage } from "@/features/regulatory/applications/pages/ApplicationHistoryPage";
+import { ApplicationStudiesPage } from "@/features/regulatory/applications/pages/ApplicationStudiesPage";
 import { SubmissionWorkspaceLayout } from "@/features/regulatory/submissions/layout/SubmissionWorkspaceLayout";
 import { SubmissionOverviewPage } from "@/features/regulatory/submissions/pages/SubmissionOverviewPage";
 import { SubmissionDocumentsPage } from "@/features/regulatory/submissions/pages/SubmissionDocumentsPage";
@@ -220,6 +221,13 @@ export const router = createBrowserRouter([
                       {
                         path: "publishing",
                         element: <ApplicationPublishingPage />,
+                      },
+                      // "Which studies support this filing?" — a claim the
+                      // application makes, so it lives in the application's
+                      // workspace rather than on the study (ADR-056).
+                      {
+                        path: "studies",
+                        element: <ApplicationStudiesPage />,
                       },
                       {
                         path: "history",

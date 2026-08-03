@@ -12,6 +12,7 @@ using RegOS.Submission.Application.Commands.RemoveSubmissionRole;
 using RegOS.Submission.Application.Commands.ReportStudyOnPlacement;
 using RegOS.Submission.Application.Queries.GetApplicationContacts;
 using RegOS.Submission.Application.Queries.GetSubmission;
+using RegOS.Submission.Application.Queries.ListStudyFilings;
 using RegOS.Submission.Application.Queries.GetSubmissionChanges;
 using RegOS.Submission.Application.Queries.GetSubmissionContentPlan;
 using RegOS.Submission.Application.Queries.ListAttachableProductDocuments;
@@ -40,6 +41,8 @@ public static class DependencyInjection
         services.AddScoped<PlaceSubmissionDocumentHandler>();
 
         services.AddScoped<ReportStudyOnPlacementHandler>();
+
+        services.AddScoped<ListStudyFilingsHandler>();
 
         services.AddScoped<ChangeSubmissionFormatHandler>();
 

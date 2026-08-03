@@ -48,7 +48,8 @@ EPIC-007a merged to `main` as PR #15.
 | **S002** ✅ | placement → study, set from the content plan |
 | **S002b** ⛔ | `file-tag` per placement — **blocked: the vocabulary is not held** |
 | **S003** ⛔ | **STF generation — the epic's reason to exist.** Unblocks Module 4, and therefore every IND |
-| S004–S005 | citation, then the RIM attributes a real user asks for |
+| **S004** ✅ | citation from the application, both directions queryable — **driver A, done** |
+| **S005** ⬜ | RIM attributes — **nothing to build: nobody has asked** (ADR-056 §3) |
 
 ### External prerequisites
 

@@ -5,6 +5,7 @@ import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { RegisterStudyDialog } from "../components/RegisterStudyDialog";
+import { StudyFilings } from "../components/StudyFilings";
 import { studyKindLabel } from "../constants/studyKinds";
 import { useStudies } from "../hooks/useStudies";
 
@@ -67,6 +68,11 @@ export function StudiesPage() {
             </div>
 
             <p className="mt-1 text-sm">{study.title}</p>
+
+            {/* The inverse question, on the study's own row: "which filings
+                cite this?" Fetched when asked for rather than with the list,
+                because most of the time nobody is asking. */}
+            <StudyFilings studyId={study.id} />
           </li>
         ))}
       </ul>

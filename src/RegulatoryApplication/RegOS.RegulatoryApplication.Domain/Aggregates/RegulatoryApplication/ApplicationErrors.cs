@@ -29,4 +29,8 @@ public static class ApplicationErrors
 
     public const string ApplicationAlreadyClosed =
         "The application is closed and can no longer change status.";
+
+    // Study citations (EPIC-019 S004)
+    public const string StudyIsNotCited =
+        "This application does not cite that study.";
 }
