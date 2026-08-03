@@ -987,6 +987,39 @@ which is the discipline working rather than the discipline being obstructive.
 
 ---
 
+### S005's opening finding — the DTD enforces the story boundary
+
+*Found 2026-08-03, reading the pinned DTDs before writing a renderer.*
+
+**A leaf cannot sit under the root.** `ectd:ectd`'s content model is the five
+module elements and nothing else, so every leaf lives inside a module element —
+and 35 containers below that accept `leaf*` directly.
+
+**ICH's Module 1 is `(leaf*)` and nothing else.** One element, no children. All
+**147** `m1-*` elements live in FDA's regional DTD, not ICH's.
+
+> **So `index.xml` is structurally incapable of expressing FDA's Module 1.** The
+> acceptance criterion set for S005 — *"deliberately ignorant of FDA"* — turns
+> out not to be a discipline anyone has to maintain. It is what the format
+> permits. A renderer that reached for FDA's vocabulary here could not produce a
+> valid file.
+
+**What S005 does need is a section → element name**, for Modules 2–5. That is a
+third wire mapping beside `Token` and `EctdFolder`, and it behaves better than
+either:
+
+| | |
+|---|---|
+| the values | Appendix 4's `Element` column, which was **not transcribed** — only the directory column was |
+| where they are checkable | **the pinned ICH DTD** — every sampled value is declared there |
+| provenance | **not needed.** RegOS can never invent one, because an invented element name is DTD-invalid. The format forecloses the failure mode that made `EctdFolderSource` necessary |
+
+**And a seed test becomes possible that has no equivalent for folders:** every
+element name in the blueprint must exist in the DTD the package ships. That is
+Level 2a applied to our own reference data.
+
+---
+
 ### S005 — render `index.xml` (ICH)
 
 **Proves:** the shared backbone renders from frozen values alone — `operation`
