@@ -22,6 +22,20 @@
     <EmbeddedResource
       Include="..\..\..\docs\evidence\EPIC-007a\spec\us-regional-v3-3.dtd"
       LogicalName="RegOS.Submission.Application.Generation.us-regional-v3-3.dtd" />
+    <EmbeddedResource
+      Include="..\..\..\docs\evidence\EPIC-019\spec\ich-stf-v2-2.dtd"
+      LogicalName="RegOS.Submission.Application.Generation.ich-stf-v2-2.dtd" />
+    <!--
+      The stylesheet and the vocabulary it reads travel together: the stylesheet
+      resolves document('valid-values.xml') by a relative path, so a util/style/
+      holding one of them checks nothing (E34).
+    -->
+    <EmbeddedResource
+      Include="..\..\..\docs\evidence\EPIC-019\spec\ich-stf-stylesheet-2-3.xsl"
+      LogicalName="RegOS.Submission.Application.Generation.ich-stf-stylesheet-2-3.xsl" />
+    <EmbeddedResource
+      Include="..\..\..\docs\evidence\EPIC-019\spec\valid-values.xml"
+      LogicalName="RegOS.Submission.Application.Generation.valid-values.xml" />
   </ItemGroup>
 
   <ItemGroup>

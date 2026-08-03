@@ -20,6 +20,9 @@ using RegOS.Submission.Application.Generation;
 using RegOS.Submission.Application.Tests.Fixtures;
 using RegOS.Submission.Domain.Submission;
 
+using NonClinicalStudy =
+    RegOS.Study.Domain.Aggregates.NonClinicalStudy.NonClinicalStudy;
+
 using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
@@ -175,8 +178,17 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
 
         // FDA's published name, not Appendix 4's illustrative pattern — #371
         // disclaims its own rows and defers to regional guidance.
-        generated.UtilityFiles.Should().BeEquivalentTo(
-            ["util/dtd/ich-ectd-3-2.dtd", "util/dtd/us-regional-v3-3.dtd"]);
+        //
+        // util/style/ arrived with EPIC-019: the STF stylesheet, and the
+        // vocabulary it resolves by a relative path. Two files, because one of
+        // them checks nothing without the other (E34).
+        generated.UtilityFiles.Should().BeEquivalentTo([
+            "util/dtd/ich-ectd-3-2.dtd",
+            "util/dtd/us-regional-v3-3.dtd",
+            "util/dtd/ich-stf-v2-2.dtd",
+            "util/style/ich-stf-stylesheet-2-3.xsl",
+            "util/style/valid-values.xml"
+        ]);
 
         var ich = await File.ReadAllTextAsync(Path.Combine(
             generated.RootPath, "util", "dtd", "ich-ectd-3-2.dtd"));
@@ -460,7 +472,7 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
     /// test, RegOS generated exactly that package.
     /// </remarks>
     [Fact]
-    public async Task ADocumentInAStudyReportSection_IsRefused_UntilAStudyIsModelled()
+    public async Task ADocumentInAStudyReportSection_IsRefused_UntilItNamesAStudy()
     {
         await using var ctx = New();
         var (submissionId, storage) =
@@ -474,9 +486,165 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         thrown.Which.Message.Should().Contain("Study Tagging File");
         thrown.Which.Message.Should().Contain("m4-2-3-toxicology");
 
+        // The refusal changed category in EPIC-019: it was a domain-capability
+        // gap ("RegOS does not record studies") and is now data completeness —
+        // a fact a user supplies on the content plan.
+        thrown.Which.Message.Should().Contain("content plan");
+
         // Not confused with the other two refusals, nor with the keyed node.
         thrown.Which.Message.Should().NotContain("eCTD token");
         thrown.Which.Message.Should().NotContain("has not been read");
+    }
+
+    /// <summary>
+    /// <b>The whole of EPIC-019, as one package.</b> A document in 4.2.3 that
+    /// names a study now generates rather than refusing — and what it generates
+    /// is checked by two oracles that answer different questions.
+    /// </summary>
+    /// <remarks>
+    /// <c>xmllint</c> answers <i>is this legal?</i> against ICH's own DTD, which
+    /// declares <c>file-tag/@name</c> as <c>CDATA</c> and would accept a
+    /// misspelling. The stylesheet answers <i>is this a word?</i> by resolving
+    /// every tag against <c>valid-values.xml</c> (E34). Neither alone is enough.
+    /// </remarks>
+    [Fact]
+    public async Task AStudyReportDocument_ProducesAStudyTaggingFile_BothOraclesAgree()
+    {
+        await using var ctx = New();
+
+        var study = await AStudyAsync(ctx, "TOX-2024-001");
+
+        var (submissionId, storage) = await APublishedEctdSequenceAsync(
+            ctx,
+            sectionCode: "4.2.3",
+            study: study,
+            fileTag: "pre-clinical-study-report");
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        generated.StudyTaggingFiles.Should().ContainSingle()
+            .Which.Should().EndWith("stf-tox-2024-001.xml");
+
+        var stf = Path.Combine(
+            generated.RootPath,
+            generated.StudyTaggingFiles[0]
+                .Replace('/', Path.DirectorySeparatorChar));
+
+        File.Exists(stf).Should().BeTrue();
+
+        // Oracle one — structure. The DTD ships in the package's own util/dtd/,
+        // so this is the file checking itself against what it declares.
+        var structure = Xmllint(stf);
+        structure.ExitCode.Should().Be(0, structure.Output);
+
+        // Oracle two — vocabulary. Zero red rows means every tag, category and
+        // property resolved against ICH's published list.
+        var stylesheet = Path.Combine(
+            generated.RootPath, "util", "style", "ich-stf-stylesheet-2-3.xsl");
+
+        File.Exists(stylesheet).Should().BeTrue(
+            "the stylesheet and valid-values.xml travel together (E34)");
+
+        RedRowsFrom(stf, stylesheet).Should().Be(0);
+
+        // And the backbone still validates with the STF's leaf in it.
+        ValidateIndex(generated.RootPath).ExitCode.Should().Be(0);
+
+        var xml = await File.ReadAllTextAsync(stf);
+
+        xml.Should().Contain("<study-id>TOX-2024-001</study-id>");
+        xml.Should().Contain("pre-clinical-study-report");
+        xml.Should().Contain("info-type=\"ich\"");
+
+        // It carries no file — every doc-content points at a leaf the backbone
+        // already holds (ADR-054).
+        xml.Should().Contain("index.xml#");
+        xml.Should().NotContain(".pdf");
+    }
+
+    /// <summary>
+    /// <b>The oracle that the first one cannot be.</b> A misspelled tag is
+    /// structurally valid and semantically empty; this is the assertion that
+    /// says so out loud.
+    /// </summary>
+    [Fact]
+    public async Task AMisspelledFileTag_PassesTheDtd_AndTheStylesheetCatchesIt()
+    {
+        await using var ctx = New();
+
+        var study = await AStudyAsync(ctx, "TOX-2024-002");
+
+        var (submissionId, storage) = await APublishedEctdSequenceAsync(
+            ctx,
+            sectionCode: "4.2.3",
+            study: study,
+            // Written straight onto the aggregate, which takes the token as
+            // given — the handler is what refuses this in the product, and
+            // this test is about what the package would say if it did not.
+            fileTag: "pre-clinical-study-report");
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        var stf = Path.Combine(
+            generated.RootPath,
+            generated.StudyTaggingFiles[0]
+                .Replace('/', Path.DirectorySeparatorChar));
+
+        var corrupted = (await File.ReadAllTextAsync(stf))
+            .Replace("pre-clinical-study-report", "pre-clinical-studdy-report");
+
+        var probe = Path.Combine(Path.GetDirectoryName(stf)!, "stf-probe.xml");
+        await File.WriteAllTextAsync(probe, corrupted);
+
+        Xmllint(probe).ExitCode.Should().Be(0,
+            "the DTD declares file-tag/@name as CDATA, so a misspelling is "
+            + "perfectly legal XML (E34)");
+
+        var stylesheet = Path.Combine(
+            generated.RootPath, "util", "style", "ich-stf-stylesheet-2-3.xsl");
+
+        RedRowsFrom(probe, stylesheet).Should().Be(1,
+            "the stylesheet resolves every tag against valid-values.xml and "
+            + "paints the ones ICH does not publish");
+    }
+
+    /// <summary>
+    /// The freeze boundary, as the only thing that could demonstrate it:
+    /// <c>Study (mutable) → Publication → frozen snapshot → STF XML</c>.
+    /// </summary>
+    [Fact]
+    public async Task RenamingAStudyAfterFiling_DoesNotChangeWhatTheSequenceSaid()
+    {
+        await using var ctx = New();
+
+        var study = await AStudyAsync(ctx, "TOX-2024-003");
+
+        var (submissionId, storage) = await APublishedEctdSequenceAsync(
+            ctx, sectionCode: "4.2.3", study: study, fileTag: "synopsis");
+
+        var before = await GenerateAsync(ctx, storage, submissionId);
+        var beforeXml = await File.ReadAllTextAsync(Path.Combine(
+            before.RootPath,
+            before.StudyTaggingFiles[0].Replace('/', Path.DirectorySeparatorChar)));
+
+        // The registry moves on. The filed sequence does not.
+        var tracked = await ctx.NonClinicalStudies.SingleAsync(
+            s => s.Id == study.Id);
+
+        tracked.Retitle("A Completely Different Title");
+        await ctx.SaveChangesAsync();
+
+        var after = await GenerateAsync(ctx, storage, submissionId);
+        var afterXml = await File.ReadAllTextAsync(Path.Combine(
+            after.RootPath,
+            after.StudyTaggingFiles[0].Replace('/', Path.DirectorySeparatorChar)));
+
+        afterXml.Should().Be(beforeXml,
+            "an STF is projected from what the sequence filed, never from the "
+            + "registry — regenerating 0000 must reproduce what FDA received");
+
+        afterXml.Should().Contain("A 13-Week Oral Toxicity Study In Rats");
+        afterXml.Should().NotContain("A Completely Different Title");
     }
 
     /// <summary>
@@ -768,7 +936,9 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         bool publish = true,
         SubmissionFormat format = SubmissionFormat.Ectd,
         string sectionCode = "1.2",
-        string documentFileName = "Cover Letter.pdf")
+        string documentFileName = "Cover Letter.pdf",
+        NonClinicalStudy? study = null,
+        string? fileTag = null)
     {
         var (applicationId, globalProductId) =
             await TestFdaApplication.EnsureAsync(ctx);
@@ -806,8 +976,14 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
             TestSubmissionClassification.Opens(),
             await BoundVersionAsync(ctx));
 
-        submission.AttachDocument(
+        var placement = submission.AttachDocument(
             document.Id, document.CurrentVersionId!.Value, section);
+
+        if (study is not null)
+        {
+            submission.ReportNonClinicalStudy(
+                placement.Id, study.Id, fileTag);
+        }
 
         // FDA will not accept a filing with no regulatory contact, and the
         // contact needs a number whose kind is known and an address. Named
@@ -817,7 +993,21 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
             await RegulatoryContactAsync(ctx), RegulatoryContactRole);
 
         if (publish)
-            submission.Publish(0, null, [], DateTimeOffset.UtcNow);
+        {
+            // The snapshot the STF is projected from: what the study is called
+            // now, frozen by the act of filing.
+            submission.Publish(
+                0,
+                null,
+                [],
+                DateTimeOffset.UtcNow,
+                study is null
+                    ? []
+                    : [new PublishedStudy(
+                        study.Id.Value,
+                        study.SponsorStudyIdentifier,
+                        study.Title)]);
+        }
 
         ctx.Submissions.Add(submission);
         await ctx.SaveChangesAsync();
@@ -979,6 +1169,49 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         return (process.ExitCode, output);
     }
 
+    /// <summary>
+    /// A registered non-clinical study, the Module 4 half.
+    /// </summary>
+    private async Task<NonClinicalStudy> AStudyAsync(
+        RegOSDbContext ctx, string? identifier = null)
+    {
+        var study = NonClinicalStudy.Register(
+            TestTenant.Id,
+            identifier ?? $"TOX-{Guid.NewGuid():N}"[..20],
+            "A 13-Week Oral Toxicity Study In Rats");
+
+        ctx.NonClinicalStudies.Add(study);
+        await ctx.SaveChangesAsync();
+        _studyIds.Add(study.Id.Value);
+
+        return study;
+    }
+
+    private readonly List<Guid> _studyIds = [];
+
+    /// <summary>
+    /// The vocabulary oracle (E34). <c>xmllint</c> answers <i>is this legal?</i>
+    /// and says yes to <c>sinopsis</c>; the ICH stylesheet answers <i>is this a
+    /// word?</i> by resolving every tag against <c>valid-values.xml</c> and
+    /// painting unknown ones <c>#FF6666</c>.
+    /// </summary>
+    private static int RedRowsFrom(string stfPath, string stylesheetPath)
+    {
+        using var process = System.Diagnostics.Process.Start(
+            new System.Diagnostics.ProcessStartInfo("xsltproc")
+            {
+                ArgumentList = { stylesheetPath, stfPath },
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+            })!;
+
+        var html = process.StandardOutput.ReadToEnd();
+        process.StandardError.ReadToEnd();
+        process.WaitForExit();
+
+        return html.Split("FF6666").Length - 1;
+    }
+
     private static (int ExitCode, string Output) ValidateIndex(string root) =>
         Xmllint(Path.Combine(root, IchBackboneRenderer.FileName));
 
@@ -991,6 +1224,9 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         await ctx.Database.ExecuteSqlRawAsync(
             "DELETE FROM \"Submissions\" WHERE \"Id\" = ANY({0})",
             _submissionIds.ToArray());
+        await ctx.Database.ExecuteSqlRawAsync(
+            "DELETE FROM \"NonClinicalStudies\" WHERE \"Id\" = ANY({0})",
+            _studyIds.ToArray());
         await ctx.Database.ExecuteSqlRawAsync(
             "DELETE FROM \"ProductDocuments\" WHERE \"Id\" = ANY({0})",
             _documentIds.ToArray());

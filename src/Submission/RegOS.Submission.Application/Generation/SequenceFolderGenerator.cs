@@ -131,8 +131,19 @@ public sealed class SequenceFolderGenerator
         foreach (var leaf in leaves)
             RequireAPathTheRegionAccepts(sequenceNumber, leaf.RelativePath);
 
+        var studyTaggingFiles = await ResolveStudyTaggingFilesAsync(
+            submission, leaves, cancellationToken);
+
+        foreach (var stf in studyTaggingFiles)
+            RequireAPathTheRegionAccepts(sequenceNumber, stf.RelativePath);
+
         return new SequencePlan(
-            sequenceNumber, leaves, deletions, vocabulary, regional);
+            sequenceNumber,
+            leaves,
+            deletions,
+            vocabulary,
+            regional,
+            studyTaggingFiles);
     }
 
     /// <summary>
@@ -753,7 +764,7 @@ public sealed class SequenceFolderGenerator
             var placement = placements[document.TemplateSectionId!.Value];
 
             RequireAWritableBackbonePosition(placement);
-            RequireNoStudyTaggingFileIsOwed(placement);
+            RequireAStudyWhereOneIsOwed(placement, document);
 
             var folder = placement.Folder;
             var fileName = FileNameFor(version.OriginalFileName);
@@ -785,11 +796,184 @@ public sealed class SequenceFolderGenerator
                 ModifiedFile(
                     document.ReplacesSubmissionDocumentId,
                     priorSequences,
-                    placement.IsRegional)));
+                    placement.IsRegional),
+                document.ClinicalStudyId?.Value
+                    ?? document.NonClinicalStudyId?.Value,
+                document.FiledStudyIdentifier,
+                document.FiledStudyTitle,
+                document.FileTag,
+                folder));
         }
 
         return planned;
     }
+
+    /// <summary>
+    /// One STF per (study, eCTD element) — the projection ADR-054 describes.
+    /// </summary>
+    /// <remarks>
+    /// <b>The grouping key is a pair, not a study</b> (E29 §VI): one study
+    /// supporting two CTD subsections files two STFs, and a model keyed on the
+    /// study alone would be wrong on the specification's own worked examples.
+    /// <para>
+    /// <b>Everything comes from the frozen snapshot.</b> The identifier and
+    /// title are what <em>this sequence filed</em>, not what the registry says
+    /// today, so regenerating a filed sequence reproduces what the authority
+    /// received even after the study is renamed. That is the whole freeze
+    /// boundary, and it is why this method never touches the Study tables.
+    /// </para>
+    /// <para>
+    /// <b>The <c>append</c> chain is derived, not stored</b> — the same shape
+    /// ADR-045 derives a document's operation with, keyed differently: <i>was
+    /// there an STF for this pair in a previous published sequence?</i> Nothing
+    /// records that an STF existed, because nothing needs to: the placements
+    /// that would have produced one are frozen in that sequence.
+    /// </para>
+    /// </remarks>
+    private async Task<IReadOnlyList<PlannedStudyTaggingFile>>
+        ResolveStudyTaggingFilesAsync(
+            SubmissionAggregate submission,
+            IReadOnlyList<PlannedLeaf> leaves,
+            CancellationToken cancellationToken)
+    {
+        var tagged = leaves
+            .Where(l => l.StudyId is not null && l.ElementPath.Count > 0)
+            .ToList();
+
+        if (tagged.Count == 0) return [];
+
+        var previous = await ResolvePreviousStudyTaggingFilesAsync(
+            submission, cancellationToken);
+
+        var planned = new List<PlannedStudyTaggingFile>();
+
+        foreach (var group in tagged
+            .GroupBy(l => (StudyId: l.StudyId!.Value, Element: l.ElementPath[^1]))
+            .OrderBy(g => g.Key.Element, StringComparer.Ordinal)
+            .ThenBy(g => g.Key.StudyId))
+        {
+            var first = group.First();
+
+            // Refusal — a historical gap. A sequence published before EPIC-019
+            // froze study identities has placements that report a study and no
+            // record of what it was called at the time. Inventing it from
+            // today's registry is exactly what the freeze exists to prevent.
+            if (first.FiledStudyIdentifier is not { } identifier
+                || first.FiledStudyTitle is not { } title)
+            {
+                throw new BusinessRuleViolationException(string.Format(
+                    SequenceGenerationErrors.SequencePredatesTheStudySnapshot,
+                    first.Title));
+            }
+
+            RequireAnIdentifierAFileNameCanCarry(identifier);
+
+            // Beside the study's files, as the specification puts it (E29).
+            // The group's folders are ordered, so two runs agree.
+            var folder = group
+                .Select(l => l.Folder)
+                .OrderBy(f => f, StringComparer.Ordinal)
+                .First();
+
+            var fileName = $"stf-{identifier.ToLowerInvariant()}.xml";
+
+            var relativePath = folder.Length == 0
+                ? fileName
+                : $"{folder}/{fileName}";
+
+            var key = (group.Key.StudyId, group.Key.Element);
+
+            var priorSequence = previous.TryGetValue(key, out var sequence)
+                ? sequence
+                : (int?)null;
+
+            planned.Add(new PlannedStudyTaggingFile(
+                group.Key.StudyId,
+                identifier,
+                title,
+                group.Key.Element,
+                relativePath,
+                StudyTaggingLeafId(group.Key.StudyId, group.Key.Element),
+                // The one place eCTD mandates append (E10's third scope).
+                priorSequence is null ? "new" : "append",
+                priorSequence is { } number
+                    ? $"../../../{number:0000}/{relativePath}"
+                        + $"#{StudyTaggingLeafId(group.Key.StudyId, group.Key.Element)}"
+                    : null,
+                group
+                    .OrderBy(l => l.RelativePath, StringComparer.Ordinal)
+                    .Select(l => new TaggedDocument(l.LeafId, l.FileTag))
+                    .ToList()));
+        }
+
+        return planned;
+    }
+
+    /// <summary>
+    /// The most recent published sequence that filed an STF for each (study,
+    /// element) — derived from its placements, because an STF is a projection
+    /// and nothing stores that one existed.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<(Guid, string), int>>
+        ResolvePreviousStudyTaggingFilesAsync(
+            SubmissionAggregate submission,
+            CancellationToken cancellationToken)
+    {
+        var earlier = await _dbContext.Set<SubmissionAggregate>()
+            .AsNoTracking()
+            .Include(s => s.Documents)
+            .Where(s => s.ApplicationId == submission.ApplicationId
+                && s.SequenceNumber != null
+                && s.Id != submission.Id)
+            .ToListAsync(cancellationToken);
+
+        if (earlier.Count == 0) return new Dictionary<(Guid, string), int>();
+
+        var sections = await _dbContext.Set<TemplateSection>()
+            .AsNoTracking()
+            .Where(x => x.IchElement != null)
+            .ToDictionaryAsync(x => x.Id, x => x.IchElement!, cancellationToken);
+
+        var chain = new Dictionary<(Guid, string), int>();
+
+        foreach (var sequence in earlier.OrderBy(s => s.SequenceNumber))
+        {
+            foreach (var document in sequence.Documents)
+            {
+                var studyId = document.ClinicalStudyId?.Value
+                    ?? document.NonClinicalStudyId?.Value;
+
+                if (studyId is not { } id
+                    || document.TemplateSectionId is not { } sectionId
+                    || document.Operation is null
+                    || document.Operation == SubmissionContentOperation.Unchanged)
+                {
+                    continue;
+                }
+
+                if (!sections.TryGetValue(sectionId, out var element)
+                    || string.IsNullOrEmpty(element))
+                {
+                    continue;
+                }
+
+                // Latest wins: a third sequence appends to the second, never to
+                // the first — "you should not continually append to the
+                // original STF" (E29 §V).
+                chain[(id, element)] = sequence.SequenceNumber!.Value;
+            }
+        }
+
+        return chain;
+    }
+
+    /// <summary>
+    /// Deterministic, and derived from the pair rather than from a row: a later
+    /// sequence has to point at this leaf, and regenerating must produce the
+    /// same id (ADR-054 §5).
+    /// </summary>
+    private static string StudyTaggingLeafId(Guid studyId, string element) =>
+        $"leaf-stf-{Slug(element)}-{studyId:N}";
 
     /// <summary>
     /// FDA accepts no path longer than 150 characters (evidence E22).
@@ -899,8 +1083,8 @@ public sealed class SequenceFolderGenerator
     /// resolved and not where deletions are — the omission is the rule.
     /// </para>
     /// </remarks>
-    private static void RequireNoStudyTaggingFileIsOwed(
-        SectionPlacement placement)
+    private static void RequireAStudyWhereOneIsOwed(
+        SectionPlacement placement, SubmissionDocument document)
     {
         // Empty for every Module 1 section — ICH's m1 is (leaf*) and gives them
         // no element at all.
@@ -913,13 +1097,74 @@ public sealed class SequenceFolderGenerator
         // rather than the container above it.
         var element = placement.IchElements[^1];
 
-        if (StudyTaggedSections.Any(
+        if (!StudyTaggedSections.Any(
             prefix => element.StartsWith(prefix, StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        // Refusal — data completeness. The capability exists now; what is
+        // missing is a fact a user can supply on the content plan.
+        if (!document.ReportsAStudy)
         {
             throw new BusinessRuleViolationException(string.Format(
                 SequenceGenerationErrors.SectionRequiresAStudyTaggingFile,
                 placement.Code, element));
         }
+
+        // Refusal — domain capability. ICH requires species, route, duration
+        // and type-of-control for exactly these four sections, and a Study
+        // holds none of them (ADR-056 §3 admits an attribute when a workflow
+        // demands it — this is that demand, and it is a story rather than a
+        // guess).
+        if (CategorySections.Any(
+            prefix => element.StartsWith(prefix, StringComparison.Ordinal)))
+        {
+            throw new BusinessRuleViolationException(string.Format(
+                SequenceGenerationErrors.SectionRequiresStudyCategories,
+                placement.Code, element));
+        }
+    }
+
+    /// <summary>
+    /// The four CTD sections whose STF must carry <c>category</c> — species,
+    /// route-of-admin, duration, type-of-control (E29, E33).
+    /// </summary>
+    /// <remarks>
+    /// <b>Refused rather than emitted empty.</b> <c>category*</c> is optional in
+    /// the DTD, so an STF without one is structurally valid and would pass
+    /// <c>xmllint</c> — and would tell a reviewer nothing about a study they are
+    /// required to be told about. This is E23's shape again: legal, and wrong.
+    /// <para>
+    /// The seeded FDA IND blueprint offers none of these four, so nothing today
+    /// can reach this. It is written now because the alternative is discovering
+    /// it when a blueprint gains 4.2.3.1.
+    /// </para>
+    /// </remarks>
+    private static readonly string[] CategorySections =
+        ["m4-2-3-1-", "m4-2-3-2-", "m4-2-3-4-1-", "m5-3-5-1-"];
+
+    /// <summary>
+    /// An STF is named <c>stf-&lt;study-id&gt;.xml</c> (E29), so the sponsor's
+    /// code becomes a filename.
+    /// </summary>
+    /// <remarks>
+    /// <b>Refused, never slugged.</b> A slug would put a name in the package
+    /// that is not the study's — and the filename is one of the things a
+    /// reviewer reads. S001 predicted this refusal when it declined to police
+    /// the identifier's format in the domain: the check belongs at the boundary
+    /// that needs it, and this is that boundary.
+    /// </remarks>
+    private static void RequireAnIdentifierAFileNameCanCarry(string identifier)
+    {
+        if (identifier.All(c =>
+            char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.'))
+        {
+            return;
+        }
+
+        throw new BusinessRuleViolationException(string.Format(
+            SequenceGenerationErrors.StudyIdentifierIsNotAFileName, identifier));
     }
 
     /// <summary>
@@ -1026,6 +1271,12 @@ public sealed class SequenceFolderGenerator
 
         var utilities = await WriteDtdsAsync(root, cancellationToken);
 
+        // Written before index.xml, because the backbone quotes their
+        // checksums — and after the leaves, because each one points at leaf IDs
+        // the backbone will carry.
+        var taggingFiles = await WriteStudyTaggingFilesAsync(
+            root, plan, cancellationToken);
+
         // The regional file first, because index.xml's Module 1 leaf points at
         // it — and a backbone that links a file which does not exist is worse
         // than one that links nothing (S005 deferred the link for that reason).
@@ -1035,7 +1286,7 @@ public sealed class SequenceFolderGenerator
         var backbones = new List<string> { regional.Path };
 
         backbones.AddRange(await WriteIchBackboneAsync(
-            root, plan, leaves, regional.Md5, cancellationToken));
+            root, plan, leaves, taggingFiles, regional.Md5, cancellationToken));
 
         // Every emitted path, not only the leaves. These are fixed strings and
         // the check cannot fire today — which is the point: if a DTD is renamed
@@ -1043,7 +1294,12 @@ public sealed class SequenceFolderGenerator
         foreach (var path in utilities.Concat(backbones))
             RequireAPathTheRegionAccepts(plan.SequenceNumber, path);
 
-        return new GeneratedSequenceFolder(root, leaves, utilities, backbones);
+        return new GeneratedSequenceFolder(
+            root,
+            leaves,
+            utilities,
+            backbones,
+            taggingFiles.Select(f => f.Path).ToList());
     }
 
     /// <summary>
@@ -1062,10 +1318,14 @@ public sealed class SequenceFolderGenerator
         string root,
         SequencePlan plan,
         IReadOnlyList<GeneratedLeaf> written,
+        IReadOnlyList<(string Path, string Md5)> taggingFiles,
         string regionalBackboneMd5,
         CancellationToken cancellationToken)
     {
         var checksums = written.ToDictionary(x => x.RelativePath, x => x.Md5);
+
+        foreach (var (path, md5) in taggingFiles)
+            checksums[path] = md5;
 
         var leaves = plan.Leaves
             .Where(leaf => leaf.RegionalElementPath.Count == 0)
@@ -1077,6 +1337,16 @@ public sealed class SequenceFolderGenerator
                 leaf.Operation,
                 checksums[leaf.RelativePath],
                 leaf.ModifiedFile))
+            // The STF's own leaf, in the element its documents sit in — an STF
+            // is content of the section it describes, not a utility file.
+            .Concat(plan.StudyTaggingFiles.Select(stf => new BackboneLeaf(
+                ElementChainFor(plan, stf),
+                stf.LeafId,
+                $"Study Tagging File — {stf.StudyIdentifier}",
+                stf.RelativePath,
+                stf.Operation,
+                checksums[stf.RelativePath],
+                stf.ModifiedFile)))
             .Concat(plan.Deletions.Ich)
             .Append(ModuleOneCrossLink(regionalBackboneMd5))
             .ToList();
@@ -1229,14 +1499,76 @@ public sealed class SequenceFolderGenerator
     /// does not carry is the failure a reviewer cannot see and a regulator can.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// One file per (study, element), written from the frozen snapshot.
+    /// </summary>
+    private static async Task<IReadOnlyList<(string Path, string Md5)>>
+        WriteStudyTaggingFilesAsync(
+            string root,
+            SequencePlan plan,
+            CancellationToken cancellationToken)
+    {
+        var written = new List<(string Path, string Md5)>();
+
+        foreach (var stf in plan.StudyTaggingFiles)
+        {
+            var absolute = Path.Combine(
+                root, stf.RelativePath.Replace('/', Path.DirectorySeparatorChar));
+
+            Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
+
+            // How this file climbs back to the sequence folder: one ".." per
+            // folder segment. The backbone, the DTD and the stylesheet are all
+            // relative to it, and an STF sits with the study's files rather
+            // than at a fixed depth — so this is computed, never assumed.
+            var depth = stf.RelativePath.Count(c => c == '/');
+
+            var toRoot = string.Concat(Enumerable.Repeat("../", depth));
+
+            var xml = StudyTaggingFileRenderer.Render(stf, toRoot);
+
+            var bytes = new UTF8Encoding(false).GetBytes(xml);
+
+            await File.WriteAllBytesAsync(absolute, bytes, cancellationToken);
+
+            written.Add((
+                stf.RelativePath,
+                Convert.ToHexString(MD5.HashData(bytes)).ToLowerInvariant()));
+        }
+
+        return written;
+    }
+
+    /// <summary>
+    /// The element chain an STF's leaf sits in — the same chain its documents
+    /// use, read from any one of them.
+    /// </summary>
+    private static IReadOnlyList<string> ElementChainFor(
+        SequencePlan plan, PlannedStudyTaggingFile stf) =>
+        plan.Leaves
+            .First(l => l.StudyId == stf.StudyId
+                && l.ElementPath.Count > 0
+                && l.ElementPath[^1] == stf.Element)
+            .ElementPath;
+
     private static async Task<IReadOnlyList<string>> WriteDtdsAsync(
         string root, CancellationToken cancellationToken)
     {
         var written = new List<string>();
 
-        foreach (var name in new[] { "ich-ectd-3-2.dtd", "us-regional-v3-3.dtd" })
+        // The STF DTD joins the two backbone DTDs, and the stylesheet joins it
+        // with the vocabulary it reads — util/style/ is the folder ADR-054
+        // recorded as absent without knowing what went in it.
+        foreach (var (name, folder) in new[]
         {
-            var relative = $"util/dtd/{name}";
+            ("ich-ectd-3-2.dtd", "dtd"),
+            ("us-regional-v3-3.dtd", "dtd"),
+            ("ich-stf-v2-2.dtd", "dtd"),
+            ("ich-stf-stylesheet-2-3.xsl", "style"),
+            ("valid-values.xml", "style")
+        })
+        {
+            var relative = $"util/{folder}/{name}";
             var absolute = Path.Combine(
                 root, relative.Replace('/', Path.DirectorySeparatorChar));
 
@@ -1246,7 +1578,7 @@ public sealed class SequenceFolderGenerator
                 .GetManifestResourceStream(
                     $"RegOS.Submission.Application.Generation.{name}")
                 ?? throw new InvalidOperationException(
-                    $"The eCTD DTD '{name}' is not embedded in this build.");
+                    $"The eCTD artifact '{name}' is not embedded in this build.");
 
             await using var file = File.Create(absolute);
             await resource.CopyToAsync(file, cancellationToken);
@@ -1262,7 +1594,8 @@ public sealed class SequenceFolderGenerator
         IReadOnlyList<PlannedLeaf> Leaves,
         PlannedDeletions Deletions,
         WireVocabulary Vocabulary,
-        RegionalFacts Regional);
+        RegionalFacts Regional,
+        IReadOnlyList<PlannedStudyTaggingFile> StudyTaggingFiles);
 
     private sealed record PlannedLeaf(
         string RelativePath,
@@ -1274,7 +1607,12 @@ public sealed class SequenceFolderGenerator
         string LeafId,
         string Title,
         string Operation,
-        string? ModifiedFile);
+        string? ModifiedFile,
+        Guid? StudyId = null,
+        string? FiledStudyIdentifier = null,
+        string? FiledStudyTitle = null,
+        string? FileTag = null,
+        string Folder = "");
 
     /// <summary>
     /// Where a section's documents go — on disk, and in the backbone. Two

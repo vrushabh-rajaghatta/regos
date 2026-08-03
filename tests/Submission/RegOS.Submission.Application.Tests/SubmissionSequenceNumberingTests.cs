@@ -265,7 +265,8 @@ public sealed class SubmissionSequenceNumberingTests : IAsyncLifetime
         new(
             new SubmissionValidator(new SubmissionRepository(ctx), ctx),
             new SubmissionPublicationBaseline(ctx),
-            new SubmissionRepository(ctx));
+            new SubmissionRepository(ctx),
+            ctx);
 
     private async Task PublishAsync(SubmissionId submissionId)
     {

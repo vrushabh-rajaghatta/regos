@@ -149,6 +149,32 @@ public sealed class SubmissionDocument : Entity<SubmissionDocumentId>
     public string? FileTag { get; private set; }
 
     /// <summary>
+    /// The sponsor's study identifier <em>as this sequence filed it</em>, and
+    /// the study's title likewise. **Null until publication**, and null
+    /// afterwards for a placement that reported no study.
+    /// </summary>
+    /// <remarks>
+    /// <b>The freeze boundary.</b> A study is mutable; a filed sequence is not:
+    /// <code>
+    /// Study (mutable) → Publication → frozen snapshot → STF XML
+    /// </code>
+    /// An STF is projected from the snapshot, never from today's registry, so
+    /// regenerating sequence 0000 a year later reproduces the bytes FDA
+    /// received — which is [ADR-047](ADR-047)'s instrument applied to a fact
+    /// this aggregate does not own.
+    /// <para>
+    /// <b>It is a copy, and that is the point.</b> Everywhere else RegOS
+    /// refuses to duplicate a fact because two copies can disagree; here they
+    /// are <em>meant</em> to, and the disagreement is the record of a study
+    /// having been renamed since it was filed.
+    /// </para>
+    /// </remarks>
+    public string? FiledStudyIdentifier { get; private set; }
+
+    /// <inheritdoc cref="FiledStudyIdentifier"/>
+    public string? FiledStudyTitle { get; private set; }
+
+    /// <summary>
     /// The placement in the previous sequence this supersedes — eCTD's
     /// <c>modified-file</c>. Set only alongside
     /// <see cref="SubmissionContentOperation.Replace"/>.
@@ -200,6 +226,14 @@ public sealed class SubmissionDocument : Entity<SubmissionDocumentId>
         ClinicalStudyId = null;
         NonClinicalStudyId = null;
         FileTag = null;
+    }
+
+    // Only Submission.Publish may set these, and only once — the snapshot of
+    // what this sequence said the study was.
+    internal void FreezeStudyIdentity(string identifier, string title)
+    {
+        FiledStudyIdentifier = identifier;
+        FiledStudyTitle = title;
     }
 
     // Only Submission.Publish may set this, and only once.

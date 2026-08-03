@@ -91,6 +91,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [054](ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md) | A study tagging file is a projection over a study we do not have | Accepted | Direction |
 | [055](ADR-055-when-an-authority-required-fact-becomes-a-domain-fact.md) | When an authority-required fact becomes a domain fact | Accepted | Direction |
 | [056](ADR-056-study-identity-is-owned-by-the-sponsor.md) | Study identity is owned by the sponsor, not by a submission | Accepted | Direction |
+| [057](ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) | A filed artifact is projected from a snapshot; continuity is enforced at the boundary | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

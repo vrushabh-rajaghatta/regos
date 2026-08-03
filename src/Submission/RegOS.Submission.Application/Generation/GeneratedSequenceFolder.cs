@@ -23,11 +23,18 @@ namespace RegOS.Submission.Application.Generation;
 /// returned as content because, like every other path here, it is a projection
 /// of the submission and holds nothing the submission does not.
 /// </param>
+/// <param name="StudyTaggingFiles">
+/// One per (study, eCTD element). Listed apart from <paramref name="Leaves"/>
+/// because an STF carries no document: it is a projection over leaves the
+/// backbone already holds (ADR-054), so it has a path and a checksum and no
+/// product document behind it.
+/// </param>
 public sealed record GeneratedSequenceFolder(
     string RootPath,
     IReadOnlyList<GeneratedLeaf> Leaves,
     IReadOnlyList<string> UtilityFiles,
-    IReadOnlyList<string> BackboneFiles);
+    IReadOnlyList<string> BackboneFiles,
+    IReadOnlyList<string> StudyTaggingFiles);
 
 /// <summary>
 /// One document, written where the blueprint says it belongs.

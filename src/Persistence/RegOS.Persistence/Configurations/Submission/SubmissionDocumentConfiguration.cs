@@ -98,6 +98,12 @@ public sealed class SubmissionDocumentConfiguration
         // quality-assurance, 58) without inviting free text.
         builder.Property(x => x.FileTag).HasMaxLength(60);
 
+        // The freeze boundary, as columns. Written once at publish and never
+        // again: an STF is projected from these, not from today's registry, so
+        // regenerating a filed sequence reproduces what the authority received.
+        builder.Property(x => x.FiledStudyIdentifier).HasMaxLength(50);
+        builder.Property(x => x.FiledStudyTitle).HasMaxLength(500);
+
         builder.Ignore(x => x.ReportsAStudy);
 
         // Shadow FK to the owning submission — the child holds no FK property.

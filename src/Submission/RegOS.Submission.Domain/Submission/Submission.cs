@@ -504,11 +504,18 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// this is the first. The diff is computed against it and frozen — see
     /// <see cref="RecordOperations"/>.
     /// </param>
+    /// <param name="publishedStudies">
+    /// What each reported study was called at the moment of filing. Supplied
+    /// rather than read, because studies are another context (ADR-056) — and
+    /// frozen here rather than looked up later, because an STF must reproduce
+    /// what the authority received even after the study is renamed.
+    /// </param>
     public void Publish(
         int sequenceNumber,
         int? previousPublishedSequenceNumber,
         IReadOnlyCollection<PublishedPlacement> previousPlacements,
-        DateTimeOffset publishedAt)
+        DateTimeOffset publishedAt,
+        IReadOnlyCollection<PublishedStudy>? publishedStudies = null)
     {
         ArgumentNullException.ThrowIfNull(previousPlacements);
 
@@ -537,6 +544,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
                 SubmissionErrors.FirstSequenceHasNoBaseline);
 
         RecordOperations(previousPlacements);
+        FreezeStudyIdentities(publishedStudies ?? []);
 
         Status = SubmissionStatus.Published;
         SequenceNumber = sequenceNumber;
@@ -545,6 +553,33 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             SubmissionStatus.Published,
             DateOnly.FromDateTime(publishedAt.UtcDateTime),
             publishedAt.UtcDateTime);
+    }
+
+    /// <summary>
+    /// Takes the snapshot an STF is projected from.
+    /// </summary>
+    /// <remarks>
+    /// Silent about a study it was not given: the caller resolves what the
+    /// placements reference, and a placement whose study has vanished from the
+    /// registry is a broken reference the generator names — not something to
+    /// half-freeze here.
+    /// </remarks>
+    private void FreezeStudyIdentities(
+        IReadOnlyCollection<PublishedStudy> studies)
+    {
+        foreach (var document in _documents)
+        {
+            var studyId = document.ClinicalStudyId?.Value
+                ?? document.NonClinicalStudyId?.Value;
+
+            if (studyId is not { } id) continue;
+
+            var study = studies.FirstOrDefault(s => s.StudyId == id);
+
+            if (study is null) continue;
+
+            document.FreezeStudyIdentity(study.Identifier, study.Title);
+        }
     }
 
     /// <summary>
