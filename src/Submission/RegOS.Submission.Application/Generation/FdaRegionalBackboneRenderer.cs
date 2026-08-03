@@ -59,6 +59,20 @@ public static class FdaRegionalBackboneRenderer
         "https://www.accessdata.fda.gov/static/eCTD/us-regional.xsl";
 
     private const string FdaNamespace = "http://www.ich.org/fda";
+    /// <summary>
+    /// The module container, which <b>this renderer owns</b>:
+    /// <c>fda-regional</c> is <c>(admin, m1-regional?)</c>, so there is exactly
+    /// one and its presence is a property of the file rather than of any leaf.
+    /// </summary>
+    /// <remarks>
+    /// Named publicly so the generator can strip it from a section's element
+    /// chain. The blueprint records it on Module 1's root — correctly, it is
+    /// that section's regional element — and a leaf path that still carried it
+    /// would nest <c>m1-regional</c> inside itself. Caught by the parser on the
+    /// first generated file, and invisible to every content assertion.
+    /// </remarks>
+    public const string ModuleOneContainer = "m1-regional";
+
     private const string XlinkNamespace = "http://www.w3c.org/1999/xlink";
     private const string RootElement = "fda-regional:fda-regional";
     private const string DtdVersion = "3.3";
@@ -261,7 +275,7 @@ public static class FdaRegionalBackboneRenderer
             node.Leaves.Add(leaf);
         }
 
-        writer.WriteStartElement("m1-regional");
+        writer.WriteStartElement(ModuleOneContainer);
         WriteNode(writer, root);
         writer.WriteEndElement();
     }

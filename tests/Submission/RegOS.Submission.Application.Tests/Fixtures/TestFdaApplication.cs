@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
+using RegOS.Organization.Domain.Aggregates.Contact;
 using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.ApplicationType;
@@ -61,10 +62,18 @@ internal static class TestFdaApplication
             ApplicationTypeId applicationTypeId,
             string fixtureCode)
     {
+        await EnsureApplicantIsIdentifiableAsync(ctx);
+
         var existing = await FindAsync(ctx, fixtureCode);
 
         if (existing is not null)
+        {
+            // Find-or-create, so the row is usually already there — and it was
+            // created before an application number could be recorded at all.
+            await EnsureNumberedAsync(ctx, existing.Value.Item1);
+
             return existing.Value;
+        }
 
         var countryId = await ctx.Countries
             .AsNoTracking().Select(x => x.Id).FirstAsync();
@@ -84,6 +93,11 @@ internal static class TestFdaApplication
             applicationType,
             organizationId,
             "Blueprint Validation Application");
+
+        // Every FDA sequence is filed against a number the authority assigned.
+        // Six digits, because that is what FDA issues — the shape is checked at
+        // the FDA boundary, not by the aggregate (ADR-055).
+        application.RecordApplicationNumber("123456");
 
         ctx.Products.Add(product);
         ctx.RegulatoryApplications.Add(application);
@@ -128,4 +142,84 @@ internal static class TestFdaApplication
 
         return applicationId == default ? null : (applicationId, globalProductId);
     }
+
+    /// <summary>
+    /// The number FDA assigned. Six digits, because that is what FDA issues —
+    /// and the shape is checked at the FDA boundary rather than by the
+    /// aggregate (ADR-055).
+    /// </summary>
+    private static async Task EnsureNumberedAsync(
+        RegOSDbContext ctx, RegulatoryApplicationId applicationId)
+    {
+        var application = await ctx.RegulatoryApplications
+            .SingleAsync(x => x.Id == applicationId);
+
+        if (application.ApplicationNumber is not null)
+            return;
+
+        application.RecordApplicationNumber("123456");
+
+        // Parallel test classes converge on this one row, so two of them can
+        // both find it unnumbered. Both write the same value, so losing the
+        // race costs nothing — the same reasoning the create path already uses.
+        try
+        {
+            await ctx.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+        }
+        finally
+        {
+            ctx.ChangeTracker.Clear();
+        }
+    }
+
+    /// <summary>
+    /// FDA identifies the applicant by a DUNS number, and the fixture's
+    /// applicant is whichever organization the seed created first.
+    /// </summary>
+    /// <remarks>
+    /// <b>Given rather than defaulted.</b> The generator refuses a missing DUNS
+    /// rather than writing FDA's <c>999999999</c>, because the placeholder is
+    /// permitted *"if you are unable to acquire a DUNS number"* — a fact about
+    /// the applicant that an empty column does not establish (E25). So the
+    /// fixture has to supply one, exactly as a user would.
+    /// </remarks>
+    private static async Task EnsureApplicantIsIdentifiableAsync(RegOSDbContext ctx)
+    {
+        var organizationId = await ctx.Organizations
+            .AsNoTracking().Select(x => x.Id).FirstAsync();
+
+        var duns = await ctx.IdentifierSchemes
+            .AsNoTracking()
+            .Where(x => x.Code == "DUNS")
+            .Select(x => x.Id)
+            .SingleAsync();
+
+        var organization = await ctx.Organizations
+            .Include(x => x.Identifiers)
+            .SingleAsync(x => x.Id == organizationId);
+
+        if (organization.Identifiers.Any(x => x.SchemeId == duns))
+            return;
+
+        // A fictional nine-digit number. Real ones are issued by Dun &
+        // Bradstreet and this is a test database.
+        organization.AddIdentifier(duns, "123456789");
+
+        // As above: a lost race means someone else recorded the same number.
+        try
+        {
+            await ctx.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+        }
+        finally
+        {
+            ctx.ChangeTracker.Clear();
+        }
+    }
 }
+

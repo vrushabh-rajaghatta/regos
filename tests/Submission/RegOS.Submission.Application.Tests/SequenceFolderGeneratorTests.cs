@@ -1,13 +1,16 @@
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Text;
 
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
+using RegOS.Organization.Domain.Aggregates.Contact;
 using RegOS.Persistence;
 using RegOS.Product.Domain.Product;
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.DocumentType;
+using RegOS.ReferenceData.Domain.Organization;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
@@ -237,13 +240,21 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// <b>The story boundary, asserted.</b> ICH declares its Module 1 element
-    /// <c>(leaf*)</c> and defers the module to the regions, so a Module 1
-    /// document is written to disk and named in the <em>regional</em> backbone —
-    /// which S006 writes. It must not appear here.
+    /// <b>The story boundary, and S006 moved it.</b> ICH declares its Module 1
+    /// element <c>(leaf*)</c> and defers the module to the regions, so a Module
+    /// 1 document is written to disk and named in the <em>regional</em>
+    /// backbone. What <c>index.xml</c> carries is one leaf: a pointer at that
+    /// file.
     /// </summary>
+    /// <remarks>
+    /// This test asserted the opposite until 2026-08-03 — <c>index.xml</c>
+    /// mentioning Module 1 at all was the defect S005 was guarding against,
+    /// because *"a backbone that links a missing file is worse than one that
+    /// links nothing"*. The file now exists, so the link is written, and the
+    /// assertion inverts with the behaviour rather than being deleted.
+    /// </remarks>
     [Fact]
-    public async Task AModuleOneDocument_IsWrittenToDisk_AndNamedInNoIchElement()
+    public async Task AModuleOneDocument_IsNamedInTheRegionalBackbone_AndCrossLinkedFromTheIndex()
     {
         await using var ctx = New();
 
@@ -256,16 +267,82 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
             .Which.RelativePath.Should()
             .Be("m1/us/12-cover-letters/cover-letter.pdf");
 
-        var xml = await File.ReadAllTextAsync(
+        var index = await File.ReadAllTextAsync(
             Path.Combine(generated.RootPath, "index.xml"));
 
-        xml.Should().NotContain("<leaf");
-        xml.Should().NotContain(
-            "m1-administrative-information-and-prescribing-information");
+        // The document itself is not here — only the regional file is.
+        index.Should().NotContain("12-cover-letters");
+        index.Should().Contain("xlink:href=\"m1/us/us-regional.xml\"");
 
-        // Still a valid document — every module is optional in the DTD, which
-        // is what lets the two backbones be written by two stories.
+        var regional = await File.ReadAllTextAsync(Path.Combine(
+            generated.RootPath, "m1", "us", "us-regional.xml"));
+
+        // And there the document is, one directory pair up from the backbone.
+        regional.Should().Contain("m1-2-cover-letters");
+        regional.Should().Contain(
+            "xlink:href=\"../../m1/us/12-cover-letters/cover-letter.pdf\"");
+
         ValidateIndex(generated.RootPath).ExitCode.Should().Be(0);
+    }
+
+    /// <summary>
+    /// <b>S006's acceptance criterion, on output RegOS generated.</b> The
+    /// standing Level 2a evidence for <c>us-regional.xml</c> came from the
+    /// renderer being handed a hand-built <c>RegionalBackbone</c>. This is the
+    /// same DTD applied to a file built from a real published sequence — a real
+    /// applicant's DUNS, a real contact, real placements.
+    /// </summary>
+    /// <remarks>
+    /// The DOCTYPE is rewritten to the pinned DTD before validating, because
+    /// what ships points at accessdata.fda.gov (E26) and this evidence is
+    /// offline. Neither is bent to suit the other: the shipped header is
+    /// asserted separately in FdaRegionalBackboneRendererTests.
+    /// </remarks>
+    [Fact]
+    public async Task TheGeneratedPackage_CarriesARegionalBackboneValidAgainstItsOwnDtd()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) = await APublishedEctdSequenceAsync(ctx);
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        var path = Path.Combine(
+            generated.RootPath, "m1", "us", "us-regional.xml");
+
+        var offline = (await File.ReadAllTextAsync(path)).Replace(
+            FdaRegionalBackboneRenderer.DoctypeSystemId,
+            "../../util/dtd/us-regional-v3-3.dtd",
+            StringComparison.Ordinal);
+
+        await File.WriteAllTextAsync(path, offline, new UTF8Encoding(false));
+
+        var result = Xmllint(path);
+
+        result.ExitCode.Should().Be(0, result.Output);
+    }
+
+    /// <summary>
+    /// <b>The cross-link quotes a checksum of the file it points at</b>, which
+    /// is why the regional backbone is written first. ICH makes a leaf's
+    /// <c>checksum</c> <c>#REQUIRED</c> (E16), and an empty one here would be
+    /// the E7 shape — a leaf with no file — which this is not.
+    /// </summary>
+    [Fact]
+    public async Task TheCrossLink_CarriesTheRegionalBackbonesOwnChecksum()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) = await APublishedEctdSequenceAsync(ctx);
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        var regional = await File.ReadAllBytesAsync(Path.Combine(
+            generated.RootPath, "m1", "us", "us-regional.xml"));
+
+        var index = await File.ReadAllTextAsync(
+            Path.Combine(generated.RootPath, "index.xml"));
+
+        index.Should().Contain(
+            Convert.ToHexString(MD5.HashData(regional)).ToLowerInvariant());
     }
 
     /// <summary>
@@ -382,7 +459,13 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         var xml = await File.ReadAllTextAsync(
             Path.Combine(generated.RootPath, "index.xml"));
 
-        xml.Should().NotContain("<leaf");
+        // One leaf, and it is the regional cross-link every sequence carries —
+        // the carried-forward document contributes none. Asserted as a count
+        // rather than an absence, because "no leaf at all" stopped being true
+        // when S006 wired the cross-link.
+        Regex.Matches(xml, "<leaf ").Should().ContainSingle();
+        xml.Should().Contain("us-regional.xml");
+
         ValidateIndex(generated.RootPath).ExitCode.Should().Be(0);
     }
 
@@ -586,6 +669,13 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         submission.AttachDocument(
             document.Id, document.CurrentVersionId!.Value, section);
 
+        // FDA will not accept a filing with no regulatory contact, and the
+        // contact needs a number whose kind is known and an address. Named
+        // before publication because AssignRole freezes with everything else
+        // (ADR-048).
+        submission.AssignRole(
+            await RegulatoryContactAsync(ctx), RegulatoryContactRole);
+
         if (publish)
             submission.Publish(0, null, [], DateTimeOffset.UtcNow);
 
@@ -621,6 +711,11 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
             carried.DocumentVersionId,
             carried.TemplateSectionId!.Value);
 
+        // Every sequence is filed, so every sequence names its own contact —
+        // ADR-048's whole point is that this is not an application-level fact.
+        second.AssignRole(
+            await RegulatoryContactAsync(ctx), RegulatoryContactRole);
+
         second.Publish(
             1,
             previousPublishedSequenceNumber: 0,
@@ -639,6 +734,60 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
 
         return second.Id;
     }
+
+    /// <summary>
+    /// A findable regulatory contact, reachable the way FDA requires — one
+    /// telephone number whose kind is known, and one email address.
+    /// </summary>
+    /// <remarks>
+    /// Created once and shared, like the application fixture: parallel test
+    /// classes must converge on one row rather than race.
+    /// </remarks>
+    private static async Task<ContactId> RegulatoryContactAsync(RegOSDbContext ctx)
+    {
+        const string surname = "Fixture-Regulatory";
+
+        var existing = await ctx.Contacts
+            .AsNoTracking()
+            .Where(x => x.LastName == surname)
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync();
+
+        if (existing is not null)
+            return existing;
+
+        var organizationId = await ctx.Organizations
+            .AsNoTracking().Select(x => x.Id).FirstAsync();
+
+        var contact = Contact.Create(
+            TestTenant.Id, organizationId, "Priya", surname,
+            DateOnly.FromDateTime(DateTime.UtcNow));
+
+        contact.AddRole(RegulatoryContactRole);
+        contact.AddEmail("priya.regulatory@example.com");
+        contact.AddPhone("+1 240 555 0100", ContactPhoneKind.Business);
+
+        ctx.Contacts.Add(contact);
+
+        try
+        {
+            await ctx.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            ctx.ChangeTracker.Clear();
+        }
+
+        return await ctx.Contacts
+            .AsNoTracking()
+            .Where(x => x.LastName == surname)
+            .Select(x => x.Id)
+            .FirstAsync();
+    }
+
+    /// <summary>REG — the only role with an FDA translation (E31).</summary>
+    private static readonly ContactRoleId RegulatoryContactRole =
+        new(Guid.Parse("81000000-0000-0000-0000-000000000003"));
 
     private static async Task<RegOS.ReferenceData.Domain.Blueprint.RegulatoryTemplateVersionId>
         BoundVersionAsync(RegOSDbContext ctx) =>
@@ -668,16 +817,16 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
     /// relative DOCTYPE resolves against the <c>util/dtd/</c> the generator
     /// wrote, not against a copy arranged by the test.
     /// </summary>
-    private static (int ExitCode, string Output) ValidateIndex(string root)
+    /// <summary>
+    /// <c>xmllint</c> against whatever DOCTYPE the file names, resolved from the
+    /// folder it sits in — so a package's own <c>util/dtd/</c> is what checks it.
+    /// </summary>
+    private static (int ExitCode, string Output) Xmllint(string path)
     {
         using var process = System.Diagnostics.Process.Start(
             new System.Diagnostics.ProcessStartInfo("xmllint")
             {
-                ArgumentList =
-                {
-                    "--noout", "--valid",
-                    Path.Combine(root, IchBackboneRenderer.FileName),
-                },
+                ArgumentList = { "--noout", "--valid", path },
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
             })!;
@@ -689,6 +838,9 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
 
         return (process.ExitCode, output);
     }
+
+    private static (int ExitCode, string Output) ValidateIndex(string root) =>
+        Xmllint(Path.Combine(root, IchBackboneRenderer.FileName));
 
     public Task InitializeAsync() => Task.CompletedTask;
 

@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
+using RegOS.Organization.Domain.Aggregates.Contact;
 using RegOS.ProductDocument.Domain.Entities;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.SharedKernel.Exceptions;
@@ -61,6 +62,7 @@ public sealed class SequenceFolderGenerator
         var submission = await _dbContext.Submissions
             .AsNoTracking()
             .Include(s => s.Documents)
+            .Include(s => s.Roles)
             .SingleOrDefaultAsync(s => s.Id == submissionId, cancellationToken)
             ?? throw new NotFoundException(
                 SequenceGenerationErrors.SubmissionDoesNotExist);
@@ -100,7 +102,11 @@ public sealed class SequenceFolderGenerator
                 SequenceGenerationErrors.SequencePredatesTheActivityModel);
         }
 
-        await RequireWireVocabularyAsync(submission, cancellationToken);
+        var vocabulary =
+            await RequireWireVocabularyAsync(submission, cancellationToken);
+
+        var regional =
+            await ResolveRegionalFactsAsync(submission, cancellationToken);
 
         if (submission.BoundTemplateVersionId is not { } versionId)
         {
@@ -125,7 +131,8 @@ public sealed class SequenceFolderGenerator
         foreach (var leaf in leaves)
             RequireAPathTheRegionAccepts(sequenceNumber, leaf.RelativePath);
 
-        return new SequencePlan(sequenceNumber, leaves, deletions);
+        return new SequencePlan(
+            sequenceNumber, leaves, deletions, vocabulary, regional);
     }
 
     /// <summary>
@@ -140,7 +147,7 @@ public sealed class SequenceFolderGenerator
     /// have one</i> — and a package half-built before S006 discovers a missing
     /// <c>fdast</c> is a package nobody can act on.
     /// </remarks>
-    private async Task RequireWireVocabularyAsync(
+    private async Task<WireVocabulary> RequireWireVocabularyAsync(
         SubmissionAggregate submission, CancellationToken cancellationToken)
     {
         var applicationType = await (
@@ -173,6 +180,21 @@ public sealed class SequenceFolderGenerator
 
         RequireToken("Sequence action", subType.Code, subType.Token);
 
+        // submission-id borrows the opening sequence's number rather than
+        // minting an identity — S003's whole argument for deriving the activity
+        // instead of aggregating it (E15, restated by the M1 spec §III.B.2.a).
+        var openingSequence = await _dbContext.Submissions
+            .AsNoTracking()
+            .Where(x => x.Id == typeOwner)
+            .Select(x => x.SequenceNumber)
+            .SingleAsync(cancellationToken);
+
+        return new WireVocabulary(
+            applicationType.Token!,
+            submissionType.Token!,
+            subType.Token!,
+            openingSequence!.Value);
+
         static void RequireToken(string kind, string code, string? token)
         {
             if (string.IsNullOrEmpty(token))
@@ -181,6 +203,260 @@ public sealed class SequenceFolderGenerator
                     kind, code));
         }
     }
+
+    /// <param name="OpeningSequenceNumber">
+    /// The sequence that opened the regulatory activity — this one when it opens
+    /// its own, and invariant 4 of S003 guarantees no chain to walk.
+    /// </param>
+    private sealed record WireVocabulary(
+        string ApplicationType,
+        string SubmissionType,
+        string SubmissionSubType,
+        int OpeningSequenceNumber);
+
+    /// <summary>
+    /// Everything <c>us-regional.xml</c> says about the filing, read from the
+    /// domain — <b>and every way it can be refused.</b>
+    /// </summary>
+    /// <remarks>
+    /// <b>Four of the five refusals here are data completeness</b> (ADR-055):
+    /// someone knows the answer and has not typed it in, and the message says
+    /// what to type and where. That is a different obligation from an unread
+    /// specification or an unmodelled concept, and collapsing them would send a
+    /// user hunting for a document when they needed a form.
+    /// <para>
+    /// Resolved during planning, so a missing contact fails before a directory
+    /// exists rather than after.
+    /// </para>
+    /// </remarks>
+    private async Task<RegionalFacts> ResolveRegionalFactsAsync(
+        SubmissionAggregate submission, CancellationToken cancellationToken)
+    {
+        var application = await (
+            from app in _dbContext.RegulatoryApplications.AsNoTracking()
+            where app.Id == submission.ApplicationId
+            join type in _dbContext.ApplicationTypes
+                on app.ApplicationTypeId equals type.Id
+            select new
+            {
+                app.ApplicantOrganizationId,
+                app.ApplicationNumber,
+                ApplicationTypeToken = type.Token,
+            }).SingleAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(application.ApplicationNumber))
+        {
+            throw new BusinessRuleViolationException(
+                SequenceGenerationErrors.NoApplicationNumberOnTheApplication);
+        }
+
+        // FDA's shape, checked at FDA's boundary. The domain stores what the
+        // authority assigned and has no opinion about it (ADR-055).
+        if (!IsAnFdaApplicationNumber(application.ApplicationNumber))
+        {
+            throw new BusinessRuleViolationException(string.Format(
+                SequenceGenerationErrors.ApplicationNumberIsNotInFdaFormat,
+                application.ApplicationNumber));
+        }
+
+        var applicant = await _dbContext.Organizations
+            .AsNoTracking()
+            .Include(x => x.Identifiers)
+            .SingleAsync(x => x.Id == application.ApplicantOrganizationId,
+                cancellationToken);
+
+        // By code rather than by seeded id: the id lives in a seed class this
+        // project cannot see, and the code is the stable public name.
+        var dunsSchemeId = await _dbContext.IdentifierSchemes
+            .AsNoTracking()
+            .Where(x => x.Code == DunsSchemeCode)
+            .Select(x => x.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        var duns = applicant.Identifiers
+            .FirstOrDefault(x => x.SchemeId == dunsSchemeId)?.Value;
+
+        if (string.IsNullOrWhiteSpace(duns))
+        {
+            throw new BusinessRuleViolationException(string.Format(
+                SequenceGenerationErrors.NoDunsNumberForTheApplicant,
+                applicant.LegalName));
+        }
+
+        if (submission.Title.Length > MaxSubmissionDescription)
+        {
+            throw new BusinessRuleViolationException(string.Format(
+                SequenceGenerationErrors.SubmissionDescriptionTooLong,
+                submission.Title.Length, MaxSubmissionDescription));
+        }
+
+        return new RegionalFacts(
+            duns,
+            applicant.LegalName,
+            submission.Title,
+            await ResolveContactsAsync(submission, cancellationToken),
+            application.ApplicationNumber,
+            application.ApplicationTypeToken!);
+    }
+
+    /// <summary>
+    /// The people on the filing (ADR-048), translated into FDA's contact
+    /// taxonomy — <b>every one this boundary can express faithfully, and only
+    /// those.</b>
+    /// </summary>
+    /// <remarks>
+    /// <b>A role with no translation is skipped, not refused</b>, and
+    /// <c>HA-REVIEWER</c> is why: an authority's reviewer is a real person on a
+    /// real filing and must never be emitted as one of the applicant's own
+    /// contacts. Refusing the package because someone recorded a reviewer would
+    /// punish accurate data entry.
+    /// <para>
+    /// <b>The algorithm is generic; only the table is FDA's.</b> When a role
+    /// gains a translation the renderer grows by a row rather than by a branch —
+    /// which is the whole reason the taxonomies were never merged.
+    /// </para>
+    /// </remarks>
+    private async Task<IReadOnlyList<RegionalContact>> ResolveContactsAsync(
+        SubmissionAggregate submission, CancellationToken cancellationToken)
+    {
+        var named = submission.Roles.Select(x => x.ContactId).Distinct().ToList();
+
+        var people = await _dbContext.Contacts
+            .AsNoTracking()
+            .Include(x => x.Emails)
+            .Include(x => x.Phones)
+            .Where(x => named.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+
+        var roleCodes = await _dbContext.ContactRoles
+            .AsNoTracking()
+            .ToDictionaryAsync(x => x.Id, x => x.Code, cancellationToken);
+
+        var contacts = new List<RegionalContact>();
+
+        // Ordered by the code FDA will read, then by name — two runs must
+        // produce the same bytes (ADR-049), and a dictionary does not promise
+        // that.
+        foreach (var assignment in submission.Roles
+            .Where(x => roleCodes.ContainsKey(x.RoleId))
+            .OrderBy(x => roleCodes[x.RoleId], StringComparer.Ordinal)
+            .ThenBy(x => x.ContactId.Value))
+        {
+            if (!ApplicantContactTypes.TryGetValue(
+                    roleCodes[assignment.RoleId], out var contactType))
+            {
+                continue;
+            }
+
+            var person = people[assignment.ContactId];
+            var name = $"{person.FirstName} {person.LastName}";
+
+            if (person.Phones.Count == 0 || person.Emails.Count == 0)
+            {
+                throw new BusinessRuleViolationException(string.Format(
+                    SequenceGenerationErrors.ContactIsNotReachable,
+                    name,
+                    roleCodes[assignment.RoleId],
+                    person.Phones.Count == 0
+                        ? "telephone number"
+                        : "email address"));
+            }
+
+            var telephones = new List<RegionalTelephone>();
+
+            foreach (var phone in person.Phones.OrderBy(
+                x => x.Number, StringComparer.Ordinal))
+            {
+                if (phone.Kind is not { } kind)
+                {
+                    throw new BusinessRuleViolationException(string.Format(
+                        SequenceGenerationErrors.PhoneHasNoKind,
+                        name, phone.Number));
+                }
+
+                telephones.Add(new RegionalTelephone(
+                    phone.Number, TelephoneNumberTypes[kind]));
+            }
+
+            contacts.Add(new RegionalContact(
+                name,
+                contactType,
+                telephones,
+                [.. person.Emails
+                    .Select(x => x.Address)
+                    .OrderBy(x => x, StringComparer.Ordinal)]));
+        }
+
+        if (contacts.Count == 0)
+        {
+            throw new BusinessRuleViolationException(
+                SequenceGenerationErrors.NoRegulatoryContactOnTheSequence);
+        }
+
+        return contacts;
+    }
+
+    /// <summary>
+    /// <c>ContactRole.Code</c> → FDA's <c>applicant-contact-type</c>, and this
+    /// table is the entire FDA-specific part of contact translation.
+    /// </summary>
+    /// <remarks>
+    /// <b>One row, and it used to be two.</b> <c>MFG → fdaact2</c> was recorded
+    /// on the strength of the M1 specification's phrase *"the technical
+    /// contact"*, read as a description; FDA's published list says
+    /// <c>fdaact2</c> <em>is</em> the Technical Contact, which is a different
+    /// person from a manufacturing one (evidence E31). Nor is <c>fdaact3</c> a
+    /// home for an Authorised Representative — a United States Agent is a
+    /// specific obligation on a foreign establishment, not the same role under
+    /// another flag.
+    /// <para>
+    /// <c>HA-REVIEWER</c> is absent on purpose and always will be.
+    /// </para>
+    /// </remarks>
+    private static readonly IReadOnlyDictionary<string, string>
+        ApplicantContactTypes = new Dictionary<string, string>
+        {
+            ["REG"] = "fdaact1",
+        };
+
+    /// <summary>
+    /// The domain's phone kind → FDA's <c>telephone-number-type</c> (E30).
+    /// </summary>
+    /// <remarks>
+    /// <b>One-to-one today, and the correspondence is the world's rather than
+    /// the wire's</b> (ADR-055). It lives here, in the boundary, precisely so a
+    /// second authority that slices telephones differently changes this table
+    /// and not <c>ContactPhone</c>.
+    /// </remarks>
+    private static readonly IReadOnlyDictionary<ContactPhoneKind, string>
+        TelephoneNumberTypes = new Dictionary<ContactPhoneKind, string>
+        {
+            [ContactPhoneKind.Business] = "fdatnt1",
+            [ContactPhoneKind.Fax] = "fdatnt2",
+            [ContactPhoneKind.Mobile] = "fdatnt3",
+        };
+
+    /// <summary>
+    /// *"six (6)-digit … only numeric digits, including any leading zeros …
+    /// without letters or dashes"* — M1 Backbone Specification §III.B.1.a.
+    /// </summary>
+    private static bool IsAnFdaApplicationNumber(string number) =>
+        number.Length == FdaApplicationNumberLength && number.All(char.IsAsciiDigit);
+
+    private const int FdaApplicationNumberLength = 6;
+
+    private const string DunsSchemeCode = "DUNS";
+
+    /// <summary>M1 Backbone Specification §III.A.3.</summary>
+    private const int MaxSubmissionDescription = 128;
+
+    private sealed record RegionalFacts(
+        string ApplicantId,
+        string CompanyName,
+        string SubmissionDescription,
+        IReadOnlyList<RegionalContact> Contacts,
+        string ApplicationNumber,
+        string ApplicationType);
 
     /// <summary>
     /// Each section's path inside the sequence folder — its ancestors' folders
@@ -210,6 +486,7 @@ public sealed class SequenceFolderGenerator
         {
             var segments = new List<string>();
             var elements = new List<string>();
+            var regional = new List<string>();
 
             for (var node = section; node is not null;
                  node = node.ParentSectionId is { } p && byId.TryGetValue(p, out var parent)
@@ -229,6 +506,26 @@ public sealed class SequenceFolderGenerator
                         node.Code));
                 }
 
+                // The mirror image of the ICH chain, and the split runs the
+                // other way: ICH gives Module 1 nothing and the region gives
+                // Modules 2-5 nothing, so each is empty exactly where the other
+                // is populated. Null still means "not read"; empty means "this
+                // backbone says the section has none".
+                if (node.RegionalElement is { } regionalElement)
+                {
+                    if (regionalElement.Length > 0)
+                    {
+                        regional.InsertRange(0, regionalElement.Split(
+                            '/', StringSplitOptions.RemoveEmptyEntries));
+                    }
+                }
+                else if (IsModuleOne(node.Code))
+                {
+                    throw new BusinessRuleViolationException(string.Format(
+                        SequenceGenerationErrors.NoRegionalElementForSection,
+                        node.Code));
+                }
+
                 if (folder.Length > 0)
                     segments.Insert(0, folder);
 
@@ -245,12 +542,27 @@ public sealed class SequenceFolderGenerator
                 }
             }
 
+            // The renderer owns m1-regional — the DTD gives fda-regional exactly
+            // one, so it belongs to the file rather than to any leaf. Leaving it
+            // on the chain nests the element inside itself, which is legal-
+            // looking XML that no content assertion notices and xmllint rejects.
+            if (regional is [FdaRegionalBackboneRenderer.ModuleOneContainer, ..])
+                regional.RemoveAt(0);
+
             resolved[section.Id] = new SectionPlacement(
-                section.Code, string.Join('/', segments), elements);
+                section.Code, string.Join('/', segments), elements, regional);
         }
 
         return resolved;
     }
+
+    /// <summary>
+    /// A section's code, not its element — because the element is the thing
+    /// being checked for.
+    /// </summary>
+    private static bool IsModuleOne(string code) =>
+        code.StartsWith("1.", StringComparison.Ordinal)
+        || code.Equals("M1", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// The sequence folder each superseded or withdrawn placement was filed in
@@ -298,14 +610,14 @@ public sealed class SequenceFolderGenerator
     /// the empty string, and that is the specification's own instruction rather
     /// than a convenience.
     /// </remarks>
-    private async Task<IReadOnlyList<BackboneLeaf>> ResolveDeletionsAsync(
+    private async Task<PlannedDeletions> ResolveDeletionsAsync(
         SubmissionAggregate submission,
         IReadOnlyDictionary<TemplateSectionId, SectionPlacement> placements,
         IReadOnlyDictionary<SubmissionDocumentId, int> priorSequences,
         CancellationToken cancellationToken)
     {
         if (submission.Deletions.Count == 0)
-            return [];
+            return PlannedDeletions.None;
 
         var names = await NamesOfAsync(
             submission.Deletions.Select(d => d.ProductDocumentId),
@@ -314,19 +626,41 @@ public sealed class SequenceFolderGenerator
         foreach (var deletion in submission.Deletions)
             RequireAWritableBackbonePosition(placements[deletion.TemplateSectionId]);
 
-        return submission.Deletions
-            .Select(deletion => new BackboneLeaf(
-                placements[deletion.TemplateSectionId].IchElements,
-                LeafId(deletion.DeletesSubmissionDocumentId),
-                names[deletion.ProductDocumentId],
-                Href: string.Empty,
-                Operation: "delete",
-                Checksum: string.Empty,
-                ModifiedFile: ModifiedFile(
-                    deletion.DeletesSubmissionDocumentId, priorSequences)))
-            .OrderBy(x => string.Join('/', x.ElementPath), StringComparer.Ordinal)
-            .ThenBy(x => x.Id, StringComparer.Ordinal)
+        // Split by backbone here rather than at write time: a withdrawal in
+        // Module 1 is named in us-regional.xml and carries the region's element
+        // chain, which the ICH one does not have.
+        var withdrawals = submission.Deletions
+            .Select(deletion => new
+            {
+                Placement = placements[deletion.TemplateSectionId],
+                Leaf = new BackboneLeaf(
+                    placements[deletion.TemplateSectionId].IsRegional
+                        ? placements[deletion.TemplateSectionId].RegionalElements
+                        : placements[deletion.TemplateSectionId].IchElements,
+                    LeafId(deletion.DeletesSubmissionDocumentId),
+                    names[deletion.ProductDocumentId],
+                    Href: string.Empty,
+                    Operation: "delete",
+                    Checksum: string.Empty,
+                    ModifiedFile: ModifiedFile(
+                        deletion.DeletesSubmissionDocumentId,
+                        priorSequences,
+                        placements[deletion.TemplateSectionId].IsRegional)),
+            })
+            .OrderBy(x => string.Join('/', x.Leaf.ElementPath), StringComparer.Ordinal)
+            .ThenBy(x => x.Leaf.Id, StringComparer.Ordinal)
             .ToList();
+
+        return new PlannedDeletions(
+            [.. withdrawals.Where(x => !x.Placement.IsRegional).Select(x => x.Leaf)],
+            [.. withdrawals.Where(x => x.Placement.IsRegional).Select(x => x.Leaf)]);
+    }
+
+    private sealed record PlannedDeletions(
+        IReadOnlyList<BackboneLeaf> Ich,
+        IReadOnlyList<BackboneLeaf> Regional)
+    {
+        public static readonly PlannedDeletions None = new([], []);
     }
 
     private async Task<Dictionary<
@@ -351,7 +685,8 @@ public sealed class SequenceFolderGenerator
 
     private static string? ModifiedFile(
         SubmissionDocumentId? replaces,
-        IReadOnlyDictionary<SubmissionDocumentId, int> priorSequences)
+        IReadOnlyDictionary<SubmissionDocumentId, int> priorSequences,
+        bool regional)
     {
         if (replaces is not { } target
             || !priorSequences.TryGetValue(target, out var sequence))
@@ -359,8 +694,15 @@ public sealed class SequenceFolderGenerator
             return null;
         }
 
-        return $"../{sequence:0000}/{IchBackboneRenderer.FileName}"
-            + $"#{LeafId(target)}";
+        // Evidence E27. A Module 1 leaf points at the earlier sequence's
+        // us-regional.xml, not its index.xml, because that is the file the leaf
+        // was named in — and the depth differs with it. The M1 specification
+        // §V gives both forms verbatim.
+        return regional
+            ? $"../../../{sequence:0000}/{FdaRegionalBackboneRenderer.RelativePath}"
+                + $"#{LeafId(target)}"
+            : $"../{sequence:0000}/{IchBackboneRenderer.FileName}"
+                + $"#{LeafId(target)}";
     }
 
     private async Task<IReadOnlyList<PlannedLeaf>> ResolveLeavesAsync(
@@ -436,11 +778,14 @@ public sealed class SequenceFolderGenerator
                 document.DocumentVersionId,
                 version.StoragePath,
                 placement.IchElements,
+                placement.RegionalElements,
                 LeafId(document.Id),
                 documentNames[document.ProductDocumentId],
                 WireOperation(document.Operation!.Value),
                 ModifiedFile(
-                    document.ReplacesSubmissionDocumentId, priorSequences)));
+                    document.ReplacesSubmissionDocumentId,
+                    priorSequences,
+                    placement.IsRegional)));
         }
 
         return planned;
@@ -497,6 +842,31 @@ public sealed class SequenceFolderGenerator
                 throw new BusinessRuleViolationException(string.Format(
                     SequenceGenerationErrors.SectionNeedsAFactRegOsDoesNotHold,
                     placement.Code, element, key));
+            }
+        }
+
+        if (!placement.IsRegional)
+            return;
+
+        // E19 — the blueprint's tree and the backbone's tree disagree about
+        // which nodes hold documents, and only the region's DTD knows. Checked
+        // on the innermost element, which is where the leaf would go.
+        if (placement.RegionalElements is [.., var innermost])
+        {
+            if (FdaRegionalBackboneRenderer.KeyedElements
+                .TryGetValue(innermost, out var regionalKey))
+            {
+                throw new BusinessRuleViolationException(string.Format(
+                    SequenceGenerationErrors.SectionNeedsAFactRegOsDoesNotHold,
+                    placement.Code, innermost, regionalKey));
+            }
+
+            if (FdaRegionalBackboneRenderer.ContainerOnlyElements
+                .Contains(innermost))
+            {
+                throw new BusinessRuleViolationException(string.Format(
+                    SequenceGenerationErrors.SectionHoldsNoDocuments,
+                    placement.Code, innermost));
             }
         }
     }
@@ -656,8 +1026,16 @@ public sealed class SequenceFolderGenerator
 
         var utilities = await WriteDtdsAsync(root, cancellationToken);
 
-        var backbones = await WriteIchBackboneAsync(
+        // The regional file first, because index.xml's Module 1 leaf points at
+        // it — and a backbone that links a file which does not exist is worse
+        // than one that links nothing (S005 deferred the link for that reason).
+        var regional = await WriteRegionalBackboneAsync(
             root, plan, leaves, cancellationToken);
+
+        var backbones = new List<string> { regional.Path };
+
+        backbones.AddRange(await WriteIchBackboneAsync(
+            root, plan, leaves, regional.Md5, cancellationToken));
 
         // Every emitted path, not only the leaves. These are fixed strings and
         // the check cannot fire today — which is the point: if a DTD is renamed
@@ -684,13 +1062,13 @@ public sealed class SequenceFolderGenerator
         string root,
         SequencePlan plan,
         IReadOnlyList<GeneratedLeaf> written,
+        string regionalBackboneMd5,
         CancellationToken cancellationToken)
     {
         var checksums = written.ToDictionary(x => x.RelativePath, x => x.Md5);
 
         var leaves = plan.Leaves
-            .Where(leaf => leaf.ElementPath.Count > 0
-                && leaf.ElementPath[0] != ModuleOneElement)
+            .Where(leaf => leaf.RegionalElementPath.Count == 0)
             .Select(leaf => new BackboneLeaf(
                 leaf.ElementPath,
                 leaf.LeafId,
@@ -699,9 +1077,8 @@ public sealed class SequenceFolderGenerator
                 leaf.Operation,
                 checksums[leaf.RelativePath],
                 leaf.ModifiedFile))
-            .Concat(plan.Deletions
-                .Where(leaf => leaf.ElementPath.Count > 0
-                    && leaf.ElementPath[0] != ModuleOneElement))
+            .Concat(plan.Deletions.Ich)
+            .Append(ModuleOneCrossLink(regionalBackboneMd5))
             .ToList();
 
         var xml = IchBackboneRenderer.Render(leaves);
@@ -722,6 +1099,107 @@ public sealed class SequenceFolderGenerator
 
         return [IchBackboneRenderer.FileName, IchBackboneRenderer.ChecksumFileName];
     }
+
+    /// <summary>
+    /// <c>m1/us/us-regional.xml</c> — everything ICH defers to the region, plus
+    /// the administrative block that identifies the filing.
+    /// </summary>
+    /// <remarks>
+    /// <b>Its own renderer, not a shared one with a flag</b> (E16). The two
+    /// backbones disagree on whether a leaf's checksum is required, and a single
+    /// <c>renderLeaf</c> satisfying the looser rule produces a valid
+    /// <c>us-regional.xml</c> beside an invalid <c>index.xml</c> — the worst
+    /// shape a defect can have, because the evidence points at the wrong file.
+    /// What they share is the projection beneath them, which is
+    /// <c>plan.Leaves</c>.
+    /// </remarks>
+    private static async Task<(string Path, string Md5)> WriteRegionalBackboneAsync(
+        string root,
+        SequencePlan plan,
+        IReadOnlyList<GeneratedLeaf> written,
+        CancellationToken cancellationToken)
+    {
+        var checksums = written.ToDictionary(x => x.RelativePath, x => x.Md5);
+
+        var leaves = plan.Leaves
+            .Where(leaf => leaf.RegionalElementPath.Count > 0)
+            .Select(leaf => new BackboneLeaf(
+                leaf.RegionalElementPath,
+                leaf.LeafId,
+                leaf.Title,
+                // Relative to m1/us/, where this file sits — two levels up
+                // from the sequence root the ICH backbone measures from.
+                RelativeToRegional(leaf.RelativePath),
+                leaf.Operation,
+                checksums[leaf.RelativePath],
+                leaf.ModifiedFile))
+            .Concat(plan.Deletions.Regional)
+            .ToList();
+
+        var backbone = new RegionalBackbone(
+            plan.Regional.ApplicantId,
+            plan.Regional.CompanyName,
+            plan.Regional.SubmissionDescription,
+            plan.Regional.Contacts,
+            plan.Regional.ApplicationNumber,
+            plan.Vocabulary.ApplicationType,
+            $"{plan.Vocabulary.OpeningSequenceNumber:0000}",
+            plan.Vocabulary.SubmissionType,
+            $"{plan.SequenceNumber:0000}",
+            plan.Vocabulary.SubmissionSubType,
+            leaves);
+
+        var relative = FdaRegionalBackboneRenderer.RelativePath;
+        var absolute = Path.Combine(
+            root, relative.Replace('/', Path.DirectorySeparatorChar));
+
+        Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
+
+        var bytes = new UTF8Encoding(false).GetBytes(
+            FdaRegionalBackboneRenderer.Render(backbone));
+
+        await File.WriteAllBytesAsync(absolute, bytes, cancellationToken);
+
+        // Hashed here because index.xml's cross-link quotes it, and ICH makes a
+        // leaf's checksum #REQUIRED. Writing this file before the ICH one is
+        // what makes that possible.
+        return (relative,
+            Convert.ToHexString(MD5.HashData(bytes)).ToLowerInvariant());
+    }
+
+    /// <summary>
+    /// A leaf's <c>xlink:href</c> is relative to the backbone that names it, and
+    /// <c>us-regional.xml</c> sits two levels below the sequence root.
+    /// </summary>
+    private static string RelativeToRegional(string sequenceRelativePath) =>
+        $"../../{sequenceRelativePath}";
+
+    /// <summary>
+    /// The one leaf ICH's <c>m1</c> carries: a pointer at the regional backbone.
+    /// </summary>
+    /// <remarks>
+    /// <b>S005 deferred this deliberately</b> — *"a backbone that links a
+    /// missing file is worse than one that links nothing"* — and it is written
+    /// now because <c>us-regional.xml</c> exists by the time this runs.
+    /// <para>
+    /// <b>It is the seam S007 exists to check.</b> Each file validates alone
+    /// whether or not this link resolves; only a validator pointed at the whole
+    /// package can tell.
+    /// </para>
+    /// <para>
+    /// A fixed id and a fixed operation: the regional backbone is not a document
+    /// with a lifecycle, it is the other half of this sequence's own structure,
+    /// and every sequence carries a current one. ICH's <c>m1</c> is
+    /// <c>(leaf*)</c>, so this is the only shape available.
+    /// </para>
+    /// </remarks>
+    private static BackboneLeaf ModuleOneCrossLink(string md5) => new(
+        [ModuleOneElement],
+        "leaf-m1-regional",
+        "Module 1 — Administrative Information and Prescribing Information",
+        FdaRegionalBackboneRenderer.RelativePath,
+        "new",
+        Checksum: md5);
 
     /// <summary>
     /// ICH's Module 1 element. Named here because index.xml is the file that has
@@ -782,7 +1260,9 @@ public sealed class SequenceFolderGenerator
     private sealed record SequencePlan(
         int SequenceNumber,
         IReadOnlyList<PlannedLeaf> Leaves,
-        IReadOnlyList<BackboneLeaf> Deletions);
+        PlannedDeletions Deletions,
+        WireVocabulary Vocabulary,
+        RegionalFacts Regional);
 
     private sealed record PlannedLeaf(
         string RelativePath,
@@ -790,6 +1270,7 @@ public sealed class SequenceFolderGenerator
         RegOS.ProductDocument.Domain.IDs.DocumentVersionId DocumentVersionId,
         string StoragePath,
         IReadOnlyList<string> ElementPath,
+        IReadOnlyList<string> RegionalElementPath,
         string LeafId,
         string Title,
         string Operation,
@@ -801,5 +1282,22 @@ public sealed class SequenceFolderGenerator
     /// walk the same ancestor chain.
     /// </summary>
     private sealed record SectionPlacement(
-        string Code, string Folder, IReadOnlyList<string> IchElements);
+        string Code,
+        string Folder,
+        IReadOnlyList<string> IchElements,
+        IReadOnlyList<string> RegionalElements)
+    {
+        /// <summary>
+        /// Which backbone names this leaf. <b>Exactly one does</b> — ICH's
+        /// Module 1 is <c>(leaf*)</c> with no children of its own, and FDA's
+        /// regional DTD declares nothing above Module 1.
+        /// </summary>
+        /// <remarks>
+        /// Read from the ICH chain rather than the regional one because a
+        /// Module 1 section still has an ICH ancestor: <c>m1-…</c> is where the
+        /// chain stops, and its sub-sections contribute nothing below it.
+        /// </remarks>
+        public bool IsRegional =>
+            IchElements is [ModuleOneElement, ..];
+    }
 }

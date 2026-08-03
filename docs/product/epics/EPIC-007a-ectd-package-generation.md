@@ -1,14 +1,13 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phases 1 & 2 complete · S001–S005 shipped · **S006: both backbones render and validate; the wiring is gated on one file** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 Phases 1 & 2 complete · **S001–S006 shipped** · S007 next · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
-> **RegOS generates a sequence folder and a valid `index.xml`** — the directory
-> tree, the files, the MD5s, `util/dtd/`, and an ICH backbone checked by a
-> third-party parser against a DTD RegOS did not write. **Level 2a is now earned
-> per file, and not yet per package**: `us-regional.xml` renders in isolation and
-> the generator does not yet write it, because one FDA vocabulary file gates
-> every regional backbone that could ever exist. S007 is where the claim becomes
-> a package's.
+> **RegOS generates a complete sequence folder** — the directory tree, the files,
+> the MD5s, `util/dtd/`, and **both backbones**, each checked by a third-party
+> parser against a DTD RegOS did not write. **Level 2a is earned per file on
+> generated output; per *package* is S007's**, and E16 is why that distinction is
+> not pedantry — each file validates alone whether or not the cross-link between
+> them resolves.
 
 Split from EPIC-007. The eCTD backbone needs only [EPIC-004](EPIC-004-sequences-and-submission-lifecycle.md), which is shipped; STF and the xEVMPD/IDMP messages need EPIC-010 and EPIC-019 and stay in **EPIC-007b** with gateway transmission.
 
@@ -1306,6 +1305,31 @@ have its kind supplied through the UI. The refusal below is actionable for new
 contacts and not yet for old ones. Recorded rather than fixed here — it is
 EPIC-016's surface, and the gap predates this story.
 
+#### S006 is wired — both backbones come out of one generated package ✅
+
+*2026-08-03. The renderer had been complete since the previous day; this is the
+generator building a `RegionalBackbone` from the domain.*
+
+| | |
+|---|---|
+| **the contacts** | every `SubmissionRole` whose role has an FDA translation. An untranslatable role is **skipped, not refused** — `HA-REVIEWER` is why, and refusing the package because someone accurately recorded an authority reviewer would punish good data entry. Zero survivors is the refusal, and it names the missing person rather than the missing package |
+| **DUNS** | read from `Organization.Identifiers`. **Refused when absent, never `999999999`** — FDA's fallback is for an applicant *unable to acquire* one, which an empty column does not establish |
+| **the cross-link** | S005's deferred leaf. `index.xml`'s `m1` now points at `m1/us/us-regional.xml` and quotes its MD5, which is why the regional file is written **first** |
+| **E27** | a Module 1 `modified-file` points at the earlier sequence's `us-regional.xml`, at its own depth — fixed and now reachable |
+| **E19** | container-only Module 1 sections refused by name, from the generator rather than the renderer |
+
+> **The parser earned its place again, on the first generated file.**
+> `m1-regional` came out nested inside itself: the blueprint records it on Module
+> 1's root — correctly, it *is* that section's regional element — and the
+> renderer emits it as the module container the DTD requires. Both are right and
+> the combination is invalid. **Every content assertion passed**; `xmllint`
+> rejected it. The renderer now owns the element by name and the generator strips
+> it, which is the coupling made explicit rather than assumed.
+
+**Level 2a is now earned on generated output for both files** — separately, per
+file. **Per *package* is still S007's**, and E16 is the reason the distinction
+survives: each file validates alone whether or not the cross-link resolves.
+
 #### Built while S006 waits — ADR-054 §6, the fifth refusal
 
 *2026-08-03, immediately after ADR-054 was accepted. It is the half of S006 that
@@ -1504,6 +1528,39 @@ longer *"emit some XML"*: it is an interpretation layer bounded by evidence, by
 domain modelling, and by authority-specific semantics, and **that boundary exists
 whether or not S006 is ever wired.** Completing the renderer against assumptions
 would have produced the same bytes and none of it.
+
+### A persistent property with no acquisition path is incomplete modelling
+
+*The founder's, 2026-08-03, after the third instance in one day. **This is a
+stronger statement than "unused field"** — the field existed, EF mapped it, and a
+query projected it. None of that meant the system could ever know its value.*
+
+| Fact | Can be read | Can be acquired | How it surfaced |
+|---|---|---|---|
+| `ContactPhone` | ✅ | ❌ **the form never rendered the input** | 0 phone rows in dev |
+| DUNS | ✅ | ✅ | the *claim* that it could not was wrong, and unchecked for a year |
+| `ApplicationNumber` | ✅ | ❌ **no factory parameter, no method, no command, no screen** | 59 applications, all null |
+
+**None was findable by reading the model.** Each looked complete: a property with
+a type, a column, a projection. What was missing was a path *inward*, and nothing
+in the codebase distinguishes a field nobody has filled in from a field nobody
+*can* fill in.
+
+> **eCTD generation is what found all three, and that is the inversion this epic
+> did not plan.** Package generation was expected to *consume* completed domain
+> data. Instead it has become the best acceptance test the domain model has —
+> because serialising reality forces the question **"where does this fact come
+> from?"**, and *"nowhere"* is an answer no other exercise elicits.
+
+**So the failures are not papered over with fixtures.** A generator that refuses
+until every regulatory fact it emits has a way for a user to truthfully provide
+one is doing more than producing XML: it is asking whether RegOS knows enough to
+make the assertions it is trying to submit.
+
+**The check that would find the rest**: a property whose only writer is EF
+materialisation. Not built — one pattern, three instances, and ADR-018 says wait
+for a demonstrated third *need* rather than a third occurrence. *Revisit if a
+fourth appears.*
 
 ### An observation, deliberately left as one
 
