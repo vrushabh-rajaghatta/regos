@@ -719,7 +719,19 @@ what the previous one said. **Recorded as owed rather than presented as safe.**
 ### Verification
 
 18 suites, **1,179 tests**, 0 failures (3 new). Both oracles green on a
-generated package.
+generated package. **100 browser specs**, 0 failures (1 new), on an isolated
+stack.
+
+`module-four-tagging.spec.ts` asks the question the backend tests cannot: **can
+a user actually do it?** Worth asking separately, because this epic already
+produced one defect only a browser could find — Module 4's supporting files
+rendered with no controls, so the backend supported the workflow and the UI
+quietly prevented finishing it.
+
+Its closing assertion is deliberately **negative**. A green package needs facts
+that spec does not set up — a DUNS, an application number, a reachable contact —
+so success is not the claim. The claim is that **nothing is refused for want of
+a study**, and that whatever refusal remains names something else.
 
 ---
 
