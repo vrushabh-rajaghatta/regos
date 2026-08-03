@@ -1,6 +1,6 @@
 # EPIC-019 — Study registry
 
-**Status:** 🟠 **In flight, and blocked short of S003** — S001 and S002 shipped 2026-08-03; the `file-tag` vocabulary is not held · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 **In flight, unblocked 2026-08-03** — S001, S002 and S004 shipped; the STF vocabulary arrived, so S002b and S003 are next · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Clinical and non-clinical studies as first-class records that applications and submission content can **cite** — so *"which studies support this filing?"* is a query, and Study Tagging Files become possible.
 
@@ -97,11 +97,15 @@ letting each arrive with the thing that needs it, which is how `Token`,
 |---|---|
 | **a `Study`** | the sponsor's alphanumeric code and a title. **Nothing exists** |
 | **placement → study** | which study a *placement* reports. [ADR-053](../../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)'s shape: a fact about the placement, not the section |
-| **`file-tag` per placement** | what role the document plays — synopsis, protocol, CRF. ⚠ **Corrected 2026-08-03: this vocabulary is NOT held.** What we hold is the count, not the list — see the [evidence correction](../../evidence/README.md#correction-2026-08-03--the-file-tag-vocabulary-is-not-held) |
-| **`ich-stf-v2-2.dtd`** | ⚠ **not held.** An STF can be modelled and written; it cannot be *validated*, so S007's per-package Level 2a would cover two files of three |
+| **`file-tag` per placement** | what role the document plays — synopsis, protocol, CRF. ✅ **Held since 2026-08-03**: `valid-values.xml` v6.0, **97 values** across `ich` / `us` / `jp` (**E33**) |
+| **`ich-stf-v2-2.dtd`** | ✅ **Held since 2026-08-03.** An STF can now be written *and* validated — but see below: the DTD does not check the vocabulary |
 
-**Only the last is an evidence gap**, and it does not block modelling — it
-blocks the claim. Recorded so the claim is not made by accident.
+**Both gaps closed on 2026-08-03**, and closing them corrected the entry above
+them: this table named the DTD as the source of the `file-tag` list. It is not.
+`file-tag/@name` is `CDATA`, so `xmllint` accepts `name="sinopsis"` without
+complaint. The vocabulary lives in `valid-values.xml`, and **the ICH stylesheet
+is what checks it** — painting unknown values red (**E34**). Two files, two
+jobs.
 
 ## What EPIC-007a discovered — recorded 2026-08-03
 
@@ -236,8 +240,8 @@ an STF, which is the refusal that already exists.
 |---|---|---|
 | **S001** ✅ | **`Study`** — a new context, `study-id` + `title`, two aggregates, persistence, API, minimal UI | nothing yet |
 | **S002** ✅ | **placement → study** on `SubmissionDocument`, with the UI to set it | nothing yet |
-| **S002b** ⛔ | **`file-tag` per placement** — **blocked on an evidence gap**, see below | S003 |
-| **S003** ⛔ | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
+| **S002b** 🟡 | **`file-tag` per placement** — unblocked; 97 values, realm-scoped | S003 |
+| **S003** 🟡 | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
 | **S004** ✅ | citation from `RegulatoryApplication`, both directions queryable | **driver A — done** |
 | **S005** ⬜ | the RIM attributes a real user asks for, and no more | **nothing to build: nobody has asked** |
 
@@ -248,9 +252,12 @@ an STF, which is the refusal that already exists.
 > cannot enumerate, so S003 cannot write a valid STF and **S002b and S003 are
 > both blocked on a document, not on work.**
 >
-> **What unblocks them is `ich-stf-v2-2.dtd`** — one file, which carries the
-> enumeration in its `ATTLIST` and is also what S003 would validate against. It
-> answers both halves at once.
+> **Unblocked 2026-08-03 — by three files, not one.** The prediction that
+> `ich-stf-v2-2.dtd` *"carries the enumeration in its `ATTLIST`"* was wrong:
+> `file-tag/@name` is `CDATA`. `valid-values.xml` holds the 97 values (**E33**),
+> the DTD validates structure (**E35**), and the stylesheet is the only thing
+> that checks a tag is a real word (**E34**). All three are held at
+> [`docs/evidence/EPIC-019/spec/`](../../evidence/EPIC-019/spec/).
 
 > **S003 is where this epic is worth its cost**, and S001–S002 are the two facts
 > it needs. If work stops after S003, RegOS can file an IND — which it cannot do
@@ -481,6 +488,90 @@ the job S001 claimed for it, on the first occasion it was tested.
 (2 new), on an isolated stack. `study-citation.spec.ts` asserts the two
 directions **against each other**: a citation visible on one screen and not the
 other is the failure worth catching, and neither assertion alone would see it.
+
+---
+
+## What the STF documents changed — read 2026-08-03
+
+*Three files arrived and were read before anything was built on them. Five
+findings, and the first two correct this epic's own plan.*
+
+### 1. The vocabulary is not in the DTD, and it is 97 values
+
+`file-tag/@name` is `CDATA #REQUIRED`. `xmllint --valid` **accepts
+`name="sinopsis"`** — verified, not assumed. The enumeration lives in
+`valid-values.xml`, exactly where the DTD's own comment points: *"the list of
+valid values for the name is controlled by the ICH default stylesheet"*.
+
+| Realm | `file-tag` values |
+|---|---|
+| `ich` | 68 |
+| `us` | 25 |
+| `jp` | 4 |
+| | **97** |
+
+E29's *"~40 values"* is superseded (**E33**). And **FDA's *"22 controlled file
+tags"* (E21) turns out to be the `us` realm** — the 25 today are those 22 plus
+three `HF-validation-*` added in v5.0. Two summaries, one list, and neither
+summary was the list.
+
+### 2. There is a second oracle, and it covers what the first cannot
+
+EPIC-007a's Level 2a rested on one parser answering *"is this legal?"*. The
+stylesheet answers a different question — ***"is this a word?"*** — by resolving
+every `file-tag`, `category` and `property` against `valid-values.xml` and
+painting unknown ones `#FF6666`.
+
+```
+xmllint  + ich-stf-v2-2.dtd                  → structure        (E35)
+xsltproc + stylesheet + valid-values.xml     → vocabulary       (E34)
+```
+
+Measured: `sinopsis` → **1 red row**; `synopsis` → **0**. It is third-party,
+machine-checkable, and shipped by ICH — so S003 can claim vocabulary
+correctness with an oracle rather than with its own opinion. **The rule
+`ValidatorIndependenceTests` enforces extends unchanged**: this is a second
+oracle at the same seam, not a dependency.
+
+### 3. `duration` is a `us` category, not an `ich` one
+
+Realms are **per category**, not uniformly `ich`:
+
+| Category | Values | Realm |
+|---|---|---|
+| `species` | 9 | `ich` |
+| `route-of-admin` | 8 | `ich` |
+| **`duration`** | 3 | **`us`** |
+| `type-of-control` | 5 | `ich` |
+| `property` → `site-identifier` | 1 | `us` |
+
+Emitting `duration` with `info-type="ich"` produces a file the DTD accepts and
+the stylesheet flags — measured, 1 red row. **A hard-coded `info-type="ich"`
+would be wrong for one category in four.**
+
+### 4. Element order is fixed, and two constructs were not modelled
+
+`study-identifier` is `(title, study-id, category*)` — **title first**;
+`study-id` before `title` is rejected. Also present and previously unrecorded:
+`doc-content` has an optional `title?`; `file-tag` may itself contain
+`property*`; and `content-block` is a hierarchical alternative to `doc-content`
+for multiple tags per file. The minimum needs none of the last three, but S003
+should know they exist before choosing not to use them.
+
+### 5. `util/style/` needs two files, not one
+
+The stylesheet reads `document('valid-values.xml')` by a **relative** path, so
+the vocabulary ships beside it. ADR-054 recorded `util/style/` as an absent
+folder; this is what goes in it.
+
+### What is still not held
+
+**Which `file-tag` belongs on which document.** RegOS now has the words and can
+refuse a non-word; it has no rule for choosing between `synopsis` and
+`study-report-body` for a given file, and **should not invent one** — that is
+the filer's judgement, and the closest thing to a rule is FDA regional guidance
+this repository does not hold. S002b's UI therefore offers the list and records
+the choice.
 
 ---
 

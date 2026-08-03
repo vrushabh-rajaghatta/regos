@@ -46,8 +46,8 @@ EPIC-007a merged to `main` as PR #15.
 |---|---|
 | **S001** ✅ | `Study` — a new `src/Study/` context, two aggregates, `study-id` + `title`. **[ADR-056](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)** written first, per canon |
 | **S002** ✅ | placement → study, set from the content plan |
-| **S002b** ⛔ | `file-tag` per placement — **blocked: the vocabulary is not held** |
-| **S003** ⛔ | **STF generation — the epic's reason to exist.** Unblocks Module 4, and therefore every IND |
+| **S002b** 🟡 | `file-tag` per placement — **unblocked 2026-08-03**, 97 values across three realms |
+| **S003** 🟡 | **STF generation — the epic's reason to exist.** Unblocked. Module 4, and therefore every IND |
 | **S004** ✅ | citation from the application, both directions queryable — **driver A, done** |
 | **S005** ⬜ | RIM attributes — **nothing to build: nobody has asked** (ADR-056 §3) |
 
@@ -59,7 +59,7 @@ whoever can go and fetch one.*
 
 | Document | Authority | Unblocks | Why nothing else will do |
 |---|---|---|---|
-| **`ich-stf-v2-2.dtd`** | ICH M2 | **EPIC-019 S002b and S003, simultaneously** | It is the **authoritative source for the `file-tag` enumeration** *and* what an STF is **validated against**. One file, both halves |
+| ~~`ich-stf-v2-2.dtd`~~ **+ `valid-values.xml` + the ICH stylesheet** | ICH M2 | ~~EPIC-019 S002b and S003~~ — **✅ ARRIVED 2026-08-03** | **Three files, not one, and the entry named the wrong one as the vocabulary.** `file-tag/@name` is `CDATA`, so the DTD validates a misspelled tag (**E34**); the enumeration is in `valid-values.xml` (**E33**) and the stylesheet is what checks it. Held at [`docs/evidence/EPIC-019/spec/`](../evidence/EPIC-019/spec/) |
 | `form-type.xml` | FDA | eCTD section **1.1 forms** (`m1-1-forms`, refused today) | Same shape: a closed vocabulary named by a wire attribute (**E18**) |
 | FDA *Example Submissions for Module 1* v1.4 | FDA | **EPIC-007b S008** — the Level 3 comparison EPIC-007a did not make | A worked example is the only thing that shows convention rather than legality |
 
