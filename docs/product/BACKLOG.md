@@ -50,17 +50,31 @@ EPIC-007a merged to `main` as PR #15.
 | **S003** ⛔ | **STF generation — the epic's reason to exist.** Unblocks Module 4, and therefore every IND |
 | S004–S005 | citation, then the RIM attributes a real user asks for |
 
-> ⛔ **The epic is blocked one story short of what it exists for, on a document
-> rather than on work.** The plan recorded ICH's `file-tag` vocabulary as held;
-> it is not — we hold the *count*, not the list
-> ([correction](../evidence/README.md#correction-2026-08-03--the-file-tag-vocabulary-is-not-held)).
-> Every STF names a `file-tag` from that closed list, so an STF cannot be
-> written, and a free-text box would produce packages FDA rejects at the
-> gateway.
+### External prerequisites
+
+*Documents RegOS does not hold, that block work no amount of engineering can
+unblock. Tracked here rather than inside a story, because their value is to
+whoever can go and fetch one.*
+
+| Document | Authority | Unblocks | Why nothing else will do |
+|---|---|---|---|
+| **`ich-stf-v2-2.dtd`** | ICH M2 | **EPIC-019 S002b and S003, simultaneously** | It is the **authoritative source for the `file-tag` enumeration** *and* what an STF is **validated against**. One file, both halves |
+| `form-type.xml` | FDA | eCTD section **1.1 forms** (`m1-1-forms`, refused today) | Same shape: a closed vocabulary named by a wire attribute (**E18**) |
+| FDA *Example Submissions for Module 1* v1.4 | FDA | **EPIC-007b S008** — the Level 3 comparison EPIC-007a did not make | A worked example is the only thing that shows convention rather than legality |
+
+> **We know there is a controlled vocabulary** is not **we possess the
+> controlled vocabulary**. Those are different evidence levels, and the second
+> is the one you can build on. The `file-tag` list was recorded as held on the
+> strength of a sentence saying it has *"~40 values"*
+> ([correction](../evidence/README.md#correction-2026-08-03--the-file-tag-vocabulary-is-not-held));
+> four example values appear anywhere in this repository, and four is not a
+> vocabulary.
 >
-> **One file unblocks both:** `ich-stf-v2-2.dtd` carries the enumeration in its
-> `ATTLIST` **and** is what S003's Level 2a claim would validate against. Same
-> shape as `form-type.xml` holding `m1-1-forms` refused (E18).
+> The three options for a closed external code list are **invent values**,
+> **accept arbitrary text**, or **wait for the authoritative source**. Only the
+> third is available: a free-text box lets someone type `sinopsis` and produce a
+> package FDA rejects at the gateway — a worse failure than not shipping the
+> feature, because it fails after filing rather than on screen.
 
 ### The recommendation that put it there
 

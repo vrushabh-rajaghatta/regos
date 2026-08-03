@@ -108,13 +108,22 @@ it**. Refiling changes a row on the placement and never touches this registry.
 
 ## Owed
 
-- **`Retitle` is unreachable.** The aggregate has it; nothing calls it. It
-  becomes safe — and reachable — when **S003 freezes the identifier and title
-  into the published placement**, which is
-  [ADR-047](../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md)'s
-  instrument rather than a policy. S001 predicted a guard shaped like
+- **`Retitle` is unreachable.** The aggregate has it; nothing calls it. It needs
+  **two things from S003**, because freezing and continuity are different
+  problems:
+  1. **Freeze at publish** — the identifier and title are snapshotted into the
+     published placement, so a filed STF cannot change when regenerated
+     ([ADR-047](../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md)).
+  2. **A generator refusal** — FDA duplicates a study when *"study-id and study
+     title [are] not an exact match"* across sequences (E24), so a later
+     sequence filing the same study under a new title is refused by name.
+
+  Neither is a policy on `Study`. S001 predicted one shaped like
   `ApplicationNumberPolicy`; that would have pointed `Study` at `Submission` and
-  inverted ADR-056 §4. Freezing costs nothing and inverts nothing.
+  inverted [ADR-056](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)
+  §4. The generator already reads the previous published sequence to derive
+  `operation`, so the rule lands at the boundary facing the authority and adds
+  no dependency in any direction.
 - **Whether the identifier is unique *per tenant* or globally** is settled as
   per tenant. ADR-056 left the choice open and required that whichever was made
   got a test; `study-registry.spec.ts` is it.

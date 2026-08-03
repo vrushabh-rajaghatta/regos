@@ -376,11 +376,48 @@ dependency direction for a rule neither context wants to own.
 > establishes that what a filing said is frozen when it is filed. An STF's
 > `study-identifier` is part of what was filed, so **S003 freezes the identifier
 > and title into the published placement** — after which a retitle cannot alter
-> a filed STF, and no policy, no cross-context read and no guard is needed.
+> a filed STF.
+
+#### Freezing is half of it — corrected on re-reading E24
+
+**Freezing solves regeneration, not continuity, and those are two problems.**
+FDA's TCG §4.4 names the failure explicitly: a duplicated study is *"caused by
+an updated STF being submitted with incorrect metadata (**study-id and study
+title not an exact match**)"*. So the title is part of the key FDA's tooling
+matches on, and a retitle still drifts **forward**: sequence 0000 filed under
+one title, 0001 under another, and the reviewer sees two studies. A frozen
+snapshot keeps the old package honest and does nothing about the new one.
+
+**It is still not a guard on `Study`, and the reason is better than the first
+one.** The check belongs where every other EPIC-007a refusal lives — in the
+generator, which already reads the previous published sequence to derive
+`operation` ([ADR-045](../../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md)).
+It compares this sequence's `study-identifier` against the frozen one from the
+last sequence that filed the same study and **refuses by name**. That reads
+`Submission`'s own frozen data, adds no dependency in any direction, and puts
+the authority's rule at the boundary that faces the authority.
+
+| | |
+|---|---|
+| **Freeze at publish** | a filed STF cannot change when regenerated (ADR-047's instrument) |
+| **Generator refusal** | a later sequence cannot file the same study under a different title (E24's rule, at the boundary) |
+
+**ICH and FDA do differ here**, and it is worth recording rather than
+smoothing over: ICH §V says *"the information contained in the study-identifier
+section of the most recent STF will be deemed the most current"* — a supersede
+mechanism — while FDA describes the same act as producing a duplicate. Both are
+level 3. **The receiving authority governs**, and the first vertical is
+US·FDA·IND, so RegOS takes the stricter reading.
 
 **`Retitle` is therefore unreachable today** — the aggregate has it, nothing
 calls it, and no screen offers it. Recorded rather than quietly left: it becomes
-reachable when S003 has frozen what protects it.
+reachable when S003 has built both halves.
+
+> **This wants [ADR-057](../../adr/) once S003 unblocks** — *an authority's
+> cross-sequence continuity rule is enforced at the artifact boundary using
+> frozen publication facts, never by a guard that inverts a context boundary*.
+> Not written yet, because it would be recording a decision about code that
+> cannot be written until the DTD arrives.
 
 ### Verification
 
