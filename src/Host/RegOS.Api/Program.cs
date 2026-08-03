@@ -41,11 +41,14 @@ using RegOS.Interaction.Application;
 using RegOS.Interaction.Infrastructure;
 using RegOS.Registration.Application;
 using RegOS.Registration.Infrastructure;
+using RegOS.Study.Application;
+using RegOS.Study.Infrastructure;
 using RegOS.Api.Endpoints.Commitments;
 using RegOS.Api.Endpoints.Inspections;
 using RegOS.Api.Endpoints.Meetings;
 using RegOS.Api.Endpoints.Correspondence;
 using RegOS.Api.Endpoints.Registrations;
+using RegOS.Api.Endpoints.Studies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -120,6 +123,9 @@ builder.Services.AddRegistrationInfrastructure();
 
 builder.Services.AddInteractionApplication();
 builder.Services.AddInteractionInfrastructure();
+
+builder.Services.AddStudyApplication();
+builder.Services.AddStudyInfrastructure();
 
 var app = builder.Build();
 
@@ -256,6 +262,8 @@ submissions.MapChangeSubmissionFormat();
 submissions.MapAssignSubmissionRole();
 submissions.MapRemoveSubmissionRole();
 submissions.MapListSubmissionRoles();
+submissions.MapReportStudyOnPlacement();
+submissions.MapListFileTags();
 submissions.MapGetSubmissionContentPlan();
 submissions.MapGetSubmissionChanges();
 submissions.MapListSubmissionDocuments();
@@ -302,6 +310,13 @@ inspections.MapBeginInspection();
 inspections.MapListInspections();
 inspections.MapChangeInspectionStatus();
 inspections.MapRecordInspectionFindings();
+
+var studies = app.MapGroup("").WithTags("Studies");
+studies.MapRegisterClinicalStudy();
+studies.MapRegisterNonClinicalStudy();
+studies.MapListStudies();
+studies.MapListStudyFilings();
+studies.MapApplicationStudyCitations();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

@@ -51,6 +51,11 @@
     <Project Path="src/Interaction/RegOS.Interaction.Domain/RegOS.Interaction.Domain.csproj" />
     <Project Path="src/Interaction/RegOS.Interaction.Infrastructure/RegOS.Interaction.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Study/">
+    <Project Path="src/Study/RegOS.Study.Application/RegOS.Study.Application.csproj" />
+    <Project Path="src/Study/RegOS.Study.Domain/RegOS.Study.Domain.csproj" />
+    <Project Path="src/Study/RegOS.Study.Infrastructure/RegOS.Study.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Storage/">
     <Project Path="src/Storage/RegOS.Storage/RegOS.Storage.csproj" />
   </Folder>
@@ -58,6 +63,9 @@
     <Project Path="src/Shared/RegOS.SharedKernel/RegOS.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/tests/" />
+  <Folder Name="/tests/Study/">
+    <Project Path="tests/Study/RegOS.Study.Domain.Tests/RegOS.Study.Domain.Tests.csproj" />
+  </Folder>
   <Folder Name="/tests/Architecture/">
     <Project Path="tests/Architecture/RegOS.Architecture.Tests/RegOS.Architecture.Tests.csproj" />
   </Folder>

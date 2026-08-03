@@ -6,6 +6,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 
 import { ContentPlanSectionTree } from "../components/ContentPlanSectionTree";
 import { PlaceDocumentDialog } from "../components/PlaceDocumentDialog";
+import { ReportStudyDialog } from "../components/ReportStudyDialog";
 import { useSubmission } from "../hooks/useSubmission";
 import { useSubmissionContentPlan } from "../hooks/useSubmissionContentPlan";
 import { usePlaceSubmissionDocument } from "../hooks/usePlaceSubmissionDocument";
@@ -27,6 +28,13 @@ export function SubmissionContentPlanPage() {
   const [target, setTarget] = useState<{ id: string; label: string } | null>(
     null
   );
+
+  const [reporting, setReporting] = useState<{
+    submissionDocumentId: string;
+    documentName: string;
+    studyId: string | null;
+    fileTag: string | null;
+  } | null>(null);
 
   const submission = useSubmission(submissionId!);
   const { data, isLoading, error } = useSubmissionContentPlan(submissionId!);
@@ -118,6 +126,7 @@ export function SubmissionContentPlanPage() {
               onRemove={(submissionDocumentId) =>
                 place.mutate({ submissionDocumentId, templateSectionId: null })
               }
+              onReportStudy={setReporting}
             />
           )}
 
@@ -141,6 +150,14 @@ export function SubmissionContentPlanPage() {
           section={target}
           unplaced={data?.unplacedDocuments ?? []}
           onOpenChange={(open) => !open && setTarget(null)}
+        />
+      )}
+
+      {editable && (
+        <ReportStudyDialog
+          submissionId={submissionId!}
+          placement={reporting}
+          onOpenChange={(open) => !open && setReporting(null)}
         />
       )}
     </Page>

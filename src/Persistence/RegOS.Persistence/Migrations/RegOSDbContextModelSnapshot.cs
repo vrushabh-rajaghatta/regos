@@ -1662,6 +1662,40 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("RegistrationStatusHistory", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.ApplicationStudyCitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CitedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ClinicalStudyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("NonClinicalStudyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClinicalStudyId");
+
+                    b.HasIndex("NonClinicalStudyId");
+
+                    b.HasIndex("ApplicationId", "ClinicalStudyId")
+                        .IsUnique()
+                        .HasFilter("\"ClinicalStudyId\" IS NOT NULL");
+
+                    b.HasIndex("ApplicationId", "NonClinicalStudyId")
+                        .IsUnique()
+                        .HasFilter("\"NonClinicalStudyId\" IS NOT NULL");
+
+                    b.ToTable("ApplicationStudyCitations", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1716,6 +1750,64 @@ namespace RegOS.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("RegulatoryApplications", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Study.Domain.Aggregates.ClinicalStudy.ClinicalStudy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SponsorStudyIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "SponsorStudyIdentifier")
+                        .IsUnique();
+
+                    b.ToTable("ClinicalStudies", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Study.Domain.Aggregates.NonClinicalStudy.NonClinicalStudy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SponsorStudyIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "SponsorStudyIdentifier")
+                        .IsUnique();
+
+                    b.ToTable("NonClinicalStudies", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.Submission.Domain.Submission.Submission", b =>
@@ -1817,10 +1909,28 @@ namespace RegOS.Persistence.Migrations
                     b.Property<DateTime>("AttachedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("ClinicalStudyId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("DocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileTag")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("FiledStudyIdentifier")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FiledStudyTitle")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("NonClinicalStudyId")
                         .HasColumnType("uuid");
 
                     b.Property<int?>("Operation")
@@ -1840,7 +1950,11 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClinicalStudyId");
+
                     b.HasIndex("DocumentVersionId");
+
+                    b.HasIndex("NonClinicalStudyId");
 
                     b.HasIndex("SubmissionId");
 
@@ -2575,6 +2689,25 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.ApplicationStudyCitation", b =>
+                {
+                    b.HasOne("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", null)
+                        .WithMany("StudyCitations")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Study.Domain.Aggregates.ClinicalStudy.ClinicalStudy", null)
+                        .WithMany()
+                        .HasForeignKey("ClinicalStudyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.Study.Domain.Aggregates.NonClinicalStudy.NonClinicalStudy", null)
+                        .WithMany()
+                        .HasForeignKey("NonClinicalStudyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", b =>
                 {
                     b.HasOne("RegOS.Organization.Domain.Aggregates.Organization.Organization", null)
@@ -2682,11 +2815,21 @@ namespace RegOS.Persistence.Migrations
 
             modelBuilder.Entity("RegOS.Submission.Domain.Submission.SubmissionDocument", b =>
                 {
+                    b.HasOne("RegOS.Study.Domain.Aggregates.ClinicalStudy.ClinicalStudy", null)
+                        .WithMany()
+                        .HasForeignKey("ClinicalStudyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RegOS.ProductDocument.Domain.Entities.DocumentVersion", null)
                         .WithMany()
                         .HasForeignKey("DocumentVersionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("RegOS.Study.Domain.Aggregates.NonClinicalStudy.NonClinicalStudy", null)
+                        .WithMany()
+                        .HasForeignKey("NonClinicalStudyId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("RegOS.Submission.Domain.Submission.Submission", null)
                         .WithMany("Documents")
@@ -2769,6 +2912,11 @@ namespace RegOS.Persistence.Migrations
             modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.Registration", b =>
                 {
                     b.Navigation("History");
+                });
+
+            modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication", b =>
+                {
+                    b.Navigation("StudyCitations");
                 });
 
             modelBuilder.Entity("RegOS.Submission.Domain.Submission.Submission", b =>

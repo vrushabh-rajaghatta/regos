@@ -1,6 +1,6 @@
 # EPIC-019 — Study registry
 
-**Status:** 🟡 **Phase 1 reopened 2026-08-03**, after EPIC-007a made it blocking · **Branch:** `epic/EPIC-019-study-registry` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 **S001–S004 shipped 2026-08-03** — Module 4 generates, so RegOS can file an IND. One item owed: the E24 continuity refusal (ADR-057 §2) · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Clinical and non-clinical studies as first-class records that applications and submission content can **cite** — so *"which studies support this filing?"* is a query, and Study Tagging Files become possible.
 
@@ -97,11 +97,15 @@ letting each arrive with the thing that needs it, which is how `Token`,
 |---|---|
 | **a `Study`** | the sponsor's alphanumeric code and a title. **Nothing exists** |
 | **placement → study** | which study a *placement* reports. [ADR-053](../../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)'s shape: a fact about the placement, not the section |
-| **`file-tag` per placement** | what role the document plays — synopsis, protocol, CRF. ~40 ICH values, and **this vocabulary is held** (E29) |
-| **`ich-stf-v2-2.dtd`** | ⚠ **not held.** An STF can be modelled and written; it cannot be *validated*, so S007's per-package Level 2a would cover two files of three |
+| **`file-tag` per placement** | what role the document plays — synopsis, protocol, CRF. ✅ **Held since 2026-08-03**: `valid-values.xml` v6.0, **97 values** across `ich` / `us` / `jp` (**E33**) |
+| **`ich-stf-v2-2.dtd`** | ✅ **Held since 2026-08-03.** An STF can now be written *and* validated — but see below: the DTD does not check the vocabulary |
 
-**Only the last is an evidence gap**, and it does not block modelling — it
-blocks the claim. Recorded so the claim is not made by accident.
+**Both gaps closed on 2026-08-03**, and closing them corrected the entry above
+them: this table named the DTD as the source of the `file-tag` list. It is not.
+`file-tag/@name` is `CDATA`, so `xmllint` accepts `name="sinopsis"` without
+complaint. The vocabulary lives in `valid-values.xml`, and **the ICH stylesheet
+is what checks it** — painting unknown values red (**E34**). Two files, two
+jobs.
 
 ## What EPIC-007a discovered — recorded 2026-08-03
 
@@ -132,10 +136,11 @@ would otherwise have to decide from scratch:
 | **Does the STF belong to the Study, or to the generated package?** | **Neither stores it.** It is a *projection* over the placements in one sequence that belong to one study — ADR-049's deletion test, applied to a file that needs facts the submission does not hold. The answer is to hold the facts, not the file |
 | **Does lifecycle operate on Study identity or on documents?** | **On the pair.** The mapping is `(study, eCTD element) → STF`, not `study → STF`, because *"one study could generate more than one STF representation"* (E29 §VI). Its `new`/`append` chain is derived the way ADR-045 derives a document's operation, keyed differently |
 
-### What the Study ADR must still answer
+### What the Study ADR must still answer — **answered by [ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md), 2026-08-03**
 
 *The founder's list, 2026-08-03. It is broader than STF, which is why it does not
-belong inside ADR-054 and gets its own number.*
+belong inside ADR-054 and gets its own number. Kept as written, because what the
+questions were is part of why the answers are what they are.*
 
 1. **Is `Study` an aggregate?** — Phase 2 §1 leans two aggregates, and E29 gives
    the first external reason: clinical and non-clinical carry *different*
@@ -160,12 +165,23 @@ belong inside ADR-054 and gets its own number.*
 
 ---
 
-## Phase 2 — proposed 2026-08-03 · **awaiting sign-off**
+## Phase 2 — **approved 2026-08-03** · in flight
 
 *The sketch below this section predates EPIC-007a and is superseded where the two
-disagree. Four decisions, and the first is an ADR.*
+disagree. Four decisions, all four signed off, and the first is
+**[ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)** —
+written before any code, per canon.*
 
-### 1. Where does a `Study` live? — **a new `src/Study/` context** (ADR-056)
+> **Two strengthenings came with the sign-off, and both are in ADR-056.**
+>
+> 1. The ownership argument is *"study identity is owned by the sponsor, not by a
+>    submission"* — not *"four contexts reference it"*, which is corroboration.
+> 2. **What a `Study` may become is governed, not left open**: *additional
+>    attributes are admitted only when required by an external regulatory
+>    workflow or a demonstrated business capability.* Written so that no later
+>    story can say *"RIM lists 19 more fields"* and have that count as a reason.
+
+### 1. Where does a `Study` live? — **a new `src/Study/` context** ([ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md))
 
 **Four contexts will cite a study**: `RegulatoryApplication`, `Submission`
 (placements), `Registration` (RIM's `License → Clinical Study`) and `Interaction`
@@ -193,6 +209,12 @@ regulator expects differ by kind.
 permits merging on a third demonstrated need; two sheets and one shared
 category vocabulary is not that.
 
+> **For S001's minimum the two aggregates differ by almost nothing but their
+> type, and that is fine.** The separation exists because the domain differs,
+> not because today's properties differ — so neither gets a shared base class, a
+> `StudyKind` discriminator, or an abstraction invented to hold the duplication.
+> ADR-056 §2.
+
 ### 3. What links a placement to a study? — **the placement, not the document**
 
 A `ProductDocument` can be filed in two sequences and report the same study both
@@ -203,7 +225,7 @@ third shape arriving with its vocabulary in hand**:
 | | |
 |---|---|
 | `StudyId?` | which study this placement reports |
-| `FileTag?` | what role it plays in that study's report — ICH's ~40 values, **held** |
+| `FileTag?` | what role it plays in that study's report. ⚠ **The vocabulary is not held** — corrected 2026-08-03, and this is why S002 shipped without it |
 
 **Both nullable, and null means the ordinary thing**: a placement outside 4.2.x
 and 5.3.1.x–5.3.5.x reports no study. Generation refuses only where FDA requires
@@ -216,11 +238,26 @@ an STF, which is the refusal that already exists.
 
 | | Story | Unblocks |
 |---|---|---|
-| **S001** | **`Study`** — a new context, `study-id` + `title`, two aggregates, persistence, API, minimal UI | nothing yet |
-| **S002** | **placement → study + `file-tag`** on `SubmissionDocument`, with the UI to set them | nothing yet |
-| **S003** | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
-| **S004** | citation from `RegulatoryApplication`, both directions queryable | driver A |
-| **S005** | the RIM attributes a real user asks for, and no more | driver A |
+| **S001** ✅ | **`Study`** — a new context, `study-id` + `title`, two aggregates, persistence, API, minimal UI | nothing yet |
+| **S002** ✅ | **placement → study** on `SubmissionDocument`, with the UI to set it | nothing yet |
+| **S002b** ✅ | **`file-tag` per placement** — 97 values, realm-scoped, non-words refused | S003 |
+| **S003** ✅ | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
+| **S004** ✅ | citation from `RegulatoryApplication`, both directions queryable | **driver A — done** |
+| **S005** ⬜ | the RIM attributes a real user asks for, and no more | **nothing to build: nobody has asked** |
+
+> **S002 was planned as study + `file-tag` and shipped as study alone.** The
+> `file-tag` vocabulary turned out **not to be held** — the plan said it was, and
+> the plan was wrong ([correction](../../evidence/README.md#correction-2026-08-03--the-file-tag-vocabulary-is-not-held)).
+> Every `file-tag` element in an STF carries a `name` from a closed ICH list we
+> cannot enumerate, so S003 cannot write a valid STF and **S002b and S003 are
+> both blocked on a document, not on work.**
+>
+> **Unblocked 2026-08-03 — by three files, not one.** The prediction that
+> `ich-stf-v2-2.dtd` *"carries the enumeration in its `ATTLIST`"* was wrong:
+> `file-tag/@name` is `CDATA`. `valid-values.xml` holds the 97 values (**E33**),
+> the DTD validates structure (**E35**), and the stylesheet is the only thing
+> that checks a tag is a real word (**E34**). All three are held at
+> [`docs/evidence/EPIC-019/spec/`](../../evidence/EPIC-019/spec/).
 
 > **S003 is where this epic is worth its cost**, and S001–S002 are the two facts
 > it needs. If work stops after S003, RegOS can file an IND — which it cannot do
@@ -229,6 +266,488 @@ an STF, which is the refusal that already exists.
 **What S003 cannot claim**: `ich-stf-v2-2.dtd` is not held, so the STF is
 generated and **not validated**. S007's per-package Level 2a covers two files of
 three, and that sentence goes in the epic rather than being discovered later.
+
+---
+
+## S001 — `Study` · ✅ **shipped 2026-08-03**
+
+A new `src/Study/` context: two aggregates, two identities, two facts each.
+Domain → persistence → API → registry UI, per
+**[ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)**.
+The model is written up in
+[docs/domain-model/study.md](../../domain-model/study.md).
+
+| | |
+|---|---|
+| Domain | `ClinicalStudy` · `NonClinicalStudy`, `AggregateRoot<TId>` with `sealed class …Id : StronglyTypedId` (ADR-043) |
+| Application | `RegisterClinicalStudy` · `RegisterNonClinicalStudy` · `ListStudies` · `ISponsorStudyIdentifierPolicy` |
+| Persistence | two tables, two fail-closed tenant filters (ADR-031), `AddStudyRegistry` |
+| API | `POST /api/studies/clinical` · `POST /api/studies/nonclinical` · `GET /api/studies` |
+| UI | `/regulatory/studies` — a sibling of Products, because a study exists whether or not anything has been filed |
+
+### Two decisions this story made that the ADR had left open
+
+**1. Two identities, not one.** ADR-056 §2 forbids an abstraction invented to
+hold the duplication, and a shared `StudyId` is exactly that — an identity space
+neither aggregate owns, which is the supertype
+[ADR-040 §3](../../adr/ADR-040-the-health-authority-interaction-context.md)
+declined to build. Corroborated by the consumer: the STF's `category` vocabulary
+is kind-specific, so a typed reference tells S003 what it is holding instead of
+making it probe two tables. **It puts an exclusive-or on the placement, and that
+is S002's to model explicitly.**
+
+**2. One sponsor study identifier names one study, across both kinds.** ADR-056
+required that whichever uniqueness rule was chosen got a test. This is the rule,
+and the reason is external: **E24** says FDA's tooling recognises a study by its
+`study-id`, so two studies sharing one are shown to a reviewer as **one** — the
+STF writes `<study-id>` and no kind marker. A unique index covers one table, so
+the rule lives in a policy with the two indexes closing the race beneath it.
+
+### What it deliberately does not have
+
+No status (nothing deletes a study, so ES-018 has nothing to say), no format rule
+on the identifier (EPIC-007a settled that an authority's format check belongs at
+the boundary — S003's), and none of RIM's other ~21 attributes.
+`AStudy_HasNoLifecycle_BecauseNothingRetiresOne` asserts the property list
+exactly, so admitting the next attribute is a decision someone makes rather than
+a column that appears.
+
+### Owed to S002
+
+**`Retitle` is unguarded, and that becomes wrong the moment a placement can cite
+a study.** E24 makes the *title* part of what FDA matches on too, so renaming a
+study named in a published sequence would split it in two in the reviewer's
+tool. Nothing can cite a study yet, so there is no such sequence to protect —
+recorded here and in the aggregate rather than discovered later.
+
+### Verification
+
+18 test suites, **1,152 tests**, 0 failures (16 new). **94 browser specs**, 0
+failures (2 new), on an isolated stack. `study-registry.spec.ts` proves the
+cross-kind refusal through the browser and the trimming through the API — the
+half a unique index could not catch.
+
+---
+
+## S002 — the placement reports a study · ✅ **shipped 2026-08-03**
+
+`SubmissionDocument` gains a typed reference to the study its **placement**
+reports, set from the content plan — the screen a document is filed on.
+
+| | |
+|---|---|
+| Domain | `ClinicalStudyId?` + `NonClinicalStudyId?` on the placement; `ReportClinicalStudy` / `ReportNonClinicalStudy` / `ClearReportedStudy` on the aggregate |
+| Application | `ReportStudyOnPlacement`, and the content plan now carries the study on every placed document |
+| Persistence | two nullable FKs, `Restrict` on both, indexed for S003's grouping; `AddStudyToPlacement` |
+| API | `PUT /api/submissions/{id}/documents/{documentId}/study` — a sibling of `/placement`, because both are facts about where the document sits |
+| UI | a **Set study** control on every placed document, and the sponsor's code shown beside it |
+
+### The exclusive-or is structural, not checked
+
+Each writer clears the other, so **no sequence of calls produces a placement
+reporting two studies**. The handler refuses a request naming both rather than
+resolving it — a caller naming two studies has a bug, and picking one would file
+the document under a study nobody chose.
+
+### Two consequences of "a fact about the placement", made real
+
+Both were prose in ADR-056. They are now behaviour, and both are covered in the
+browser as well as the domain:
+
+| | |
+|---|---|
+| **Unplaced reports nothing** | `ClearPlacement` takes the study with it, and an unplaced document is refused a study by name. Otherwise the reference outlives the placement it describes |
+| **Moving keeps it** | the same document reporting the same study from 4.2.1 or 4.2.3 is ordinary; moving it is not a statement about which study it reports |
+
+### What S002 found on the way
+
+**A document filed in a section that expects a different type had no controls at
+all** — it rendered as a sentence, *"Also filed here: …"*. That is precisely the
+shape a study report's supporting files take in 4.2.x, so the study could never
+be named on them and Module 4 would have been unfinishable through the UI. They
+now carry the same per-document controls as required content.
+
+### The `Retitle` guard S001 owed — and why it is not a guard
+
+S001 recorded that `Retitle` becomes unsafe once a placement can cite a study,
+and that it would need `ApplicationNumberPolicy`'s shape. **On inspection that
+answer was wrong, and the better one costs nothing.**
+
+A guard on `Study` would have to ask *"has any published sequence cited me?"* —
+which points `Study` at `Submission` and inverts
+[ADR-056 §4](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)'s
+dependency direction for a rule neither context wants to own.
+
+> **The project already has the right instrument: freeze at publish.**
+> [ADR-047](../../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md)
+> establishes that what a filing said is frozen when it is filed. An STF's
+> `study-identifier` is part of what was filed, so **S003 freezes the identifier
+> and title into the published placement** — after which a retitle cannot alter
+> a filed STF.
+
+#### Freezing is half of it — corrected on re-reading E24
+
+**Freezing solves regeneration, not continuity, and those are two problems.**
+FDA's TCG §4.4 names the failure explicitly: a duplicated study is *"caused by
+an updated STF being submitted with incorrect metadata (**study-id and study
+title not an exact match**)"*. So the title is part of the key FDA's tooling
+matches on, and a retitle still drifts **forward**: sequence 0000 filed under
+one title, 0001 under another, and the reviewer sees two studies. A frozen
+snapshot keeps the old package honest and does nothing about the new one.
+
+**It is still not a guard on `Study`, and the reason is better than the first
+one.** The check belongs where every other EPIC-007a refusal lives — in the
+generator, which already reads the previous published sequence to derive
+`operation` ([ADR-045](../../adr/ADR-045-the-cumulative-dossier-and-the-derived-delta.md)).
+It compares this sequence's `study-identifier` against the frozen one from the
+last sequence that filed the same study and **refuses by name**. That reads
+`Submission`'s own frozen data, adds no dependency in any direction, and puts
+the authority's rule at the boundary that faces the authority.
+
+| | |
+|---|---|
+| **Freeze at publish** | a filed STF cannot change when regenerated (ADR-047's instrument) |
+| **Generator refusal** | a later sequence cannot file the same study under a different title (E24's rule, at the boundary) |
+
+**ICH and FDA do differ here**, and it is worth recording rather than
+smoothing over: ICH §V says *"the information contained in the study-identifier
+section of the most recent STF will be deemed the most current"* — a supersede
+mechanism — while FDA describes the same act as producing a duplicate. Both are
+level 3. **The receiving authority governs**, and the first vertical is
+US·FDA·IND, so RegOS takes the stricter reading.
+
+**`Retitle` is therefore unreachable today** — the aggregate has it, nothing
+calls it, and no screen offers it. Recorded rather than quietly left: it becomes
+reachable when S003 has built both halves.
+
+> **This wants [ADR-057](../../adr/) once S003 unblocks** — *an authority's
+> cross-sequence continuity rule is enforced at the artifact boundary using
+> frozen publication facts, never by a guard that inverts a context boundary*.
+> Not written yet, because it would be recording a decision about code that
+> cannot be written until the DTD arrives.
+
+### Verification
+
+18 suites, **1,160 tests**, 0 failures (8 new). **96 browser specs**, 0 failures
+(2 new), on an isolated stack.
+
+---
+
+## S004 — which studies support a filing · ✅ **shipped 2026-08-03**
+
+Driver A, the question this epic was originally scoped for, and its inverse.
+
+| | |
+|---|---|
+| Domain | `ApplicationStudyCitation`, a child of `RegulatoryApplication`; `CiteClinicalStudy` / `CiteNonClinicalStudy` / `StopCitingStudy` |
+| Application | `CiteStudy` · `StopCitingStudy` · `ListApplicationStudies` · **`ListStudyFilings`** |
+| Persistence | `ApplicationStudyCitations`, cascade from the application, two filtered unique indexes |
+| API | `GET/POST /api/applications/{id}/studies`, `DELETE …/studies/{studyId}`, `GET /api/studies/{id}/filings` |
+| UI | a **Studies** tab in the application workspace, and *"Where is it filed?"* on each registry row |
+
+### A child of the citing application, not a join aggregate
+
+The Phase-1 sketch leaned toward a join aggregate *"owned by neither side,
+because both directions are queried and neither is the natural owner"*. **The
+second clause is false.** A citation is a claim the *application* makes —
+nothing about the study changes when a filing cites it, and withdrawing one is
+the application changing its mind.
+
+And a join aggregate would be built for a third citer that does not exist.
+`Registration → Clinical Study` and a commitment's study are both plausible and
+neither has been asked for; **[ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)'s
+revisit trigger names exactly that moment**, and it has not fired.
+
+### Where the inverse query lives, and why it is not obvious
+
+*"Which filings cite this study?"* spans three contexts. It cannot live beside
+`Study` — that would give the registry a dependency on both its citers, the
+inversion ADR-056 §4 exists to prevent. It cannot live in
+`RegulatoryApplication` either: reaching `Submission` from there would **close a
+cycle**, since `Submission` already depends on it.
+
+> **It lives in `Submission.Application`, the only context that already sees
+> both.** ADR-039 principle 7 at its plainest: a real question spanning three
+> contexts is a read, and a read grants nobody write ownership.
+
+Two kinds of answer, labelled, because neither implies the other: an
+**Application** cites a study, and a **Sequence** carries a placement reporting
+one. A study can be cited before anything is filed about it, and a sequence can
+report one the application never cited.
+
+### What S004 found
+
+**The repository did not `Include` the new collection**, so the aggregate's
+idempotence check read an empty list and cited the same study twice. **The
+unique index caught it** — which is the belt-and-braces pattern doing precisely
+the job S001 claimed for it, on the first occasion it was tested.
+
+### Verification
+
+18 suites, **1,167 tests**, 0 failures (7 new). **98 browser specs**, 0 failures
+(2 new), on an isolated stack. `study-citation.spec.ts` asserts the two
+directions **against each other**: a citation visible on one screen and not the
+other is the failure worth catching, and neither assertion alone would see it.
+
+---
+
+## What the STF documents changed — read 2026-08-03
+
+*Three files arrived and were read before anything was built on them. Five
+findings, and the first two correct this epic's own plan.*
+
+### 1. The vocabulary is not in the DTD, and it is 97 values
+
+`file-tag/@name` is `CDATA #REQUIRED`. `xmllint --valid` **accepts
+`name="sinopsis"`** — verified, not assumed. The enumeration lives in
+`valid-values.xml`, exactly where the DTD's own comment points: *"the list of
+valid values for the name is controlled by the ICH default stylesheet"*.
+
+| Realm | `file-tag` values |
+|---|---|
+| `ich` | 68 |
+| `us` | 25 |
+| `jp` | 4 |
+| | **97** |
+
+E29's *"~40 values"* is superseded (**E33**). And **FDA's *"22 controlled file
+tags"* (E21) turns out to be the `us` realm** — the 25 today are those 22 plus
+three `HF-validation-*` added in v5.0. Two summaries, one list, and neither
+summary was the list.
+
+### 2. There is a second oracle, and it covers what the first cannot
+
+EPIC-007a's Level 2a rested on one parser answering *"is this legal?"*. The
+stylesheet answers a different question — ***"is this a word?"*** — by resolving
+every `file-tag`, `category` and `property` against `valid-values.xml` and
+painting unknown ones `#FF6666`.
+
+```
+xmllint  + ich-stf-v2-2.dtd                  → structure        (E35)
+xsltproc + stylesheet + valid-values.xml     → vocabulary       (E34)
+```
+
+Measured: `sinopsis` → **1 red row**; `synopsis` → **0**. It is third-party,
+machine-checkable, and shipped by ICH — so S003 can claim vocabulary
+correctness with an oracle rather than with its own opinion. **The rule
+`ValidatorIndependenceTests` enforces extends unchanged**: this is a second
+oracle at the same seam, not a dependency.
+
+### 3. `duration` is a `us` category, not an `ich` one
+
+Realms are **per category**, not uniformly `ich`:
+
+| Category | Values | Realm |
+|---|---|---|
+| `species` | 9 | `ich` |
+| `route-of-admin` | 8 | `ich` |
+| **`duration`** | 3 | **`us`** |
+| `type-of-control` | 5 | `ich` |
+| `property` → `site-identifier` | 1 | `us` |
+
+Emitting `duration` with `info-type="ich"` produces a file the DTD accepts and
+the stylesheet flags — measured, 1 red row. **A hard-coded `info-type="ich"`
+would be wrong for one category in four.**
+
+### 4. Element order is fixed, and two constructs were not modelled
+
+`study-identifier` is `(title, study-id, category*)` — **title first**;
+`study-id` before `title` is rejected. Also present and previously unrecorded:
+`doc-content` has an optional `title?`; `file-tag` may itself contain
+`property*`; and `content-block` is a hierarchical alternative to `doc-content`
+for multiple tags per file. The minimum needs none of the last three, but S003
+should know they exist before choosing not to use them.
+
+### 5. `util/style/` needs two files, not one
+
+The stylesheet reads `document('valid-values.xml')` by a **relative** path, so
+the vocabulary ships beside it. ADR-054 recorded `util/style/` as an absent
+folder; this is what goes in it.
+
+### What is still not held
+
+**Which `file-tag` belongs on which document.** RegOS now has the words and can
+refuse a non-word; it has no rule for choosing between `synopsis` and
+`study-report-body` for a given file, and **should not invent one** — that is
+the filer's judgement, and the closest thing to a rule is FDA regional guidance
+this repository does not hold. S002b's UI therefore offers the list and records
+the choice.
+
+---
+
+## S002b — what the placement contributes · ✅ **shipped 2026-08-03**
+
+A placement records **which study, in what role** — ICH's `file-tag`.
+
+| | |
+|---|---|
+| Vocabulary | `FileTagVocabulary` — 97 values with their realms, **transcribed by parsing the held file, never by hand** |
+| Domain | `SubmissionDocument.FileTag`; both study writers take it, because the tag and the study are one fact |
+| Application | the handler refuses a tag ICH does not publish, and one with no study |
+| API | `PUT …/documents/{id}/study` carries it; `GET /api/study-tagging/file-tags` serves the list |
+| UI | a second select in the same dialog, appearing only once a study is named |
+
+### The vocabulary is a table in code, not seeded reference data
+
+It looks like every other lookup in RegOS and is deliberately not one.
+**ADR-055's promotion test fails for the list as a whole**:
+`data-tabulation-dataset-sdtm` and `HF-validation-protocol` do not name anything
+that would exist if ICH did not. They are wire tokens, and this project already
+holds wire tokens in code — `TelephoneNumberTypes`, `ApplicantContactTypes`.
+Nobody curates this list; it changes when ICH republishes.
+
+**What replaces the seed is the same check the seed would have got.**
+`FileTagVocabularyTests` parses `valid-values.xml` and compares — the move
+`FdaWireVocabularyTests` makes for `application-type`, pointed at a table rather
+than at a database.
+
+### One column, because the realm is a function of the tag
+
+All 97 values are distinct across `ich`, `us` and `jp`, so a placement stores
+the tag and derives `info-type` from it. A second column could only ever
+disagree with the first. **The test asserts that uniqueness** — if ICH ever
+publishes one value in two realms, the derivation starts lying silently, and
+that is the test that notices.
+
+### Refused where the list lives
+
+The aggregate takes the token as written; the handler checks it. The same
+division `RecordApplicationNumber` draws, and here it earns itself twice over:
+
+| | |
+|---|---|
+| `sinopsis` | **refused by name** — one keystroke from valid, accepted by the DTD (**E34**), unrecognised by a reviewer's tool |
+| a tag with no study | **refused** — a `file-tag` exists inside an STF, and an STF exists for a study |
+
+Both consequences follow through the aggregate too: naming a different study
+drops the role, because it was a role in the *previous* study's report; and
+unplacing the document clears both.
+
+### What it does not do
+
+**It does not say which tag belongs on which document.** RegOS has the words and
+can refuse a non-word; choosing between `synopsis` and `study-report-body` is
+the filer's judgement, and the guidance that would narrow it is not held. The
+picker shows the token as published — not prettified — because that is what the
+STF writes and what a reviewer's tool matches on.
+
+### Verification
+
+18 suites, **1,176 tests**, 0 failures (9 new). **99 browser specs**, 0 failures
+(1 new), on an isolated stack.
+
+---
+
+## S003 — the Study Tagging File · ✅ **shipped 2026-08-03**
+
+**The story this epic exists for.** A document in CTD 4.2.x that names a study
+now generates rather than refusing, so **RegOS can file an IND** — which it
+could not do this morning.
+
+| | |
+|---|---|
+| Freeze | `FiledStudyIdentifier` / `FiledStudyTitle` on the placement, written once at publish |
+| Projection | `StudyTaggingFileRenderer` — one file per **(study, eCTD element)**, never per study |
+| Chain | `new` then `append`, derived by asking which earlier sequence filed one |
+| Package | `util/dtd/ich-stf-v2-2.dtd` and `util/style/` — the stylesheet **and** the vocabulary it reads |
+| Decision | **[ADR-057](../../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md)** |
+
+### The freeze boundary
+
+```
+Study (mutable)
+      │
+      ▼
+Publication            ← the snapshot is taken here, once
+      │
+      ▼
+Frozen STF projection  ← what this sequence said the study was
+      │
+      ▼
+XML
+```
+
+The renderer never touches the `Study` tables — not by discipline, but because
+the plan it is handed carries no study id it could look up with.
+`RenamingAStudyAfterFiling_DoesNotChangeWhatTheSequenceSaid` asserts it the only
+way that means anything: generate, rename, regenerate, compare bytes.
+
+### Both oracles, and why one was not enough
+
+| Oracle | Question | Verdict on `sinopsis` |
+|---|---|---|
+| `xmllint` + `ich-stf-v2-2.dtd` | is this **legal**? | **valid** |
+| `xsltproc` + stylesheet + `valid-values.xml` | is this **a word**? | **1 red row** |
+
+`AMisspelledFileTag_PassesTheDtd_AndTheStylesheetCatchesIt` asserts both halves
+in one test, because the interesting claim is the *gap between them*.
+
+### What the oracles found, immediately
+
+**The first STF ever written was invalid twice**, and neither defect was visible
+in the XML:
+
+| | |
+|---|---|
+| `encoding="utf-16"` | `XmlWriter` takes its declared encoding from the sink, and a `StringBuilder` is UTF-16 — so the file announced one encoding while the bytes on disk were another |
+| a DOCTYPE that resolved to nothing | the path to `util/dtd/` was hardcoded two levels up, and an STF sits **with the study's files** — three levels down for 4.2.3 |
+
+Both would have produced a package a reviewer's tool could not open. Both were
+found by running the parser, not by reading the code.
+
+### Three refusals, in three different categories
+
+| | Category | Why |
+|---|---|---|
+| a study-report document naming no study | **data completeness** | a user fixes it on the content plan — this refusal *changed category* in S003, from a capability gap to a missing fact |
+| a placement in **4.2.3.1, 4.2.3.2, 4.2.3.4.1 or 5.3.5.1** | **domain capability** | ICH requires species, route, duration and type-of-control there, and a `Study` holds none. `category*` is optional in the DTD, so an empty one would *validate* and tell a reviewer nothing (E23's shape again) |
+| a study identifier a filename cannot carry | **data completeness** | an STF is `stf-<study-id>.xml`, so the sponsor's code becomes a filename. **Refused, never slugged** — a slug puts a name in the package that is not the study's. The refusal S001 predicted when it declined to police the format in the domain |
+
+And a fourth, for history: a sequence published before EPIC-019 has no snapshot,
+and is **refused rather than back-filled from today's registry** — the same call
+EPIC-007a made for sequences filed before regulatory activities were recorded.
+
+### What S003 does not do
+
+**The E24 continuity refusal is not implemented.** A study named in one
+published sequence can still be renamed, and the next sequence will file the new
+title — which FDA reads as two studies. ADR-057 §2 says where the check belongs
+(the generator, from frozen columns, no new dependency) and why it is not here
+yet: it needs a second sequence filing the same study, and a message that names
+what the previous one said. **Recorded as owed rather than presented as safe.**
+
+### Verification
+
+18 suites, **1,179 tests**, 0 failures (3 new). Both oracles green on a
+generated package. **100 browser specs**, 0 failures (1 new), on an isolated
+stack.
+
+`module-four-tagging.spec.ts` asks the question the backend tests cannot: **can
+a user actually do it?** Worth asking separately, because this epic already
+produced one defect only a browser could find — Module 4's supporting files
+rendered with no controls, so the backend supported the workflow and the UI
+quietly prevented finishing it.
+
+Its closing assertion is deliberately **negative**. A green package needs facts
+that spec does not set up — a DUNS, an application number, a reachable contact —
+so success is not the claim. The claim is that **nothing is refused for want of
+a study**, and that whatever refusal remains names something else.
+
+---
+
+## S005 — nothing to build
+
+The story was *"the RIM attributes a real user asks for, and no more"*. **Nobody
+has asked**, so by [ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)
+§3's own rule there is nothing here to write:
+
+> *Additional attributes are admitted only when required by an external
+> regulatory workflow or a demonstrated business capability.*
+
+Building `phase`, `indication`, `therapeutic area` and `subject count` now would
+be RIM's list arriving without a demand — the exact reasoning this epic was
+re-scoped to reject. **The story stays open and empty**, which is a more useful
+record than closing it: it is the place the next demand attaches to.
 
 ---
 

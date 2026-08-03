@@ -72,6 +72,25 @@ public sealed record ContentPlanPlaceholder(
     bool IsSatisfied,
     IReadOnlyList<ContentPlanDocument> Documents);
 
+/// <param name="StudyId">
+/// The study this placement reports, if it reports one. Null is the ordinary
+/// case: a document outside 4.2.x and 5.3.1.x–5.3.5.x reports no study.
+/// </param>
+/// <param name="StudyKind">
+/// <c>Clinical</c> or <c>NonClinical</c>, so the client knows which id it is
+/// holding without a second lookup. Null alongside a null
+/// <paramref name="StudyId"/>.
+/// </param>
+/// <param name="FileTag">
+/// What role this placement plays in that study's report — ICH's published
+/// token, shown as published rather than prettified: it is what the STF writes
+/// and what a reviewer's tool matches on.
+/// </param>
+/// <param name="StudyIdentifier">
+/// The sponsor's code for that study — <b>"Study ID"</b> on screen. Carried on
+/// the row because that is what a user recognises; the guid is for the client
+/// to send back.
+/// </param>
 public sealed record ContentPlanDocument(
     Guid SubmissionDocumentId,
     Guid ProductDocumentId,
@@ -79,4 +98,8 @@ public sealed record ContentPlanDocument(
     Guid DocumentTypeId,
     string DocumentTypeName,
     int VersionNumber,
-    string FileName);
+    string FileName,
+    Guid? StudyId,
+    string? StudyKind,
+    string? StudyIdentifier,
+    string? FileTag);

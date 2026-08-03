@@ -97,8 +97,11 @@ from.
 | **E16** | The two backbones disagree on `checksum`: **`#REQUIRED`** in ICH `index.xml`, **`#IMPLIED`** in FDA `us-regional.xml` | [ICH DTD](EPIC-007a/spec/ich-ectd-3-2.dtd) + [FDA DTD](EPIC-007a/spec/us-regional-v3-3.dtd) | **2a** | **EPIC-007a's rendering design** — a backbone is a contract, not a shared ruleset; see [the epic](../product/epics/EPIC-007a-ectd-package-generation.md#a-backbone-is-a-contract-not-a-shared-ruleset) | EPIC-007a |
 | **E30** | **The three attribute-value lists, held in full and machine-readable.** `telephone-number-type`: `fdatnt1` Business / `fdatnt2` Fax / `fdatnt3` Mobile. `applicant-contact-type`: `fdaact1` Regulatory / `fdaact2` Technical / `fdaact3` US Agent / `fdaact4` Promotional Labeling. `application-type`: ten codes, **`fdaat4` = IND** | FDA eCTD Submission Standards — [`telephone-number-type.xml`](EPIC-007a/spec/telephone-number-type.xml) 1.1 · [`applicant-contact-type.xml`](EPIC-007a/spec/applicant-contact-type.xml) 1.2 · [`application-type.xml`](EPIC-007a/spec/application-type.xml) 1.1 · [reading](EPIC-007a/spec/fda-attribute-lists.md) | **3** — but *complete and `status`-flagged*, so an **absence** in one of these lists is now evidence in its own right | **EPIC-007a S006's wiring** — the gate the DTD chain proved was single. **Confirms E11's outstanding assertion**: `fdaat4` = IND was RegOS's own for a year and turns out to be right. ⚠ **`form-type.xml` is still not held**, so `m1-1-forms` stays refused (E18) | EPIC-007a |
 | **E31** | **`fdaact2` is the *Technical Contact*, not a manufacturing one** — and no code means *Authorised Representative*; `fdaact3` is a **United States Agent**, a specific FDA obligation on a foreign establishment | [`applicant-contact-type.xml`](EPIC-007a/spec/applicant-contact-type.xml) v1.2 | **3** | **Falsifies half of S006's contact mapping.** RegOS decided `REG → fdaact1, MFG → fdaact2` from the M1 spec's phrase *"the technical contact"*, read as a description when it was a name. **The mapping shrinks to one row.** Better evidence made RegOS emit *less*. **[ADR-055](../adr/ADR-055-when-an-authority-required-fact-becomes-a-domain-fact.md)** — this is the *boundary translation* half of the rule, and `ContactPhone.Kind` from the same day is the *promoted* half | EPIC-007a |
+| **E33** | **The STF vocabulary is `valid-values.xml`, not the DTD — and it is 97 values, not ~40.** `file-tag` holds **68 `ich` + 25 `us` + 4 `jp`**; `category` holds `species` (9, ich), `route-of-admin` (8, ich), `duration` (**3, `us`**) and `type-of-control` (5, ich); `property` holds one value, `site-identifier` (us). A category's realm is **per category**, not uniformly `ich` | [`valid-values.xml`](EPIC-019/spec/valid-values.xml) v6.0, counted by parse | **2a** — a normative machine-readable artifact | **EPIC-019 S002b and S003.** **Supersedes E29's "~40 values"**, which was a summary's count and wrong by more than half. FDA's *"22 controlled file tags"* (E21) is the `us` realm as it stood at v4.0 — the 25 today are those 22 plus the three `HF-validation-*` added in v5.0 | EPIC-019 |
+| **E34** | **The DTD cannot police the vocabulary, and the stylesheet can.** `file-tag/@name` is declared `CDATA #REQUIRED`, so `xmllint --valid` **accepts `name="sinopsis"`**. The ICH stylesheet resolves every `file-tag`, `category` and `property` against `valid-values.xml` and paints unknown ones `bgcolor="#FF6666"` — 1 red row for `sinopsis`, 0 for `synopsis`, and 1 for `duration` carrying `info-type="ich"` instead of `us` | `xmllint` + `xsltproc` over [`ich-stf-v2-2.dtd`](EPIC-019/spec/ich-stf-v2-2.dtd) and [`ich-stf-stylesheet-2-3.xsl`](EPIC-019/spec/ich-stf-stylesheet-2-3.xsl) | **2a** | **A second oracle, for a class of error the first is blind to.** EPIC-007a's Level 2a rested on one parser answering *"is this legal?"*; this answers *"is this a word?"* — and it is third-party, machine-checkable, and shipped by ICH. The DTD's own comment says so: the valid values are *"controlled by the ICH default stylesheet"*, not by the DTD | EPIC-019 |
+| **E35** | **The STF's element order is fixed and enforced.** `study-identifier` is `(title, study-id, category*)` — **title first**; `study-id` before `title` is rejected. `doc-content` is `(title?, property*, file-tag*)` with an optional title we had not modelled; `file-tag` may itself contain `property*`; `content-block` is a hierarchical alternative to `doc-content`. `ectd:study` takes exactly one of each child, and `dtd-version` is `#FIXED "2.2"` | `xmllint --valid` negative controls over [`ich-stf-v2-2.dtd`](EPIC-019/spec/ich-stf-v2-2.dtd) | **2a** | **EPIC-019 S003.** The stylesheet reads `valid-values.xml` by a **relative** path, so both files ship together in `util/style/` — which is what ADR-054 recorded as an absent folder without knowing its contents | EPIC-019 |
 | **E32** | **A value list can carry business rules a schema cannot.** `fdaat7` (IDE), `fdaat9` (PMA) and `fdaat10` (510k) *"should only be used in the cross-reference-application-number element"*; `fdaat8` is *"Do not use. For FDA use only"*. **And there is no De Novo code at all** | [`application-type.xml`](EPIC-007a/spec/application-type.xml) v1.1, its own comments | **3** (prose) over a **2a**-shaped artifact | **Level 2b arriving without a validator** — obligations delivered by an enumeration, a shape this epic had not met. `FDA_510K` and `FDA_PMA` **must keep null tokens** despite codes existing. **`FDA_DENOVO`'s refusal changes meaning**: from *"we have not read the token"* to *"FDA's complete list has no code, so this cannot be filed in eCTD at all"* — a fact about the filing, not a gap in RegOS | EPIC-007a |
-| **E29** | **An STF is a study-shaped view over leaves the backbone already holds** — `doc-content` points at `index.xml#leafID`; it carries no files. One per study *per eCTD element* per sequence, sometimes deliberately more. Needs a **study** (sponsor's id, title, and for four CTD sections species / route / duration / type-of-control) and a **`file-tag` per placement** saying what role the document plays. Lifecycle is `append`-chained, latest-`study-identifier`-wins, delete-then-reactivate | ICH M2 *[STF Specification](EPIC-007a/spec/ich-stf-2-6-1.md)* v2.6.1 §I–V | **3** | **ADR-054** — the `file-tag` is **[ADR-053](../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)'s instance qualifier arriving a fourth time**. The STF's *content* is a projection; its *lifecycle* is not, because it states things about earlier sequences. `ich-stf-v2-2.dtd` is **not held** | EPIC-007a |
+| **E29** | **An STF is a study-shaped view over leaves the backbone already holds** — `doc-content` points at `index.xml#leafID`; it carries no files. One per study *per eCTD element* per sequence, sometimes deliberately more. Needs a **study** (sponsor's id, title, and for four CTD sections species / route / duration / type-of-control) and a **`file-tag` per placement** saying what role the document plays. Lifecycle is `append`-chained, latest-`study-identifier`-wins, delete-then-reactivate | ICH M2 *[STF Specification](EPIC-007a/spec/ich-stf-2-6-1.md)* v2.6.1 §I–V | **3** | **ADR-054** — the `file-tag` is **[ADR-053](../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)'s instance qualifier arriving a fourth time**. The STF's *content* is a projection; its *lifecycle* is not, because it states things about earlier sequences. `ich-stf-v2-2.dtd` is **not held** — and **neither is the `file-tag` vocabulary**, see the correction below | EPIC-007a |
 | **E28** | **The sequence number starts at 0001 — in the specification**, not merely in guidance: *"should start at 0001, and should not exceed 9999."* Appendix 2 maps the schemes: new `sequence-number` **0001** ↔ old Sequence **0000**. **`0000` is the pre-v2.0 numbering, replaced** | FDA *[M1 Backbone Spec](EPIC-007a/spec/fda-m1-backbone-2-6.md)* v2.6 §III.B.2.b + App. 2 · FDA *[eCTD TCG](EPIC-007a/spec/fda-ectd-tcg-1-8.md)* §2.3, §2.6 | **3** | **⚠ [ADR-044](../adr/ADR-044-a-submission-is-a-transmitted-sequence.md) and S008** — RegOS writes `0000` on **E4**. **Deferred 2026-08-03 by the founder, and the reason is one word: *should*.** Not one source in either direction says **shall**. FDA's specification says a sequence number *"should start at 0001"*; ICH's own example numbers one `0000` and it validates (E4). A *should* is convention, which is Level 3, and this register's own rule is that **2a beats 3 on legality** — so nothing yet obliges RegOS to change, and nothing yet obliges it to stay. **This row remains evidence gathering, not implementation.** What would settle it: a normative *shall* from FDA, a rejected filing, or S008 finding that 0000 changes how an example behaves rather than how it reads | EPIC-007a |
 | **E27** | **In Module 1, `modified-file` points at `us-regional.xml`, not `index.xml`** — *"`modified-file="../../../0001/m1/us/us-regional.xml#id34567"`"*, and in a grouped submission it also carries the owning application folder | FDA *[M1 Backbone Spec](EPIC-007a/spec/fda-m1-backbone-2-6.md)* v2.6 §V | **3** | **EPIC-007a S006 wiring** — the generator builds `../{sequence}/index.xml#{leaf}` for *every* backbone. Right for Modules 2–5, wrong for Module 1; unreached only because the wiring is paused | EPIC-007a |
 | **E26** | **`us-regional.xml`'s header points at accessdata.fda.gov, not `util/`** — DOCTYPE and a stylesheet PI, both absolute URLs, in a header the spec calls *"always the same"*. Appendix 2 records that local `util/` references are what **v2.0 replaced** | FDA *[M1 Backbone Spec](EPIC-007a/spec/fda-m1-backbone-2-6.md)* v2.6 §II + App. 2 §E.17 | **3** | **EPIC-007a S006 — a defect in shipped code.** The renderer emitted `../../util/dtd/…` and no stylesheet, assuming a regional backbone resolves its DTD the way the ICH one does. Corrected. **It also puts FDA's network reference against the epic's offline Level 2a claim**: tests now validate a locally-rewritten copy and assert the shipped header separately | EPIC-007a |
@@ -140,6 +143,7 @@ that the support has since grown.
 | **EPIC-007a rendering** | **E16**, **E17**, **E18**, **E19**, **E23** | E16 shaped it before a line was written — two renderers, not one with a flag. **E17–E19 arrived from the renderers themselves**: each is a placement the blueprint happily seeds and the DTD refuses, and no amount of reading a section list would have surfaced any of them. **E23 is E16's shape from the other direction** — a construct the DTD permits and the authority refuses |
 | [**ADR-053**](../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md) — an instance qualifier belongs to the placement | **E17**, **E18**, **E24** | Written *because* there were two. One would have been solved locally; two, in different backbones, a day apart, are a boundary. **E24 adds a constraint the ADR could not have known**: the qualifier must be *identical across sequences*, because that is how FDA's review tooling recognises the same node twice. The ADR is not edited — it deliberately models nothing, and this constrains the modelling when it comes |
 | **EPIC-007a S004** — the sequence folder | **E4**, **E22** | E22 arrived after the story shipped and changed it: FDA caps a path at 150 characters where ICH allows 230, and the generator now enforces the stricter one |
+| [**ADR-056**](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md) — study identity is owned by the sponsor | **E21**, **E24**, **E29** | **E24 is load-bearing for the ownership, not merely for the modelling.** E29 says the `study-id` is *the sponsor's*; E24 says it must be byte-identical across sequences or FDA's tooling splits one study into two — and **an entity owned by a submission cannot promise that**. Ownership by the sponsor is what turns the stability into an invariant rather than a hope. E21 is why it is urgent: every IND has Module 4 content |
 
 **A row moving from *inferred* to *stated by the authority* is worth recording
 even though nothing is rebuilt.** E6 → E15 is that: the design did not change,
@@ -164,3 +168,57 @@ Superseding evidence gets a **new row**; the old one is struck through and keeps
 its number. Then walk its *Relied on by* column — those are the decisions that
 have to be re-examined, and the reason this register exists rather than the facts
 living scattered through the ADRs that happened to need them first.
+
+### Resolved, 2026-08-03 — the vocabulary arrived, and it was in a different file
+
+**`valid-values.xml` v6.0, `ich-stf-v2-2.dtd` and `ich-stf-stylesheet-2-3.xsl`
+are now held** ([spec/](EPIC-019/spec/)). The correction below stands as
+written, and **one sentence in it was itself wrong**: it said the enumeration
+*"lives in `ich-stf-v2-2.dtd`"*. It does not. `file-tag/@name` is `CDATA`, and
+`xmllint` validates a misspelled tag without complaint (**E34**). The vocabulary
+lives in `valid-values.xml`, which the DTD's own comment points at —
+*"controlled by the ICH default stylesheet"*.
+
+> **Two files, two jobs, and guessing which was which cost nothing only because
+> nothing was built on the guess.** The DTD answers *is this legal?*; the
+> stylesheet plus `valid-values.xml` answers *is this a word?* The backlog named
+> one file as the source of both.
+
+Recorded as **E33**, **E34** and **E35**. E29's *"~40 values"* is superseded: the
+real count is **97**.
+
+### Correction, 2026-08-03 — the `file-tag` vocabulary is **not held**
+
+**E29 was read as holding it. It does not.** What this repository holds is the
+*cardinality* — ICH's summary says `file-tag` has *"~40 values"* with
+`info-type` of `ich` / `us` / `jp`, and FDA's Study Data TCG summary says
+*"§7.1.5 lists 22 controlled file tags"*. **Neither list is enumerated
+anywhere in `docs/evidence/`.** Four example values appear in passing —
+`synopsis`, `study-data-reviewers-guide`, `weight-of-evidence`,
+`qt-clinical-study` — and four is not a vocabulary.
+
+The enumeration lives in `ich-stf-v2-2.dtd`, which E29 already records as not
+held. **The two facts were one fact, and only one of them was written down.**
+
+> **This is the failure mode the register exists to catch, caught by the
+> register's own habit of asking where a fact came from.** Reading *"~40
+> values"* and recording *"held"* is the same error as reading a section list
+> and concluding a package would validate: a statement **about** a vocabulary is
+> not the vocabulary.
+
+**Where the wrong claim was made**, so it is not cited from those places again:
+
+| | |
+|---|---|
+| [ADR-054](../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md) §2 | its three-shapes table marks E29 *"held"*. **The ADR is not edited** — its decision does not rest on it, and §2's own conclusion (*"the abstraction is still not built here… two of the three vocabularies are files this repository does not hold"*) is only strengthened: it is three of three |
+| EPIC-019 | corrected in place — it is a planning document, not a decision |
+
+**What it costs.** ICH's `file-tag` values are a closed vocabulary a filer picks
+from, so it is `form-type.xml`'s situation exactly (**E18**), and it gets
+`form-type.xml`'s answer: **the shape is modelled, the vocabulary is not
+invented, and generation refuses by name until the list arrives.** A free-text
+box would let a user type `sinopsis` and produce a package FDA rejects — worse
+than a refusal, because it fails at the gateway rather than on the screen.
+
+**Which is why EPIC-019 S002 shipped the study reference and stopped there**,
+and why S003 cannot be scheduled as though it were unblocked.

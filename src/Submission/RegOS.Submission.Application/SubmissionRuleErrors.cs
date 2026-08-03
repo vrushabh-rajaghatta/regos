@@ -87,4 +87,21 @@ public static class SubmissionRuleErrors
     public const string TemplateSectionNotInBoundBlueprint =
         "The section does not belong to the blueprint this submission is "
             + "bound to.";
+
+    // Studies (cross-context: studies live in their own context, ADR-056)
+    public const string StudyDoesNotExist =
+        "Study does not exist.";
+
+    public static string FileTagIsNotPublished(string fileTag)
+        => $"\"{fileTag}\" is not a published file tag. ICH publishes 97, and "
+            + "a tag outside that list is accepted by the DTD and rejected by "
+            + "the reviewer's tool.";
+
+    public const string FileTagRequiresAStudy =
+        "A file tag says what a document contributes to a study report, so name "
+            + "the study first.";
+
+    public const string PlacementReportsOneStudy =
+        "A document reports one study, not two. Name either a clinical or a "
+            + "non-clinical study, or neither.";
 }

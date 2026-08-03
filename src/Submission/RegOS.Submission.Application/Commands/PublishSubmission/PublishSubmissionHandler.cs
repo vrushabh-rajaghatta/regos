@@ -1,7 +1,18 @@
+using Microsoft.EntityFrameworkCore;
+
+using RegOS.Persistence;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Study.Domain.Aggregates.ClinicalStudy;
+using RegOS.Study.Domain.Aggregates.NonClinicalStudy;
 using RegOS.Submission.Application.Services;
 using RegOS.Submission.Application.Validation;
 using RegOS.Submission.Domain.Submission;
+
+using ClinicalStudyAggregate =
+    RegOS.Study.Domain.Aggregates.ClinicalStudy.ClinicalStudy;
+using NonClinicalStudyAggregate =
+    RegOS.Study.Domain.Aggregates.NonClinicalStudy.NonClinicalStudy;
+using SubmissionAggregate = RegOS.Submission.Domain.Submission.Submission;
 
 namespace RegOS.Submission.Application.Commands.PublishSubmission;
 
@@ -36,15 +47,18 @@ public sealed class PublishSubmissionHandler
     private readonly SubmissionValidator _validator;
     private readonly ISubmissionPublicationBaseline _baseline;
     private readonly ISubmissionRepository _submissions;
+    private readonly RegOSDbContext _dbContext;
 
     public PublishSubmissionHandler(
         SubmissionValidator validator,
         ISubmissionPublicationBaseline baseline,
-        ISubmissionRepository submissions)
+        ISubmissionRepository submissions,
+        RegOSDbContext dbContext)
     {
         _validator = validator;
         _baseline = baseline;
         _submissions = submissions;
+        _dbContext = dbContext;
     }
 
     public async Task<PublishSubmissionResult> HandleAsync(
@@ -96,10 +110,72 @@ public sealed class PublishSubmissionHandler
             baseline.NextSequenceNumber,
             baseline.PreviousPublishedSequenceNumber,
             baseline.Placements,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow,
+            await ResolvePublishedStudiesAsync(submission, cancellationToken));
 
         await _submissions.UpdateAsync(submission, cancellationToken);
 
         return new PublishSubmissionResult(Published: true, Validation: null);
+    }
+
+    /// <summary>
+    /// What each reported study is called <em>now</em>, so publication can
+    /// freeze it.
+    /// </summary>
+    /// <remarks>
+    /// <b>The freeze boundary, read from the outside.</b> A study is mutable and
+    /// a filed sequence is not:
+    /// <code>
+    /// Study (mutable) → Publication → frozen snapshot → STF XML
+    /// </code>
+    /// The snapshot is taken here, by the thing that publishes, from the
+    /// registry as it then stands. After this the STF is projected from the
+    /// snapshot and never from the registry, so renaming a study cannot alter a
+    /// sequence FDA has already received.
+    /// <para>
+    /// Read across the context boundary rather than navigated (ADR-056 §4): the
+    /// handler joins on ids, and <c>Study</c> knows nothing about publication.
+    /// </para>
+    /// </remarks>
+    private async Task<IReadOnlyCollection<PublishedStudy>>
+        ResolvePublishedStudiesAsync(
+            SubmissionAggregate submission,
+            CancellationToken cancellationToken)
+    {
+        var clinicalIds = submission.Documents
+            .Select(d => d.ClinicalStudyId)
+            .OfType<ClinicalStudyId>()
+            .Distinct()
+            .ToList();
+
+        var nonClinicalIds = submission.Documents
+            .Select(d => d.NonClinicalStudyId)
+            .OfType<NonClinicalStudyId>()
+            .Distinct()
+            .ToList();
+
+        var studies = new List<PublishedStudy>();
+
+        if (clinicalIds.Count > 0)
+        {
+            studies.AddRange(await _dbContext.Set<ClinicalStudyAggregate>()
+                .AsNoTracking()
+                .Where(s => clinicalIds.Contains(s.Id))
+                .Select(s => new PublishedStudy(
+                    s.Id.Value, s.SponsorStudyIdentifier, s.Title))
+                .ToListAsync(cancellationToken));
+        }
+
+        if (nonClinicalIds.Count > 0)
+        {
+            studies.AddRange(await _dbContext.Set<NonClinicalStudyAggregate>()
+                .AsNoTracking()
+                .Where(s => nonClinicalIds.Contains(s.Id))
+                .Select(s => new PublishedStudy(
+                    s.Id.Value, s.SponsorStudyIdentifier, s.Title))
+                .ToListAsync(cancellationToken));
+        }
+
+        return studies;
     }
 }

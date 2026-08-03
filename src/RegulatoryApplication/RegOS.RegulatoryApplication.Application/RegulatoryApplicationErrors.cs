@@ -23,4 +23,16 @@ public static class RegulatoryApplicationErrors
 
     public const string DuplicateApplication =
         "A Application already exists for this product, country and authority.";
+
+    public const string ApplicationDoesNotExist = "Application does not exist.";
+
+    // Study citations (EPIC-019 S004, cross-context: studies are their own)
+    public const string StudyDoesNotExist = "Study does not exist.";
+
+    public const string CiteOneStudyAtATime =
+        "Cite one study at a time. Name either a clinical or a non-clinical "
+            + "study, not both.";
+
+    public const string NoStudyNamed =
+        "Name the study this application is supported by.";
 }

@@ -1,7 +1,7 @@
 # ADR-051 — Two More Lookups, And What Makes Something A Lookup
 
 **Status:** Accepted · **Date:** 2026-08-02 ·
-**Related:** [ADR-043](ADR-043-strongly-typed-identity-and-the-flat-master-data-carve-out.md) (admits the first eight; **§3 amended here**),
+**Related:** [ADR-043](ADR-043-entity-identity-derives-from-the-kernel.md) (admits the first eight; **§3 amended here**),
 [ADR-050](ADR-050-application-type-classifies-the-application.md) (renamed the concept ADR-043 §2 called `SubmissionTypeId`),
 [ADR-047](ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md) (§6 — sub-type is an independent axis),
 [ADR-018](ADR-018-rule-of-three.md)

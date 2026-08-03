@@ -3,7 +3,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
+using RegOS.Study.Domain.Aggregates.ClinicalStudy;
+using RegOS.Study.Domain.Aggregates.NonClinicalStudy;
 using RegOS.Submission.Domain.Submission;
+
+using ClinicalStudyEntity =
+    RegOS.Study.Domain.Aggregates.ClinicalStudy.ClinicalStudy;
+using NonClinicalStudyEntity =
+    RegOS.Study.Domain.Aggregates.NonClinicalStudy.NonClinicalStudy;
 
 using DocumentVersionEntity = RegOS.ProductDocument.Domain.Entities.DocumentVersion;
 
@@ -66,6 +73,39 @@ public sealed class SubmissionDocumentConfiguration
                     ? new TemplateSectionId(value.Value)
                     : (TemplateSectionId?)null);
 
+        // Which study this placement reports (ADR-056 §4). Two typed columns
+        // rather than one, because they name two aggregates with two identity
+        // spaces — and the exclusive-or between them is the aggregate's, since
+        // no relational constraint expresses "at most one of these is set"
+        // without a check constraint that would then have to be kept in step
+        // with the domain by hand.
+        builder.Property(x => x.ClinicalStudyId)
+            .HasConversion(
+                id => id != null ? id.Value : (Guid?)null,
+                value => value != null
+                    ? ClinicalStudyId.From(value.Value)
+                    : null);
+
+        builder.Property(x => x.NonClinicalStudyId)
+            .HasConversion(
+                id => id != null ? id.Value : (Guid?)null,
+                value => value != null
+                    ? NonClinicalStudyId.From(value.Value)
+                    : null);
+
+        // The published token, stored as written. 60 is comfortably above the
+        // longest ICH publishes (inter-laboratory-standardisation-methods-
+        // quality-assurance, 58) without inviting free text.
+        builder.Property(x => x.FileTag).HasMaxLength(60);
+
+        // The freeze boundary, as columns. Written once at publish and never
+        // again: an STF is projected from these, not from today's registry, so
+        // regenerating a filed sequence reproduces what the authority received.
+        builder.Property(x => x.FiledStudyIdentifier).HasMaxLength(50);
+        builder.Property(x => x.FiledStudyTitle).HasMaxLength(500);
+
+        builder.Ignore(x => x.ReportsAStudy);
+
         // Shadow FK to the owning submission — the child holds no FK property.
         // Declared with the aggregate's strongly-typed id (and its converter)
         // so it is compatible with Submission's primary key; the ownership
@@ -101,9 +141,28 @@ public sealed class SubmissionDocumentConfiguration
             .HasForeignKey(x => x.TemplateSectionId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Restrict, like the template section above and for the same reason: a
+        // study a filing is organised around must not be deleted out from
+        // under it. Nothing deletes a study today, which makes this the
+        // constraint that keeps that true.
+        builder.HasOne<ClinicalStudyEntity>()
+            .WithMany()
+            .HasForeignKey(x => x.ClinicalStudyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<NonClinicalStudyEntity>()
+            .WithMany()
+            .HasForeignKey(x => x.NonClinicalStudyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex("SubmissionId");
         builder.HasIndex(x => x.DocumentVersionId);
         builder.HasIndex(x => x.TemplateSectionId);
+
+        // S003 groups a sequence's placements by (study, eCTD element) to
+        // project an STF, so these are the columns it will scan.
+        builder.HasIndex(x => x.ClinicalStudyId);
+        builder.HasIndex(x => x.NonClinicalStudyId);
 
         // Mirrors the aggregate invariant: a Product Document may appear only
         // once per submission. Guards against corruption from concurrent

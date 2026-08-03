@@ -239,7 +239,8 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
         var handler = new PublishSubmissionHandler(
             ValidatorFor(ctx),
             new SubmissionPublicationBaseline(ctx),
-            new SubmissionRepository(ctx));
+            new SubmissionRepository(ctx),
+            ctx);
 
         var result = await handler.HandleAsync(
             new PublishSubmissionCommand(submissionId), default);

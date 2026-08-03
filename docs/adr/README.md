@@ -83,6 +83,15 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [046](ADR-046-a-submissions-lifecycle-is-only-what-we-did.md) | A submission's lifecycle is only what we did | Accepted | Current |
 | [047](ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md) | Publication metadata exists only when publication makes it true | Accepted | Current |
 | [048](ADR-048-the-people-on-a-filing-belong-to-the-filing.md) | The people on a filing belong to the filing | Accepted | Current |
+| [049](ADR-049-generation-derives-transmission-creates.md) | Generation derives; transmission creates | Accepted | Current |
+| [050](ADR-050-application-type-classifies-the-application.md) | Application type classifies the application | Accepted | Current |
+| [051](ADR-051-two-more-lookups-and-what-a-lookup-is.md) | Two more lookups, and what a lookup is | Accepted | Direction |
+| [052](ADR-052-where-a-specification-stops-naming-directories.md) | Where a specification stops naming directories | Accepted | Current |
+| [053](ADR-053-instance-qualifiers-belong-to-the-placement.md) | Instance qualifiers belong to the placement | Accepted | Direction |
+| [054](ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md) | A study tagging file is a projection over a study we do not have | Accepted | Direction |
+| [055](ADR-055-when-an-authority-required-fact-becomes-a-domain-fact.md) | When an authority-required fact becomes a domain fact | Accepted | Direction |
+| [056](ADR-056-study-identity-is-owned-by-the-sponsor.md) | Study identity is owned by the sponsor, not by a submission | Accepted | Direction |
+| [057](ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) | A filed artifact is projected from a snapshot; continuity is enforced at the boundary | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

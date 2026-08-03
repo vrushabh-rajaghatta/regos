@@ -102,4 +102,9 @@ public static class SubmissionErrors
     public const string FormatLockedOncePublished =
         "The format of a published sequence cannot be changed — it is what "
         + "the filing was made as.";
+
+    // Studies (ADR-056)
+    public const string UnplacedDocumentReportsNoStudy =
+        "Which study a document reports is a fact about where it sits in the "
+        + "dossier, so place it in a section first.";
 }

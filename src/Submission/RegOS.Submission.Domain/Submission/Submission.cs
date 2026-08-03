@@ -8,6 +8,8 @@ using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
+using RegOS.Study.Domain.Aggregates.ClinicalStudy;
+using RegOS.Study.Domain.Aggregates.NonClinicalStudy;
 
 namespace RegOS.Submission.Domain.Submission;
 
@@ -344,8 +346,80 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// stays part of the submission, but sits nowhere — a state the validator
     /// reports rather than tolerates silently.
     /// </summary>
+    /// <remarks>
+    /// Takes any reported study with it: a document that sits nowhere reports
+    /// nothing, because reporting a study is a fact about where the document is
+    /// filed (ADR-056 §4).
+    /// </remarks>
     public void ClearPlacement(SubmissionDocumentId submissionDocumentId)
         => Placeable(submissionDocumentId).PlaceIn(null);
+
+    /// <summary>
+    /// Records that a placement reports a clinical study.
+    /// </summary>
+    /// <remarks>
+    /// <b>Requires the document to be placed.</b> The study is a fact about the
+    /// placement, so there has to be one — and this is what makes that sentence
+    /// true of the data rather than only of the comment.
+    /// <para>
+    /// The aggregate cannot check the study exists: studies are another
+    /// context, and reaching across that boundary from inside here would be
+    /// worse than the handler owning the rule — the same division
+    /// <see cref="PlaceDocument"/> draws for template sections.
+    /// </para>
+    /// </remarks>
+    /// <param name="fileTag">
+    /// What role the document plays in that study's report — ICH's
+    /// <c>file-tag</c>. Optional here and refused when it names nothing: the
+    /// vocabulary is 97 published tokens the handler owns, not an invariant this
+    /// aggregate can state (ADR-055, and the same division
+    /// <c>RecordApplicationNumber</c> draws).
+    /// </param>
+    public void ReportClinicalStudy(
+        SubmissionDocumentId submissionDocumentId,
+        ClinicalStudyId studyId,
+        string? fileTag = null)
+    {
+        ArgumentNullException.ThrowIfNull(studyId);
+
+        Reporting(submissionDocumentId).ReportClinicalStudy(studyId, fileTag);
+    }
+
+    /// <summary>
+    /// Records that a placement reports a non-clinical study — the Module 4
+    /// half, and the one FDA blocks an IND over.
+    /// </summary>
+    /// <remarks>See <see cref="ReportClinicalStudy"/>.</remarks>
+    public void ReportNonClinicalStudy(
+        SubmissionDocumentId submissionDocumentId,
+        NonClinicalStudyId studyId,
+        string? fileTag = null)
+    {
+        ArgumentNullException.ThrowIfNull(studyId);
+
+        Reporting(submissionDocumentId).ReportNonClinicalStudy(studyId, fileTag);
+    }
+
+    /// <summary>
+    /// Says that this placement reports no study after all — and so plays no
+    /// role in one, which is why the file-tag goes with it. Distinct from
+    /// clearing the placement, which removes the document from the dossier
+    /// altogether.
+    /// </summary>
+    public void ClearReportedStudy(SubmissionDocumentId submissionDocumentId)
+        => Placeable(submissionDocumentId).ClearReportedStudy();
+
+    private SubmissionDocument Reporting(
+        SubmissionDocumentId submissionDocumentId)
+    {
+        var document = Placeable(submissionDocumentId);
+
+        if (document.TemplateSectionId is null)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.UnplacedDocumentReportsNoStudy);
+
+        return document;
+    }
 
     private SubmissionDocument Placeable(SubmissionDocumentId submissionDocumentId)
     {
@@ -430,11 +504,18 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// this is the first. The diff is computed against it and frozen — see
     /// <see cref="RecordOperations"/>.
     /// </param>
+    /// <param name="publishedStudies">
+    /// What each reported study was called at the moment of filing. Supplied
+    /// rather than read, because studies are another context (ADR-056) — and
+    /// frozen here rather than looked up later, because an STF must reproduce
+    /// what the authority received even after the study is renamed.
+    /// </param>
     public void Publish(
         int sequenceNumber,
         int? previousPublishedSequenceNumber,
         IReadOnlyCollection<PublishedPlacement> previousPlacements,
-        DateTimeOffset publishedAt)
+        DateTimeOffset publishedAt,
+        IReadOnlyCollection<PublishedStudy>? publishedStudies = null)
     {
         ArgumentNullException.ThrowIfNull(previousPlacements);
 
@@ -463,6 +544,7 @@ public sealed class Submission : AggregateRoot<SubmissionId>
                 SubmissionErrors.FirstSequenceHasNoBaseline);
 
         RecordOperations(previousPlacements);
+        FreezeStudyIdentities(publishedStudies ?? []);
 
         Status = SubmissionStatus.Published;
         SequenceNumber = sequenceNumber;
@@ -471,6 +553,33 @@ public sealed class Submission : AggregateRoot<SubmissionId>
             SubmissionStatus.Published,
             DateOnly.FromDateTime(publishedAt.UtcDateTime),
             publishedAt.UtcDateTime);
+    }
+
+    /// <summary>
+    /// Takes the snapshot an STF is projected from.
+    /// </summary>
+    /// <remarks>
+    /// Silent about a study it was not given: the caller resolves what the
+    /// placements reference, and a placement whose study has vanished from the
+    /// registry is a broken reference the generator names — not something to
+    /// half-freeze here.
+    /// </remarks>
+    private void FreezeStudyIdentities(
+        IReadOnlyCollection<PublishedStudy> studies)
+    {
+        foreach (var document in _documents)
+        {
+            var studyId = document.ClinicalStudyId?.Value
+                ?? document.NonClinicalStudyId?.Value;
+
+            if (studyId is not { } id) continue;
+
+            var study = studies.FirstOrDefault(s => s.StudyId == id);
+
+            if (study is null) continue;
+
+            document.FreezeStudyIdentity(study.Identifier, study.Title);
+        }
     }
 
     /// <summary>

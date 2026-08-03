@@ -120,7 +120,45 @@ public static class SequenceGenerationErrors
     public const string SectionRequiresAStudyTaggingFile =
         "Section {0} holds study reports, and FDA files nothing under <{1}> "
         + "without a Study Tagging File naming the study each document belongs "
-        + "to. RegOS does not record studies yet, so there is nothing to name.";
+        + "to. Say which study this document reports, on the content plan.";
+
+    /// <remarks>
+    /// <b>A capability gap, not a data one.</b> ICH requires species, route of
+    /// administration, duration and type-of-control for exactly four CTD
+    /// sections, and a <c>Study</c> holds none of them — ADR-056 §3 admits an
+    /// attribute when an external workflow demands it, and this message is that
+    /// demand arriving.
+    /// </remarks>
+    public const string SectionRequiresStudyCategories =
+        "Section {0} files studies that must be described by species, route, "
+        + "duration and type of control, and <{1}> is one of the four ICH "
+        + "requires them for. RegOS does not record those facts about a study "
+        + "yet, so the tagging file would describe the study as nothing.";
+
+    /// <remarks>
+    /// The refusal S001 predicted when it declined to police the identifier's
+    /// format in the domain. An STF is named <c>stf-&lt;study-id&gt;.xml</c>,
+    /// so the sponsor's code becomes a filename — and slugging it would put a
+    /// name in the package that is not the study's.
+    /// </remarks>
+    public const string StudyIdentifierIsNotAFileName =
+        "Study \"{0}\" cannot be filed: its identifier becomes the tagging "
+        + "file's name, and a file name carries only letters, digits, dots, "
+        + "hyphens and underscores.";
+
+    /// <remarks>
+    /// <b>Refusal 4's shape, for a sequence rather than a fact.</b> A sequence
+    /// published before EPIC-019 has placements that report a study and no
+    /// record of what that study was called at the time. Reading it from
+    /// today's registry is exactly what the freeze boundary exists to prevent,
+    /// so this refuses instead — the same call S003 made for a sequence filed
+    /// before regulatory activities were recorded (E13).
+    /// </remarks>
+    public const string SequencePredatesTheStudySnapshot =
+        "\"{0}\" reports a study, but this sequence was filed before RegOS "
+        + "recorded what a study was called at the moment of filing. A tagging "
+        + "file built from today's registry would not be what the authority "
+        + "received.";
 
     /// <remarks>
     /// <b>E19, and it is a validation problem rather than a modelling one.</b>

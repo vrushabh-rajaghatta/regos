@@ -126,7 +126,8 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
         new(
             new SubmissionValidator(new SubmissionRepository(ctx), ctx),
             new SubmissionPublicationBaseline(ctx),
-            new SubmissionRepository(ctx));
+            new SubmissionRepository(ctx),
+            ctx);
 
     // --- Publish: validation gate --------------------------------------------
 

@@ -31,7 +31,12 @@ public sealed class RegulatoryApplicationRepository
         RegulatoryApplicationId id,
         CancellationToken cancellationToken)
     {
+        // Tracked, with its citations. Load-bearing rather than convenient:
+        // the aggregate's idempotence check reads the collection, so an
+        // unloaded one reports "not cited yet" and adds a second row for a
+        // study already there. The unique index caught exactly that.
         return await _dbContext.RegulatoryApplications
+            .Include(x => x.StudyCitations)
             .FirstOrDefaultAsync(
                 x => x.Id == id,
                 cancellationToken);

@@ -40,6 +40,8 @@ Run as **three epics**, cut when this is pulled into Now. Suggested IDs at that 
 
 Do not attempt all three in one branch — it would be the largest epic in the project by a wide margin and would sit unmerged for months, against the flow's *"keep epics small enough to complete before they drift."*
 
+> **10a was cut and planned on 2026-08-03** → **[EPIC-010a — Substance & composition](EPIC-010a-substance-and-composition.md)**, which carries the settled Phase 2 and Phase 3 for cluster A and supersedes the sketches below **for that cluster only**. Decisions 1–4 and 6 were settled there; decision 5 (`Registration` → `PackagedProduct`) remains open and belongs to 10b. The sketches below stand unchanged for **10b** and **10c**.
+
 ### In scope ✅ *(across the three splits)*
 - **`Substance`** — substance name, class, type, CAS number, INN, chem/bio description, molecular formula, UNII code + name.
 - **`Ingredient`** — role (active/excipient), links substance ↔ component ↔ pharmaceutical product detail, manufacturing source organization.
