@@ -92,6 +92,25 @@ public static class SequenceGenerationErrors
         "This sequence is not bound to a blueprint, so its documents sit in no "
         + "sections and there is no structure to write.";
 
+    // ── What the authority will not accept ───────────────────────────────────
+
+    /// <remarks>
+    /// <b>The stricter of two published limits wins.</b> ICH Appendix 2 allows a
+    /// 230-character path; FDA's eCTD Technical Conformance Guide §2.4 says *"the
+    /// length of the entire path must not exceed 150 characters"* (evidence E22).
+    /// A path can therefore be legal under ICH and rejected by the region it is
+    /// filed to, and RegOS previously checked neither.
+    /// <para>
+    /// Refused rather than truncated: shortening a path silently renames a
+    /// document inside a package a regulator reads, and the fix — a shorter
+    /// document name — belongs to whoever named it.
+    /// </para>
+    /// </remarks>
+    public const string PathTooLongForTheRegion =
+        "'{0}' is {1} characters, and FDA accepts no path longer than {2}. "
+        + "Shorten the document's name — every folder in the path is fixed by "
+        + "the blueprint.";
+
     // ── What the filesystem cannot express ───────────────────────────────────
 
     /// <remarks>

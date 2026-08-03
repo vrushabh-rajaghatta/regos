@@ -120,6 +120,11 @@ public sealed class SequenceFolderGenerator
         var deletions = await ResolveDeletionsAsync(
             submission, placements, priorSequences, cancellationToken);
 
+        // Checked here rather than while resolving, because the limit is on the
+        // whole path and the sequence folder is part of it.
+        foreach (var leaf in leaves)
+            RequireAPathTheRegionAccepts(sequenceNumber, leaf.RelativePath);
+
         return new SequencePlan(sequenceNumber, leaves, deletions);
     }
 
@@ -441,6 +446,38 @@ public sealed class SequenceFolderGenerator
     }
 
     /// <summary>
+    /// FDA accepts no path longer than 150 characters (evidence E22).
+    /// </summary>
+    /// <remarks>
+    /// <b>The stricter of two published limits.</b> ICH Appendix 2 allows 230,
+    /// so a path this refuses may be perfectly legal elsewhere — which is why the
+    /// message names the region rather than the format.
+    /// <para>
+    /// <b>What is measured is what RegOS emits</b>: the sequence folder and
+    /// everything under it, <c>0000/m3/32-body-data/…</c>. The application folder
+    /// above it (<c>NDA123456/</c>) is the caller's, chosen at delivery, and it
+    /// spends from the same 150 — so a package that passes here can still exceed
+    /// the limit once it is placed. Measuring what we do not choose would be
+    /// guessing; leaving the rest unsaid would be worse.
+    /// </para>
+    /// </remarks>
+    private static void RequireAPathTheRegionAccepts(
+        int sequenceNumber, string relativePath)
+    {
+        var path = $"{sequenceNumber:0000}/{relativePath}";
+
+        if (path.Length > MaxPathLength)
+        {
+            throw new BusinessRuleViolationException(string.Format(
+                SequenceGenerationErrors.PathTooLongForTheRegion,
+                path, path.Length, MaxPathLength));
+        }
+    }
+
+    /// <summary>FDA eCTD Technical Conformance Guide §2.4.</summary>
+    private const int MaxPathLength = 150;
+
+    /// <summary>
     /// Refusal 3 — the specification asks for a fact RegOS does not hold.
     /// </summary>
     /// <remarks>
@@ -561,6 +598,12 @@ public sealed class SequenceFolderGenerator
 
         var backbones = await WriteIchBackboneAsync(
             root, plan, leaves, cancellationToken);
+
+        // Every emitted path, not only the leaves. These are fixed strings and
+        // the check cannot fire today — which is the point: if a DTD is renamed
+        // or a backbone moves, the limit is still enforced rather than assumed.
+        foreach (var path in utilities.Concat(backbones))
+            RequireAPathTheRegionAccepts(plan.SequenceNumber, path);
 
         return new GeneratedSequenceFolder(root, leaves, utilities, backbones);
     }

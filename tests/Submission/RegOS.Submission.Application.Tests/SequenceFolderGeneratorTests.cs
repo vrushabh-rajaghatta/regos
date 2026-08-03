@@ -326,6 +326,50 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         ValidateIndex(generated.RootPath).ExitCode.Should().Be(0);
     }
 
+    /// <summary>
+    /// <b>E22 — FDA accepts no path longer than 150 characters</b> (eCTD
+    /// Technical Conformance Guide §2.4), where ICH Appendix 2 allows 230. The
+    /// stricter of two published limits wins, and RegOS previously checked
+    /// neither.
+    /// </summary>
+    /// <remarks>
+    /// Refused rather than truncated: shortening would silently rename a
+    /// document inside a package a regulator reads.
+    /// </remarks>
+    [Fact]
+    public async Task APathLongerThanFdaAccepts_IsRefusedRatherThanShortened()
+    {
+        await using var ctx = New();
+
+        // 2.3's folder is m2/23-qos, so the file name carries the length.
+        var (submissionId, storage) = await APublishedEctdSequenceAsync(
+            ctx, sectionCode: "2.3", documentFileName: new string('a', 160) + ".pdf");
+
+        var act = async () => await GenerateAsync(ctx, storage, submissionId);
+
+        var thrown = await act.Should()
+            .ThrowAsync<BusinessRuleViolationException>();
+
+        thrown.Which.Message.Should().Contain("no path longer than 150");
+    }
+
+    /// <summary>
+    /// The fixed paths every package carries, measured rather than assumed —
+    /// <c>util/dtd/us-regional-v3-3.dtd</c> is the longest of them.
+    /// </summary>
+    [Fact]
+    public async Task ThePackagesOwnFiles_FitWithinTheLimit()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) =
+            await APublishedEctdSequenceAsync(ctx, sectionCode: "2.3");
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        foreach (var path in generated.UtilityFiles.Concat(generated.BackboneFiles))
+            $"0000/{path}".Length.Should().BeLessThanOrEqualTo(150);
+    }
+
     // --- The refusals ---------------------------------------------------------
 
     [Fact]
@@ -440,7 +484,8 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
         RegOSDbContext ctx,
         bool publish = true,
         SubmissionFormat format = SubmissionFormat.Ectd,
-        string sectionCode = "1.2")
+        string sectionCode = "1.2",
+        string documentFileName = "Cover Letter.pdf")
     {
         var (applicationId, globalProductId) =
             await TestFdaApplication.EnsureAsync(ctx);
@@ -455,7 +500,7 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
             $"products/{globalProductId.Value}/{document.Id.Value}/v1.pdf";
 
         document.AddInitialVersion(
-            originalFileName: "Cover Letter.pdf",
+            originalFileName: documentFileName,
             storedFileName: "v1.pdf",
             contentType: "application/pdf",
             fileSize: 14,
