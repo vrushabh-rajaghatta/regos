@@ -194,7 +194,11 @@ No `ManufacturingSourceOrganizationId` — Q4 was rejected; the seam is recorded
 
 #### Value objects
 
-`CodedConcept` (D1) · `Strength` (D4). Both live in `src/Product/` unless a second context demonstrates a need — at which point the Rule of Three question is asked, not before.
+`CodedConcept` (D1) · `Strength` (D4).
+
+⚠️ **Corrected 2026-08-03 by [ADR-058](../../adr/ADR-058-substances-are-shared-facts-ingredients-are-roles.md) §3.** This said both live in `src/Product/`. `CodedConcept` cannot: `Substance` sits in `ReferenceData` and carries two of them, so `Product` as its home would require **`ReferenceData → Product`** and invert an established dependency. It lives in **`ReferenceData.Domain`** — not `SharedKernel`, which ADR-017 keeps to primitives with no domain meaning.
+
+`Strength` is unaffected and stays in `src/Product/` until a second context demonstrates a need.
 
 ### What 10a changes in already-shipped aggregates
 
@@ -220,7 +224,7 @@ No `ManufacturingSourceOrganizationId` — Q4 was rejected; the seam is recorded
 
 ### ADR to write
 
-**ADR-058 — *Substances are shared facts; ingredients are the roles they play*.** Forced, because it makes a cross-context ownership decision (`Substance` in ReferenceData, referenced from Product), establishes the `CodedConcept` seam the whole platform will use, and opens the first write path into reference data. Written **before** implementation, per canon.
+**[ADR-058](../../adr/ADR-058-substances-are-shared-facts-ingredients-are-roles.md) — *Substances are shared facts; ingredients are the roles they play*. ✅ Written 2026-08-03.** Forced, because it makes a cross-context ownership decision (`Substance` in ReferenceData, referenced from Product), establishes the `CodedConcept` seam the whole platform will use, and opens the first write path into reference data. Written **before** implementation, per canon.
 
 ---
 
