@@ -148,7 +148,7 @@ rather than the EU market that was predicted to settle it.
 | [`poc/how-to-reproduce.md`](poc/how-to-reproduce.md) | the invocation, the output, **and the negative controls** | ✅ |
 | `poc/negative-controls/` | proof the parser rejects — without which a pass means nothing | ✅ |
 | [`spec/ich-ectd-3-2.dtd`](spec/ich-ectd-3-2.dtd) | the ICH backbone, transcribed from Appendix 8 and verified against the spec's own examples | ✅ |
-| `spec/ich-ectd-3-2-appendix-4.md` | **the directory table** — which folder a CTD section is written to | ⚪ **blocks S004**, see below |
+| [`spec/ich-ectd-3-2-appendix-4.md`](spec/ich-ectd-3-2-appendix-4.md) | **the directory table** — which folder a CTD section is written to | ⚠️ **partial**, and Level 3 not 2a — see below |
 | `comparison-to-fda-examples.md` | Level 3 — where we match FDA's published XML and where we differ | ⚪ |
 | a 2b report | FDA business rules | ✖ carried |
 
@@ -185,6 +185,46 @@ for the same reason:
 exists, is nullable, and holds null in all 186 rows — the same *"not in
 evidence"* a null `Token` carries. The shape was established by S004; only the
 values are outstanding.
+
+#### Appendix 4 arrived partially, and said something about itself
+
+*2026-08-03.* An extract was supplied and is transcribed at
+[`spec/ich-ectd-3-2-appendix-4.md`](spec/ich-ectd-3-2-appendix-4.md). It closes
+less of the gap than expected, for three reasons the appendix states itself.
+
+**1. It is Level 3, not Level 2a.** Its own preamble:
+
+> *"The file and folder names shown within modules 2-5 are **not mandatory, but
+> recommended**, and can be further reduced or omitted to avoid path length
+> issues."*
+
+A package that departs from these names is **not thereby invalid**, so no parser
+can check us against them. It is still the best Level 3 available — the
+specification's own recommendation outranks one regulator's examples — but the
+expectation that it would supply canonical, checkable names does not survive
+reading it.
+
+**2. It stops at the door of Module 1.** Entries 3–7 give `m1` and one regional
+directory per region, then say *"refer to regional guidance for details."*
+**There are no Module 1 subsection folders.** For an FDA IND blueprint — whose
+sections are almost entirely `1.x` — Appendix 4 supplies `m1/us` and nothing
+else. **The first vertical is the part it does not cover.**
+
+**3. Placeholders are unrecoverable from plain text.** The appendix says italic
+names are examples the applicant replaces. The extract carries no italics, so
+`substance-1-manufacturer-1`, `product-1`, `excipient-1` and
+`32a3-excip-name-1` are identifiable only from their comments, and others may
+not be identifiable at all.
+
+**Still outstanding:** Module 4 from entry #203, all of Module 5, and `util/` —
+the extract was truncated at 50,000 characters.
+
+> **The appendix did close one thing, and it was a defect in RegOS.** Sections
+> 2.7.1–2.7.6 have a file row and **no directory row**: their documents go in
+> 2.7's folder. `TemplateSection` had been collapsing `""` into `null`, which
+> would have made *"this section adds no directory of its own"* indistinguishable
+> from *"nobody has read the specification"* — and two-thirds of Module 2
+> unrenderable. Fixed, with `HasEctdPlacement` naming the difference.
 
 > **The first external check RegOS has ever had.** It is narrow — one backbone
 > file, structure only, hand-built — and it is real: the specification is FDA's,

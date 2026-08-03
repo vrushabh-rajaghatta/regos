@@ -64,11 +64,24 @@ public sealed class TemplateSection
     /// </para>
     /// <para>
     /// It is <b>one link in a chain, not a whole path</b>. A leaf's location is
-    /// the ancestor folders joined, so a section that inserts no directory of
-    /// its own would carry an empty value rather than repeat its parent's. The
-    /// value may itself contain <c>/</c> where the specification nests without
-    /// an intervening section — FDA's Module 1 root is <c>m1/us</c>, one section
-    /// and two directories.
+    /// the ancestor folders joined. The value may itself contain <c>/</c> where
+    /// the specification nests without an intervening section — FDA's Module 1
+    /// root is <c>m1/us</c>, one section and two directories.
+    /// </para>
+    /// <para>
+    /// <b>Empty and null are different, and Appendix 4 is why.</b> Sections
+    /// 2.7.1 to 2.7.6 have a file row and no directory row: their documents are
+    /// written into 2.7's folder, so they contribute nothing of their own. That
+    /// is a **known** placement, not a missing one.
+    /// <list type="bullet">
+    /// <item><c>null</c> — not in evidence. Rendering refuses.</item>
+    /// <item><c>""</c> — evidence says this section adds no directory. Rendering
+    /// proceeds, using the parent's folder.</item>
+    /// <item>a value — this section's own directory.</item>
+    /// </list>
+    /// Collapsing the first two would make a package impossible to build for
+    /// two-thirds of Module 2, for no reason other than a convenience in this
+    /// method.
     /// </para>
     /// <para>
     /// <b>Set at construction and never afterwards</b>, because a published
@@ -83,6 +96,12 @@ public sealed class TemplateSection
     public string? EctdFolder { get; }
 
     /// <summary>
+    /// Whether this section's eCTD placement is known — including "known to be
+    /// nothing". False only when the specification has not been read.
+    /// </summary>
+    public bool HasEctdPlacement => EctdFolder is not null;
+
+    /// <summary>
     /// ICH Appendix 2's naming rules, applied per directory segment: lowercase
     /// <c>a-z0-9-</c> only, and at most 64 characters each.
     /// </summary>
@@ -90,13 +109,21 @@ public sealed class TemplateSection
     /// Enforced here rather than trusted to the seed, because the value's whole
     /// purpose is to become a filename — and an illegal one is not a cosmetic
     /// defect, it is a package a regulator's tooling rejects.
+    /// <para>
+    /// <b>Only <c>null</c> travels through as "not in evidence".</b> A supplied
+    /// string that trims to nothing is a deliberate statement that the section
+    /// adds no directory, and it stays distinguishable from silence.
+    /// </para>
     /// </remarks>
     private static string? NormaliseFolder(string? folder)
     {
-        if (string.IsNullOrWhiteSpace(folder))
+        if (folder is null)
             return null;
 
         var trimmed = folder.Trim().Trim('/');
+
+        if (trimmed.Length == 0)
+            return string.Empty;
 
         foreach (var segment in trimmed.Split('/'))
         {

@@ -44,14 +44,29 @@ public class TemplateSectionEctdFolderTests
         section.EctdFolder.Should().BeNull();
     }
 
+    /// <summary>
+    /// Appendix 4 gives sections 2.7.1 to 2.7.6 a file row and no directory
+    /// row — their documents go in 2.7's folder. <b>That is a known placement,
+    /// not a missing one</b>, and collapsing it into null would make two-thirds
+    /// of Module 2 unrenderable for no reason but a convenience.
+    /// </summary>
     [Fact]
-    public void ABlankFolder_CollapsesToNull()
+    public void ASectionThatAddsNoDirectory_IsKnown_NotMissing()
     {
-        // "" and null must not become two ways of saying "not in evidence".
         var section = NewDraftTemplate()
-            .AddSection("3.2.S", "Drug Substance", ectdFolder: "   ");
+            .AddSection("2.7.4", "Summary of Clinical Safety", ectdFolder: "");
+
+        section.EctdFolder.Should().BeEmpty();
+        section.HasEctdPlacement.Should().BeTrue();
+    }
+
+    [Fact]
+    public void OnlySilenceMeansNotInEvidence()
+    {
+        var section = NewDraftTemplate().AddSection("3.2.S", "Drug Substance");
 
         section.EctdFolder.Should().BeNull();
+        section.HasEctdPlacement.Should().BeFalse();
     }
 
     [Fact]
