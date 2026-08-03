@@ -1,6 +1,12 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phase 1 open · **Branch:** `epic/EPIC-007a-ectd-package-generation` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **Phase 3 — generator implementation not started** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+
+> **The epic's named capability has not begun.** Everything shipped so far is
+> preparatory: the specifications are pinned, the model has been corrected three
+> times, and one hand-built package has been checked. **No RegOS code has ever
+> produced an eCTD file.** The status line says so because the alternative is a
+> reader inferring otherwise from three completed stories.
 
 Split from EPIC-007. The eCTD backbone needs only [EPIC-004](EPIC-004-sequences-and-submission-lifecycle.md), which is shipped; STF and the xEVMPD/IDMP messages need EPIC-010 and EPIC-019 and stay in **EPIC-007b** with gateway transmission.
 
@@ -754,6 +760,187 @@ appears, a shared renderer with one conditional may well be the honest answer �
 and this note will have cost nothing. **What it must not do is pass silently:**
 the two DTDs are both in `spec/`, so any rendering story validates against both
 or claims neither.
+
+---
+
+## Phase 3 — the generator ⚪ decomposed, signed off, not started
+
+*Decomposed 2026-08-03, before any generator code, on the principle the epic has
+followed throughout: **decide what a story is meant to prove before deciding how
+to implement it.***
+
+Five stories, each retiring **one** class of uncertainty. The cut is along the
+evidence hierarchy rather than along implementation convenience, which is why
+two renderers are two stories rather than one file-writing story and one
+XML story.
+
+### One change to the shape, and the DTDs decide it
+
+**The ICH backbone is rendered first, and the FDA regional backbone second** —
+the reverse of the obvious order, because E16 is not a symmetric divergence:
+
+| | `checksum` on a leaf | Emitting one anyway |
+|---|---|---|
+| ICH `index.xml` | **`#REQUIRED`** | — |
+| FDA `us-regional.xml` | **`#IMPLIED`** | **legal** — the attribute is permitted, merely not demanded |
+
+Whichever renderer is written second inherits the first one's habits. So the
+order decides *how the inevitable leak fails*:
+
+> **FDA first** teaches *"checksum is optional"*, and that habit carried into
+> `index.xml` produces a file that is **invalid** — and invalid in the worst
+> way, because `us-regional.xml` beside it still passes.
+>
+> **ICH first** teaches *"always emit a checksum"*, and that habit carried into
+> `us-regional.xml` produces a **valid** file with an attribute it did not have
+> to supply.
+
+One order fails silently, the other cannot fail at all. **This is E16 earning
+its place before a line of renderer code exists**, which is what recording it as
+a prediction was for.
+
+### The five stories
+
+| | Story | Retires the uncertainty | Evidence level |
+|---|---|---|---|
+| **S004** | The sequence folder — structure, leaf placement, `util/dtd/`, checksums | *Can RegOS materialise the package filesystem faithfully and repeatably?* | — |
+| **S005** | Render `index.xml` (ICH backbone) | *Can it render the shared backbone without any authority's rules in it?* | 2a, per file |
+| **S006** | Render `us-regional.xml` (FDA Module 1) | *Can it render the authority-specific backbone — and does S003's model reach the wire?* | 2a, per file |
+| **S007** | Assembly, delivery, and the epic's Level 2a claim | *Does a package **RegOS generated** satisfy the specification?* | **2a, per package** |
+| **S008** | Compare generated output against FDA's examples | *Does it resemble regulatory practice, not merely legal XML?* | **3** |
+
+---
+
+### S004 — the sequence folder
+
+**Proves:** a published `Submission` materialises as a deterministic directory
+tree — `0000/m1/us/…`, `m2/`…, with `util/dtd/` populated from `spec/`, and an
+MD5 for every leaf file.
+
+> **This is where ADR-049's central claim becomes testable, and the test is one
+> line.** *"The generated package is a projection, not a domain artifact"*
+> predicts that **generating twice produces byte-identical output.** If it does
+> not, the package holds something the submission does not, and ADR-049 is
+> wrong — which is exactly the kind of failure the epic exists to find.
+
+**Decisions this story forces:**
+
+- **The sequence number becomes a directory name**, and `0000` vs `0001` stops
+  being abstract. E4 says `0000` is legal; E5 says every FDA example starts at
+  `0001`. Nothing has had to choose until now, because nothing has had to write
+  the number down as a *filename*.
+- **Unplaced documents produce no leaf** (ADR-045 §5), and a `SubmissionDeletion`
+  produces a leaf with **no file and an empty checksum** (E7) — the one place a
+  filesystem story must know an XML fact.
+- **Paper and NeeS must not reach here at all.** ADR-047 §4 asserted the
+  *derivation* is format-independent; the DoD asks for proof the *rendering* is
+  not. The entry point is where that is provable.
+
+**Falsified by:** two runs differing; or a leaf path that cannot be derived from
+the blueprint section, meaning placement carries information the model does not.
+
+---
+
+### S005 — render `index.xml` (ICH)
+
+**Proves:** the shared backbone renders from frozen values alone — `operation`
+read from `SubmissionContentOperation`, never recomputed (ADR-045), and
+`modified-file` from `ReplacesSubmissionDocumentId`.
+
+**Deliberately first, and deliberately ignorant of FDA.** `index.xml` carries no
+`submission-type`, no `submission-sub-type`, no `application-type` — **none of
+S003's vocabulary appears in it.** A renderer that reaches for a wire token here
+has reached across a boundary, and the story is over before it starts.
+
+**Validated against** `spec/ich-ectd-3-2.dtd`, whose two negative controls are
+already known to bite: a bad `operation` value and a missing `checksum`.
+
+---
+
+### S006 — render `us-regional.xml` (FDA)
+
+**Proves:** the authority-specific backbone renders — and, incidentally, that
+**S003 was right**. This is the first time `OriginatingSubmissionId` becomes
+`submission-id`, and E15 stops being a quotation and becomes an attribute.
+
+**The rendering precondition lands here and nowhere else.** *"A package renders
+only if every wire token the target authority needs exists"* — a missing token is
+a named domain error, never malformed XML. S005 cannot need it; `index.xml` has
+no tokens.
+
+**Two acceptance criteria are about restraint rather than output:**
+
+1. **S005 is not refactored into a shared base.** Two renderers, one projection
+   beneath them. [ADR-018](../../adr/ADR-018-rule-of-three.md) forbids
+   abstracting a boundary on one demonstrated divergence, and this story is
+   where the temptation is at its peak.
+2. **The story records whether a second divergence appeared.** If two backbones
+   turn out to differ in exactly one attribute, E16's prediction stays a
+   prediction and *"a backbone is a contract"* is left unpromoted — which is a
+   result, not a disappointment.
+
+---
+
+### S007 — assembly, delivery, and the Level 2a claim
+
+**Proves the epic's outcome sentence**, and nothing before it does.
+
+> **Per-file validity is not package validity, and E16 is the reason.** S005 and
+> S006 each validate one file in isolation. **S007 validates both files from a
+> single generated package** — the precise thing that passes when each half is
+> checked alone and fails when they are checked together.
+
+This is also where the epic's Level 2a evidence is **re-earned**. The existing
+2a rests on `poc/ctd-987654/`, which **was hand-written**. It proves the target
+can be hit; it says nothing about whether RegOS hits it. The PoC is kept, and
+reclassified in the evidence directory as what it is.
+
+**Delivery, with two rules that become tests rather than review notes:**
+
+| | |
+|---|---|
+| The ZIP gets **no aggregate, no id, no status** | ADR-049 — deleting it loses no business information. It is a download, not a record |
+| **Forbidden words asserted absent**, not merely avoided | *"FDA-ready"*, *"Validated"*, *"Ready for submission"* — a browser assertion, because the DoD calls this a product requirement rather than a documentation one |
+| **No code in `src/` reads a validator verdict** | an architecture test. `xmllint` lives in `tests/` because that is what it is |
+
+---
+
+### S008 — Level 3, against FDA's own examples
+
+**Proves** the generated package resembles what a regulator actually receives.
+Produces [`comparison-to-fda-examples.md`](../../evidence/EPIC-007a/README.md),
+the epic's last unfilled artifact.
+
+**Differences are explained, never absorbed.** Where our output differs from
+example #21–#24, the difference is either a defect we fix or a deliberate
+divergence we record — and the sequence-numbering question (E4 vs E5) is the one
+already known to be waiting.
+
+**This is where hypotheses 4–7 may soften without resolving.** *"A validator
+answers 'is this legal?'; none of the four is a legality question."* Level 3 is
+the closest evidence this epic can reach, and it is still not an answer.
+
+---
+
+### What is already known to fail, on day one
+
+The development database holds a published sequence that **cannot be rendered**,
+and it will be the first thing anyone tries:
+
+| | |
+|---|---|
+| `Initial NDA - 002`, sequence `0000` | **refused twice, for two different reasons** |
+| no `SubmissionSubTypeId` | it predates S003 — a *history* gap, and unrecoverable (E13) |
+| its application type `FDA_DENOVO` has **no `Token`** | an *evidence* gap — FDA prints that token nowhere we have read |
+
+**Both refusals are the design working.** They are also a useful test of whether
+the errors are worth reading: one should say *this sequence predates the model*
+and the other *this classification has no eCTD token*, and a user who gets the
+same sentence for both has been failed by a message, not by a rule.
+
+*(The submission is also the row S001's migration classified as `FDA_DENOVO` from
+its earliest sequence, which is the old model's defect arriving as data — a
+business correction, still deliberately not made.)*
 
 ---
 
