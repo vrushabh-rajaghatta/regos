@@ -85,7 +85,7 @@ and the priority call gets reconsidered rather than the claim quietly weakened.
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| — | **EPIC-007a** | **eCTD package generation** | 🟡 **Phase 1 open** — see [Now](#now) | EPIC-004 ✅ |
+| — | **EPIC-007a** | **eCTD package generation** | 🟢 **Closed 2026-08-03 at Level 2a.** S001–S007 shipped; **S008 (Level 3 comparison) carried to EPIC-007b** — FDA's example packages are not held, and the Level 3 claim is not made | EPIC-004 ✅ |
 | 2 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations | ⚪ Not Started · planned | EPIC-017 ✅ |
 | 3 | **EPIC-019** | **Study registry** — clinical & non-clinical studies, cited by applications and submission content | ⚪ Not Started · planned | none |
 
