@@ -13,6 +13,20 @@ internal static class ApplicationTypes
     // GeographyAndRegulatoryIds — no name lookups, independent of database state.
     public static IReadOnlyList<ApplicationTypeEntity> Data =>
     [
+        // FDA device application types, and their nulls are load-bearing.
+        //
+        // application-type.xml does publish a code for two of these — fdaat10
+        // for 510(k), fdaat9 for PMA — and its own comment says they "should
+        // only be used in the cross-reference-application-number element"
+        // (evidence E32). A cross-reference names some *other* application; it
+        // is not this application's type. RegOS has nowhere to record that
+        // distinction, so it records no token, and a reader holding FDA's list
+        // is not left to conclude these were simply missed.
+        //
+        // FDA_DENOVO is different again: the list is complete and status-
+        // flagged, and there is no De Novo code in it at all. Its null is not
+        // "unread" — it is "FDA publishes none", which means a De Novo request
+        // has no eCTD application type to be filed under.
         ApplicationTypeEntity.Create(
             new ApplicationTypeId(ApplicationTypeIds.Fda510k),
             "FDA_510K",
@@ -51,15 +65,15 @@ internal static class ApplicationTypes
 
         // FDA drug (pharma) application types.
         //
-        // FDA_IND is the only row in this table with a wire token, because it is
-        // the only one this project has seen written down — `fdaat4`, read out
-        // of FDA's worked examples #21-#24 and recorded in
-        // docs/evidence/EPIC-007a/ectd-mapping.md (Level 3).
+        // Both tokens here come from FDA's own published list — spec/
+        // application-type.xml v1.1, held since 2026-08-03 (evidence E30).
+        // `fdaat4` was RegOS's own assertion for a year, flagged in E11 as
+        // unevidenced, and turns out to have been right. That does not make a
+        // year of asserting it evidence.
         //
         // Every other null here means "the token for this row is not in
         // evidence", which is a smaller and more honest claim than "this
-        // authority is unmodelled": FDA's own NDA and 510(k) tokens are just as
-        // absent as CDSCO's. Rendering fails by name either way.
+        // authority is unmodelled". Rendering fails by name either way.
         ApplicationTypeEntity.Create(
             new ApplicationTypeId(ApplicationTypeIds.FdaInd),
             "FDA_IND",
@@ -70,7 +84,8 @@ internal static class ApplicationTypes
             new ApplicationTypeId(ApplicationTypeIds.FdaNda),
             "FDA_NDA",
             "New Drug Application (NDA)",
-            new AuthorityId(GeographyAndRegulatoryIds.FDA)),
+            new AuthorityId(GeographyAndRegulatoryIds.FDA),
+            "fdaat1"),
 
         // Clinical-trial applications for other authorities (pharma).
         ApplicationTypeEntity.Create(

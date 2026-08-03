@@ -376,18 +376,21 @@ public static class FdaRegionalBackboneRenderer
 /// Everything <c>us-regional.xml</c> states about a filing, already decided.
 /// </summary>
 /// <param name="ApplicantId">
-/// The applicant's DUNS number.
+/// The applicant's DUNS number — <c>Organization.Identifiers</c>, scheme
+/// <c>DUNS</c>.
 /// <para>
-/// <b>Supplied, never defaulted.</b> A constant here once held FDA's supposedly
-/// permitted placeholder <c>999999999</c>, on the strength of a citation to a
-/// *Technical Conformance Guide §3.1.1* — a document this repository has never
-/// held. Every occurrence of that citation was in a file RegOS wrote. It was
-/// removed on 2026-08-03 rather than left to look like evidence.
+/// <b>Supplied, never defaulted.</b> A constant here once held FDA's permitted
+/// placeholder <c>999999999</c>, and it was removed on 2026-08-03: FDA's
+/// condition is *"if you are unable to acquire a DUNS number"* — about the
+/// applicant, not about a system with nowhere to store one (E25).
 /// </para>
 /// <para>
-/// RegOS models no DUNS field, so generation refuses until either the number is
-/// modelled or a specification we hold says what to write instead. The renderer
-/// can express the value; nothing invents it.
+/// <b>And a system with nowhere to store one is not what RegOS is.</b> This
+/// comment claimed for a day that *"RegOS models no DUNS field"*, and the
+/// mapping had claimed it since Phase 1. Neither was ever checked against the
+/// aggregate: <c>Organization</c> carries scheme-and-value identifiers,
+/// <c>IdentifierSchemes.Duns</c> is seeded, and a screen already prints one.
+/// The generator reads it from there.
 /// </para>
 /// </param>
 /// <param name="SubmissionId">
