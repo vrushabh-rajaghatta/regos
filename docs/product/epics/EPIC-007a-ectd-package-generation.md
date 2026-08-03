@@ -1,12 +1,12 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 placement decided (ADR-052); folder materialisation not started** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 shipped — RegOS writes an eCTD sequence folder** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
-> **The epic's named capability has not begun.** Everything shipped so far is
-> preparatory: the specifications are pinned, the model has been corrected three
-> times, and one hand-built package has been checked. **No RegOS code has ever
-> produced an eCTD file.** The status line says so because the alternative is a
-> reader inferring otherwise from three completed stories.
+> **The epic's named capability has begun, and only just.** RegOS now writes a
+> sequence folder — the directory tree, the files, the MD5s, `util/dtd/` — and
+> **not one line of XML.** Neither backbone exists, so nothing here has been
+> checked against a DTD yet: the standing Level 2a evidence is still a package
+> that was hand-written, not generated. S005 through S007 close that.
 
 Split from EPIC-007. The eCTD backbone needs only [EPIC-004](EPIC-004-sequences-and-submission-lifecycle.md), which is shipped; STF and the xEVMPD/IDMP messages need EPIC-010 and EPIC-019 and stay in **EPIC-007b** with gateway transmission.
 
@@ -811,7 +811,7 @@ a prediction was for.
 
 ---
 
-### S004 — the sequence folder 🟡 placement resolved, materialisation not started
+### S004 — the sequence folder ✅
 
 **Proves:** a published `Submission` materialises as a deterministic directory
 tree — `0000/m1/us/…`, `m2/`…, with `util/dtd/` populated from `spec/`, and an

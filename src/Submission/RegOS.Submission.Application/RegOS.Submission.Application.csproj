@@ -3,6 +3,25 @@
   <ItemGroup>
     <ProjectReference Include="..\RegOS.Submission.Domain\RegOS.Submission.Domain.csproj" />
     <ProjectReference Include="..\..\Persistence\RegOS.Persistence\RegOS.Persistence.csproj" />
+    <ProjectReference Include="..\..\Storage\RegOS.Storage\RegOS.Storage.csproj" />
+  </ItemGroup>
+
+  <!--
+    Every eCTD package ships its DTDs inside util/dtd/ (ICH Appendix 4, rows
+    371-376), so these are build inputs rather than reference material.
+
+    Linked out of docs/evidence/ rather than copied beside the code, and
+    deliberately: a copy would drift from the file the evidence directory pins,
+    and then the DTD a package carries would stop being the DTD the Level 2a
+    claim was checked against. One file, two readers.
+  -->
+  <ItemGroup>
+    <EmbeddedResource
+      Include="..\..\..\docs\evidence\EPIC-007a\spec\ich-ectd-3-2.dtd"
+      LogicalName="RegOS.Submission.Application.Generation.ich-ectd-3-2.dtd" />
+    <EmbeddedResource
+      Include="..\..\..\docs\evidence\EPIC-007a\spec\us-regional-v3-3.dtd"
+      LogicalName="RegOS.Submission.Application.Generation.us-regional-3-3.dtd" />
   </ItemGroup>
 
   <ItemGroup>
