@@ -87,4 +87,12 @@ public static class SubmissionRuleErrors
     public const string TemplateSectionNotInBoundBlueprint =
         "The section does not belong to the blueprint this submission is "
             + "bound to.";
+
+    // Studies (cross-context: studies live in their own context, ADR-056)
+    public const string StudyDoesNotExist =
+        "Study does not exist.";
+
+    public const string PlacementReportsOneStudy =
+        "A document reports one study, not two. Name either a clinical or a "
+            + "non-clinical study, or neither.";
 }

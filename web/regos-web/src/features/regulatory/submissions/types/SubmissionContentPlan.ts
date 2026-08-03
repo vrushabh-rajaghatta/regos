@@ -14,6 +14,16 @@ export interface ContentPlanDocument {
   documentTypeName: string;
   versionNumber: number;
   fileName: string;
+  /**
+   * The study this *placement* reports, if any — never a fact about the
+   * document, which can be filed again elsewhere and report something else.
+   * Null is the ordinary case: outside CTD 4.2.x and 5.3.1.x–5.3.5.x a
+   * document reports no study.
+   */
+  studyId: string | null;
+  studyKind: "Clinical" | "NonClinical" | null;
+  /** The sponsor's code for it — "Study ID" on screen. */
+  studyIdentifier: string | null;
 }
 
 export interface ContentPlanPlaceholder {

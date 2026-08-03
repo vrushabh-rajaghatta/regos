@@ -262,6 +262,7 @@ submissions.MapChangeSubmissionFormat();
 submissions.MapAssignSubmissionRole();
 submissions.MapRemoveSubmissionRole();
 submissions.MapListSubmissionRoles();
+submissions.MapReportStudyOnPlacement();
 submissions.MapGetSubmissionContentPlan();
 submissions.MapGetSubmissionChanges();
 submissions.MapListSubmissionDocuments();

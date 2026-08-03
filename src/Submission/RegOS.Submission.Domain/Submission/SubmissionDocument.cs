@@ -1,6 +1,8 @@
 using RegOS.ProductDocument.Domain.IDs;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.SharedKernel.Abstractions;
+using RegOS.Study.Domain.Aggregates.ClinicalStudy;
+using RegOS.Study.Domain.Aggregates.NonClinicalStudy;
 
 namespace RegOS.Submission.Domain.Submission;
 
@@ -85,6 +87,41 @@ public sealed class SubmissionDocument : Entity<SubmissionDocumentId>
     public SubmissionContentOperation? Operation { get; private set; }
 
     /// <summary>
+    /// The study this placement reports on, when it is a clinical one. Null
+    /// when it reports a non-clinical study, or no study at all.
+    /// </summary>
+    /// <remarks>
+    /// <b>A fact about the placement, not about the document and not about the
+    /// study</b> (ADR-053, ADR-056 §4). The same
+    /// <c>ProductDocument</c> can be filed in two sequences and report the same
+    /// study both times; what differs is the placement. And a study does not
+    /// know where it is filed — so refiling changes a row here and never
+    /// touches the registry.
+    /// <para>
+    /// <b>Typed, and paired with <see cref="NonClinicalStudyId"/> rather than
+    /// merged into one column.</b> They are two aggregates with two identity
+    /// spaces (ADR-056), so a single id would be a supertype in all but name.
+    /// The cost is an exclusive-or across two nullable columns, enforced by
+    /// <see cref="ReportClinicalStudy"/> and its sibling, which are the only
+    /// writers and each clears the other.
+    /// </para>
+    /// </remarks>
+    public ClinicalStudyId? ClinicalStudyId { get; private set; }
+
+    /// <summary>
+    /// The study this placement reports on, when it is a non-clinical one —
+    /// the Module 4 half, and the one that blocks an IND today.
+    /// </summary>
+    /// <remarks>See <see cref="ClinicalStudyId"/> for why there are two.</remarks>
+    public NonClinicalStudyId? NonClinicalStudyId { get; private set; }
+
+    /// <summary>
+    /// True when this placement reports a study of either kind.
+    /// </summary>
+    public bool ReportsAStudy
+        => ClinicalStudyId is not null || NonClinicalStudyId is not null;
+
+    /// <summary>
     /// The placement in the previous sequence this supersedes — eCTD's
     /// <c>modified-file</c>. Set only alongside
     /// <see cref="SubmissionContentOperation.Replace"/>.
@@ -98,8 +135,37 @@ public sealed class SubmissionDocument : Entity<SubmissionDocumentId>
 
     // Only the aggregate may move a document; callers go through
     // Submission.PlaceDocument / ClearPlacement so the invariants are enforced.
+    //
+    // Taking a document out of the dossier takes its study with it. The study
+    // is a fact about *where this document is filed*, so a document that sits
+    // nowhere reports nothing — leaving the reference behind would make
+    // "a fact about the placement" true in the comment and false in the row.
     internal void PlaceIn(TemplateSectionId? templateSectionId)
-        => TemplateSectionId = templateSectionId;
+    {
+        TemplateSectionId = templateSectionId;
+
+        if (templateSectionId is null) ClearReportedStudy();
+    }
+
+    // The two writers of the exclusive-or. Each clears the other, so no caller
+    // can produce a placement that reports two studies.
+    internal void ReportClinicalStudy(ClinicalStudyId studyId)
+    {
+        ClinicalStudyId = studyId;
+        NonClinicalStudyId = null;
+    }
+
+    internal void ReportNonClinicalStudy(NonClinicalStudyId studyId)
+    {
+        NonClinicalStudyId = studyId;
+        ClinicalStudyId = null;
+    }
+
+    internal void ClearReportedStudy()
+    {
+        ClinicalStudyId = null;
+        NonClinicalStudyId = null;
+    }
 
     // Only Submission.Publish may set this, and only once.
     internal void RecordOperation(

@@ -45,11 +45,22 @@ EPIC-007a merged to `main` as PR #15.
 | | |
 |---|---|
 | **S001** ✅ | `Study` — a new `src/Study/` context, two aggregates, `study-id` + `title`. **[ADR-056](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)** written first, per canon |
-| **S002** | placement → study, and a `file-tag` per placement |
-| **S003** | **STF generation — the epic's reason to exist.** Unblocks Module 4, and therefore every IND |
+| **S002** ✅ | placement → study, set from the content plan |
+| **S002b** ⛔ | `file-tag` per placement — **blocked: the vocabulary is not held** |
+| **S003** ⛔ | **STF generation — the epic's reason to exist.** Unblocks Module 4, and therefore every IND |
 | S004–S005 | citation, then the RIM attributes a real user asks for |
 
-> **If work stops after S003, RegOS can file an IND — which it cannot do today.**
+> ⛔ **The epic is blocked one story short of what it exists for, on a document
+> rather than on work.** The plan recorded ICH's `file-tag` vocabulary as held;
+> it is not — we hold the *count*, not the list
+> ([correction](../evidence/README.md#correction-2026-08-03--the-file-tag-vocabulary-is-not-held)).
+> Every STF names a `file-tag` from that closed list, so an STF cannot be
+> written, and a free-text box would produce packages FDA rejects at the
+> gateway.
+>
+> **One file unblocks both:** `ich-stf-v2-2.dtd` carries the enumeration in its
+> `ATTLIST` **and** is what S003's Level 2a claim would validate against. Same
+> shape as `form-type.xml` holding `m1-1-forms` refused (E18).
 
 ### The recommendation that put it there
 

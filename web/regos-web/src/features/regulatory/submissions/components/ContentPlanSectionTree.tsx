@@ -13,6 +13,16 @@ interface Props {
    * API.
    */
   onRemove: (submissionDocumentId: string) => void;
+  /**
+   * Names the study a placement reports. Offered on every placed document
+   * rather than only in CTD 4.2.x and 5.3.x: which sections owe a study is a
+   * regulatory rule, and deriving it here would mean the browser holding a
+   * second copy of it. The generator refuses a missing one by name.
+   */
+  onReportStudy: (placement: {
+    submissionDocumentId: string;
+    documentName: string;
+  }) => void;
   depth?: number;
 }
 
@@ -30,6 +40,7 @@ export function ContentPlanSectionTree({
   editable,
   onPlace,
   onRemove,
+  onReportStudy,
   depth = 0,
 }: Props) {
   return (
@@ -91,6 +102,33 @@ export function ContentPlanSectionTree({
                           {document.fileName}
                         </span>
 
+                        {document.studyIdentifier && (
+                          <span
+                            data-testid="placement-study"
+                            className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
+                          >
+                            {document.studyIdentifier}
+                          </span>
+                        )}
+
+                        {editable && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            data-testid="report-study"
+                            aria-label={`Set the study ${document.name} reports in ${section.code} ${section.title}`}
+                            onClick={() =>
+                              onReportStudy({
+                                submissionDocumentId:
+                                  document.submissionDocumentId,
+                                documentName: document.name,
+                              })
+                            }
+                          >
+                            {document.studyIdentifier ? "Study" : "Set study"}
+                          </Button>
+                        )}
+
                         {editable && (
                           <Button
                             size="sm"
@@ -129,15 +167,70 @@ export function ContentPlanSectionTree({
           )}
 
           {section.additionalDocuments.length > 0 && (
-            <p
+            <div
               data-testid="section-additional-documents"
               className="mt-1 text-sm text-muted-foreground"
             >
               {/* Content the blueprint does not require but the dossier
-                  legitimately carries — listed, never flagged. */}
-              Also filed here:{" "}
-              {section.additionalDocuments.map((d) => d.name).join(", ")}
-            </p>
+                  legitimately carries — listed, never flagged.
+
+                  It carries the same per-document controls as a placeholder's
+                  content, and that is not cosmetic: a study report's
+                  supporting files sit in 4.2.x satisfying no placeholder, and
+                  they need a study named on them exactly as the required ones
+                  do. Rendered as a sentence, they were unreachable. */}
+              <span>Also filed here:</span>
+
+              <ul className="mt-1 space-y-1">
+                {section.additionalDocuments.map((document) => (
+                  <li
+                    key={document.submissionDocumentId}
+                    data-testid="additional-document"
+                    className="flex flex-wrap items-center gap-x-2"
+                  >
+                    <span>{document.name}</span>
+
+                    {document.studyIdentifier && (
+                      <span
+                        data-testid="placement-study"
+                        className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
+                      >
+                        {document.studyIdentifier}
+                      </span>
+                    )}
+
+                    {editable && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        data-testid="report-study"
+                        aria-label={`Set the study ${document.name} reports in ${section.code} ${section.title}`}
+                        onClick={() =>
+                          onReportStudy({
+                            submissionDocumentId: document.submissionDocumentId,
+                            documentName: document.name,
+                          })
+                        }
+                      >
+                        {document.studyIdentifier ? "Study" : "Set study"}
+                      </Button>
+                    )}
+
+                    {editable && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        data-testid="remove-placement"
+                        aria-label={`Remove ${document.name} from ${section.code} ${section.title}`}
+                        onClick={() => onRemove(document.submissionDocumentId)}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {section.children.length > 0 && (
@@ -146,6 +239,7 @@ export function ContentPlanSectionTree({
               editable={editable}
               onPlace={onPlace}
               onRemove={onRemove}
+              onReportStudy={onReportStudy}
               depth={depth + 1}
             />
           )}

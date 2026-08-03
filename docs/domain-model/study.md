@@ -89,14 +89,32 @@ code**, because that is what tells a typo apart from a genuine duplicate.
 The same constraint is why both facts are trimmed on the way in: `" ABC-1 "` and
 `"ABC-1"` are one study to FDA, and must be one here.
 
+## Where a study is reported
+
+A study does not know where it is filed. **The placement does** — since S002,
+`SubmissionDocument` carries a typed reference to the study it reports, and at
+most one:
+
+```
+Submission
+  SubmissionDocument (the placement)
+    ClinicalStudyId?      ─┐ exactly one, or neither
+    NonClinicalStudyId?   ─┘
+```
+
+Two consequences, both enforced rather than described: **taking a document out
+of the dossier takes its study with it**, and **moving it between sections keeps
+it**. Refiling changes a row on the placement and never touches this registry.
+
 ## Owed
 
-- **A retitle is unguarded, and that becomes wrong in S002.** E24 makes the
-  title part of what FDA matches on, so renaming a study already named in a
-  published sequence would split it in two in the reviewer's tool. Nothing can
-  cite a study yet, so there is no such sequence to protect — the moment a
-  placement can name one, `Retitle` needs the shape `ApplicationNumberPolicy`
-  uses.
+- **`Retitle` is unreachable.** The aggregate has it; nothing calls it. It
+  becomes safe — and reachable — when **S003 freezes the identifier and title
+  into the published placement**, which is
+  [ADR-047](../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md)'s
+  instrument rather than a policy. S001 predicted a guard shaped like
+  `ApplicationNumberPolicy`; that would have pointed `Study` at `Submission` and
+  inverted ADR-056 §4. Freezing costs nothing and inverts nothing.
 - **Whether the identifier is unique *per tenant* or globally** is settled as
   per tenant. ADR-056 left the choice open and required that whichever was made
   got a test; `study-registry.spec.ts` is it.

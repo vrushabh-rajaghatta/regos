@@ -1,6 +1,6 @@
 # EPIC-019 — Study registry
 
-**Status:** 🟢 **In flight** — S001 shipped 2026-08-03, S002 next · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟠 **In flight, and blocked short of S003** — S001 and S002 shipped 2026-08-03; the `file-tag` vocabulary is not held · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Clinical and non-clinical studies as first-class records that applications and submission content can **cite** — so *"which studies support this filing?"* is a query, and Study Tagging Files become possible.
 
@@ -97,7 +97,7 @@ letting each arrive with the thing that needs it, which is how `Token`,
 |---|---|
 | **a `Study`** | the sponsor's alphanumeric code and a title. **Nothing exists** |
 | **placement → study** | which study a *placement* reports. [ADR-053](../../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)'s shape: a fact about the placement, not the section |
-| **`file-tag` per placement** | what role the document plays — synopsis, protocol, CRF. ~40 ICH values, and **this vocabulary is held** (E29) |
+| **`file-tag` per placement** | what role the document plays — synopsis, protocol, CRF. ⚠ **Corrected 2026-08-03: this vocabulary is NOT held.** What we hold is the count, not the list — see the [evidence correction](../../evidence/README.md#correction-2026-08-03--the-file-tag-vocabulary-is-not-held) |
 | **`ich-stf-v2-2.dtd`** | ⚠ **not held.** An STF can be modelled and written; it cannot be *validated*, so S007's per-package Level 2a would cover two files of three |
 
 **Only the last is an evidence gap**, and it does not block modelling — it
@@ -221,7 +221,7 @@ third shape arriving with its vocabulary in hand**:
 | | |
 |---|---|
 | `StudyId?` | which study this placement reports |
-| `FileTag?` | what role it plays in that study's report — ICH's ~40 values, **held** |
+| `FileTag?` | what role it plays in that study's report. ⚠ **The vocabulary is not held** — corrected 2026-08-03, and this is why S002 shipped without it |
 
 **Both nullable, and null means the ordinary thing**: a placement outside 4.2.x
 and 5.3.1.x–5.3.5.x reports no study. Generation refuses only where FDA requires
@@ -235,10 +235,22 @@ an STF, which is the refusal that already exists.
 | | Story | Unblocks |
 |---|---|---|
 | **S001** ✅ | **`Study`** — a new context, `study-id` + `title`, two aggregates, persistence, API, minimal UI | nothing yet |
-| **S002** | **placement → study + `file-tag`** on `SubmissionDocument`, with the UI to set them | nothing yet |
-| **S003** | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
+| **S002** ✅ | **placement → study** on `SubmissionDocument`, with the UI to set it | nothing yet |
+| **S002b** ⛔ | **`file-tag` per placement** — **blocked on an evidence gap**, see below | S003 |
+| **S003** ⛔ | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
 | **S004** | citation from `RegulatoryApplication`, both directions queryable | driver A |
 | **S005** | the RIM attributes a real user asks for, and no more | driver A |
+
+> **S002 was planned as study + `file-tag` and shipped as study alone.** The
+> `file-tag` vocabulary turned out **not to be held** — the plan said it was, and
+> the plan was wrong ([correction](../../evidence/README.md#correction-2026-08-03--the-file-tag-vocabulary-is-not-held)).
+> Every `file-tag` element in an STF carries a `name` from a closed ICH list we
+> cannot enumerate, so S003 cannot write a valid STF and **S002b and S003 are
+> both blocked on a document, not on work.**
+>
+> **What unblocks them is `ich-stf-v2-2.dtd`** — one file, which carries the
+> enumeration in its `ATTLIST` and is also what S003 would validate against. It
+> answers both halves at once.
 
 > **S003 is where this epic is worth its cost**, and S001–S002 are the two facts
 > it needs. If work stops after S003, RegOS can file an IND — which it cannot do
@@ -307,6 +319,73 @@ recorded here and in the aggregate rather than discovered later.
 failures (2 new), on an isolated stack. `study-registry.spec.ts` proves the
 cross-kind refusal through the browser and the trimming through the API — the
 half a unique index could not catch.
+
+---
+
+## S002 — the placement reports a study · ✅ **shipped 2026-08-03**
+
+`SubmissionDocument` gains a typed reference to the study its **placement**
+reports, set from the content plan — the screen a document is filed on.
+
+| | |
+|---|---|
+| Domain | `ClinicalStudyId?` + `NonClinicalStudyId?` on the placement; `ReportClinicalStudy` / `ReportNonClinicalStudy` / `ClearReportedStudy` on the aggregate |
+| Application | `ReportStudyOnPlacement`, and the content plan now carries the study on every placed document |
+| Persistence | two nullable FKs, `Restrict` on both, indexed for S003's grouping; `AddStudyToPlacement` |
+| API | `PUT /api/submissions/{id}/documents/{documentId}/study` — a sibling of `/placement`, because both are facts about where the document sits |
+| UI | a **Set study** control on every placed document, and the sponsor's code shown beside it |
+
+### The exclusive-or is structural, not checked
+
+Each writer clears the other, so **no sequence of calls produces a placement
+reporting two studies**. The handler refuses a request naming both rather than
+resolving it — a caller naming two studies has a bug, and picking one would file
+the document under a study nobody chose.
+
+### Two consequences of "a fact about the placement", made real
+
+Both were prose in ADR-056. They are now behaviour, and both are covered in the
+browser as well as the domain:
+
+| | |
+|---|---|
+| **Unplaced reports nothing** | `ClearPlacement` takes the study with it, and an unplaced document is refused a study by name. Otherwise the reference outlives the placement it describes |
+| **Moving keeps it** | the same document reporting the same study from 4.2.1 or 4.2.3 is ordinary; moving it is not a statement about which study it reports |
+
+### What S002 found on the way
+
+**A document filed in a section that expects a different type had no controls at
+all** — it rendered as a sentence, *"Also filed here: …"*. That is precisely the
+shape a study report's supporting files take in 4.2.x, so the study could never
+be named on them and Module 4 would have been unfinishable through the UI. They
+now carry the same per-document controls as required content.
+
+### The `Retitle` guard S001 owed — and why it is not a guard
+
+S001 recorded that `Retitle` becomes unsafe once a placement can cite a study,
+and that it would need `ApplicationNumberPolicy`'s shape. **On inspection that
+answer was wrong, and the better one costs nothing.**
+
+A guard on `Study` would have to ask *"has any published sequence cited me?"* —
+which points `Study` at `Submission` and inverts
+[ADR-056 §4](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)'s
+dependency direction for a rule neither context wants to own.
+
+> **The project already has the right instrument: freeze at publish.**
+> [ADR-047](../../adr/ADR-047-publication-metadata-exists-only-when-publication-makes-it-true.md)
+> establishes that what a filing said is frozen when it is filed. An STF's
+> `study-identifier` is part of what was filed, so **S003 freezes the identifier
+> and title into the published placement** — after which a retitle cannot alter
+> a filed STF, and no policy, no cross-context read and no guard is needed.
+
+**`Retitle` is therefore unreachable today** — the aggregate has it, nothing
+calls it, and no screen offers it. Recorded rather than quietly left: it becomes
+reachable when S003 has frozen what protects it.
+
+### Verification
+
+18 suites, **1,160 tests**, 0 failures (8 new). **96 browser specs**, 0 failures
+(2 new), on an isolated stack.
 
 ---
 

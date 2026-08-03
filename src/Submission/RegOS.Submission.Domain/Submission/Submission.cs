@@ -8,6 +8,8 @@ using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
+using RegOS.Study.Domain.Aggregates.ClinicalStudy;
+using RegOS.Study.Domain.Aggregates.NonClinicalStudy;
 
 namespace RegOS.Submission.Domain.Submission;
 
@@ -344,8 +346,70 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// stays part of the submission, but sits nowhere — a state the validator
     /// reports rather than tolerates silently.
     /// </summary>
+    /// <remarks>
+    /// Takes any reported study with it: a document that sits nowhere reports
+    /// nothing, because reporting a study is a fact about where the document is
+    /// filed (ADR-056 §4).
+    /// </remarks>
     public void ClearPlacement(SubmissionDocumentId submissionDocumentId)
         => Placeable(submissionDocumentId).PlaceIn(null);
+
+    /// <summary>
+    /// Records that a placement reports a clinical study.
+    /// </summary>
+    /// <remarks>
+    /// <b>Requires the document to be placed.</b> The study is a fact about the
+    /// placement, so there has to be one — and this is what makes that sentence
+    /// true of the data rather than only of the comment.
+    /// <para>
+    /// The aggregate cannot check the study exists: studies are another
+    /// context, and reaching across that boundary from inside here would be
+    /// worse than the handler owning the rule — the same division
+    /// <see cref="PlaceDocument"/> draws for template sections.
+    /// </para>
+    /// </remarks>
+    public void ReportClinicalStudy(
+        SubmissionDocumentId submissionDocumentId,
+        ClinicalStudyId studyId)
+    {
+        ArgumentNullException.ThrowIfNull(studyId);
+
+        Reporting(submissionDocumentId).ReportClinicalStudy(studyId);
+    }
+
+    /// <summary>
+    /// Records that a placement reports a non-clinical study — the Module 4
+    /// half, and the one FDA blocks an IND over.
+    /// </summary>
+    /// <remarks>See <see cref="ReportClinicalStudy"/>.</remarks>
+    public void ReportNonClinicalStudy(
+        SubmissionDocumentId submissionDocumentId,
+        NonClinicalStudyId studyId)
+    {
+        ArgumentNullException.ThrowIfNull(studyId);
+
+        Reporting(submissionDocumentId).ReportNonClinicalStudy(studyId);
+    }
+
+    /// <summary>
+    /// Says that this placement reports no study after all. Distinct from
+    /// clearing the placement, which removes the document from the dossier
+    /// altogether.
+    /// </summary>
+    public void ClearReportedStudy(SubmissionDocumentId submissionDocumentId)
+        => Placeable(submissionDocumentId).ClearReportedStudy();
+
+    private SubmissionDocument Reporting(
+        SubmissionDocumentId submissionDocumentId)
+    {
+        var document = Placeable(submissionDocumentId);
+
+        if (document.TemplateSectionId is null)
+            throw new BusinessRuleViolationException(
+                SubmissionErrors.UnplacedDocumentReportsNoStudy);
+
+        return document;
+    }
 
     private SubmissionDocument Placeable(SubmissionDocumentId submissionDocumentId)
     {

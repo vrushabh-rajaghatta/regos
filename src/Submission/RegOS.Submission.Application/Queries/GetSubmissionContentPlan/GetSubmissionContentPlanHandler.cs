@@ -4,7 +4,14 @@ using RegOS.Persistence;
 using RegOS.ProductDocument.Domain.Entities;
 using RegOS.ReferenceData.Domain.Blueprint;
 using RegOS.ReferenceData.Domain.DocumentType;
+using RegOS.Study.Domain.Aggregates.ClinicalStudy;
+using RegOS.Study.Domain.Aggregates.NonClinicalStudy;
 using RegOS.Submission.Domain.Submission;
+
+using ClinicalStudyAggregate =
+    RegOS.Study.Domain.Aggregates.ClinicalStudy.ClinicalStudy;
+using NonClinicalStudyAggregate =
+    RegOS.Study.Domain.Aggregates.NonClinicalStudy.NonClinicalStudy;
 
 namespace RegOS.Submission.Application.Queries.GetSubmissionContentPlan;
 
@@ -199,7 +206,10 @@ public sealed class GetSubmissionContentPlanHandler
                 d.DocumentTypeId.Value,
                 d.DocumentTypeName,
                 d.VersionNumber,
-                d.FileName))
+                d.FileName,
+                d.StudyId,
+                d.StudyKind,
+                d.StudyIdentifier))
             .ToList();
 
     private async Task<IReadOnlyDictionary<Guid, PlacedDocument>>
@@ -230,20 +240,99 @@ public sealed class GetSubmissionContentPlanHandler
                 DocumentTypeName = documentType.Name,
                 version.VersionNumber,
                 version.OriginalFileName,
+                attachment.ClinicalStudyId,
+                attachment.NonClinicalStudyId,
             }).ToListAsync(cancellationToken);
+
+        var studies = await LoadStudyIdentifiersAsync(
+            rows.Select(r => r.ClinicalStudyId),
+            rows.Select(r => r.NonClinicalStudyId),
+            cancellationToken);
 
         return rows.ToDictionary(
             row => row.Id.Value,
-            row => new PlacedDocument(
-                row.Id.Value,
-                row.ProductDocumentId.Value,
-                row.TemplateSectionId,
-                row.DisplayOrder,
-                row.DocumentName,
-                row.DocumentTypeId,
-                row.DocumentTypeName,
-                row.VersionNumber,
-                row.OriginalFileName));
+            row =>
+            {
+                // The exclusive-or, read back: at most one of the two is set,
+                // so the first non-null wins and there is nothing to reconcile.
+                var studyId = row.ClinicalStudyId?.Value
+                    ?? row.NonClinicalStudyId?.Value;
+
+                return new PlacedDocument(
+                    row.Id.Value,
+                    row.ProductDocumentId.Value,
+                    row.TemplateSectionId,
+                    row.DisplayOrder,
+                    row.DocumentName,
+                    row.DocumentTypeId,
+                    row.DocumentTypeName,
+                    row.VersionNumber,
+                    row.OriginalFileName,
+                    studyId,
+                    row.ClinicalStudyId is not null ? "Clinical"
+                        : row.NonClinicalStudyId is not null ? "NonClinical"
+                        : null,
+                    studyId is { } id && studies.TryGetValue(id, out var code)
+                        ? code
+                        : null);
+            });
+    }
+
+    /// <summary>
+    /// The sponsor's code for every study these placements report, in two
+    /// round trips rather than two correlated subqueries per row.
+    /// </summary>
+    /// <remarks>
+    /// Two queries because they are two aggregates in two tables (ADR-056).
+    /// Merged into one dictionary safely: an identifier names one study across
+    /// both kinds, so the guids cannot collide either.
+    /// <para>
+    /// The <c>Contains</c> is over the <em>typed</em> ids, not their guids: a
+    /// strongly typed id's converter has no SQL translation for <c>.Value</c>,
+    /// so unwrapping first pushes the whole predicate to client evaluation and
+    /// EF refuses to translate it at all.
+    /// </para>
+    /// </remarks>
+    private async Task<IReadOnlyDictionary<Guid, string>>
+        LoadStudyIdentifiersAsync(
+            IEnumerable<ClinicalStudyId?> clinicalIds,
+            IEnumerable<NonClinicalStudyId?> nonClinicalIds,
+            CancellationToken cancellationToken)
+    {
+        var clinical = clinicalIds.OfType<ClinicalStudyId>().Distinct().ToList();
+
+        var nonClinical = nonClinicalIds
+            .OfType<NonClinicalStudyId>()
+            .Distinct()
+            .ToList();
+
+        var identifiers = new Dictionary<Guid, string>();
+
+        if (clinical.Count > 0)
+        {
+            var rows = await _dbContext.Set<ClinicalStudyAggregate>()
+                .AsNoTracking()
+                .Where(s => clinical.Contains(s.Id))
+                .Select(s => new { s.Id, s.SponsorStudyIdentifier })
+                .ToListAsync(cancellationToken);
+
+            foreach (var row in rows)
+                identifiers[row.Id.Value] = row.SponsorStudyIdentifier;
+        }
+
+        if (nonClinical.Count > 0)
+        {
+            var rows = await _dbContext.Set<NonClinicalStudyAggregate>()
+                .AsNoTracking()
+                .Where(s => nonClinical.Contains(s.Id))
+                .Select(s => new { s.Id, s.SponsorStudyIdentifier })
+                .ToListAsync(cancellationToken);
+
+            foreach (var row in rows)
+                identifiers[row.Id.Value] = row.SponsorStudyIdentifier;
+        }
+
+        return identifiers;
     }
 
     /// <summary>
@@ -288,7 +377,10 @@ public sealed class GetSubmissionContentPlanHandler
             .ToDictionaryAsync(t => t.Id, t => t.Name, cancellationToken);
     }
 
-    /// <summary>An attached document plus where (if anywhere) it sits.</summary>
+    /// <summary>
+    /// An attached document, where (if anywhere) it sits, and which study that
+    /// placement reports.
+    /// </summary>
     private sealed record PlacedDocument(
         Guid SubmissionDocumentId,
         Guid ProductDocumentId,
@@ -298,5 +390,8 @@ public sealed class GetSubmissionContentPlanHandler
         DocumentTypeId DocumentTypeId,
         string DocumentTypeName,
         int VersionNumber,
-        string FileName);
+        string FileName,
+        Guid? StudyId,
+        string? StudyKind,
+        string? StudyIdentifier);
 }
