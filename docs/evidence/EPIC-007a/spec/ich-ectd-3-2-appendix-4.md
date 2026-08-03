@@ -47,18 +47,55 @@ Entries 3–7 give `m1` and one regional directory per region — `m1/eu`, `m1/j
 whose sections are almost entirely `1.x`, Appendix 4 supplies `m1/us` and stops.
 The rest is FDA's own guidance, which this repository does not hold.
 
-### 4. What is missing from this extract
+### 4. Complete — entries 1–379
 
-The source paste was truncated at 50,000 characters, mid-entry at **#203**.
+Supplied in two parts (the first truncated at #203) and reassembled here.
 
 | | |
 |---|---|
-| Module 1 regional roots (3–7) | ✅ complete |
-| Module 2 (8–35) | ✅ complete |
-| Module 3 (36–136) | ✅ complete |
-| Module 4 (137–203) | ⚠️ **truncated** — #203's directory value is cut off |
-| Module 5 | ✖ **absent** |
-| `util/` | ✖ **absent** |
+| Backbone (1–2), Module 1 regional roots (3–7) | ✅ |
+| Module 2 (8–35) · Module 3 (36–136) · Module 4 (137–269) · Module 5 (270–369) | ✅ |
+| `util/` (370–379) | ✅ |
+
+**113 CTD sections have a directory.** What that covers of RegOS's own blueprint
+is measured in §6.
+
+### 5. Two more things the appendix says about itself
+
+**The `util/` filenames are illustrative too** — #371's comment:
+
+> *"File names in rows 372 - 379 are **illustrative only**. Please consult
+> regional guidance for the current name and version of the files."*
+
+So `util/dtd/ich-ectd-n.dtd` is a pattern, not a filename. The same comment
+narrows what a package carries: *"it is not necessary to include regional
+DTDs/Schemas other than the one for the region to which the application is being
+made"* — for an FDA IND, the ICH DTD and `us-regional` only.
+
+**Granularity differs between Modules 4 and 5.** Module 4 gives study reports as
+**files** in the section's directory; Module 5 gives each study report its own
+**directory** (#276: *"A directory should be created for each study and the
+files associated with the study report should be organized within the
+directory"*). A renderer that treats the two the same is wrong in one of them.
+
+### 6. What it covers of the seeded FDA IND blueprint
+
+Measured against the published versions, not estimated:
+
+| | |
+|---|---|
+| distinct section codes in the blueprint | **40** |
+| matched to an Appendix 4 directory | **27** |
+| module roots — a coding mismatch, not a gap | **5** |
+| **Module 1 subsections — the real gap** | **8** |
+
+The five module roots are coded `M1`…`M5` here and `1`…`5` in Appendix 4. That
+is RegOS's own naming choice, not missing evidence, and it means the mapping is
+**not a plain string match** at the module level.
+
+The eight that Appendix 4 genuinely does not reach are `1.1`, `1.2`, `1.3`,
+`1.4`, `1.13`, `1.14`, `1.14.4`, `1.14.4.1` — **every Module 1 section in the
+blueprint**, which is to say the whole of the first vertical.
 
 ---
 
@@ -163,15 +200,82 @@ identifier.
 | 194 | 4.2.3.3 | `…/423-tox/4233-genotox` |
 | 195 | 4.2.3.3.1 | `…/4233-genotox/42331-in-vitro` |
 | 199 | 4.2.3.3.2 | `…/4233-genotox/42332-in-vivo` |
-| **203** | **4.2.3.4** | ✖ **cut off mid-entry — the extract ends here** |
+| 203 | 4.2.3.4 | `…/423-tox/4234-carcigen` |
+| 204 | 4.2.3.4.1 | `…/4234-carcigen/42341-lt-stud` |
+| 208 | 4.2.3.4.2 | `…/4234-carcigen/42342-smt-stud` |
+| 212 | 4.2.3.4.3 | `…/4234-carcigen/42343-other-stud` |
+| 216 | 4.2.3.5 | `…/423-tox/4235-repro-dev-tox` |
+| 217 | 4.2.3.5.1 | `…/4235-repro-dev-tox/42351-fert-embryo-dev` |
+| 221 | 4.2.3.5.2 | `…/4235-repro-dev-tox/42352-embryo-fetal-dev` |
+| 225 | 4.2.3.5.3 | `…/4235-repro-dev-tox/42353-pre-postnatal-dev` |
+| 229 | 4.2.3.5.4 | `…/4235-repro-dev-tox/42354-juv` |
+| 233 | 4.2.3.6 | `…/423-tox/4236-loc-tol` |
+| 237 | 4.2.3.7 | `…/423-tox/4237-other-tox-stud` |
+| 238 | 4.2.3.7.1 | `…/4237-other-tox-stud/42371-antigen` |
+| 242 | 4.2.3.7.2 | `…/4237-other-tox-stud/42372-immunotox` |
+| 246 | 4.2.3.7.3 | `…/4237-other-tox-stud/42373-mechan-stud` |
+| 250 | 4.2.3.7.4 | `…/4237-other-tox-stud/42374-dep` |
+| 254 | 4.2.3.7.5 | `…/4237-other-tox-stud/42375-metab` |
+| 258 | 4.2.3.7.6 | `…/4237-other-tox-stud/42376-imp` |
+| 262 | 4.2.3.7.7 | `…/4237-other-tox-stud/42377-other` |
+| 266 | 4.3 | `m4/43-lit-ref` |
 
 ### Module 5
 
-✖ **Not received.**
+Note the granularity change: **each study report gets its own directory here**,
+where Module 4 gave them as files (#276).
+
+| # | Section | Directory |
+|---|---|---|
+| 270 | 5 | `m5` |
+| 271 | 5.2 | `m5/52-tab-list` |
+| 273 | 5.3 | `m5/53-clin-stud-rep` |
+| 274 | 5.3.1 | `…/53-clin-stud-rep/531-rep-biopharm-stud` |
+| 275 | 5.3.1.1 | `…/531-rep-biopharm-stud/5311-ba-stud-rep` |
+| 279 | 5.3.1.2 | `…/531-rep-biopharm-stud/5312-compar-ba-be-stud-rep` |
+| 283 | 5.3.1.3 | `…/531-rep-biopharm-stud/5313-in-vitro-in-vivo-corr-stud-rep` |
+| 287 | 5.3.1.4 | `…/531-rep-biopharm-stud/5314-bioanalyt-analyt-met` |
+| 291 | 5.3.2 | `…/53-clin-stud-rep/532-rep-stud-pk-human-biomat` |
+| 292 | 5.3.2.1 | `…/532-rep-stud-pk-human-biomat/5321-plasma-prot-bind-stud-rep` |
+| 296 | 5.3.2.2 | `…/532-rep-stud-pk-human-biomat/5322-rep-hep-metab-interact-stud` |
+| 300 | 5.3.2.3 | `…/532-rep-stud-pk-human-biomat/5323-stud-other-human-biomat` |
+| 304 | 5.3.3 | `…/53-clin-stud-rep/533-rep-human-pk-stud` |
+| 305 | 5.3.3.1 | `…/533-rep-human-pk-stud/5331-healthy-subj-pk-init-tol-stud-rep` |
+| 309 | 5.3.3.2 | `…/533-rep-human-pk-stud/5332-patient-pk-init-tol-stud-rep` |
+| 313 | 5.3.3.3 | `…/533-rep-human-pk-stud/5333-intrin-factor-pk-stud-rep` |
+| 317 | 5.3.3.4 | `…/533-rep-human-pk-stud/5334-extrin-factor-pk-stud-rep` |
+| 321 | 5.3.3.5 | `…/533-rep-human-pk-stud/5335-popul-pk-stud-rep` |
+| 325 | 5.3.4 | `…/53-clin-stud-rep/534-rep-human-pd-stud` |
+| 326 | 5.3.4.1 | `…/534-rep-human-pd-stud/5341-healthy-subj-pd-stud-rep` |
+| 330 | 5.3.4.2 | `…/534-rep-human-pd-stud/5342-patient-pd-stud-rep` |
+| 334 | 5.3.5 | `…/53-clin-stud-rep/535-rep-effic-safety-stud` |
+| 335 | 5.3.5 *(per indication)* | `…/535-rep-effic-safety-stud/indication-1` **⟨example⟩** |
+| 336 | 5.3.5.1 | `…/indication-1/5351-stud-rep-contr` |
+| 340 | 5.3.5.2 | `…/indication-1/5352-stud-rep-uncontr` |
+| 344 | 5.3.5.3 | `…/indication-1/5353-rep-analys-data-more-one-stud` |
+| 348 | 5.3.5.4 | `…/indication-1/5354-other-stud-rep` |
+| 352 | 5.3.6 | `…/53-clin-stud-rep/536-postmark-exp` |
+| 353 | 5.3.7 | `…/53-clin-stud-rep/537-crf-ipl` |
+| 354 | 5.3.7 *(per study)* | `…/537-crf-ipl/study-1` **⟨example⟩** |
+| 366 | 5.4 | `m5/54-lit-ref` |
+
+### `util/`
+
+**The filenames here are illustrative** — see §5.
+
+| # | Path | |
+|---|---|---|
+| 370 | `util` | utilities |
+| 371 | `util/dtd` | only the region being filed to needs its regional DTD |
+| 372 | `util/dtd/ich-ectd-n.dtd` | `n` is the version, e.g. `3-2` |
+| 373–376 | `util/dtd/{eu,jp,us,xx}-regional-n.{dtd,xsd}` | one of these |
+| 377 | `util/style` | ICH and regional stylesheets |
+| 378 | `util/style/ectd-n.xsl` | **RegOS holds no stylesheet** |
+| 379 | `util/style/xx-regional-n.xsl` | |
 
 ---
 
-## One extraction artifact, noted rather than silently repaired
+## Two oddities in the source, noted rather than silently repaired
 
 Entry **61** arrives as:
 
@@ -182,6 +286,10 @@ Element m3-2-s-4-3-validation-of-analytical-procedures (name, manufacturer)
 `(name, manufacturer)` belongs on the `Title` line, not the element name — the
 same class of PDF line-wrap damage that had to be repaired when Appendix 8 was
 transcribed. The directory value on that row is unaffected.
+
+Entries **358** and **362** carry the comment *"define element"* — an editorial
+note left in the published document, not guidance. Recorded because a reader
+who met it later would reasonably wonder whether it was transcription damage.
 
 ---
 
