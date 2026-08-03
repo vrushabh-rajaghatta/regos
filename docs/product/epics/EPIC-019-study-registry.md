@@ -1,6 +1,6 @@
 # EPIC-019 — Study registry
 
-**Status:** 🟢 **S001–S004 shipped 2026-08-03** — Module 4 generates, so RegOS can file an IND. One item owed: the E24 continuity refusal (ADR-057 §2) · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 **Complete — merged 2026-08-03 (PR #16).** Module 4 generates, so RegOS can file an IND. One item owed and now carrying its own number: the E24 continuity refusal → **EPIC-021** · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Clinical and non-clinical studies as first-class records that applications and submission content can **cite** — so *"which studies support this filing?"* is a query, and Study Tagging Files become possible.
 
@@ -715,6 +715,16 @@ title — which FDA reads as two studies. ADR-057 §2 says where the check belon
 (the generator, from frozen columns, no new dependency) and why it is not here
 yet: it needs a second sequence filing the same study, and a message that names
 what the previous one said. **Recorded as owed rather than presented as safe.**
+
+> **Carried to [EPIC-021](../BACKLOG.md) at review**, on the founder's reading:
+> this epic's Definition of Done puts STF explicitly *out of scope*, and E24 is
+> cited throughout as the **reason** for decisions rather than as a guarantee.
+> Nothing here claims continuity, so nothing here is untrue — and the gap has a
+> number instead of a footnote.
+>
+> **Until it exists, a user can rename a filed study and the next sequence will
+> carry the new title, with nothing warning them.** That is the shape of the
+> gap, not only its location.
 
 ### Verification
 
