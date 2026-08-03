@@ -825,10 +825,12 @@ MD5 for every leaf file.
 
 **Decisions this story forces:**
 
-- **The sequence number becomes a directory name**, and `0000` vs `0001` stops
-  being abstract. E4 says `0000` is legal; E5 says every FDA example starts at
-  `0001`. Nothing has had to choose until now, because nothing has had to write
-  the number down as a *filename*.
+- **The sequence folder is named `0000`.** *Decided 2026-08-03.* E4 says it is
+  legal; E5 says every FDA example starts at `0001`. **RegOS writes down the
+  business fact it holds, and E5 stays convention** until EPIC-007b or a real
+  filing gives a reason to adopt it. The two evidence levels answer different
+  questions and this is the first place they collide as code — see S008, where
+  the divergence is compared rather than assumed away.
 - **Unplaced documents produce no leaf** (ADR-045 §5), and a `SubmissionDeletion`
   produces a leaf with **no file and an empty checksum** (E7) — the one place a
   filesystem story must know an XML fact.
@@ -836,8 +838,88 @@ MD5 for every leaf file.
   *derivation* is format-independent; the DoD asks for proof the *rendering* is
   not. The entry point is where that is provable.
 
+**Two refusals, two different sentences.** *Acceptance criterion, added
+2026-08-03.* Generation can be impossible for two unrelated reasons, and a
+single *"cannot generate package"* would collapse them:
+
+| Gap | Says | Because |
+|---|---|---|
+| **Historical** | *this sequence predates the regulatory activity model* | it has no `SubmissionSubTypeId`, and E13 says nothing can recover one |
+| **Evidence** | *this classification has no eCTD token* | the vocabulary is real; the wire value has never been read |
+
+The first is about **our** history and can only be fixed by a person deciding.
+The second is about the **authority's** vocabulary and is fixed by reading a
+specification. **A user who gets the same sentence for both has been failed by a
+message, not by a rule** — and the distinction is the evidence register showing
+up in the product.
+
+> **The check belongs at the entry point, not in the renderer that consumes the
+> values.** A refusal after the folder is on disk leaves a misleading directory
+> behind. S004 can state the rule without knowing any renderer's internals:
+> *every reference-data value this submission points at that carries a `Token`
+> must have one for the target authority.*
+
 **Falsified by:** two runs differing; or a leaf path that cannot be derived from
 the blueprint section, meaning placement carries information the model does not.
+
+> **⚠ That second falsifier has already fired, before implementation. See
+> below.**
+
+---
+
+### S004's open question — where does a leaf actually go?
+
+*Found 2026-08-03, checking the plan against the repository before writing code.
+**Not a modelling question that was missed — an evidence question that only
+becomes visible when a path has to be written down.***
+
+**What is known, and sourced.** `ectd-mapping.md` §3.4 already records the top
+level and the naming rules:
+
+```
+ctd-123456/            same across all sequences
+  0000/
+    index.xml   index-md5.txt
+    m1/us/   m2/   m3/   m4/   m5/
+    util/dtd/   util/style/
+```
+
+lowercase, `[a-z0-9-]`, ≤64 chars a segment, ≤150 the whole path — ICH App 2 and
+FDA Tech Guide 2.4.
+
+**What is not in this repository:** the folder name for a *section*. Does
+blueprint section `3.2.S` become `m3/32-body-of-data/32s-drug-substance/`? That
+table is **ICH Appendix 4**, and only Appendix 8 — the DTD — was transcribed.
+
+**And this is not a Module 1 problem.** The seeded FDA IND blueprint covers all
+five modules — 26 · 25 · 85 · 15 · 10 sections — so 135 placements need a path
+and roughly 25 have one that can be defended.
+
+| Route | Verdict |
+|---|---|
+| Derive a folder from the section code — `1.14.4.1` → `114-4-1/` | ✖ **invention.** Nothing says FDA names them that way |
+| Put every leaf at its module root — `m3/file.pdf` | ⚠ **DTD-valid** — `xlink:href` is `CDATA`, so nothing rejects it — and unconventional. Legal at 2a, wrong at 3 |
+| Read the folder name out of the regional DTD's element names | ⚠ **Module 1 only, and Level 3.** `m1-2-cover-letters`, `m1-14-4-1-…` are *element* names; that FDA names folders identically is an inference from their examples, not something the DTD states |
+
+#### The recommendation, and why it is a schema question
+
+> **The section-to-folder mapping is versioned regulatory knowledge, not
+> renderer code** — which makes putting it in a `switch` statement the exact
+> mistake this project exists not to make. It belongs on `TemplateSection`, and
+> it has the same shape as `Token` on the three catalogues: **present where a
+> specification has been read, null where it has not, and null means *not in
+> evidence* rather than *derive it*.**
+
+If that is right, S004 grows a migration and the rendering precondition extends
+to cover it — a nullable path segment, seeded for FDA Module 1 from the regional
+DTD's element names at Level 3, and null for Modules 2–5 until ICH Appendix 4 is
+in the repository.
+
+**Held for sign-off rather than assumed.** Everything else in S004 —
+determinism, `util/dtd/`, checksums, the entry-point guards, both refusals — is
+unaffected and could be built first. But *leaf placement* is the story's middle
+name, so building around the gap would be delivering S004 in the sense that
+matters least.
 
 ---
 
