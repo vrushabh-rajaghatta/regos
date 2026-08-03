@@ -1,9 +1,14 @@
 # ICH eCTD v3.2.2 — Appendix 4, *File Organization for the eCTD*
 
-**Partial.** Transcribed 2026-08-03 from the founder's extract of the v3.2.2 PDF.
-Only the rows RegOS needs — those that name a **directory** — are reproduced;
-the `File` rows, the `Comment` prose and the element names are not, because a
-section's folder is the only thing the blueprint stores.
+**Complete — entries 1–379.** Transcribed 2026-08-03 from the founder's extract
+of the v3.2.2 PDF, supplied in two parts. Only the rows RegOS needs — those that
+name a **directory** — are reproduced; the `File` rows, the `Comment` prose and
+the element names are not, because a section's folder is the only thing the
+blueprint stores.
+
+**A transcription is not the publication.** Same standard as Appendix 8: if this
+is wrong, everything resting on it is wrong and would look exactly as
+convincing.
 
 ---
 
@@ -33,8 +38,9 @@ Module 1's entries read differently — see §3.
 > naming conventions."*
 
 **The extract carries no italics**, so a placeholder is indistinguishable from a
-canonical name except by reading the comment beside it. Four are identifiable
-from their comments and are marked **⟨example⟩** below; there may be others.
+canonical name except by reading the comment beside it. **Six** are identifiable
+from their comments and are marked **⟨example⟩** below; there may be others that
+carry no comment to give them away.
 
 ### 3. Appendix 4 stops at the door of Module 1
 
@@ -175,7 +181,7 @@ identifier.
 | 132 | 3.2.R | `m3/32-body-data/32r-reg-info` |
 | 133 | 3.3 | `m3/33-lit-ref` |
 
-### Module 4 — truncated
+### Module 4
 
 | # | Section | Directory |
 |---|---|---|
