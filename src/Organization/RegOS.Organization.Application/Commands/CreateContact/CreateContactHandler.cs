@@ -55,7 +55,7 @@ public sealed class CreateContactHandler
             contact.AddEmail(email);
 
         foreach (var phone in command.Phones ?? [])
-            contact.AddPhone(phone);
+            contact.AddPhone(phone.Number, phone.Kind);
 
         await _repository.AddAsync(contact, cancellationToken);
 

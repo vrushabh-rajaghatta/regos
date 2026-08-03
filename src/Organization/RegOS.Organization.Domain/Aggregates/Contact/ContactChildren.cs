@@ -99,13 +99,34 @@ public sealed class ContactEmail : Entity<ContactEmailId>
 }
 
 /// <summary>
+/// What kind of line a number reaches. <b>A business concept, not a wire
+/// vocabulary</b> — the question *"is that your office number, your fax or your
+/// mobile?"* is the obvious next one to ask about any number, and it would be
+/// worth answering if no authority had ever asked.
+/// </summary>
+/// <remarks>
+/// FDA's <c>telephone-number-type</c> happens to enumerate exactly these three
+/// (<c>fdatnt1</c>, <c>fdatnt2</c>, <c>fdatnt3</c> — evidence E30), and the
+/// coincidence is the world's rather than the wire's. **The translation belongs
+/// at the boundary**, in the renderer, the way ADR-048 keeps contact roles out
+/// of the format's taxonomy. Nothing here carries a token.
+/// </remarks>
+public enum ContactPhoneKind
+{
+    Business = 1,
+    Fax = 2,
+    Mobile = 3,
+}
+
+/// <summary>
 /// One number this person is reachable on. Free text: international formats
 /// vary too much for RegOS to have an opinion, and normalising would lose the
 /// extension a user typed.
 /// </summary>
 public sealed class ContactPhone : Entity<ContactPhoneId>
 {
-    internal ContactPhone(ContactPhoneId id, string number)
+    internal ContactPhone(
+        ContactPhoneId id, string number, ContactPhoneKind? kind)
     {
         if (string.IsNullOrWhiteSpace(number))
             throw new DomainException(ContactErrors.PhoneRequired);
@@ -115,8 +136,12 @@ public sealed class ContactPhone : Entity<ContactPhoneId>
         if (trimmed.Length > Contact.PhoneMaxLength)
             throw new DomainException(ContactErrors.PhoneTooLong);
 
+        if (kind is { } declared && !Enum.IsDefined(declared))
+            throw new DomainException(ContactErrors.PhoneKindUnknown);
+
         Id = id;
         Number = trimmed;
+        Kind = kind;
     }
 
     private ContactPhone()
@@ -124,6 +149,24 @@ public sealed class ContactPhone : Entity<ContactPhoneId>
     }
 
     public string Number { get; private set; } = default!;
+
+    /// <summary>
+    /// <b>Null means <em>recorded before RegOS asked</em></b>, not "unknown" and
+    /// not "assume business".
+    /// </summary>
+    /// <remarks>
+    /// Every phone stored before 2026-08-03 has one, because nobody was ever
+    /// offered the question — the same shape as
+    /// <c>Submission.SubmissionSubTypeId</c>, where a null marks a row that
+    /// predates the model rather than a value someone declined to give.
+    /// <para>
+    /// A null is a gap someone using the system can close by answering. That is
+    /// what makes it a <b>data-completeness</b> refusal at generation time —
+    /// the same class as a missing application number — rather than a refusal
+    /// about our history or the authority's vocabulary.
+    /// </para>
+    /// </remarks>
+    public ContactPhoneKind? Kind { get; private set; }
 }
 
 public static class ContactErrors
@@ -160,6 +203,10 @@ public static class ContactErrors
     public const string PhoneRequired = "A phone number cannot be blank.";
 
     public const string PhoneTooLong = "That phone number is too long.";
+
+    public const string PhoneKindUnknown =
+        "A phone number is an office line, a fax or a mobile — or it is left "
+        + "unsaid.";
 
     public const string PhoneAlreadyRecorded =
         "This contact already has that phone number.";

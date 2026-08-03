@@ -18,6 +18,13 @@ public sealed record ContactRow(
     DateOnly StatusDate,
     IReadOnlyList<ContactRoleDto> Roles,
     IReadOnlyList<string> Emails,
-    IReadOnlyList<string> Phones);
+    IReadOnlyList<ContactPhoneDto> Phones);
 
 public sealed record ContactRoleDto(Guid RoleId, string Code, string Name);
+
+/// <param name="Kind">
+/// <c>Business</c>, <c>Fax</c>, <c>Mobile</c> — or <b>null, meaning the number
+/// was recorded before RegOS asked</b>. Sent as the name rather than an
+/// ordinal, so a client reading the payload sees what it means.
+/// </param>
+public sealed record ContactPhoneDto(string Number, string? Kind);

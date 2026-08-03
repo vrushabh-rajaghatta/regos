@@ -179,9 +179,14 @@ public sealed class Contact : AggregateRoot<ContactId>
         return email;
     }
 
-    public ContactPhone AddPhone(string number)
+    /// <param name="kind">
+    /// Office, fax or mobile — optional, because the aggregate cannot invent an
+    /// answer nobody gave. A caller that knows should say; a caller that does
+    /// not must not guess on the user's behalf.
+    /// </param>
+    public ContactPhone AddPhone(string number, ContactPhoneKind? kind = null)
     {
-        var phone = new ContactPhone(ContactPhoneId.New(), number);
+        var phone = new ContactPhone(ContactPhoneId.New(), number, kind);
 
         if (_phones.Any(x => x.Number == phone.Number))
             throw new BusinessRuleViolationException(

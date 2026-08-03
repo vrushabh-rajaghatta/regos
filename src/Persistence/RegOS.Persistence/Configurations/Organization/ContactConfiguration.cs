@@ -182,6 +182,13 @@ public sealed class ContactPhoneConfiguration
             .HasMaxLength(ContactAggregate.PhoneMaxLength)
             .IsRequired();
 
+        // Stored as its name, not its ordinal: a column reading 'Mobile' says
+        // what it means to anyone reading the database, and reordering the enum
+        // cannot silently change what existing rows mean.
+        builder.Property(x => x.Kind)
+            .HasConversion<string>()
+            .HasMaxLength(16);
+
         builder.Property<ContactId>("ContactId")
             .HasConversion(id => id.Value, value => new ContactId(value));
 

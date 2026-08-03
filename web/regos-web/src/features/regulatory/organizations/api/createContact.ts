@@ -2,6 +2,14 @@ import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 
 import { detailOf } from "@/shared/api/problemDetail";
 
+import type { ContactPhoneKind } from "../types/Contact";
+
+export interface CreateContactPhone {
+  number: string;
+  /** Omitted or null when the caller genuinely does not know. */
+  kind?: ContactPhoneKind | null;
+}
+
 export interface CreateContactRequest {
   firstName: string;
   lastName: string;
@@ -12,7 +20,7 @@ export interface CreateContactRequest {
   countryId?: string | null;
   roleIds?: string[];
   emails?: string[];
-  phones?: string[];
+  phones?: CreateContactPhone[];
 }
 
 export async function createContact(

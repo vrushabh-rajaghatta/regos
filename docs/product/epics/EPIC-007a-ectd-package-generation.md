@@ -1269,6 +1269,43 @@ written to succeed even as an exercise — **code that cannot run to completion 
 worse than code not written**, which is S004's own lesson about building around a
 gap, arriving from the other side.
 
+#### The gate lifted, and turned inside out — 2026-08-03
+
+The three attribute lists arrived (**E30**). `telephone-number-type` gives
+`fdatnt1` Business, `fdatnt2` Fax, `fdatnt3` Mobile — **and `ContactPhone` was a
+bare number with no kind.** The blocker moved from the authority's vocabulary to
+our model in the same breath as being lifted.
+
+**That is what produced [ADR-055](../../adr/ADR-055-when-an-authority-required-fact-becomes-a-domain-fact.md)**,
+the rule this epic had applied six times without naming: *promote an
+authority-required fact into the domain only when it is an ordinary business
+concept that would exist if the authority did not*. Office / fax / mobile is
+that; `fdaact1` is not.
+
+| | |
+|---|---|
+| **`ContactPhone.Kind`** | nullable domain enum, translated in the renderer, **no token column**. A change to `Organization` made from an eCTD story, and legitimate because the fact is Organization's — the specification only revealed it was missing |
+| **`fdaat4` = IND confirmed** | RegOS's own assertion for a year (E11), and right. That still does not make a year of asserting it evidence |
+| **`fdaat1` seeded**, `fdaat9`/`fdaat10` **not** | published, active, and *"should only be used in the cross-reference-application-number element"* (**E32**) — business rules delivered by an enumeration. **Level 2b arriving without a validator** |
+| **no De Novo code exists** | the list is complete and `status`-flagged, so `FDA_DENOVO`'s refusal stops meaning *"unread"* and starts meaning *"this cannot be filed in eCTD at all"* |
+| **the DUNS correction** | `Organization.Identifiers` has carried a `DUNS` scheme since EPIC-016. The mapping said *"no field"* from Phase 1, the renderer's comment repeated it, and two decisions rested on it. **The DUNS-citation failure in the opposite direction** — that one about FDA's document, this one about our own code |
+
+> **`FdaWireVocabularyTests`** is Level 2a applied to our own reference data —
+> the move S005 made for element names, now for tokens. It reads the *database*
+> rather than the seed constant, because S002 and S003 both found those two
+> diverging.
+
+**And a defect nobody was looking for.** `CreateContactForm` has carried a
+`phone` value and submitted it since it was written, and **never rendered the
+input** — so every contact created through that screen was created without a
+number. The dev database confirms it: `ContactPhones` held **zero rows**. Found
+only because something finally needed to read one.
+
+⚠ **There is no contact *edit* screen**, so a phone recorded before today cannot
+have its kind supplied through the UI. The refusal below is actionable for new
+contacts and not yet for old ones. Recorded rather than fixed here — it is
+EPIC-016's surface, and the gap predates this story.
+
 #### Built while S006 waits — ADR-054 §6, the fifth refusal
 
 *2026-08-03, immediately after ADR-054 was accepted. It is the half of S006 that
