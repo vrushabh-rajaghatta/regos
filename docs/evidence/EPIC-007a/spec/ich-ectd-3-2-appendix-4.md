@@ -105,6 +105,64 @@ blueprint**, which is to say the whole of the first vertical.
 
 ---
 
+## The `element` column, for the sections RegOS seeds
+
+Supplied 2026-08-03 as structured JSON of the whole table — which is a better
+artifact than the prose, because **every value in it is checkable against the
+pinned DTD** rather than merely readable.
+
+**All 32 verified.** Each element below is declared in
+[`ich-ectd-3-2.dtd`](ich-ectd-3-2.dtd), so this pairing is Level 3 (Appendix 4
+states it) with a Level 2a check on the target (the DTD declares it). A seeded
+value that is not in the DTD is a defect a test can catch — something the folder
+column can never have.
+
+| Section | ICH element |
+|---|---|
+| 1 (`M1`) | `m1-administrative-information-and-prescribing-information` |
+| 2 (`M2`) | `m2-common-technical-document-summaries` |
+| 2.3 | `m2-3-quality-overall-summary` |
+| 2.4 | `m2-4-nonclinical-overview` |
+| 2.5 | `m2-5-clinical-overview` |
+| 2.6 | `m2-6-nonclinical-written-and-tabulated-summaries` |
+| 2.7 | `m2-7-clinical-summary` |
+| 3 (`M3`) | `m3-quality` |
+| 3.2.S | **`m3-2-body-of-data` › `m3-2-s-drug-substance`** |
+| 3.2.S.1–.7 | `m3-2-s-1-general-information` … `m3-2-s-7-stability` |
+| 3.2.P | **`m3-2-body-of-data` › `m3-2-p-drug-product`** |
+| 3.2.P.1–.8 | `m3-2-p-1-description-and-composition-of-the-drug-product` … `m3-2-p-8-stability` |
+| 4 (`M4`) | `m4-nonclinical-study-reports` |
+| 4.2.1 / 4.2.2 / 4.2.3 | **`m4-2-study-reports` › `m4-2-1-pharmacology` / `-2-pharmacokinetics` / `-3-toxicology`** |
+| 5 (`M5`) | `m5-clinical-study-reports` |
+| 5.2 | `m5-2-tabular-listing-of-all-clinical-studies` |
+| 5.3 | `m5-3-clinical-study-reports` |
+
+### The bold rows: RegOS's tree is coarser than the CTD's, in exactly two places
+
+The DTD forbids the shortcuts our blueprint takes:
+
+```
+m3-quality                  (leaf*, m3-2-body-of-data?, m3-3-literature-references?)
+m4-nonclinical-study-reports (leaf*, m4-2-study-reports?, m4-3-literature-references?)
+```
+
+`m3-2-s-drug-substance` is **not** a legal child of `m3-quality`, and
+`m4-2-1-pharmacology` is **not** a legal child of `m4-nonclinical-study-reports`.
+The blueprint has no `3.2` and no `4.2` node, so the renderer must supply
+`m3-2-body-of-data` and `m4-2-study-reports` itself.
+
+> **These are the same two levels the folder column already chains** —
+> `32-body-data/32s-drug-sub` and `42-stud-rep/421-pharmacol`. One mechanism
+> covers both: a value is a chain, and the renderer merges shared prefixes.
+> Where the blueprint is coarser than the CTD, the skipped level is carried in
+> the value rather than invented in code.
+
+**Module 1 sub-sections carry no element.** ICH's Module 1 is `(leaf*)` with no
+children, so 1.1 … 1.14.4.1 contribute nothing to `index.xml` — the empty value,
+not the null one. Their FDA elements belong to `us-regional.xml` (S006).
+
+---
+
 ## Directory rows
 
 `#` is Appendix 4's own sequential reference number, which the appendix warns
