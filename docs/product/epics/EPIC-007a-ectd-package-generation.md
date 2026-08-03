@@ -1,6 +1,6 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 shipped · S005 shipped — `index.xml` renders and validates; S006 is next** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · S004 · S005 shipped · **S006: both backbones render and validate; the generator wiring is what remains** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 > **The epic's named capability has begun, and only just.** RegOS now writes a
 > sequence folder — the directory tree, the files, the MD5s, `util/dtd/` — and
@@ -1150,6 +1150,51 @@ asserts so.
 only if every wire token the target authority needs exists"* — a missing token is
 a named domain error, never malformed XML. S005 cannot need it; `index.xml` has
 no tokens.
+
+#### Decided 2026-08-03, before implementation
+
+| | |
+|---|---|
+| `form-type` | **refuse.** Not a document RegOS lacks — a domain fact. Hard-coding `fdaft1` because today's seed contains one form would bake regulatory knowledge into the renderer. Recorded as **E18**, governed by **[ADR-053](../../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)** |
+| missing application number / telephone / email | **refuse, individually and specifically.** Ordinary data-completeness failures, each fixable by someone entering data they already have |
+| `telephone-number-type` | **refuse until FDA's vocabulary is in evidence.** Unlike DUNS this has no positive source: `fdatnt1` appears only in our own hand-written PoC, with nothing saying what it means or that it is right for the contact being emitted. The renderer takes the value as input, which is the correct architecture; the generator does not invent it |
+| DUNS | **emit FDA's permitted `999999999`** (Technical Conformance Guide §3.1.1) and **record that a placeholder was used**. A filing convention, not a property of an organisation — a documented *temporary policy*, not a RegOS convention, which disappears when `Organization.DunsNumber` is modelled without the rendering algorithm changing |
+| contact roles | **translate at the boundary, map only what evidence supports.** `REG → fdaact1`, `MFG → fdaact2`; everything else refused. No token column on `ContactRole` — the taxonomies answer different questions. **`HA-REVIEWER` being unmappable is the point**: an authority reviewer must never appear as an applicant contact |
+| the regional DTD's file name | **the published one.** Appendix 4 #371 disclaims its own rows as illustrative; FDA publishes `us-regional-v3-3.dtd`. The DOCTYPE, the embedded resource and the file on disk now agree byte-for-byte |
+
+> **The evidence standard is not weakened for the last unresolved token.** Every
+> earlier decision in this epic tightened the discipline around regulatory
+> knowledge; `telephone-number-type` follows the same rule as `form-type`,
+> `application-type` and every other wire value.
+
+#### What S006 found
+
+**E18 and E19, and E18 with E17 is why ADR-053 exists.** The DTDs said much the
+same thing three times: the blueprint describes *where documents belong*, and the
+backbone sometimes needs to know *which occurrence of that location* is being
+rendered.
+
+**E19 is different from the other two, and the difference matters.**
+
+| | |
+|---|---|
+| **E17** | some nodes are repeatable instances |
+| **E18** | some nodes wrap leaves with required metadata |
+| **E19** | **the placement surface the blueprint exposes is broader than the one the backbone accepts** |
+
+E17 and E18 are modelling problems. **E19 is a validation problem**, and it is
+resolved as one: the blueprint may legitimately describe the CTD outline, and
+whether a section is leaf-capable is a fact about a *particular authority's*
+backbone. So the renderer decides it, and the blueprint is not remodelled.
+
+Of the **eight** Module 1 sections the FDA IND blueprint offers as placement
+targets, **two** can hold a document — `m1-2-cover-letters` and
+`m1-14-4-1-investigational-brochure`. Five are declared as child elements with no
+`leaf` at all; the eighth is `m1-1-forms`.
+
+> A section being *in* the CTD outline does not make it a place a document can
+> go. Nothing before rendering could have shown this, and the blueprint has been
+> offering those placements since S002.
 
 **Two acceptance criteria are about restraint rather than output:**
 

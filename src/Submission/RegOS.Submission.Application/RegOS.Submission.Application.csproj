@@ -21,7 +21,7 @@
       LogicalName="RegOS.Submission.Application.Generation.ich-ectd-3-2.dtd" />
     <EmbeddedResource
       Include="..\..\..\docs\evidence\EPIC-007a\spec\us-regional-v3-3.dtd"
-      LogicalName="RegOS.Submission.Application.Generation.us-regional-3-3.dtd" />
+      LogicalName="RegOS.Submission.Application.Generation.us-regional-v3-3.dtd" />
   </ItemGroup>
 
   <ItemGroup>

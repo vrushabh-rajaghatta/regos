@@ -635,13 +635,17 @@ public sealed class SequenceFolderGenerator
     /// Only the region being filed to needs its regional DTD, which #371 states
     /// outright, so one regional file rather than four.
     /// <para>
-    /// <b>The file names are RegOS's, following a pattern the appendix
-    /// states.</b> #371 says rows 372–379 are *"illustrative only … consult
-    /// regional guidance for the current name and version"*, and the pattern is
-    /// <c>ich-ectd-n.dtd</c> where <c>n</c> is the version. This writes
-    /// <c>3-2</c> and <c>3-3</c> accordingly — the same class of choice ADR-052
-    /// governs for directories, and the DOCTYPE that S005 and S006 emit has to
-    /// agree with what is written here.
+    /// <b>The names are the published ones, not Appendix 4's pattern.</b> #371
+    /// says rows 372–379 are *"illustrative only … consult regional guidance for
+    /// the current name and version"* — so the pattern <c>us-regional-3-3.dtd</c>
+    /// suggests is exactly what the appendix disclaims, and FDA publishes
+    /// <c>us-regional-v3-3.dtd</c>. This is not ADR-052's territory: that
+    /// governs names <em>nobody</em> published, and this one is published.
+    /// </para>
+    /// <para>
+    /// The DOCTYPE each backbone emits, the embedded resource, and the file on
+    /// disk all name the same string. A package that validates against a DTD it
+    /// does not carry is the failure a reviewer cannot see and a regulator can.
     /// </para>
     /// </remarks>
     private static async Task<IReadOnlyList<string>> WriteDtdsAsync(
@@ -649,7 +653,7 @@ public sealed class SequenceFolderGenerator
     {
         var written = new List<string>();
 
-        foreach (var name in new[] { "ich-ectd-3-2.dtd", "us-regional-3-3.dtd" })
+        foreach (var name in new[] { "ich-ectd-3-2.dtd", "us-regional-v3-3.dtd" })
         {
             var relative = $"util/dtd/{name}";
             var absolute = Path.Combine(

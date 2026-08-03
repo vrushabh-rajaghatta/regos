@@ -169,8 +169,10 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
 
         var generated = await GenerateAsync(ctx, storage, submissionId);
 
+        // FDA's published name, not Appendix 4's illustrative pattern — #371
+        // disclaims its own rows and defers to regional guidance.
         generated.UtilityFiles.Should().BeEquivalentTo(
-            ["util/dtd/ich-ectd-3-2.dtd", "util/dtd/us-regional-3-3.dtd"]);
+            ["util/dtd/ich-ectd-3-2.dtd", "util/dtd/us-regional-v3-3.dtd"]);
 
         var ich = await File.ReadAllTextAsync(Path.Combine(
             generated.RootPath, "util", "dtd", "ich-ectd-3-2.dtd"));
