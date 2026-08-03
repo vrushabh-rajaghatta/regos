@@ -4,6 +4,7 @@ const items = [
   "Due work",
   "Products",
   "Registrations",
+  "Studies",
   "Correspondence",
   "Meetings",
   "Inspections",

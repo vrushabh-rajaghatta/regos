@@ -37,6 +37,7 @@ import { OrganizationContactsPage } from "@/features/regulatory/organizations/pa
 import { DueWorkPage } from "@/features/regulatory/dueWork/pages/DueWorkPage";
 import { MeetingsPage } from "@/features/regulatory/meetings/pages/MeetingsPage";
 import { InspectionsPage } from "@/features/regulatory/inspections/pages/InspectionsPage";
+import { StudiesPage } from "@/features/regulatory/studies/pages/StudiesPage";
 import { CorrespondencePage } from "@/features/regulatory/correspondence/pages/CorrespondencePage";
 import { CorrespondenceDetailPage } from "@/features/regulatory/correspondence/pages/CorrespondenceDetailPage";
 import { OrganizationsPage } from "@/features/regulatory/organizations/pages/OrganizationsPage";
@@ -321,6 +322,13 @@ export const router = createBrowserRouter([
               {
                 path: "inspections",
                 element: <InspectionsPage />,
+              },
+              // A sibling of Products, not a page inside a submission: a study
+              // exists whether or not anything has been filed about it, and its
+              // identity is the sponsor's (ADR-056).
+              {
+                path: "studies",
+                element: <StudiesPage />,
               },
               {
                 path: "meetings",

@@ -121,7 +121,8 @@ Persistence is centralised on purpose — EF configuration for every context
 lives in `RegOS.Persistence`, not beside the aggregate.
 
 Contexts today: Platform · Organization · Product · ProductDocument ·
-RegulatoryApplication · Submission · Registration · Interaction · ReferenceData.
+RegulatoryApplication · Submission · Registration · Interaction · Study ·
+ReferenceData.
 
 ---
 
@@ -133,6 +134,7 @@ RegulatoryApplication · Submission · Registration · Interaction · ReferenceD
   `RegulatoryApplication` — never `Record`, `Item`, `Data`.
 - **The domain's word and the screen's word may differ, and both are binding.**
   `MedicinalProduct` is the aggregate; **"Market"** is what the UI calls it.
+  `SponsorStudyIdentifier` is the property; **"Study ID"** is the label.
   RIM's vocabulary keeps the model precise; the screen uses the word a
   regulatory user would say out loud. Where they differ, record the pair in
   [docs/domain-model/](docs/domain-model/) — and never let the screen's word

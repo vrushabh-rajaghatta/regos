@@ -40,6 +40,10 @@ using HaMeetingAggregate =
     RegOS.Interaction.Domain.Meetings.HaMeeting;
 using InspectionAggregate =
     RegOS.Interaction.Domain.Inspections.Inspection;
+using ClinicalStudyAggregate =
+    RegOS.Study.Domain.Aggregates.ClinicalStudy.ClinicalStudy;
+using NonClinicalStudyAggregate =
+    RegOS.Study.Domain.Aggregates.NonClinicalStudy.NonClinicalStudy;
 using UserAggregate =
     RegOS.Platform.Domain.Aggregates.User.User;
 using TenantAggregate =
@@ -192,6 +196,23 @@ public sealed class RegOSDbContext : DbContext
     public DbSet<RegistrationAggregate> Registrations =>
         Set<RegistrationAggregate>();
 
+    /// <summary>
+    /// Studies in human subjects. Tenant-owned and fail-closed.
+    /// </summary>
+    /// <remarks>
+    /// Two sets rather than one with a discriminator, because they are two
+    /// aggregates (ADR-056). A read that wants both composes them.
+    /// </remarks>
+    public DbSet<ClinicalStudyAggregate> ClinicalStudies =>
+        Set<ClinicalStudyAggregate>();
+
+    /// <summary>
+    /// Studies not in human subjects — the Module 4 half. Tenant-owned and
+    /// fail-closed.
+    /// </summary>
+    public DbSet<NonClinicalStudyAggregate> NonClinicalStudies =>
+        Set<NonClinicalStudyAggregate>();
+
     public DbSet<DocumentTypeAggregate> DocumentTypes =>
         Set<DocumentTypeAggregate>();
 
@@ -322,6 +343,15 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<InspectionAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // A sponsor's studies are the sponsor's. Both kinds are roots with
+        // their own TenantId rather than reaching through anything (ADR-056),
+        // so both take the ordinary first filter shape.
+        modelBuilder.Entity<ClinicalStudyAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<NonClinicalStudyAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // Platform-seeded, tenant-augmentable: the second of ADR-038's three

@@ -1,6 +1,6 @@
 # EPIC-019 — Study registry
 
-**Status:** 🟡 **Phase 1 reopened 2026-08-03**, after EPIC-007a made it blocking · **Branch:** `epic/EPIC-019-study-registry` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 **In flight** — S001 shipped 2026-08-03, S002 next · **Branch:** `epic/EPIC-019-study-registry` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 Clinical and non-clinical studies as first-class records that applications and submission content can **cite** — so *"which studies support this filing?"* is a query, and Study Tagging Files become possible.
 
@@ -234,7 +234,7 @@ an STF, which is the refusal that already exists.
 
 | | Story | Unblocks |
 |---|---|---|
-| **S001** | **`Study`** — a new context, `study-id` + `title`, two aggregates, persistence, API, minimal UI | nothing yet |
+| **S001** ✅ | **`Study`** — a new context, `study-id` + `title`, two aggregates, persistence, API, minimal UI | nothing yet |
 | **S002** | **placement → study + `file-tag`** on `SubmissionDocument`, with the UI to set them | nothing yet |
 | **S003** | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
 | **S004** | citation from `RegulatoryApplication`, both directions queryable | driver A |
@@ -247,6 +247,66 @@ an STF, which is the refusal that already exists.
 **What S003 cannot claim**: `ich-stf-v2-2.dtd` is not held, so the STF is
 generated and **not validated**. S007's per-package Level 2a covers two files of
 three, and that sentence goes in the epic rather than being discovered later.
+
+---
+
+## S001 — `Study` · ✅ **shipped 2026-08-03**
+
+A new `src/Study/` context: two aggregates, two identities, two facts each.
+Domain → persistence → API → registry UI, per
+**[ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)**.
+The model is written up in
+[docs/domain-model/study.md](../../domain-model/study.md).
+
+| | |
+|---|---|
+| Domain | `ClinicalStudy` · `NonClinicalStudy`, `AggregateRoot<TId>` with `sealed class …Id : StronglyTypedId` (ADR-043) |
+| Application | `RegisterClinicalStudy` · `RegisterNonClinicalStudy` · `ListStudies` · `ISponsorStudyIdentifierPolicy` |
+| Persistence | two tables, two fail-closed tenant filters (ADR-031), `AddStudyRegistry` |
+| API | `POST /api/studies/clinical` · `POST /api/studies/nonclinical` · `GET /api/studies` |
+| UI | `/regulatory/studies` — a sibling of Products, because a study exists whether or not anything has been filed |
+
+### Two decisions this story made that the ADR had left open
+
+**1. Two identities, not one.** ADR-056 §2 forbids an abstraction invented to
+hold the duplication, and a shared `StudyId` is exactly that — an identity space
+neither aggregate owns, which is the supertype
+[ADR-040 §3](../../adr/ADR-040-the-health-authority-interaction-context.md)
+declined to build. Corroborated by the consumer: the STF's `category` vocabulary
+is kind-specific, so a typed reference tells S003 what it is holding instead of
+making it probe two tables. **It puts an exclusive-or on the placement, and that
+is S002's to model explicitly.**
+
+**2. One sponsor study identifier names one study, across both kinds.** ADR-056
+required that whichever uniqueness rule was chosen got a test. This is the rule,
+and the reason is external: **E24** says FDA's tooling recognises a study by its
+`study-id`, so two studies sharing one are shown to a reviewer as **one** — the
+STF writes `<study-id>` and no kind marker. A unique index covers one table, so
+the rule lives in a policy with the two indexes closing the race beneath it.
+
+### What it deliberately does not have
+
+No status (nothing deletes a study, so ES-018 has nothing to say), no format rule
+on the identifier (EPIC-007a settled that an authority's format check belongs at
+the boundary — S003's), and none of RIM's other ~21 attributes.
+`AStudy_HasNoLifecycle_BecauseNothingRetiresOne` asserts the property list
+exactly, so admitting the next attribute is a decision someone makes rather than
+a column that appears.
+
+### Owed to S002
+
+**`Retitle` is unguarded, and that becomes wrong the moment a placement can cite
+a study.** E24 makes the *title* part of what FDA matches on too, so renaming a
+study named in a published sequence would split it in two in the reviewer's
+tool. Nothing can cite a study yet, so there is no such sequence to protect —
+recorded here and in the aggregate rather than discovered later.
+
+### Verification
+
+18 test suites, **1,152 tests**, 0 failures (16 new). **94 browser specs**, 0
+failures (2 new), on an isolated stack. `study-registry.spec.ts` proves the
+cross-kind refusal through the browser and the trimming through the API — the
+half a unique index could not catch.
 
 ---
 
