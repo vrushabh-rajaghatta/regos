@@ -1020,6 +1020,49 @@ Level 2a applied to our own reference data.
 
 ---
 
+### S005 is ready to build — everything it needs is decided and in the repository
+
+*Written 2026-08-03 at a deliberate stopping point, so the next session reads
+this from the repository rather than reconstructing it from a conversation.*
+
+**Decided and evidenced:**
+
+| | |
+|---|---|
+| the element for every section RegOS seeds | [Appendix 4 §element](../../evidence/EPIC-007a/spec/ich-ectd-3-2-appendix-4.md), **all 32 verified against the pinned DTD** |
+| Module 1 sub-sections | carry **no** ICH element — `m1` is `(leaf*)`. Empty value, not null |
+| the two skipped levels | `m3-2-body-of-data` and `m4-2-study-reports`, carried in the value as a chain — the same two the folder column already chains |
+| paths, checksums, `util/dtd/` | done in S004, and `GeneratedSequenceFolder` already returns them |
+| order | ICH before FDA (E16 — the habit it teaches stays correct when carried forward) |
+
+**Still to build:**
+
+1. `TemplateSection.EctdElement` + migration. **No provenance enum** — RegOS can
+   never invent an element name, because an invented one is DTD-invalid. The
+   format forecloses the failure mode `EctdFolderSource` exists for.
+2. **Blueprint v4.** ⚠ *Open decision, below.*
+3. The renderer — leaves grouped into an element tree, **merging shared
+   prefixes**, since three sections under `4.2` must emit `m4-2-study-reports`
+   once rather than three times.
+4. `index.xml` validated against the pinned DTD by `xmllint`, plus
+   `index-md5.txt` (Appendix 4 #2).
+5. A seed test with no folder equivalent: **every `EctdElement` in the blueprint
+   must be declared in the DTD the package ships.**
+
+#### The one open decision
+
+S006 will need a *regional* element per Module 1 section (`m1-2-cover-letters` is
+FDA's, from the regional DTD, and all 147 `m1-*` elements are there).
+
+| | |
+|---|---|
+| **v4 carries both columns**, ICH and regional, seeded from both pinned DTDs | one immutable version for one semantic change — *a section knows its element name in each backbone* — and both sets of values are verifiable **today**, so neither is speculative. Cost: S005 seeds data only S006 reads |
+| **v4 ICH only, v5 regional in S006** | one story, one change. Cost: two immutable versions for what is arguably one fact |
+
+*The founder leans toward the first; awaiting confirmation before v4 is written.*
+
+---
+
 ### S005 — render `index.xml` (ICH)
 
 **Proves:** the shared backbone renders from frozen values alone — `operation`
