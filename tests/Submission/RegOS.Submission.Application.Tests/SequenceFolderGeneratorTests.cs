@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Text;
@@ -322,6 +323,78 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
     }
 
     /// <summary>
+    /// <b>EPIC-007a's outcome sentence, and nothing before this asserted it.</b>
+    /// Per-file validity is not package validity: S005 and S006 each check one
+    /// file in isolation, and <b>E16 is the reason that is not enough</b> — the
+    /// two backbones disagree about whether a leaf's checksum is required, so a
+    /// package can fail as a whole while the file under test passes.
+    /// </summary>
+    /// <remarks>
+    /// <b>One package, both files, and the link between them resolved.</b> The
+    /// cross-link is the seam: <c>index.xml</c> names a file it does not
+    /// contain, and no per-file check can tell whether that file is there.
+    /// <para>
+    /// This is also where the epic's Level 2a evidence is <b>re-earned</b>. The
+    /// standing claim rests on <c>poc/ctd-987654/</c>, which was hand-written —
+    /// it proves the target can be hit and says nothing about whether RegOS hits
+    /// it.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public async Task OnePackage_BothBackbonesValid_AndTheLinkBetweenThemResolves()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) = await APublishedEctdSequenceAsync(ctx);
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        // Every file the package claims to carry is on disk.
+        foreach (var relative in generated.BackboneFiles
+            .Concat(generated.UtilityFiles)
+            .Concat(generated.Leaves.Select(x => x.RelativePath)))
+        {
+            File.Exists(Path.Combine(
+                generated.RootPath,
+                relative.Replace('/', Path.DirectorySeparatorChar)))
+                .Should().BeTrue($"the package lists {relative}");
+        }
+
+        // The regional file validates offline (E26 — what ships points at
+        // accessdata.fda.gov, and the evidence is a pinned DTD).
+        var regionalPath = Path.Combine(
+            generated.RootPath, "m1", "us", "us-regional.xml");
+
+        await File.WriteAllTextAsync(
+            regionalPath,
+            (await File.ReadAllTextAsync(regionalPath)).Replace(
+                FdaRegionalBackboneRenderer.DoctypeSystemId,
+                "../../util/dtd/us-regional-v3-3.dtd",
+                StringComparison.Ordinal),
+            new UTF8Encoding(false));
+
+        var index = Xmllint(
+            Path.Combine(generated.RootPath, IchBackboneRenderer.FileName));
+        var regional = Xmllint(regionalPath);
+
+        index.ExitCode.Should().Be(0, index.Output);
+        regional.ExitCode.Should().Be(0, regional.Output);
+
+        // And the seam itself: index.xml points at the regional file by a path
+        // relative to the sequence root, and that path resolves.
+        var indexXml = await File.ReadAllTextAsync(
+            Path.Combine(generated.RootPath, IchBackboneRenderer.FileName));
+
+        var href = Regex.Match(indexXml, "xlink:href=\"([^\"]*us-regional[^\"]*)\"")
+            .Groups[1].Value;
+
+        href.Should().NotBeEmpty();
+
+        File.Exists(Path.Combine(
+            generated.RootPath, href.Replace('/', Path.DirectorySeparatorChar)))
+            .Should().BeTrue("index.xml names a file the package must contain");
+    }
+
+    /// <summary>
     /// <b>The cross-link quotes a checksum of the file it points at</b>, which
     /// is why the regional backbone is written first. ICH makes a leaf's
     /// <c>checksum</c> <c>#REQUIRED</c> (E16), and an empty one here would be
@@ -511,6 +584,73 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
 
         foreach (var path in generated.UtilityFiles.Concat(generated.BackboneFiles))
             $"0000/{path}".Length.Should().BeLessThanOrEqualTo(150);
+    }
+
+    // --- S007: delivery -------------------------------------------------------
+
+    /// <summary>
+    /// <b>ADR-049 as a signature rather than a promise.</b> The archive is
+    /// handed to the caller and kept nowhere — no aggregate, no id, no status,
+    /// and no scratch folder left on disk.
+    /// </summary>
+    [Fact]
+    public async Task ThePackage_IsAnArchiveOfTheSequence_AndNothingIsLeftBehind()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) = await APublishedEctdSequenceAsync(ctx);
+
+        var package = await new SequencePackageAssembler(
+            new SequenceFolderGenerator(ctx, storage)).AssembleAsync(submissionId);
+
+        package.FileName.Should().Be("0000.zip");
+
+        using var archive = new ZipArchive(new MemoryStream(package.Contents));
+
+        // The sequence folder is at the archive root: unpacking produces 0000/
+        // and nothing above it. RegOS does not invent the application folder —
+        // the mapping draws one and marks it "e.g.".
+        archive.Entries.Select(x => x.FullName).Should().Contain(
+        [
+            "0000/index.xml",
+            "0000/index-md5.txt",
+            "0000/m1/us/us-regional.xml",
+            "0000/util/dtd/ich-ectd-3-2.dtd",
+            "0000/m1/us/12-cover-letters/cover-letter.pdf",
+        ]);
+
+        Directory.Exists(Path.Combine(Path.GetTempPath(), "regos-ectd",
+            Path.GetFileNameWithoutExtension(package.FileName)))
+            .Should().BeFalse();
+    }
+
+    /// <summary>
+    /// <b>A refusal leaves nothing on disk either.</b> Everything is checked
+    /// before a byte is written, and the scratch folder is removed whether or
+    /// not an archive came out of it — a half-built directory that looks like a
+    /// package is worse than no directory at all.
+    /// </summary>
+    [Fact]
+    public async Task ARefusedPackage_LeavesNoScratchFolder()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) =
+            await APublishedEctdSequenceAsync(ctx, sectionCode: "4.2.3");
+
+        var before = ScratchFolders();
+
+        var act = async () => await new SequencePackageAssembler(
+            new SequenceFolderGenerator(ctx, storage)).AssembleAsync(submissionId);
+
+        await act.Should().ThrowAsync<BusinessRuleViolationException>();
+
+        ScratchFolders().Should().BeEquivalentTo(before);
+    }
+
+    private static IReadOnlyList<string> ScratchFolders()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "regos-ectd");
+
+        return Directory.Exists(root) ? Directory.GetDirectories(root) : [];
     }
 
     // --- The refusals ---------------------------------------------------------

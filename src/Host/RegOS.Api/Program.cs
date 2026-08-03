@@ -248,6 +248,7 @@ submissions.MapCreateSubmission();
 submissions.MapListSubmissions();
 submissions.MapListContinuableSubmissions();
 submissions.MapGetSubmission();
+submissions.MapGenerateSequencePackage();
 submissions.MapAttachProductDocument();
 submissions.MapRemoveProductDocument();
 submissions.MapPlaceSubmissionDocument();

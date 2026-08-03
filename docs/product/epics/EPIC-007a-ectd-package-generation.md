@@ -1,6 +1,6 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phases 1 & 2 complete · **S001–S006 shipped** · S007 next · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 **Closed 2026-08-03 at Level 2a. S001–S007 shipped; S008 carried, and the Level 3 claim is not made** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 > **RegOS generates a complete sequence folder** — the directory tree, the files,
 > the MD5s, `util/dtd/`, and **both backbones**, each checked by a third-party
@@ -1414,7 +1414,29 @@ targets, **two** can hold a document — `m1-2-cover-letters` and
 
 ---
 
-### S007 — assembly, delivery, and the Level 2a claim
+### S007 — assembly, delivery, and the Level 2a claim ✅
+
+**Shipped 2026-08-03. 17 suites, 1,136 tests, 92 browser specs, 0 failures.**
+
+| | |
+|---|---|
+| **Level 2a, per package** | one generated package, **both backbones validated by `xmllint`**, and the cross-link between them resolved to a file that exists. E16's failure mode — each half passing alone — is now a thing a test would catch |
+| **Delivery** | `SequencePackageAssembler` → a ZIP, in memory, handed to the caller and **kept nowhere**. No aggregate, no id, no status (ADR-049), and the scratch folder is deleted whether or not an archive came out of it |
+| **The archive root is `0000/`** | RegOS **does not invent the application folder**. The mapping draws one and marks it *"e.g."*; no specification here names it, and it is the same across every sequence of an application — a filing decision, not a property of this download |
+| **`ValidatorIndependenceTests`** | *no code in `src/` reads a verdict* — plus a negative control, plus an assertion that the oracle **is** still invoked from `tests/`, so the rule cannot be satisfied by deleting it |
+| **Forbidden words** | asserted absent in a browser, on a real published sequence: *FDA-ready*, *Validated*, *Ready for submission* |
+
+> **The browser spec's second half is the one worth keeping.** It clicks
+> Generate on a sequence whose application has no number, and asserts the
+> refusal arrives **in its own words** — *"Record the number FDA assigned"* —
+> rather than as a generic failure. Five refusals, five different people's next
+> actions, and a screen that collapsed them would undo the distinction the epic
+> exists to draw.
+
+**The PoC is reclassified rather than removed.** `poc/ctd-987654/` was
+hand-written: it proved the target could be hit and said nothing about whether
+RegOS hits it. **That claim is now re-earned on generated output**, and the PoC
+keeps its place as the first external check this project ever had.
 
 **Proves the epic's outcome sentence**, and nothing before it does.
 
@@ -1484,6 +1506,44 @@ same sentence for both has been failed by a message, not by a rule.
 *(The submission is also the row S001's migration classified as `FDA_DENOVO` from
 its earliest sequence, which is the old model's defect arriving as data — a
 business correction, still deliberately not made.)*
+
+---
+
+## Closed 2026-08-03 — at Level 2a, and the Level 3 claim is not made
+
+**The epic is closed one story short of its own Definition of Done, and that is
+recorded rather than worked around.**
+
+| DoD line | |
+|---|---|
+| a published sequence produces a conforming package | ✅ |
+| lifecycle rendered from frozen values; paper never reaches the renderer | ✅ |
+| **at least one representative package DTD-valid (2a)**, third-party parser, reproducible invocation | ✅ **on generated output, per package** |
+| no document says "validated" without naming the level | ✅ — and now asserted in a browser |
+| ADR for what the package *is* | ✅ ADR-049 |
+| architecture test: no `src/` reads a validator verdict | ✅ |
+| **compared against FDA's published example submissions (Level 3)** | ✖ **not done — S008** |
+
+**S008 is blocked on artifacts, not on effort.** FDA's *Example Submissions for
+Module 1* v1.4 packages are not in this repository; we hold **readings** of them
+(E5, E13) and not the files. No amount of work here produces them.
+
+> **So the epic claims 2a and does not claim 3**, and every document in it says
+> which. That is the same treatment Phase 1 gave the validator task when it
+> failed as scoped: *"what the epic said would happen if Task 1 failed was to say
+> so — not to describe self-validation as external evidence."* **Closing at 2a
+> while implying 3 would be the exact error the four levels were invented to
+> prevent.**
+
+**S008 is carried to EPIC-007b**, where transmission makes example packages
+worth obtaining for more than comparison. The one divergence already known and
+waiting for it — **E28**, `0000` against every FDA example's `0001` — remains
+deferred on the founder's decision, because no source in either direction says
+*shall*.
+
+**What EPIC-007a closes in RIM: still nothing**, exactly as Phase 1 said. The
+trade was a coverage step for the first external check this project has ever
+had, and the check found things no coverage step would have.
 
 ---
 

@@ -57,6 +57,7 @@ public static class DependencyInjection
 
         // The first RegOS code that produces part of an eCTD package (S004).
         services.AddScoped<SequenceFolderGenerator>();
+        services.AddScoped<SequencePackageAssembler>();
 
         services.AddScoped<GetSubmissionHandler>();
 
