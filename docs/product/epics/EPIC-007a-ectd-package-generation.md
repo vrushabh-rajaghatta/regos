@@ -1487,6 +1487,24 @@ business correction, still deliberately not made.)*
 
 ---
 
+## The sentence the epic ends on
+
+*The founder's, 2026-08-03, and it is the outcome rather than a summary of it.*
+
+> **The goal stopped being to generate valid eCTD packages, and became to make
+> every regulatory assertion explicit — either by generating it from evidenced
+> facts, or by refusing and naming exactly which fact was missing.**
+
+**And that is why this epic validated rather than built.** The epics before it
+defined their own success — organizations, authentication, products,
+applications. This one had to prove that years of accumulated modelling could
+withstand a specification neither RegOS nor anyone here controls. **Every time it
+failed, it found something that was not actually finished.**
+
+*It will shape the next authority more than any renderer or DTD in it.*
+
+---
+
 ## What EPIC-007a has proved so far
 
 *Recorded 2026-08-02, after S002. **This is neither a decision nor evidence** —
@@ -1538,6 +1556,61 @@ longer *"emit some XML"*: it is an interpretation layer bounded by evidence, by
 domain modelling, and by authority-specific semantics, and **that boundary exists
 whether or not S006 is ever wired.** Completing the renderer against assumptions
 would have produced the same bytes and none of it.
+
+### What a refusal came to mean, and it changed three times
+
+*The founder's progression, 2026-08-03. **The most useful thing in this
+retrospective**, because it explains why the epic felt slow and was not.*
+
+| | A refusal meant | |
+|---|---|---|
+| **S001–S003** | *"we cannot proceed until we know more"* | a **stop** |
+| **S004–S005** | *"the platform cannot truthfully make this regulatory statement"* | **evidence** |
+| **S006** | *"generate every package that can be generated truthfully, and explain every one that cannot"* | the **acceptance criterion** |
+
+> **The renderers are specification interpreters. The generator is a boundary
+> validator.** It asks the domain model *"can you honestly support this
+> regulatory assertion?"* — and a *no* is a modelling finding, not an
+> implementation failure.
+
+**Which is why the most valuable discoveries were not XML problems at all:**
+
+| | |
+|---|---|
+| contact phones existed with **no kind** | and a form that never rendered the input |
+| application numbers existed with **no acquisition path** | 59 rows, all null, unwritable |
+| DUNS existed, and **everyone believed it did not** | including a comment written the day before |
+| study reports need a companion artifact **the model does not represent** | ADR-054 |
+| Module 1 placements were **broader than the backbone allows** | E19 |
+
+**None is a question any earlier epic could have asked.** The packaging boundary
+was the first component in a position to ask them.
+
+### What the oracle found, and where it stopped
+
+*The founder's chronology, with two corrections — the order, and the fourth
+item, which is the more interesting of the two.*
+
+| | Discovery | Class |
+|---|---|---|
+| **1** | `utf-16` declared over UTF-8 bytes (S005) | **implementation** defect |
+| **2** | leaves flat under `m1-regional`; `m1-13` sorted before `m1-2` (S006 renderer) | **specification interpretation** defect |
+| **3** | `m1-regional` nested inside itself (S006 wiring) | **composition** defect — *nobody's mistake* |
+
+**Each is further from *"a bug in our code"* and closer to *"a truth about the
+system"*.** By the third, no component was wrong.
+
+> **The STF is not the fourth item — it is where the sequence stops**, and that
+> is the sharper point. A study-report leaf with no STF is **DTD-valid, breaks no
+> business rule, resembles a published example, and would be accepted by the
+> gateway.** No oracle in this epic's table was looking, and none could be: it was
+> found by *reading a conformance guide*, which is a different kind of document
+> doing a different kind of work.
+
+That is [what no level in the register measures](../../evidence/README.md#what-no-level-in-this-table-measures)
+— *every level answers "was it rejected?"; none answers "was it understood?"* —
+and putting the STF inside the oracle's taxonomy would quietly claim a reach the
+oracle does not have.
 
 ### The oracle is a boundary to be *defended*, not a dependency to be *acquired*
 
