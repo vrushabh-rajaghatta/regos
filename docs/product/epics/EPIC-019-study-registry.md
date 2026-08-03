@@ -132,10 +132,11 @@ would otherwise have to decide from scratch:
 | **Does the STF belong to the Study, or to the generated package?** | **Neither stores it.** It is a *projection* over the placements in one sequence that belong to one study — ADR-049's deletion test, applied to a file that needs facts the submission does not hold. The answer is to hold the facts, not the file |
 | **Does lifecycle operate on Study identity or on documents?** | **On the pair.** The mapping is `(study, eCTD element) → STF`, not `study → STF`, because *"one study could generate more than one STF representation"* (E29 §VI). Its `new`/`append` chain is derived the way ADR-045 derives a document's operation, keyed differently |
 
-### What the Study ADR must still answer
+### What the Study ADR must still answer — **answered by [ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md), 2026-08-03**
 
 *The founder's list, 2026-08-03. It is broader than STF, which is why it does not
-belong inside ADR-054 and gets its own number.*
+belong inside ADR-054 and gets its own number. Kept as written, because what the
+questions were is part of why the answers are what they are.*
 
 1. **Is `Study` an aggregate?** — Phase 2 §1 leans two aggregates, and E29 gives
    the first external reason: clinical and non-clinical carry *different*
@@ -160,12 +161,23 @@ belong inside ADR-054 and gets its own number.*
 
 ---
 
-## Phase 2 — proposed 2026-08-03 · **awaiting sign-off**
+## Phase 2 — **approved 2026-08-03** · in flight
 
 *The sketch below this section predates EPIC-007a and is superseded where the two
-disagree. Four decisions, and the first is an ADR.*
+disagree. Four decisions, all four signed off, and the first is
+**[ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)** —
+written before any code, per canon.*
 
-### 1. Where does a `Study` live? — **a new `src/Study/` context** (ADR-056)
+> **Two strengthenings came with the sign-off, and both are in ADR-056.**
+>
+> 1. The ownership argument is *"study identity is owned by the sponsor, not by a
+>    submission"* — not *"four contexts reference it"*, which is corroboration.
+> 2. **What a `Study` may become is governed, not left open**: *additional
+>    attributes are admitted only when required by an external regulatory
+>    workflow or a demonstrated business capability.* Written so that no later
+>    story can say *"RIM lists 19 more fields"* and have that count as a reason.
+
+### 1. Where does a `Study` live? — **a new `src/Study/` context** ([ADR-056](../../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md))
 
 **Four contexts will cite a study**: `RegulatoryApplication`, `Submission`
 (placements), `Registration` (RIM's `License → Clinical Study`) and `Interaction`
@@ -192,6 +204,12 @@ regulator expects differ by kind.
 **Cost: real duplication, and it is accepted rather than unnoticed.** ADR-018
 permits merging on a third demonstrated need; two sheets and one shared
 category vocabulary is not that.
+
+> **For S001's minimum the two aggregates differ by almost nothing but their
+> type, and that is fine.** The separation exists because the domain differs,
+> not because today's properties differ — so neither gets a shared base class, a
+> `StudyKind` discriminator, or an abstraction invented to hold the duplication.
+> ADR-056 §2.
 
 ### 3. What links a placement to a study? — **the placement, not the document**
 

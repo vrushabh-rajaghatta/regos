@@ -1,7 +1,7 @@
 # ADR-054 — A Study Tagging File Is A Projection Over A Study RegOS Does Not Yet Have
 
 **Status:** Accepted · **Date:** 2026-08-03 ·
-**Related:** [ADR-049](ADR-049-generation-derives-what-transmission-creates.md) (the package is a projection — this tests that claim harder than the ZIP did),
+**Related:** [ADR-049](ADR-049-generation-derives-transmission-creates.md) (the package is a projection — this tests that claim harder than the ZIP did),
 [ADR-053](ADR-053-instance-qualifiers-belong-to-the-placement.md) (**its revisit trigger has fired**),
 [ADR-045](ADR-045-the-cumulative-dossier-and-the-derived-delta.md) (§5 — the derived delta, whose shape this reuses),
 [E21, E29](../evidence/README.md)
