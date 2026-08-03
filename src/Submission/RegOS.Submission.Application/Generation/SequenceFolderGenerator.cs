@@ -20,14 +20,14 @@ namespace RegOS.Submission.Application.Generation;
 /// </summary>
 /// <remarks>
 /// <b>EPIC-007a S004, and the first RegOS code ever to produce part of an eCTD
-/// package.</b> It proves one thing and refuses four:
+/// package.</b> It proves one thing and refuses five:
 /// <list type="bullet">
 /// <item>the same published submission generates <b>byte-identical</b> output
 /// every time — which is ADR-049's *"the package is a projection"* stated as
 /// something that can fail.</item>
-/// <item>a draft, a paper filing, a sequence predating the activity model, and
-/// one whose vocabulary or placement has never been read are each refused, in
-/// their own words.</item>
+/// <item>a draft, a paper filing, a sequence predating the activity model, one
+/// whose vocabulary or placement has never been read, and one whose documents
+/// need a fact RegOS does not hold are each refused, in their own words.</item>
 /// </list>
 /// <para>
 /// <b>Nothing is written until everything is checked.</b> A refusal after the
@@ -411,6 +411,7 @@ public sealed class SequenceFolderGenerator
             var placement = placements[document.TemplateSectionId!.Value];
 
             RequireAWritableBackbonePosition(placement);
+            RequireNoStudyTaggingFileIsOwed(placement);
 
             var folder = placement.Folder;
             var fileName = FileNameFor(version.OriginalFileName);
@@ -499,6 +500,65 @@ public sealed class SequenceFolderGenerator
             }
         }
     }
+
+    /// <summary>
+    /// Refusal 3 again — and this one covers a whole module.
+    /// </summary>
+    /// <remarks>
+    /// FDA requires a Study Tagging File for every file in <c>4.2.x</c> and
+    /// <c>5.3.1.x–5.3.5.x</c> (evidence E21). An STF names the study a document
+    /// belongs to; RegOS records no studies, so <b>ADR-054</b> says generation
+    /// refuses by name until one is modelled.
+    /// <para>
+    /// <b>Matched on the backbone element, not on the section code.</b> The
+    /// range FDA gives is a range of CTD section numbers, and an ICH element
+    /// name carries its section number at the front — <c>m4-2-3-toxicology</c> —
+    /// so the prefix <em>is</em> the number. A blueprint code is ours and could
+    /// be written any way; an element name is the DTD's and cannot.
+    /// </para>
+    /// <para>
+    /// <b>The bounds are the ones FDA drew, not the modules'.</b> 5.2 is exempt
+    /// by name, bare 5.3 is outside the enumerated range, and 5.3.6 and 5.3.7
+    /// are past its end. A rule that refused all of Modules 4 and 5 would look
+    /// identical on every document the blueprint seeds today and be wrong.
+    /// </para>
+    /// <para>
+    /// <b>A withdrawal is exempt, and the specification says so outright:</b>
+    /// deleting a study document deletes the leaf in <c>index.xml</c> and
+    /// submits no STF (E29). That is why this is checked where leaves are
+    /// resolved and not where deletions are — the omission is the rule.
+    /// </para>
+    /// </remarks>
+    private static void RequireNoStudyTaggingFileIsOwed(
+        SectionPlacement placement)
+    {
+        // Empty for every Module 1 section — ICH's m1 is (leaf*) and gives them
+        // no element at all.
+        if (placement.IchElements.Count == 0)
+            return;
+
+        // The innermost element of the chain is the one the leaf is written
+        // into, and ICH names a child of 4.2.x m4-2-… itself — so testing the
+        // innermost tests the chain, and naming it names where the leaf went
+        // rather than the container above it.
+        var element = placement.IchElements[^1];
+
+        if (StudyTaggedSections.Any(
+            prefix => element.StartsWith(prefix, StringComparison.Ordinal)))
+        {
+            throw new BusinessRuleViolationException(string.Format(
+                SequenceGenerationErrors.SectionRequiresAStudyTaggingFile,
+                placement.Code, element));
+        }
+    }
+
+    /// <summary>
+    /// *"Study Tagging Files (STFs) are required for all files in section 4.2.x
+    /// and 5.3.1.x – 5.3.5.x"* — FDA eCTD Technical Conformance Guide §2.8,
+    /// written as the element prefixes those sections carry.
+    /// </summary>
+    private static readonly string[] StudyTaggedSections =
+        ["m4-2-", "m5-3-1-", "m5-3-2-", "m5-3-3-", "m5-3-4-", "m5-3-5-"];
 
     /// <summary>
     /// <c>operation (new | append | replace | delete)</c> — the DTD's own

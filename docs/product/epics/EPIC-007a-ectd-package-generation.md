@@ -1,12 +1,14 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · S004 · S005 shipped · **S006: both backbones render and validate; the generator wiring is what remains** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 Phases 1 & 2 complete · S001–S005 shipped · **S006: both backbones render and validate; the wiring is gated on one file** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
-> **The epic's named capability has begun, and only just.** RegOS now writes a
-> sequence folder — the directory tree, the files, the MD5s, `util/dtd/` — and
-> **not one line of XML.** Neither backbone exists, so nothing here has been
-> checked against a DTD yet: the standing Level 2a evidence is still a package
-> that was hand-written, not generated. S005 through S007 close that.
+> **RegOS generates a sequence folder and a valid `index.xml`** — the directory
+> tree, the files, the MD5s, `util/dtd/`, and an ICH backbone checked by a
+> third-party parser against a DTD RegOS did not write. **Level 2a is now earned
+> per file, and not yet per package**: `us-regional.xml` renders in isolation and
+> the generator does not yet write it, because one FDA vocabulary file gates
+> every regional backbone that could ever exist. S007 is where the claim becomes
+> a package's.
 
 Split from EPIC-007. The eCTD backbone needs only [EPIC-004](EPIC-004-sequences-and-submission-lifecycle.md), which is shipped; STF and the xEVMPD/IDMP messages need EPIC-010 and EPIC-019 and stay in **EPIC-007b** with gateway transmission.
 
@@ -1231,6 +1233,75 @@ finding in this epic to demand a new concept rather than a missing field:
 | Evidence blockers | `telephone-number-type`, `applicant-contact-type`, `form-type` — waiting on the *eCTD Backbone Files Specification for Module 1* |
 |---|---|
 | **Domain blocker** | **the STF — wanting an ADR before any wiring** |
+
+#### Both blockers moved on 2026-08-03, and in opposite directions
+
+| | Then | Now |
+|---|---|---|
+| **Evidence** | three vocabularies, *"waiting on the Module 1 specification"* | **the specification arrived and does not contain them.** Table 1 says the attribute lists *"are maintained as separate XML files"* on FDA's website. Its worked examples evidence `fdaact1`/`fdaact2` and prove `fdatnt1`/`fdatnt3` are real codes **whose meanings are never stated** |
+| **Domain** | the STF, *"wanting an ADR before any wiring"* | **[ADR-054](../../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md), and its refusal is built** — below |
+
+#### The evidence blocker is one file, not three, and the DTD says so
+
+*Established 2026-08-03 by reading the pinned regional DTD's content models
+rather than by reasoning about what a backbone needs. Every element on this
+chain is mandatory:*
+
+```
+fda-regional:fda-regional  (admin, m1-regional?)
+  admin                    (applicant-info, application-set)
+    applicant-info         (id, company-name, submission-description?, applicant-contacts)
+      applicant-contacts   (applicant-contact+)
+        applicant-contact  (applicant-contact-name, telephones, emails)
+          telephones       (telephone+)
+            telephone      telephone-number-type CDATA #REQUIRED
+```
+
+> **No `us-regional.xml` can exist at all without a `telephone-number-type`
+> value** — not a degraded one, not one missing an optional block. One vocabulary
+> file gates the whole regional backbone, therefore the whole package, therefore
+> **S007's package-level Level 2a claim**.
+
+**That changes what *paused* means here.** S006 is not waiting on three documents
+that each unlock part of a file; it is waiting on `telephone-number-type.xml`,
+after which the other two begin to matter. And the wiring could not have been
+written to succeed even as an exercise — **code that cannot run to completion is
+worse than code not written**, which is S004's own lesson about building around a
+gap, arriving from the other side.
+
+#### Built while S006 waits — ADR-054 §6, the fifth refusal
+
+*2026-08-03, immediately after ADR-054 was accepted. It is the half of S006 that
+was blocked on a decision rather than on a document.*
+
+**It fixes shipped behaviour.** Since S005, a document placed in 4.2.1 rendered
+into `index.xml` and produced a package that is **DTD-valid and wrong**: FDA's
+review tool files a study-report leaf carrying no STF under *"Not Applicable
+(N/A) or Unassigned Folders"* (eCTD TCG §4.3). The package arrives, validates,
+and loses its nonclinical section.
+
+> **No oracle in this epic could have caught it.** Level 2a says the XML is
+> legal, and it is. **2b would not have caught it either** — the leaf breaks no
+> business rule; it is simply unaccompanied. This is the first defect the epic
+> has found that is invisible to every validator it planned for, and it needed a
+> conformance guide and a reader.
+
+| | |
+|---|---|
+| the rule | *"STFs are required for all files in section 4.2.x and 5.3.1.x – 5.3.5.x"* (§2.8) |
+| matched on | the **backbone element**, not the section code. ICH names a child of 4.2.x `m4-2-…` itself, so the prefix *is* the CTD number — and an element name comes from the DTD where a blueprint code comes from us |
+| the bounds | **FDA's, not the module's.** 5.2 is exempt by name and bare 5.3 is outside the enumerated range; 5.3 carries a *required* document in the seeded blueprint. A rule refusing all of Modules 4 and 5 would look identical on every seeded section, so both boundaries are asserted |
+| a withdrawal | **exempt.** Deleting a study document deletes the leaf and submits *no* STF (E29), so the check sits where leaves are resolved and not where deletions are. **The omission is the rule** |
+
+**The fifth refusal, and the second of the third kind** — *the specification has
+been read and asks for a fact the domain does not carry*:
+
+> *Section 4.2.3 holds study reports, and FDA files nothing under
+> `<m4-2-3-toxicology>` without a Study Tagging File naming the study each
+> document belongs to. RegOS does not record studies yet, so there is nothing to
+> name.*
+
+A test asserts it is confused with neither of the other two.
 
 #### What S006 found
 

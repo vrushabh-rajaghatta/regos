@@ -88,6 +88,30 @@ public static class SequenceGenerationErrors
         + "{2}; RegOS records the section but not which one, so this leaf cannot "
         + "be written down truthfully.";
 
+    /// <remarks>
+    /// <b>The same third gap, and by far the largest instance of it.</b> FDA
+    /// requires a Study Tagging File for every file in 4.2.x and 5.3.1.x–5.3.5.x
+    /// (evidence E21), and an STF states which study a document belongs to and
+    /// what role it plays in that study's report. RegOS holds neither fact.
+    /// <para>
+    /// Not closable by reading anything — the ICH specification that defines an
+    /// STF has been read (E29). <b>ADR-054</b> says what one is (a projection
+    /// over the placements in a sequence that belong to one study) and what has
+    /// to exist before one can be written.
+    /// </para>
+    /// <para>
+    /// <b>Refused rather than written without one</b>, and no validator could
+    /// have made this decision for us: a leaf with no STF is perfectly valid
+    /// XML, and FDA's review tool simply files it under *"Not Applicable (N/A)
+    /// or Unassigned Folders"* (eCTD TCG §4.3). A package that quietly loses its
+    /// nonclinical section on arrival is worse than one that was never built.
+    /// </para>
+    /// </remarks>
+    public const string SectionRequiresAStudyTaggingFile =
+        "Section {0} holds study reports, and FDA files nothing under <{1}> "
+        + "without a Study Tagging File naming the study each document belongs "
+        + "to. RegOS does not record studies yet, so there is nothing to name.";
+
     public const string SubmissionIsUnbound =
         "This sequence is not bound to a blueprint, so its documents sit in no "
         + "sections and there is no structure to write.";

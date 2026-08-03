@@ -296,6 +296,66 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
     }
 
     /// <summary>
+    /// <b>The third refusal again, and the largest instance of it.</b> FDA
+    /// requires a Study Tagging File for every file in 4.2.x (evidence E21); an
+    /// STF names the study each document belongs to, and RegOS records no
+    /// studies (ADR-054). The FDA IND blueprint seeds 4.2.1, 4.2.2 and 4.2.3 and
+    /// every IND has nonclinical content, so this is a module rather than a
+    /// section.
+    /// </summary>
+    /// <remarks>
+    /// <b>No validator could have found this.</b> The leaf is perfectly valid
+    /// XML without an STF — FDA's review tool simply files it under *"Not
+    /// Applicable (N/A) or Unassigned Folders"* (eCTD TCG §4.3). Until this
+    /// test, RegOS generated exactly that package.
+    /// </remarks>
+    [Fact]
+    public async Task ADocumentInAStudyReportSection_IsRefused_UntilAStudyIsModelled()
+    {
+        await using var ctx = New();
+        var (submissionId, storage) =
+            await APublishedEctdSequenceAsync(ctx, sectionCode: "4.2.3");
+
+        var act = async () => await GenerateAsync(ctx, storage, submissionId);
+
+        var thrown = await act.Should()
+            .ThrowAsync<BusinessRuleViolationException>();
+
+        thrown.Which.Message.Should().Contain("Study Tagging File");
+        thrown.Which.Message.Should().Contain("m4-2-3-toxicology");
+
+        // Not confused with the other two refusals, nor with the keyed node.
+        thrown.Which.Message.Should().NotContain("eCTD token");
+        thrown.Which.Message.Should().NotContain("has not been read");
+    }
+
+    /// <summary>
+    /// <b>The bounds are FDA's, not the module's.</b> §2.8 enumerates 4.2.x and
+    /// 5.3.1.x–5.3.5.x: 5.2 is exempt by name and bare 5.3 is outside the range,
+    /// and both hold documents in the seeded blueprint — 5.3 has a
+    /// <em>required</em> one.
+    /// </summary>
+    /// <remarks>
+    /// A rule that refused all of Modules 4 and 5 would pass the test above and
+    /// still be wrong, so the boundary is asserted rather than the interior.
+    /// </remarks>
+    [Theory]
+    [InlineData("5.2")]
+    [InlineData("5.3")]
+    public async Task ASectionOutsideTheStudyTaggedRange_StillRenders(
+        string sectionCode)
+    {
+        await using var ctx = New();
+        var (submissionId, storage) =
+            await APublishedEctdSequenceAsync(ctx, sectionCode: sectionCode);
+
+        var generated = await GenerateAsync(ctx, storage, submissionId);
+
+        generated.Leaves.Should().ContainSingle();
+        ValidateIndex(generated.RootPath).ExitCode.Should().Be(0);
+    }
+
+    /// <summary>
     /// <b>ADR-045's central claim, as something that can fail.</b> A RegOS
     /// sequence holds the whole dossier; an eCTD sequence holds only what
     /// changed, and the DTD has no <c>unchanged</c> operation. So a carried-
