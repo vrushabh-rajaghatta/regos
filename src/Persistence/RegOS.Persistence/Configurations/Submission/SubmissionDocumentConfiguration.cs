@@ -93,6 +93,11 @@ public sealed class SubmissionDocumentConfiguration
                     ? NonClinicalStudyId.From(value.Value)
                     : null);
 
+        // The published token, stored as written. 60 is comfortably above the
+        // longest ICH publishes (inter-laboratory-standardisation-methods-
+        // quality-assurance, 58) without inviting free text.
+        builder.Property(x => x.FileTag).HasMaxLength(60);
+
         builder.Ignore(x => x.ReportsAStudy);
 
         // Shadow FK to the owning submission — the child holds no FK property.

@@ -24,6 +24,11 @@ export interface ContentPlanDocument {
   studyKind: "Clinical" | "NonClinical" | null;
   /** The sponsor's code for it — "Study ID" on screen. */
   studyIdentifier: string | null;
+  /**
+   * What role this placement plays in that study's report — ICH's published
+   * token, shown as published because it is what the STF writes.
+   */
+  fileTag: string | null;
 }
 
 export interface ContentPlanPlaceholder {

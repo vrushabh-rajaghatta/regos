@@ -156,6 +156,87 @@ public class SubmissionReportedStudyTests
             + "document is not a statement about which study it reports");
     }
 
+    // --- the file tag travels with the study --------------------------------
+
+    [Fact]
+    public void APlacement_RecordsWhatItContributesToTheStudyReport()
+    {
+        var submission = NewDraft();
+        var placement = Placed(submission);
+
+        submission.ReportNonClinicalStudy(
+            placement.Id, NonClinicalStudyId.New(), "pre-clinical-study-report");
+
+        placement.FileTag.Should().Be("pre-clinical-study-report");
+    }
+
+    /// <summary>
+    /// The tag and the study are one fact — (which study, in what role) — so a
+    /// writer that set half would leave the other half describing the study
+    /// before it.
+    /// </summary>
+    [Fact]
+    public void NamingADifferentStudy_DoesNotLeaveTheOldRoleBehind()
+    {
+        var submission = NewDraft();
+        var placement = Placed(submission);
+
+        submission.ReportNonClinicalStudy(
+            placement.Id, NonClinicalStudyId.New(), "pre-clinical-study-report");
+
+        submission.ReportClinicalStudy(placement.Id, ClinicalStudyId.New());
+
+        placement.FileTag.Should().BeNull(
+            "the role was a role in the previous study's report");
+    }
+
+    [Fact]
+    public void ClearingTheStudy_ClearsTheRoleWithIt()
+    {
+        var submission = NewDraft();
+        var placement = Placed(submission);
+
+        submission.ReportClinicalStudy(
+            placement.Id, ClinicalStudyId.New(), "synopsis");
+
+        submission.ClearReportedStudy(placement.Id);
+
+        placement.FileTag.Should().BeNull(
+            "a file-tag exists inside an STF, and an STF exists for a study");
+    }
+
+    [Fact]
+    public void UnplacingTheDocument_ClearsTheRoleToo()
+    {
+        var submission = NewDraft();
+        var placement = Placed(submission);
+
+        submission.ReportClinicalStudy(
+            placement.Id, ClinicalStudyId.New(), "synopsis");
+
+        submission.ClearPlacement(placement.Id);
+
+        placement.FileTag.Should().BeNull();
+    }
+
+    /// <summary>
+    /// The aggregate takes the token as written. The vocabulary is 97 published
+    /// values owned by ICH, and checking it here would put a foreign list
+    /// inside a consistency boundary that cannot maintain it — the same
+    /// division <c>RecordApplicationNumber</c> draws (ADR-055).
+    /// </summary>
+    [Fact]
+    public void TheAggregate_DoesNotPoliceTheVocabulary()
+    {
+        var submission = NewDraft();
+        var placement = Placed(submission);
+
+        submission.ReportClinicalStudy(
+            placement.Id, ClinicalStudyId.New(), "sinopsis");
+
+        placement.FileTag.Should().Be("sinopsis");
+    }
+
     [Fact]
     public void APublishedSubmission_IsClosedToStudyChanges()
     {

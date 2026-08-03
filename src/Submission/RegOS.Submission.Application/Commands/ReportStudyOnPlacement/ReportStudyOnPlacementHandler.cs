@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 using RegOS.Persistence;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Submission.Application.StudyTagging;
 using RegOS.Submission.Domain.Submission;
 
 using ClinicalStudyAggregate =
@@ -47,6 +48,30 @@ public sealed class ReportStudyOnPlacementHandler
                 SubmissionRuleErrors.PlacementReportsOneStudy);
         }
 
+        // Checked here rather than in the aggregate: the vocabulary is 97
+        // published tokens owned by ICH, not an invariant a Submission can
+        // state (ADR-055). Refused by name, because "sinopsis" is one keystroke
+        // from valid and the DTD would accept it (E34).
+        var fileTag = string.IsNullOrWhiteSpace(command.FileTag)
+            ? null
+            : command.FileTag.Trim();
+
+        if (fileTag is not null && !FileTagVocabulary.Contains(fileTag))
+        {
+            throw new BusinessRuleViolationException(
+                SubmissionRuleErrors.FileTagIsNotPublished(fileTag));
+        }
+
+        // A file-tag lives inside an STF and an STF exists for a study, so a
+        // tag with no study is a fact about nothing.
+        if (fileTag is not null
+            && command.ClinicalStudyId is null
+            && command.NonClinicalStudyId is null)
+        {
+            throw new BusinessRuleViolationException(
+                SubmissionRuleErrors.FileTagRequiresAStudy);
+        }
+
         var submission = await _repository.GetByIdAsync(
             command.SubmissionId,
             cancellationToken);
@@ -68,7 +93,7 @@ public sealed class ReportStudyOnPlacementHandler
                     SubmissionRuleErrors.StudyDoesNotExist);
 
             submission.ReportClinicalStudy(
-                command.SubmissionDocumentId, clinical);
+                command.SubmissionDocumentId, clinical, fileTag);
         }
         else if (command.NonClinicalStudyId is { } nonClinical)
         {
@@ -81,7 +106,7 @@ public sealed class ReportStudyOnPlacementHandler
                     SubmissionRuleErrors.StudyDoesNotExist);
 
             submission.ReportNonClinicalStudy(
-                command.SubmissionDocumentId, nonClinical);
+                command.SubmissionDocumentId, nonClinical, fileTag);
         }
         else
         {

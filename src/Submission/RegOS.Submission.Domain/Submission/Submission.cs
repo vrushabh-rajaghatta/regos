@@ -368,13 +368,21 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// <see cref="PlaceDocument"/> draws for template sections.
     /// </para>
     /// </remarks>
+    /// <param name="fileTag">
+    /// What role the document plays in that study's report — ICH's
+    /// <c>file-tag</c>. Optional here and refused when it names nothing: the
+    /// vocabulary is 97 published tokens the handler owns, not an invariant this
+    /// aggregate can state (ADR-055, and the same division
+    /// <c>RecordApplicationNumber</c> draws).
+    /// </param>
     public void ReportClinicalStudy(
         SubmissionDocumentId submissionDocumentId,
-        ClinicalStudyId studyId)
+        ClinicalStudyId studyId,
+        string? fileTag = null)
     {
         ArgumentNullException.ThrowIfNull(studyId);
 
-        Reporting(submissionDocumentId).ReportClinicalStudy(studyId);
+        Reporting(submissionDocumentId).ReportClinicalStudy(studyId, fileTag);
     }
 
     /// <summary>
@@ -384,15 +392,17 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// <remarks>See <see cref="ReportClinicalStudy"/>.</remarks>
     public void ReportNonClinicalStudy(
         SubmissionDocumentId submissionDocumentId,
-        NonClinicalStudyId studyId)
+        NonClinicalStudyId studyId,
+        string? fileTag = null)
     {
         ArgumentNullException.ThrowIfNull(studyId);
 
-        Reporting(submissionDocumentId).ReportNonClinicalStudy(studyId);
+        Reporting(submissionDocumentId).ReportNonClinicalStudy(studyId, fileTag);
     }
 
     /// <summary>
-    /// Says that this placement reports no study after all. Distinct from
+    /// Says that this placement reports no study after all — and so plays no
+    /// role in one, which is why the file-tag goes with it. Distinct from
     /// clearing the placement, which removes the document from the dossier
     /// altogether.
     /// </summary>

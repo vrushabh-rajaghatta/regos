@@ -35,7 +35,8 @@ public static class ReportStudyOnPlacementEndpoint
                     : null,
                 request.NonClinicalStudyId is { } nonClinical
                     ? NonClinicalStudyId.From(nonClinical)
-                    : null),
+                    : null,
+                request.FileTag),
             cancellationToken);
 
         return Results.NoContent();

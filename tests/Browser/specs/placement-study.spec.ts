@@ -118,11 +118,18 @@ test.describe("Which study a placement reports", () => {
     // By value, not by label: the option's text is the sponsor code, title and
     // kind, and matching on a slice of it would silently pick a neighbour.
     await page.getByLabel("Study", { exact: true }).selectOption(study);
+
+    // The role only appears once a study is named: a file tag with no study
+    // describes nothing, and the server refuses it.
+    await expect(page.getByTestId("file-tag-select")).toBeVisible();
+    await page.getByTestId("file-tag-select").selectOption("synopsis");
+
     await page.getByRole("button", { name: "Save" }).click();
 
-    // The sponsor's code is what shows, because that is what a user recognises.
+    // The sponsor's code is what shows, because that is what a user
+    // recognises — and the role beside it, as ICH publishes it.
     await expect(placeholder.getByTestId("placement-study")).toHaveText(
-      studyCode,
+      `${studyCode} · synopsis`,
     );
 
     await page.screenshot({
@@ -167,7 +174,7 @@ test.describe("Which study a placement reports", () => {
 
     await expect(moved_row).toBeVisible();
     await expect(moved_row.getByTestId("placement-study")).toHaveText(
-      studyCode,
+      `${studyCode} · synopsis`,
     );
 
     // --- taking it out of the dossier takes the study with it --------------
@@ -179,6 +186,94 @@ test.describe("Which study a placement reports", () => {
     });
 
     expect(errors()).toEqual([]);
+  });
+
+  test("a file tag must be a published word, and needs a study", async () => {
+    const unique = Date.now();
+
+    const studyId = await registerNonClinicalStudy(
+      `TOX-FT-${unique}`,
+      "A Study With A Role",
+    );
+
+    const template = await (
+      await api(`/reference-data/templates/${FDA_IND_CTD}`)
+    ).json();
+
+    const version = template.versions.find(
+      (v: { status: string }) => v.status === "Published",
+    );
+
+    const target: Requirement = version.requiredDocuments.filter(
+      (d: Requirement) => d.isMandatory,
+    )[0];
+
+    const globalProductId = await createProduct(unique);
+    const applicationId = await createApplication(globalProductId);
+    const submissionId = await createSubmission(applicationId, unique);
+
+    const documentId = await uploadActiveDocument(
+      globalProductId,
+      target.documentTypeId,
+      unique,
+    );
+
+    await api(`/submissions/${submissionId}/documents`, {
+      method: "POST",
+      body: JSON.stringify({
+        productDocumentId: documentId,
+        templateSectionId: target.sectionId,
+      }),
+    });
+
+    const placementId = await placementIdOf(submissionId, documentId);
+
+    const put = (body: unknown) =>
+      api(`/api/submissions/${submissionId}/documents/${placementId}/study`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      });
+
+    // The whole reason the vocabulary had to be held. "sinopsis" is one
+    // keystroke from valid; the DTD accepts it (E34) and a reviewer's tool
+    // does not recognise it, so the refusal has to happen here.
+    const misspelled = await put({
+      clinicalStudyId: null,
+      nonClinicalStudyId: studyId,
+      fileTag: "sinopsis",
+    });
+
+    expect(misspelled.status, "a tag ICH does not publish").toBe(409);
+    expect(await misspelled.text()).toContain("sinopsis");
+
+    // A tag with no study describes nothing.
+    const orphaned = await put({
+      clinicalStudyId: null,
+      nonClinicalStudyId: null,
+      fileTag: "synopsis",
+    });
+
+    expect(orphaned.status, "a tag with no study").toBe(409);
+
+    // A regional tag is as valid as an ICH one — the realm is a property of
+    // the word, not a second thing to state.
+    const regional = await put({
+      clinicalStudyId: null,
+      nonClinicalStudyId: studyId,
+      fileTag: "annotated-crf",
+    });
+
+    expect(regional.ok, "a us-realm tag").toBeTruthy();
+
+    const plan = await (
+      await api(`/submissions/${submissionId}/content-plan`)
+    ).json();
+
+    const row = documentsOf(plan).find(
+      (d) => d.submissionDocumentId === placementId,
+    );
+
+    expect(row?.fileTag).toBe("annotated-crf");
   });
 
   test("a placement reports one study, not two", async () => {
@@ -273,6 +368,7 @@ type PlanDocument = {
   submissionDocumentId: string;
   studyId: string | null;
   studyKind: string | null;
+  fileTag: string | null;
 };
 
 type PlanSection = {

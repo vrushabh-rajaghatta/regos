@@ -122,6 +122,33 @@ public sealed class SubmissionDocument : Entity<SubmissionDocumentId>
         => ClinicalStudyId is not null || NonClinicalStudyId is not null;
 
     /// <summary>
+    /// What role this document plays in that study's report — ICH's
+    /// <c>file-tag</c>: <c>synopsis</c>, <c>protocol-or-amendment</c>,
+    /// <c>randomisation-scheme</c> and 94 others.
+    /// </summary>
+    /// <remarks>
+    /// <b>Stored as the published token, not translated from a domain concept.</b>
+    /// The list is a wire vocabulary rather than 97 business concepts — half of
+    /// it names dataset formats and regional artefacts — so ADR-055's promotion
+    /// test fails for it, and it is recorded the way an application number is:
+    /// verbatim, with the check at the boundary that owns the list
+    /// (<c>FileTagVocabulary</c>, applied in the handler).
+    /// <para>
+    /// <b>The realm is not stored beside it.</b> All 97 published values are
+    /// distinct across <c>ich</c>, <c>us</c> and <c>jp</c>, so <c>info-type</c>
+    /// is a function of the tag — a second column could only ever disagree with
+    /// the first.
+    /// </para>
+    /// <para>
+    /// <b>Null unless this placement reports a study</b>, and that is an
+    /// invariant rather than a convention: a <c>file-tag</c> exists only inside
+    /// an STF, and an STF exists only for a study. Clearing the study clears
+    /// this with it.
+    /// </para>
+    /// </remarks>
+    public string? FileTag { get; private set; }
+
+    /// <summary>
     /// The placement in the previous sequence this supersedes — eCTD's
     /// <c>modified-file</c>. Set only alongside
     /// <see cref="SubmissionContentOperation.Replace"/>.
@@ -148,23 +175,31 @@ public sealed class SubmissionDocument : Entity<SubmissionDocumentId>
     }
 
     // The two writers of the exclusive-or. Each clears the other, so no caller
-    // can produce a placement that reports two studies.
-    internal void ReportClinicalStudy(ClinicalStudyId studyId)
+    // can produce a placement that reports two studies. Both take the file-tag,
+    // because the tag is part of the same fact: what this placement contributes
+    // to a study report is (which study, in what role), and a writer that set
+    // half of it would leave the other half describing the study before.
+    internal void ReportClinicalStudy(ClinicalStudyId studyId, string? fileTag)
     {
         ClinicalStudyId = studyId;
         NonClinicalStudyId = null;
+        FileTag = fileTag;
     }
 
-    internal void ReportNonClinicalStudy(NonClinicalStudyId studyId)
+    internal void ReportNonClinicalStudy(
+        NonClinicalStudyId studyId,
+        string? fileTag)
     {
         NonClinicalStudyId = studyId;
         ClinicalStudyId = null;
+        FileTag = fileTag;
     }
 
     internal void ClearReportedStudy()
     {
         ClinicalStudyId = null;
         NonClinicalStudyId = null;
+        FileTag = null;
     }
 
     // Only Submission.Publish may set this, and only once.

@@ -21,8 +21,14 @@ namespace RegOS.Submission.Application.Commands.ReportStudyOnPlacement;
 /// same reason.
 /// </para>
 /// </remarks>
+/// <param name="FileTag">
+/// What role the document plays in that study's report — one of ICH's 97
+/// published tokens. Null is legitimate: a placement can name its study before
+/// anyone has decided what it contributes.
+/// </param>
 public sealed record ReportStudyOnPlacementCommand(
     SubmissionId SubmissionId,
     SubmissionDocumentId SubmissionDocumentId,
     ClinicalStudyId? ClinicalStudyId,
-    NonClinicalStudyId? NonClinicalStudyId);
+    NonClinicalStudyId? NonClinicalStudyId,
+    string? FileTag = null);

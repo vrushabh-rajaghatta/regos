@@ -209,7 +209,8 @@ public sealed class GetSubmissionContentPlanHandler
                 d.FileName,
                 d.StudyId,
                 d.StudyKind,
-                d.StudyIdentifier))
+                d.StudyIdentifier,
+                d.FileTag))
             .ToList();
 
     private async Task<IReadOnlyDictionary<Guid, PlacedDocument>>
@@ -242,6 +243,7 @@ public sealed class GetSubmissionContentPlanHandler
                 version.OriginalFileName,
                 attachment.ClinicalStudyId,
                 attachment.NonClinicalStudyId,
+                attachment.FileTag,
             }).ToListAsync(cancellationToken);
 
         var studies = await LoadStudyIdentifiersAsync(
@@ -274,7 +276,8 @@ public sealed class GetSubmissionContentPlanHandler
                         : null,
                     studyId is { } id && studies.TryGetValue(id, out var code)
                         ? code
-                        : null);
+                        : null,
+                    row.FileTag);
             });
     }
 
@@ -393,5 +396,6 @@ public sealed class GetSubmissionContentPlanHandler
         string FileName,
         Guid? StudyId,
         string? StudyKind,
-        string? StudyIdentifier);
+        string? StudyIdentifier,
+        string? FileTag);
 }

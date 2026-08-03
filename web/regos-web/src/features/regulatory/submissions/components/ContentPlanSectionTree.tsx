@@ -22,6 +22,8 @@ interface Props {
   onReportStudy: (placement: {
     submissionDocumentId: string;
     documentName: string;
+    studyId: string | null;
+    fileTag: string | null;
   }) => void;
   depth?: number;
 }
@@ -108,6 +110,7 @@ export function ContentPlanSectionTree({
                             className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
                           >
                             {document.studyIdentifier}
+                            {document.fileTag ? ` · ${document.fileTag}` : ""}
                           </span>
                         )}
 
@@ -122,6 +125,8 @@ export function ContentPlanSectionTree({
                                 submissionDocumentId:
                                   document.submissionDocumentId,
                                 documentName: document.name,
+                                studyId: document.studyId,
+                                fileTag: document.fileTag,
                               })
                             }
                           >
@@ -196,6 +201,7 @@ export function ContentPlanSectionTree({
                         className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
                       >
                         {document.studyIdentifier}
+                        {document.fileTag ? ` · ${document.fileTag}` : ""}
                       </span>
                     )}
 
@@ -209,6 +215,8 @@ export function ContentPlanSectionTree({
                           onReportStudy({
                             submissionDocumentId: document.submissionDocumentId,
                             documentName: document.name,
+                            studyId: document.studyId,
+                            fileTag: document.fileTag,
                           })
                         }
                       >

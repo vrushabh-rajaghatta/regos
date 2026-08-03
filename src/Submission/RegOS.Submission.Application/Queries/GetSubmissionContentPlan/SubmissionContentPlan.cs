@@ -81,6 +81,11 @@ public sealed record ContentPlanPlaceholder(
 /// holding without a second lookup. Null alongside a null
 /// <paramref name="StudyId"/>.
 /// </param>
+/// <param name="FileTag">
+/// What role this placement plays in that study's report — ICH's published
+/// token, shown as published rather than prettified: it is what the STF writes
+/// and what a reviewer's tool matches on.
+/// </param>
 /// <param name="StudyIdentifier">
 /// The sponsor's code for that study — <b>"Study ID"</b> on screen. Carried on
 /// the row because that is what a user recognises; the guid is for the client
@@ -96,4 +101,5 @@ public sealed record ContentPlanDocument(
     string FileName,
     Guid? StudyId,
     string? StudyKind,
-    string? StudyIdentifier);
+    string? StudyIdentifier,
+    string? FileTag);

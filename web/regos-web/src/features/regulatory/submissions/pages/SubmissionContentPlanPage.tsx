@@ -32,6 +32,8 @@ export function SubmissionContentPlanPage() {
   const [reporting, setReporting] = useState<{
     submissionDocumentId: string;
     documentName: string;
+    studyId: string | null;
+    fileTag: string | null;
   } | null>(null);
 
   const submission = useSubmission(submissionId!);

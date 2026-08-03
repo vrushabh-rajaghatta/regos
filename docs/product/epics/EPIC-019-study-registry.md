@@ -240,7 +240,7 @@ an STF, which is the refusal that already exists.
 |---|---|---|
 | **S001** ✅ | **`Study`** — a new context, `study-id` + `title`, two aggregates, persistence, API, minimal UI | nothing yet |
 | **S002** ✅ | **placement → study** on `SubmissionDocument`, with the UI to set it | nothing yet |
-| **S002b** 🟡 | **`file-tag` per placement** — unblocked; 97 values, realm-scoped | S003 |
+| **S002b** ✅ | **`file-tag` per placement** — 97 values, realm-scoped, non-words refused | S003 |
 | **S003** 🟡 | **STF generation** — the projection ADR-054 describes, `stf-<study-id>.xml`, `append` chains derived like ADR-045's delta | **Module 4. The epic's reason to exist** |
 | **S004** ✅ | citation from `RegulatoryApplication`, both directions queryable | **driver A — done** |
 | **S005** ⬜ | the RIM attributes a real user asks for, and no more | **nothing to build: nobody has asked** |
@@ -572,6 +572,69 @@ refuse a non-word; it has no rule for choosing between `synopsis` and
 the filer's judgement, and the closest thing to a rule is FDA regional guidance
 this repository does not hold. S002b's UI therefore offers the list and records
 the choice.
+
+---
+
+## S002b — what the placement contributes · ✅ **shipped 2026-08-03**
+
+A placement records **which study, in what role** — ICH's `file-tag`.
+
+| | |
+|---|---|
+| Vocabulary | `FileTagVocabulary` — 97 values with their realms, **transcribed by parsing the held file, never by hand** |
+| Domain | `SubmissionDocument.FileTag`; both study writers take it, because the tag and the study are one fact |
+| Application | the handler refuses a tag ICH does not publish, and one with no study |
+| API | `PUT …/documents/{id}/study` carries it; `GET /api/study-tagging/file-tags` serves the list |
+| UI | a second select in the same dialog, appearing only once a study is named |
+
+### The vocabulary is a table in code, not seeded reference data
+
+It looks like every other lookup in RegOS and is deliberately not one.
+**ADR-055's promotion test fails for the list as a whole**:
+`data-tabulation-dataset-sdtm` and `HF-validation-protocol` do not name anything
+that would exist if ICH did not. They are wire tokens, and this project already
+holds wire tokens in code — `TelephoneNumberTypes`, `ApplicantContactTypes`.
+Nobody curates this list; it changes when ICH republishes.
+
+**What replaces the seed is the same check the seed would have got.**
+`FileTagVocabularyTests` parses `valid-values.xml` and compares — the move
+`FdaWireVocabularyTests` makes for `application-type`, pointed at a table rather
+than at a database.
+
+### One column, because the realm is a function of the tag
+
+All 97 values are distinct across `ich`, `us` and `jp`, so a placement stores
+the tag and derives `info-type` from it. A second column could only ever
+disagree with the first. **The test asserts that uniqueness** — if ICH ever
+publishes one value in two realms, the derivation starts lying silently, and
+that is the test that notices.
+
+### Refused where the list lives
+
+The aggregate takes the token as written; the handler checks it. The same
+division `RecordApplicationNumber` draws, and here it earns itself twice over:
+
+| | |
+|---|---|
+| `sinopsis` | **refused by name** — one keystroke from valid, accepted by the DTD (**E34**), unrecognised by a reviewer's tool |
+| a tag with no study | **refused** — a `file-tag` exists inside an STF, and an STF exists for a study |
+
+Both consequences follow through the aggregate too: naming a different study
+drops the role, because it was a role in the *previous* study's report; and
+unplacing the document clears both.
+
+### What it does not do
+
+**It does not say which tag belongs on which document.** RegOS has the words and
+can refuse a non-word; choosing between `synopsis` and `study-report-body` is
+the filer's judgement, and the guidance that would narrow it is not held. The
+picker shows the token as published — not prettified — because that is what the
+STF writes and what a reviewer's tool matches on.
+
+### Verification
+
+18 suites, **1,176 tests**, 0 failures (9 new). **99 browser specs**, 0 failures
+(1 new), on an isolated stack.
 
 ---
 

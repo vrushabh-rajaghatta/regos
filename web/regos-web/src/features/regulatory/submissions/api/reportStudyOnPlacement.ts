@@ -16,6 +16,7 @@ export async function reportStudyOnPlacement(
   submissionId: string,
   submissionDocumentId: string,
   study: { id: string; kind: StudyKind } | null,
+  fileTag: string | null,
 ): Promise<void> {
   const response = await apiFetch(
     buildUrl(
@@ -27,6 +28,8 @@ export async function reportStudyOnPlacement(
       body: JSON.stringify({
         clinicalStudyId: study?.kind === "Clinical" ? study.id : null,
         nonClinicalStudyId: study?.kind === "NonClinical" ? study.id : null,
+        // Sent together, because they are one fact: which study, in what role.
+        fileTag: study ? fileTag : null,
       }),
     },
   );

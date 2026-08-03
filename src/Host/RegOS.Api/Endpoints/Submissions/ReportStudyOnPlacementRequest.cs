@@ -15,4 +15,5 @@ namespace RegOS.Api.Endpoints.Submissions;
 /// </remarks>
 public sealed record ReportStudyOnPlacementRequest(
     Guid? ClinicalStudyId,
-    Guid? NonClinicalStudyId);
+    Guid? NonClinicalStudyId,
+    string? FileTag = null);

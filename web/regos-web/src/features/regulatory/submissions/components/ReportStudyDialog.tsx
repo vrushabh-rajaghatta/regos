@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,12 +10,18 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 
 import { studyKindLabel, useStudies } from "../../studies";
+import { useFileTags } from "../hooks/useFileTags";
 import { useReportStudyOnPlacement } from "../hooks/useReportStudyOnPlacement";
 
 interface Props {
   submissionId: string;
   /** The placement being described, or null when the dialog is closed. */
-  placement: { submissionDocumentId: string; documentName: string } | null;
+  placement: {
+    submissionDocumentId: string;
+    documentName: string;
+    studyId: string | null;
+    fileTag: string | null;
+  } | null;
   onOpenChange(open: boolean): void;
 }
 
@@ -33,8 +39,17 @@ export function ReportStudyDialog({
   onOpenChange,
 }: Props) {
   const [selected, setSelected] = useState("");
+  const [fileTag, setFileTag] = useState("");
+
+  // Opened on a placement that already says something: start from what it says
+  // rather than from blank, or "Save" silently erases the other half.
+  useEffect(() => {
+    setSelected(placement?.studyId ?? "");
+    setFileTag(placement?.fileTag ?? "");
+  }, [placement]);
 
   const studies = useStudies();
+  const fileTags = useFileTags();
   const report = useReportStudyOnPlacement(submissionId);
 
   async function submit(event: React.FormEvent) {
@@ -50,6 +65,7 @@ export function ReportStudyDialog({
       await report.mutateAsync({
         submissionDocumentId: placement.submissionDocumentId,
         study: chosen ? { id: chosen.id, kind: chosen.kind } : null,
+        fileTag: fileTag === "" ? null : fileTag,
       });
     } catch {
       // A refusal is an outcome. The server's reason renders below.
@@ -57,6 +73,7 @@ export function ReportStudyDialog({
     }
 
     setSelected("");
+    setFileTag("");
     onOpenChange(false);
   }
 
@@ -97,6 +114,44 @@ export function ReportStudyDialog({
               </p>
             )}
           </Field>
+
+          {/*
+            Offered only alongside a study, because a file tag says what a
+            document contributes to a study report — with no study it describes
+            nothing, and the server refuses it.
+          */}
+          {selected !== "" && (
+            <Field>
+              <FieldLabel htmlFor="fileTag">Role in the study report</FieldLabel>
+
+              <select
+                id="fileTag"
+                value={fileTag}
+                onChange={(event) => setFileTag(event.target.value)}
+                className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                data-testid="file-tag-select"
+              >
+                <option value="">Not stated</option>
+                {(fileTags.data ?? []).map((tag) => (
+                  <option key={tag.name} value={tag.name}>
+                    {tag.name}
+                    {tag.realm === "ich" ? "" : ` (${tag.realm})`}
+                  </option>
+                ))}
+              </select>
+
+              <p className="text-xs text-muted-foreground">
+                {/*
+                  Shown as published, not prettified: this is the token the STF
+                  writes and the reviewer's tool matches on. Which one belongs
+                  on a given document is the filer's judgement — RegOS has the
+                  words, not the rule for choosing between them.
+                */}
+                ICH publishes 97. Tags marked <code>us</code> or <code>jp</code>{" "}
+                are regional.
+              </p>
+            </Field>
+          )}
 
           {report.isError && (
             <p
