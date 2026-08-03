@@ -170,6 +170,34 @@ public sealed class FdaRegionalBackboneRendererTests : IDisposable
         Validate(xml).ExitCode.Should().Be(0);
     }
 
+    /// <summary>
+    /// <b>E23 — a construct the format permits and the authority refuses.</b>
+    /// ICH declares <c>node-extension</c> in most content models
+    /// (<c>((leaf | node-extension)*)</c>), and FDA's eCTD Technical Conformance
+    /// Guide §5 says it is *"not acceptable in any submissions to FDA"*.
+    /// </summary>
+    /// <remarks>
+    /// Neither renderer emits one. <b>Today that is a property of the
+    /// implementation; this makes it a property of the design</b> — the failure
+    /// mode being someone adding support later on the entirely reasonable
+    /// grounds that the DTD allows it. Asserted for both backbones, because the
+    /// prohibition is regional and <c>index.xml</c> travels in the same package.
+    /// </remarks>
+    [Fact]
+    public void NeitherBackbone_EmitsANodeExtension()
+    {
+        var regional = FdaRegionalBackboneRenderer.Render(AnIndSequence());
+
+        var ich = IchBackboneRenderer.Render([
+            new BackboneLeaf(
+                ["m2-common-technical-document-summaries"],
+                "leaf-x", "Summary", "m2/summary.pdf", "new", "abc"),
+        ]);
+
+        regional.Should().NotContain("node-extension");
+        ich.Should().NotContain("node-extension");
+    }
+
     // --- E16, carried forward -------------------------------------------------
 
     /// <summary>
@@ -215,21 +243,45 @@ public sealed class FdaRegionalBackboneRendererTests : IDisposable
     }
 
     /// <summary>
-    /// The DOCTYPE, the embedded resource and the file on disk name one string.
-    /// A package that validates against a DTD it does not carry is the failure a
-    /// reviewer cannot see and a regulator can.
+    /// <b>E26 — the header is FDA's, verbatim.</b> The Module 1 Backbone Files
+    /// Specification §II calls it *"always the same"*: a DOCTYPE pointing at
+    /// accessdata.fda.gov and a stylesheet processing instruction beside it.
     /// </summary>
+    /// <remarks>
+    /// This renderer emitted a <c>../../util/dtd/</c> path and no stylesheet at
+    /// all, on the reasonable assumption that a regional backbone resolves its
+    /// DTD the way the ICH one does. Appendix 2 §E.17 records that the util-folder
+    /// form is what v2.0 <em>replaced</em>. Only the specification said so.
+    /// </remarks>
     [Fact]
-    public void TheDoctype_NamesFdasPublishedDtd()
+    public void TheHeader_IsTheOneTheSpecificationStates()
     {
-        FdaRegionalBackboneRenderer.DoctypeSystemId
-            .Should().Be("../../util/dtd/us-regional-v3-3.dtd");
+        var xml = FdaRegionalBackboneRenderer.Render(AnIndSequence());
+
+        xml.Should().Contain(
+            "<!DOCTYPE fda-regional:fda-regional SYSTEM "
+            + "\"https://www.accessdata.fda.gov/static/eCTD/us-regional-v3-3.dtd\">");
+
+        xml.Should().Contain(
+            "<?xml-stylesheet type=\"text/xsl\" "
+            + "href=\"https://www.accessdata.fda.gov/static/eCTD/us-regional.xsl\"?>");
+
+        // And nothing left over from what it used to emit.
+        xml.Should().NotContain("util/dtd");
     }
 
     // --- Fixtures ------------------------------------------------------------
 
+    /// <remarks>
+    /// Every wire value here is a <b>test</b> value, supplied to the renderer
+    /// rather than known by it. <c>123456789</c> is a fictional DUNS and
+    /// <c>fdatnt1</c> a token whose vocabulary RegOS has not read — both are
+    /// legitimate here, where the question is *"can this renderer express a valid
+    /// file?"*, and neither may reach a generator until a specification we hold
+    /// supplies it.
+    /// </remarks>
     private static RegionalBackbone AnIndSequence() => new(
-        ApplicantId: RegionalBackbone.DunsPlaceholder,
+        ApplicantId: "123456789",
         CompanyName: "Demo Manufacturer Ltd.",
         SubmissionDescription: "Original IND",
         Contacts:
@@ -274,8 +326,19 @@ public sealed class FdaRegionalBackboneRendererTests : IDisposable
             resource.CopyTo(file);
         }
 
+        // FDA's header points the DOCTYPE at accessdata.fda.gov (E26), and the
+        // epic's Level 2a claim rests on offline validation against a pinned DTD.
+        // Rewriting it here keeps both honest: what ships carries FDA's URL — see
+        // TheHeader_IsTheOneTheSpecificationStates — and what is validated is the
+        // DTD this repository pins. Bending either to suit the other would be the
+        // dishonest fix.
+        var offline = xml.Replace(
+            FdaRegionalBackboneRenderer.DoctypeSystemId,
+            "../../util/dtd/us-regional-v3-3.dtd",
+            StringComparison.Ordinal);
+
         var path = Path.Combine(regional, "us-regional.xml");
-        File.WriteAllText(path, xml, new UTF8Encoding(false));
+        File.WriteAllText(path, offline, new UTF8Encoding(false));
 
         using var process = Process.Start(new ProcessStartInfo("xmllint")
         {

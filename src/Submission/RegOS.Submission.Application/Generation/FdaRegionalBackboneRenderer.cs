@@ -30,11 +30,33 @@ public static class FdaRegionalBackboneRenderer
     public const string RelativePath = "m1/us/us-regional.xml";
 
     /// <summary>
-    /// FDA's published DTD name, reached from <c>m1/us/</c>. Appendix 4 #371
-    /// disclaims its own illustrative rows and defers to regional guidance, so
-    /// the package carries <c>us-regional-v3-3.dtd</c> and this names it.
+    /// <b>A URL, not a path into <c>util/</c></b> — the Module 1 Backbone Files
+    /// Specification §II states the header verbatim, and Appendix 2 §E.17 records
+    /// that referencing local files *"in the util folder"* is what v2.0 replaced
+    /// (evidence E26).
     /// </summary>
-    public const string DoctypeSystemId = "../../util/dtd/us-regional-v3-3.dtd";
+    /// <remarks>
+    /// This renderer emitted <c>../../util/dtd/us-regional-v3-3.dtd</c> until
+    /// 2026-08-03, on the reasonable assumption that a regional backbone resolves
+    /// its DTD the way the ICH one does. It does not, and only the specification
+    /// said so.
+    /// <para>
+    /// <b>It also puts the epic's Level 2a claim in tension with the format.</b>
+    /// FDA wants a network reference; our evidence rests on offline validation
+    /// against a pinned DTD. Tests validate a copy with the DOCTYPE rewritten to
+    /// the pinned file and assert separately that what ships carries this URL —
+    /// so neither the output nor the evidence is bent to suit the other.
+    /// </para>
+    /// </remarks>
+    public const string DoctypeSystemId =
+        "https://www.accessdata.fda.gov/static/eCTD/us-regional-v3-3.dtd";
+
+    /// <summary>
+    /// Part of the header the specification calls *"always the same"*, and absent
+    /// from this renderer until E26 was read.
+    /// </summary>
+    public const string StylesheetHref =
+        "https://www.accessdata.fda.gov/static/eCTD/us-regional.xsl";
 
     private const string FdaNamespace = "http://www.ich.org/fda";
     private const string XlinkNamespace = "http://www.w3c.org/1999/xlink";
@@ -100,6 +122,9 @@ public static class FdaRegionalBackboneRenderer
         {
             writer.WriteStartDocument(standalone: false);
             writer.WriteDocType(RootElement, null, DoctypeSystemId, null);
+
+            writer.WriteProcessingInstruction(
+                "xml-stylesheet", $"type=\"text/xsl\" href=\"{StylesheetHref}\"");
 
             writer.WriteStartElement("fda-regional", "fda-regional", FdaNamespace);
             writer.WriteAttributeString("xmlns", "xlink", null, XlinkNamespace);
@@ -351,8 +376,19 @@ public static class FdaRegionalBackboneRenderer
 /// Everything <c>us-regional.xml</c> states about a filing, already decided.
 /// </summary>
 /// <param name="ApplicantId">
-/// The applicant's DUNS number — or FDA's permitted placeholder when RegOS holds
-/// none. See <see cref="RegionalBackbone.DunsPlaceholder"/>.
+/// The applicant's DUNS number.
+/// <para>
+/// <b>Supplied, never defaulted.</b> A constant here once held FDA's supposedly
+/// permitted placeholder <c>999999999</c>, on the strength of a citation to a
+/// *Technical Conformance Guide §3.1.1* — a document this repository has never
+/// held. Every occurrence of that citation was in a file RegOS wrote. It was
+/// removed on 2026-08-03 rather than left to look like evidence.
+/// </para>
+/// <para>
+/// RegOS models no DUNS field, so generation refuses until either the number is
+/// modelled or a specification we hold says what to write instead. The renderer
+/// can express the value; nothing invents it.
+/// </para>
 /// </param>
 /// <param name="SubmissionId">
 /// The sequence number that <b>opened the regulatory activity</b>, four digits.
@@ -370,23 +406,7 @@ public sealed record RegionalBackbone(
     string SubmissionType,
     string SequenceNumber,
     string SubmissionSubType,
-    IReadOnlyList<BackboneLeaf> Leaves)
-{
-    /// <summary>
-    /// <b>A temporary policy, not a RegOS convention.</b> <c>applicant-info/id</c>
-    /// is a DUNS number and is mandatory; RegOS models no such field. FDA
-    /// permits <c>999999999</c> in its place (Technical Conformance Guide
-    /// §3.1.1), so emitting it uses the authority's own stand-in rather than
-    /// inventing an identity.
-    /// <para>
-    /// Every package built with it says so — see
-    /// <c>GeneratedSequenceFolder.Placeholders</c>. When
-    /// <c>Organization.DunsNumber</c> is modelled this disappears without the
-    /// rendering algorithm changing.
-    /// </para>
-    /// </summary>
-    public const string DunsPlaceholder = "999999999";
-}
+    IReadOnlyList<BackboneLeaf> Leaves);
 
 /// <param name="ContactType">
 /// FDA's <c>applicant-contact-type</c>, translated from RegOS's
