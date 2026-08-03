@@ -145,8 +145,14 @@ about EPIC-019, not a fresh one against EPIC-018.
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 2 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations | ⚪ Not Started · planned | EPIC-017 ✅ |
-| 3 | **EPIC-019** | **Study registry** — clinical & non-clinical studies, cited by applications and submission content | 🟡 **In flight** — S001 shipped · see [Now](#now) | none |
+| 1 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations | ⚪ Not Started · planned | EPIC-017 ✅ |
+| 2 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
+| 3 | **EPIC-010b/c** | the remaining IDMP clusters — **still sketches**, re-cut on pull-in | ⚪ Not Started | EPIC-010a |
+
+> **EPIC-021 is placed second rather than last on purpose.** It is small, its
+> architecture is settled, and what it guards against is silent: a study renamed
+> after filing produces a package FDA accepts and misfiles. The longer RegOS
+> files sequences without it, the more filings exist for it to be wrong about.
 
 ### Why EPIC-007a is recommended over the runway's next step
 
@@ -190,9 +196,7 @@ and value calls are the founder's.
 | ID | Epic | Status | Notes |
 |---|---|---|---|
 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations | ⚪ Not Started | needs EPIC-017 · planned → [`epics/EPIC-018-labeling-and-product-information.md`](epics/EPIC-018-labeling-and-product-information.md) |
-| **EPIC-019** | **Study registry** — clinical & non-clinical studies, cited by applications and submission content | 🟡 **In flight — see [Now](#now)** | **no longer a filler, and no longer Later** — EPIC-007a found that FDA requires a Study Tagging File for every file in 4.2.x and 5.3.1.x–5.3.5.x (E21), so **no package can be generated for a submission with any Module 4 content** until a study exists ([ADR-054](../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md)) · [ADR-056](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md) → [`epics/EPIC-019-study-registry.md`](epics/EPIC-019-study-registry.md) |
 | **EPIC-010** | **IDMP / product data depth** — substances, ingredients, strength, presentation, packaging, manufacturing | ⚪ Not Started | needs EPIC-016 + EPIC-017 · **split into 10a/10b/10c before cutting a branch** · umbrella → [`epics/EPIC-010-idmp-product-data-depth.md`](epics/EPIC-010-idmp-product-data-depth.md) |
-| **EPIC-010a** | **Substance & composition** — the IDMP root: substances, ingredients, strength, dose form, route; *"which products contain this API?"* | ⚪ Not Started · **planned to Phase 3** | needs EPIC-016 ✅ + EPIC-017 ✅ · **vocabularies are seeded, not licensed — this epic does not deliver IDMP/xEVMPD readiness** · ADR-058 to write → [`epics/EPIC-010a-substance-and-composition.md`](epics/EPIC-010a-substance-and-composition.md) |
 | **EPIC-021** | **Cross-sequence continuity** — the checks FDA's review tooling needs and no DTD can express: a study filed twice under two titles, an instance qualifier that drifts, a `study-id` that changes | ⚪ Not Started | **owed by EPIC-019**, scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) — the check belongs in the generator, reading frozen publication facts, adding no dependency in any direction. **Architecture settled; implementation deferred** because it needs a second sequence filing the same study. E24, E17, E18 |
 | **EPIC-020** | **Regulatory process & planning** — objectives, plan/step templates, live plans and dated steps; RIM's spine | ⚪ Not Started | needs EPIC-004 + EPIC-006 + EPIC-017 · deliberately last · planned → [`epics/EPIC-020-regulatory-process-and-planning.md`](epics/EPIC-020-regulatory-process-and-planning.md) |
 | **EPIC-007b** | **Publishing — transmission, STF & message formats** — gateway transmission (ESG/AS2), study tagging files, xEVMPD/IDMP messages | ⚪ Not Started | needs EPIC-010 + EPIC-019 · **carries the `Filed` transition**: ADR-046 named EPIC-007 as the milestone, and it belongs to whichever half transmits |
@@ -231,7 +235,8 @@ Three divergences are **not** gaps and should be defended, not closed:
 | 3 | **EPIC-006** HA interactions | 5 | → ~37% | 🟢 |
 | 4 | **EPIC-004** Sequences & lifecycle | deepens Submission (13% → high) + 1 | **→ ~39%** | 🟢 |
 | 5 | **EPIC-018** Labeling & product information | 10 | → ~55% | ⚪ |
-| 6 | **EPIC-019** Study registry | 2 | → ~59% | ⚪ |
+| — | *taken out of order 2026-08-03* — EPIC-019 shipped before 018, because Module 4 was blocked and labeling was not | | | |
+| 6 | **EPIC-019** Study registry | 2 | → ~59% | 🟢 |
 | 7 | **EPIC-010** IDMP depth (10a/10b/10c) | 16 | → ~87% | ⚪ |
 | 8 | **EPIC-020** Process & planning | 6 | → ~98% | ⚪ |
 
