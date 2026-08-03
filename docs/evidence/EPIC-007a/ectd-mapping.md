@@ -109,7 +109,7 @@ Appendix 6 **its operation is always `new`**.
 
 | eCTD | RegOS source | | |
 |---|---|---|---|
-| `applicant-info/id` | **DUNS number** — no field | spec | ✖ **gap** (`999999999` permitted, Tech Guide 3.1.1) |
+| `applicant-info/id` | **DUNS number** — no field | spec | ✖ **gap**, with an FDA-permitted fallback: *"If you are unable to acquire a DUNS number prior to submission, you may enter 999999999"* — **[eCTD TCG](spec/fda-ectd-tcg-1-8.md) §3.1.1** (**E25**). ⚠ *The condition is about the **applicant**, not the filing system; `Organization.DunsNumber` is still the real answer. This row was briefly marked unevidenced on 2026-08-03, when the citation was found to trace only to our own PoC — the document arrived the same day and the section number was exactly right.* |
 | `applicant-info/company-name` | `Organization.LegalName` of the applicant | model | ✔ |
 | `submission-description?` | `Submission.Title` | model | ⚠ optional; ours is free text |
 | `application-number` `@application-type` | `RegulatoryApplication.ApplicationNumber`; type from `SubmissionType` → `fdaat4` (IND) | model | ⚠ **nullable, no fixture sets one** |

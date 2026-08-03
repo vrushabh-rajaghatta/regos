@@ -1158,14 +1158,79 @@ no tokens.
 | `form-type` | **refuse.** Not a document RegOS lacks — a domain fact. Hard-coding `fdaft1` because today's seed contains one form would bake regulatory knowledge into the renderer. Recorded as **E18**, governed by **[ADR-053](../../adr/ADR-053-instance-qualifiers-belong-to-the-placement.md)** |
 | missing application number / telephone / email | **refuse, individually and specifically.** Ordinary data-completeness failures, each fixable by someone entering data they already have |
 | `telephone-number-type` | **refuse until FDA's vocabulary is in evidence.** Unlike DUNS this has no positive source: `fdatnt1` appears only in our own hand-written PoC, with nothing saying what it means or that it is right for the contact being emitted. The renderer takes the value as input, which is the correct architecture; the generator does not invent it |
-| DUNS | **emit FDA's permitted `999999999`** (Technical Conformance Guide §3.1.1) and **record that a placeholder was used**. A filing convention, not a property of an organisation — a documented *temporary policy*, not a RegOS convention, which disappears when `Organization.DunsNumber` is modelled without the rendering algorithm changing |
+| DUNS | **Reversed, then restored — both on the same day, and the round trip is the point.** The decision was to emit FDA's permitted `999999999` citing *Technical Conformance Guide §3.1.1*; that citation was found to trace only to our own PoC, so it was reversed to *refuse*; the eCTD TCG then arrived and **§3.1.1 says exactly what we had claimed** (**E25**). Restored. ⚠ FDA's condition is *"if you are unable to acquire a DUNS number"* — about the **applicant**, not about a system with nowhere to store one, so it stays a **recorded fallback** and `Organization.DunsNumber` stays the real answer |
 | contact roles | **translate at the boundary, map only what evidence supports.** `REG → fdaact1`, `MFG → fdaact2`; everything else refused. No token column on `ContactRole` — the taxonomies answer different questions. **`HA-REVIEWER` being unmappable is the point**: an authority reviewer must never appear as an applicant contact |
 | the regional DTD's file name | **the published one.** Appendix 4 #371 disclaims its own rows as illustrative; FDA publishes `us-regional-v3-3.dtd`. The DOCTYPE, the embedded resource and the file on disk now agree byte-for-byte |
 
-> **The evidence standard is not weakened for the last unresolved token.** Every
-> earlier decision in this epic tightened the discipline around regulatory
-> knowledge; `telephone-number-type` follows the same rule as `form-type`,
-> `application-type` and every other wire value.
+> **The evidence standard is not weakened for the last unresolved token** — and,
+> once stated, it had to be applied backwards. `telephone-number-type` was
+> refused because its only source was our own PoC. Checking that claim revealed
+> the DUNS placeholder had exactly the same source, and the distinction drawn
+> between them did not survive reading the repository.
+>
+> **RegOS emits only values supported by specifications it actually holds.** Not
+> values it once wrote into a prototype.
+
+#### What arrived instead, and what it settled
+
+FDA's **Study Data** Technical Conformance Guide v6.2.1 was obtained on
+2026-08-03 and read in full. It is **not** the eCTD Technical Conformance Guide —
+it governs SDTM/SEND/ADaM datasets *inside* Modules 4 and 5, and names the other
+document at its own footnote 72. **It carries none of the four Module 1
+vocabularies S006 needs**, which is what forced the DUNS correction above.
+
+It did carry three findings, [recorded in full](../../evidence/EPIC-007a/spec/fda-study-data-tcg-6-2-1.md):
+
+| | |
+|---|---|
+| **E10 upgraded** | *"Do not use the eCTD 'append' lifecycle operator… Updated files should be submitted as replaced"* — an instruction, where E10 held only discouragement. **Scoped to study data files**, and deliberately not widened |
+| **E20** | FDA's own Appendix E draws a v3.2.2 sequence folder as `0000`. Corroborates E4 without displacing E5; S008 now has three sources for one divergence |
+| **E21** | Module 4/5 study data requires a **Study Tagging File** — `ts.xpt`, `[study-id]`, 22 controlled file tags — enforced by automated validation on receipt. **RegOS models none of it.** *Recorded as outside this epic — a judgement the eCTD TCG overturned hours later* |
+
+#### Then the right one arrived
+
+FDA's **eCTD** Technical Conformance Guide v1.8 was obtained the same day and read
+in full ([recorded here](../../evidence/EPIC-007a/spec/fda-ectd-tcg-1-8.md)).
+
+**§3.1.1 says what our PoC had claimed, in the section our PoC had cited.** The
+DUNS decision is restored (**E25**). The lesson survives the vindication: the
+claim was true and the evidence was absent, and for a year nothing in the
+repository could tell those apart.
+
+| | |
+|---|---|
+| **E22** | **FDA caps the entire path at 150 characters**; ICH Appendix 2 allows 230. RegOS checked neither. **Now enforced in S004** over every emitted path |
+| **E23** | **`node-extension` is forbidden outright** — *"not acceptable in any submissions to FDA"* — though ICH declares it in most content models. Neither renderer emits one; that is now asserted rather than assumed |
+| **E24** | **An instance qualifier must be identical across sequences**, because that is how FDA's review tooling recognises the same node twice. A constraint no DTD can express, and one **ADR-053 could not have known** |
+| **E10** | the document/dataset distinction preserved on 2026-08-03 — before either guide was held — turns out to be **the authority's own wording** |
+
+#### E21 is now a blocker, and it is the fourth of its kind
+
+> *"Study Tagging Files (STFs) are required for all files in section 4.2.x and
+> 5.3.1.x – 5.3.5.x."* (§2.8)
+
+**The FDA IND blueprint seeds 4.2.1, 4.2.2 and 4.2.3.** Every IND has Module 4
+content. Without an STF, §4.3 says the leaves land in *"Not Applicable (N/A) or
+Unassigned Folders"* in FDA's review tool. 5.2 is explicitly exempt; bare 5.3 is
+outside the enumerated range.
+
+**And an STF is not a document.** Study documents are *referenced* by it under a
+controlled `file-tag`; it has its own lifecycle; deleting the leaves it references
+deletes it. That is a domain concept, not a file — which makes it the fourth
+finding in this epic to demand a new concept rather than a missing field:
+
+| | |
+|---|---|
+| **E17** | instance identity |
+| **E18** | wrapper elements |
+| **E19** | blueprint/backbone mismatch |
+| **E21** | study tagging |
+
+**S006 stays unwired**, and its blockers are now two different kinds:
+
+| Evidence blockers | `telephone-number-type`, `applicant-contact-type`, `form-type` — waiting on the *eCTD Backbone Files Specification for Module 1* |
+|---|---|
+| **Domain blocker** | **the STF — wanting an ADR before any wiring** |
 
 #### What S006 found
 
