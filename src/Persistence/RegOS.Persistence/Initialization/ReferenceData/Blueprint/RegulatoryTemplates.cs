@@ -76,10 +76,28 @@ internal static class RegulatoryTemplates
             template, "FDA-IND", EctdFolderSource.IchAppendix4);
         template.PublishVersion(v3.Id, new DateOnly(2026, 8, 3), DateTime.UtcNow);
 
+        // ── v4 — what each section is called in each backbone ────────────────
+        //
+        // One version for one change: a section knows its element name in each
+        // backbone. Both sets are seeded together because both are verifiable
+        // today — every value is declared in the DTD the package ships, and a
+        // seed test asserts it — so neither half is speculative (ADR-018).
+        //
+        // The split runs opposite ways. ICH declares one Module 1 element and
+        // the whole of Modules 2-5's structure; FDA declares 147 for Module 1
+        // and nothing above it. So a Module 1 section has a regional element and
+        // an empty ICH one, and a Module 2-5 section the reverse.
+        var v4 = template.StartDraftVersion();
+        AddFdaIndModule1WithElements(template);
+        AddHarmonizedCtdModules(
+            template, "FDA-IND", EctdFolderSource.IchAppendix4);
+        template.PublishVersion(v4.Id, new DateOnly(2026, 8, 3), DateTime.UtcNow);
+
         // Existing submissions keep the version they were created against;
         // nothing new binds to either superseded one.
         template.DeprecateVersion(v1.Id);
         template.DeprecateVersion(v2.Id);
+        template.DeprecateVersion(v3.Id);
 
         return template;
     }
@@ -194,6 +212,64 @@ internal static class RegulatoryTemplates
             "1.14.4.1", "Investigator's Brochure", investigationalLabeling.Id, 1);
 
         AddFdaIndModule1Documents(template, forms, coverLetter, ib);
+    }
+
+    /// <summary>
+    /// FDA Module 1 with the element names each backbone uses for it.
+    /// </summary>
+    /// <remarks>
+    /// <b>Every ICH element here is empty, and that is a statement rather than
+    /// an omission.</b> ICH's Module 1 is <c>(leaf*)</c> with no children, so a
+    /// Module 1 section contributes no element level to <c>index.xml</c> at all
+    /// — its leaves hang directly off the module. Null would mean "nobody has
+    /// read the specification"; empty means "the specification says none".
+    /// <para>
+    /// The regional names are FDA's own, every one declared in
+    /// <c>us-regional-v3-3.dtd</c>, which is what makes an invented element name
+    /// impossible rather than merely discouraged.
+    /// </para>
+    /// </remarks>
+    private static void AddFdaIndModule1WithElements(RegulatoryTemplate template)
+    {
+        const EctdFolderSource Ich = EctdFolderSource.IchAppendix4;
+        const EctdFolderSource Ours = EctdFolderSource.RegOsConvention;
+        const string NoIchElement = "";
+
+        var m1 = template.AddSection(
+            "M1", "Administrative Information and Prescribing Information",
+            null, 1, "m1/us", Ich,
+            "m1-administrative-information-and-prescribing-information",
+            "m1-regional");
+
+        var forms = template.AddSection(
+            "1.1", "Forms", m1.Id, 1, "11-forms", Ours,
+            NoIchElement, "m1-1-forms");
+        var coverLetters = template.AddSection(
+            "1.2", "Cover Letters", m1.Id, 2, "12-cover-letters", Ours,
+            NoIchElement, "m1-2-cover-letters");
+        template.AddSection(
+            "1.3", "Administrative Information", m1.Id, 3, "13-admin-info", Ours,
+            NoIchElement, "m1-3-administrative-information");
+        template.AddSection(
+            "1.4", "References", m1.Id, 4, "14-references", Ours,
+            NoIchElement, "m1-4-references");
+        template.AddSection(
+            "1.13", "Annual Report", m1.Id, 5, "113-annual-report", Ours,
+            NoIchElement, "m1-13-annual-report");
+
+        var labeling = template.AddSection(
+            "1.14", "Labeling", m1.Id, 6, "114-labeling", Ours,
+            NoIchElement, "m1-14-labeling");
+        var investigationalLabeling = template.AddSection(
+            "1.14.4", "Investigational Drug Labeling", labeling.Id, 4,
+            "1144-investigational-drug-labeling", Ours,
+            NoIchElement, "m1-14-4-investigational-drug-labeling");
+        var ib = template.AddSection(
+            "1.14.4.1", "Investigational Brochure", investigationalLabeling.Id, 1,
+            "11441-invest-brochure", Ours,
+            NoIchElement, "m1-14-4-1-investigational-brochure");
+
+        AddFdaIndModule1Documents(template, forms, coverLetters, ib);
     }
 
     /// <summary>
@@ -389,83 +465,104 @@ internal static class RegulatoryTemplates
         // 3.2.S — the missing level is carried in the segment (ADR-052).
         string? F(string folder) => folderSource is null ? null : folder;
 
+        // The ICH backbone element for the same section. Null on versions that
+        // predate placement, for the same history-reproduction reason as F.
+        // Where the value chains — m3-2-body-of-data/m3-2-s-drug-substance — the
+        // blueprint has no node for the skipped level and the DTD requires one.
+        string? E(string element) => folderSource is null ? null : element;
+
         // ── Module 2 — CTD Summaries ─────────────────────────────────────────
         var m2 = template.AddSection(
             "M2", "Common Technical Document Summaries", null, 2,
-            F("m2"), folderSource);
+            F("m2"), folderSource, E("m2-common-technical-document-summaries"));
         var qos = template.AddSection("2.3", "Quality Overall Summary", m2.Id, 1,
-            F("23-qos"), folderSource);
+            F("23-qos"), folderSource, E("m2-3-quality-overall-summary"));
         var nonclinicalOverview =
             template.AddSection("2.4", "Nonclinical Overview", m2.Id, 2,
-                F("24-nonclin-over"), folderSource);
+                F("24-nonclin-over"), folderSource, E("m2-4-nonclinical-overview"));
         var clinicalOverview =
             template.AddSection("2.5", "Clinical Overview", m2.Id, 3,
-                F("25-clin-over"), folderSource);
+                F("25-clin-over"), folderSource, E("m2-5-clinical-overview"));
         var nonclinicalSummary = template.AddSection(
             "2.6", "Nonclinical Written and Tabulated Summaries", m2.Id, 4,
-            F("26-nonclin-sum"), folderSource);
+            F("26-nonclin-sum"), folderSource,
+            E("m2-6-nonclinical-written-and-tabulated-summaries"));
         var clinicalSummary =
             template.AddSection("2.7", "Clinical Summary", m2.Id, 5,
-                F("27-clin-sum"), folderSource);
+                F("27-clin-sum"), folderSource, E("m2-7-clinical-summary"));
 
         // ── Module 3 — Quality ───────────────────────────────────────────────
         var m3 = template.AddSection("M3", "Quality", null, 3,
-            F("m3"), folderSource);
+            F("m3"), folderSource, E("m3-quality"));
         var substance = template.AddSection("3.2.S", "Drug Substance", m3.Id, 1,
-            F("32-body-data/32s-drug-sub"), folderSource);
+            F("32-body-data/32s-drug-sub"), folderSource,
+            E("m3-2-body-of-data/m3-2-s-drug-substance"));
         template.AddSection("3.2.S.1", "General Information", substance.Id, 1,
-            F("32s1-gen-info"), folderSource);
+            F("32s1-gen-info"), folderSource, E("m3-2-s-1-general-information"));
         template.AddSection("3.2.S.2", "Manufacture", substance.Id, 2,
-            F("32s2-manuf"), folderSource);
+            F("32s2-manuf"), folderSource, E("m3-2-s-2-manufacture"));
         template.AddSection("3.2.S.3", "Characterisation", substance.Id, 3,
-            F("32s3-charac"), folderSource);
+            F("32s3-charac"), folderSource, E("m3-2-s-3-characterisation"));
         template.AddSection("3.2.S.4", "Control of Drug Substance", substance.Id, 4,
-            F("32s4-contr-drug-sub"), folderSource);
+            F("32s4-contr-drug-sub"), folderSource,
+            E("m3-2-s-4-control-of-drug-substance"));
         template.AddSection("3.2.S.5", "Reference Standards or Materials", substance.Id, 5,
-            F("32s5-ref-stand"), folderSource);
+            F("32s5-ref-stand"), folderSource,
+            E("m3-2-s-5-reference-standards-or-materials"));
         template.AddSection("3.2.S.6", "Container Closure System", substance.Id, 6,
-            F("32s6-cont-closure-sys"), folderSource);
+            F("32s6-cont-closure-sys"), folderSource,
+            E("m3-2-s-6-container-closure-system"));
         var sStability = template.AddSection("3.2.S.7", "Stability", substance.Id, 7,
-            F("32s7-stab"), folderSource);
+            F("32s7-stab"), folderSource, E("m3-2-s-7-stability"));
 
         var product = template.AddSection("3.2.P", "Drug Product", m3.Id, 2,
-            F("32-body-data/32p-drug-prod"), folderSource);
+            F("32-body-data/32p-drug-prod"), folderSource,
+            E("m3-2-body-of-data/m3-2-p-drug-product"));
         template.AddSection(
             "3.2.P.1", "Description and Composition of the Drug Product", product.Id, 1,
-            F("32p1-desc-comp"), folderSource);
+            F("32p1-desc-comp"), folderSource,
+            E("m3-2-p-1-description-and-composition-of-the-drug-product"));
         template.AddSection("3.2.P.2", "Pharmaceutical Development", product.Id, 2,
-            F("32p2-pharm-dev"), folderSource);
+            F("32p2-pharm-dev"), folderSource, E("m3-2-p-2-pharmaceutical-development"));
         template.AddSection("3.2.P.3", "Manufacture", product.Id, 3,
-            F("32p3-manuf"), folderSource);
+            F("32p3-manuf"), folderSource, E("m3-2-p-3-manufacture"));
         template.AddSection("3.2.P.4", "Control of Excipients", product.Id, 4,
-            F("32p4-contr-excip"), folderSource);
+            F("32p4-contr-excip"), folderSource, E("m3-2-p-4-control-of-excipients"));
         template.AddSection("3.2.P.5", "Control of Drug Product", product.Id, 5,
-            F("32p5-contr-drug-prod"), folderSource);
+            F("32p5-contr-drug-prod"), folderSource,
+            E("m3-2-p-5-control-of-drug-product"));
         template.AddSection("3.2.P.6", "Reference Standards or Materials", product.Id, 6,
-            F("32p6-ref-stand"), folderSource);
+            F("32p6-ref-stand"), folderSource,
+            E("m3-2-p-6-reference-standards-or-materials"));
         template.AddSection("3.2.P.7", "Container Closure System", product.Id, 7,
-            F("32p7-cont-closure-sys"), folderSource);
+            F("32p7-cont-closure-sys"), folderSource,
+            E("m3-2-p-7-container-closure-system"));
         var pStability = template.AddSection("3.2.P.8", "Stability", product.Id, 8,
-            F("32p8-stab"), folderSource);
+            F("32p8-stab"), folderSource, E("m3-2-p-8-stability"));
 
         // ── Module 4 — Nonclinical Study Reports ─────────────────────────────
         var m4 = template.AddSection("M4", "Nonclinical Study Reports", null, 4,
-            F("m4"), folderSource);
+            F("m4"), folderSource, E("m4-nonclinical-study-reports"));
         template.AddSection("4.2.1", "Pharmacology", m4.Id, 1,
-            F("42-stud-rep/421-pharmacol"), folderSource);
+            F("42-stud-rep/421-pharmacol"), folderSource,
+            E("m4-2-study-reports/m4-2-1-pharmacology"));
         template.AddSection("4.2.2", "Pharmacokinetics", m4.Id, 2,
-            F("42-stud-rep/422-pk"), folderSource);
+            F("42-stud-rep/422-pk"), folderSource,
+            E("m4-2-study-reports/m4-2-2-pharmacokinetics"));
         template.AddSection("4.2.3", "Toxicology", m4.Id, 3,
-            F("42-stud-rep/423-tox"), folderSource);
+            F("42-stud-rep/423-tox"), folderSource,
+            E("m4-2-study-reports/m4-2-3-toxicology"));
 
         // ── Module 5 — Clinical Study Reports ────────────────────────────────
         var m5 = template.AddSection("M5", "Clinical Study Reports", null, 5,
-            F("m5"), folderSource);
+            F("m5"), folderSource, E("m5-clinical-study-reports"));
         template.AddSection("5.2", "Tabular Listing of All Clinical Studies", m5.Id, 1,
-            F("52-tab-list"), folderSource);
+            F("52-tab-list"), folderSource,
+            E("m5-2-tabular-listing-of-all-clinical-studies"));
         var clinicalReports =
             template.AddSection("5.3", "Clinical Study Reports", m5.Id, 2,
-                F("53-clin-stud-rep"), folderSource);
+                F("53-clin-stud-rep"), folderSource,
+                E("m5-3-clinical-study-reports"));
 
         // ── Harmonized required documents ────────────────────────────────────
         template.AddRequiredDocument(

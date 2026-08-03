@@ -1,6 +1,6 @@
 # EPIC-007a — eCTD package generation
 
-**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 shipped — RegOS writes an eCTD sequence folder** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 Phases 1 & 2 complete · S001–S003 shipped · **S004 shipped · S005 schema + seed shipped; the renderer is what remains** · **Branch:** `epic/EPIC-007a-ectd-package-generation` · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 > **The epic's named capability has begun, and only just.** RegOS now writes a
 > sequence folder — the directory tree, the files, the MD5s, `util/dtd/` — and
@@ -1059,7 +1059,14 @@ FDA's, from the regional DTD, and all 147 `m1-*` elements are there).
 | **v4 carries both columns**, ICH and regional, seeded from both pinned DTDs | one immutable version for one semantic change — *a section knows its element name in each backbone* — and both sets of values are verifiable **today**, so neither is speculative. Cost: S005 seeds data only S006 reads |
 | **v4 ICH only, v5 regional in S006** | one story, one change. Cost: two immutable versions for what is arguably one fact |
 
-*The founder leans toward the first; awaiting confirmation before v4 is written.*
+**Decided: v4 carries both**, and it is shipped. 40 sections — 32 with an ICH
+element, 9 with a regional one, and Module 1's sub-sections carrying an *empty*
+ICH element because ICH's `m1` is `(leaf*)` and says they have none.
+
+**What remains of S005 is the renderer**: group leaves into an element tree,
+merging shared prefixes so three sections under `4.2` emit `m4-2-study-reports`
+once; then `index.xml` and `index-md5.txt`, validated by `xmllint` against the
+pinned DTD.
 
 ---
 

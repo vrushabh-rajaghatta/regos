@@ -48,6 +48,10 @@ public static class RegulatoryTemplateErrors
     public const string SectionEctdFolderSourceNotRecognised =
         "That is not a source RegOS recognises for an eCTD folder name.";
 
+    public const string SectionElementNameNotLegal =
+        "An eCTD element name may contain only lowercase letters, digits and "
+        + "hyphens — an invented one is not merely wrong, it is invalid XML.";
+
     public const string SectionEctdFolderNotLegal =
         "An eCTD folder name may contain only lowercase letters, digits and "
         + "hyphens, and each part must be 64 characters or fewer.";

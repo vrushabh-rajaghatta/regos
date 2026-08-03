@@ -24,6 +24,8 @@ const FDA_IND_CTD = "60000000-0000-0000-0000-000000000001";
 //   v2  the brochure moved to 1.14.4.1 — with FDA's old caption carried across
 //   v3  FDA's own wording, and every section's eCTD folder with the provenance
 //       of that folder beside it (S004, ADR-052)
+//   v4  what each section is called in each backbone — ICH's element for
+//       Modules 2-5, FDA's for Module 1 (S005, evidence E16)
 const BLUEPRINTS = [
   {
     id: FDA_IND_CTD,
@@ -48,6 +50,14 @@ const BLUEPRINTS = [
       },
       {
         versionNumber: 3,
+        status: "Deprecated",
+        effectiveFrom: "2026-08-03",
+        sections: 40,
+        requiredDocuments: 13,
+        validationRules: 4,
+      },
+      {
+        versionNumber: 4,
         status: "Published",
         effectiveFrom: "2026-08-03",
         sections: 40,
@@ -211,15 +221,15 @@ test.describe("Blueprint seed integrity", () => {
     // m1-14-4-1-investigational-brochure and its Comprehensive ToC v2.3.2 says
     // "Investigational brochure"; two FDA sources agreeing with each other and
     // not with RegOS is not a wording preference.
-    const v3 = byNumber(3);
-    expect(section(v3, "1.14.4.1")).toMatchObject({
+    const latest = byNumber(4);
+    expect(section(latest, "1.14.4.1")).toMatchObject({
       title: "Investigational Brochure",
     });
-    expect(section(v3, "1.2")).toMatchObject({ title: "Cover Letters" });
+    expect(section(latest, "1.2")).toMatchObject({ title: "Cover Letters" });
 
-    const labeling = section(v3, "1.14");
-    const investigationalLabeling = section(v3, "1.14.4");
-    const brochure = section(v3, "1.14.4.1");
+    const labeling = section(latest, "1.14");
+    const investigationalLabeling = section(latest, "1.14.4");
+    const brochure = section(latest, "1.14.4.1");
 
     // Four levels deep — M1 → 1.14 → 1.14.4 → 1.14.4.1 — which is deeper than
     // any section RegOS carried before this correction.

@@ -58,6 +58,12 @@ public sealed class TemplateSectionConfiguration
         builder.Property(x => x.EctdFolderSource)
             .HasConversion<int?>();
 
+        // What this section is called in each backbone. Two columns because a
+        // backbone is a contract (E16): the names come from different DTDs, and
+        // ICH declares one Module 1 element where FDA declares 147.
+        builder.Property(x => x.IchElement).HasMaxLength(256);
+        builder.Property(x => x.RegionalElement).HasMaxLength(256);
+
         builder.Ignore(x => x.HasEctdPlacement);
 
         // Shadow FK to the owning version; the relationship binds to it in

@@ -17,7 +17,9 @@ public sealed class TemplateSection
         TemplateSectionId? parentSectionId,
         int order,
         string? ectdFolder = null,
-        EctdFolderSource? ectdFolderSource = null)
+        EctdFolderSource? ectdFolderSource = null,
+        string? ichElement = null,
+        string? regionalElement = null)
     {
         if (string.IsNullOrWhiteSpace(code))
             throw new DomainException(RegulatoryTemplateErrors.SectionCodeRequired);
@@ -44,6 +46,8 @@ public sealed class TemplateSection
                 RegulatoryTemplateErrors.SectionEctdFolderSourceNotRecognised);
 
         EctdFolderSource = ectdFolderSource;
+        IchElement = NormaliseElement(ichElement);
+        RegionalElement = NormaliseElement(regionalElement);
     }
 
     public TemplateSectionId Id { get; }
@@ -131,6 +135,51 @@ public sealed class TemplateSection
     public EctdFolderSource? EctdFolderSource { get; }
 
     /// <summary>
+    /// What this section is called in <c>index.xml</c> — the ICH backbone.
+    /// </summary>
+    /// <remarks>
+    /// <b>No provenance is stored, and the asymmetry with
+    /// <see cref="EctdFolder"/> is the point.</b> RegOS can never invent an
+    /// element name, because an invented one is <em>DTD-invalid</em> — the
+    /// format forecloses the failure mode <see cref="EctdFolderSource"/> exists
+    /// to expose. Every value here is Appendix 4's pairing with a target the
+    /// pinned DTD declares, and a seed test asserts exactly that.
+    /// <para>
+    /// <b>Empty means this section adds no element level.</b> ICH's Module 1 is
+    /// <c>(leaf*)</c> with no children, so 1.1 … 1.14.4.1 contribute nothing to
+    /// <c>index.xml</c> — a known placement, not a missing one, exactly as for
+    /// folders.
+    /// </para>
+    /// <para>
+    /// <b>A chain where RegOS's tree is coarser than the CTD's.</b> The DTD
+    /// forbids <c>m3-2-s-drug-substance</c> as a child of <c>m3-quality</c>, and
+    /// the blueprint has no <c>3.2</c> node — so 3.2.S carries
+    /// <c>m3-2-body-of-data/m3-2-s-drug-substance</c>. The same two levels the
+    /// folder column already chains, and for the same reason: a skipped level is
+    /// carried in the value rather than invented in a renderer.
+    /// </para>
+    /// </remarks>
+    public string? IchElement { get; }
+
+    /// <summary>
+    /// What this section is called in the authority's own backbone —
+    /// <c>us-regional.xml</c> for FDA.
+    /// </summary>
+    /// <remarks>
+    /// <b>A second column rather than a reused one, because a backbone is a
+    /// contract</b> (evidence E16). These names come from a different DTD, and
+    /// the split runs the opposite way to <see cref="IchElement"/>: ICH declares
+    /// one Module 1 element and 147 for Modules 2–5's structure; FDA declares
+    /// 147 for Module 1 and none above it. A single column would have to mean
+    /// different things in different modules.
+    /// <para>
+    /// <see cref="EctdFolder"/> stays single because a file has one location
+    /// whichever backbone points at it. Placement is shared; naming is not.
+    /// </para>
+    /// </remarks>
+    public string? RegionalElement { get; }
+
+    /// <summary>
     /// Whether this section's eCTD placement is known — including "known to be
     /// nothing". False only when the specification has not been read.
     /// </summary>
@@ -168,6 +217,35 @@ public sealed class TemplateSection
             {
                 throw new DomainException(
                     RegulatoryTemplateErrors.SectionEctdFolderNotLegal);
+            }
+        }
+
+        return trimmed;
+    }
+
+    /// <summary>
+    /// An XML element name, or a chain of them. Same character rule as a folder
+    /// — the DTD's own names are lowercase <c>a-z0-9-</c> throughout — and the
+    /// same empty-versus-null distinction.
+    /// </summary>
+    private static string? NormaliseElement(string? element)
+    {
+        if (element is null)
+            return null;
+
+        var trimmed = element.Trim().Trim('/');
+
+        if (trimmed.Length == 0)
+            return string.Empty;
+
+        foreach (var name in trimmed.Split('/'))
+        {
+            if (name.Length == 0
+                || !name.All(c => c is >= 'a' and <= 'z'
+                    or >= '0' and <= '9' or '-'))
+            {
+                throw new DomainException(
+                    RegulatoryTemplateErrors.SectionElementNameNotLegal);
             }
         }
 
