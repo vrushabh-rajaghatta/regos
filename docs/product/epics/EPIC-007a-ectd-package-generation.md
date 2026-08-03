@@ -1529,6 +1529,47 @@ domain modelling, and by authority-specific semantics, and **that boundary exist
 whether or not S006 is ever wired.** Completing the renderer against assumptions
 would have produced the same bytes and none of it.
 
+### The oracle is a boundary to be *defended*, not a dependency to be *acquired*
+
+*Recorded 2026-08-03, on the founder's observation that DTD validation has
+become **"an independent implementation of the specification checking yours"**
+and should be **"a first-class architectural boundary, not just a test."**
+Agreed — with one reading ruled out, because the epic's own principle rules it
+out.*
+
+By the end of the epic the parser had caught **three defects nothing in RegOS
+could**, and none was a validation failure in the ordinary sense:
+
+| | What it caught | Why our reasoning could not |
+|---|---|---|
+| S005 | `utf-16` declared over UTF-8 bytes | the file was well-formed and every content assertion passed |
+| S006 | Module 1 has no ICH tree | the DTD's content models say so and the outline does not |
+| S006 wiring | **`m1-regional` nested inside itself** | **two independently correct components**, and no single one of them was wrong |
+
+The third is the one that changes the status. It is not a mistake anyone made —
+it is what two right answers compose into, and **a defect with no author is
+exactly what an independent implementation exists to find.**
+
+> **So the status is promoted, and the direction of dependency is not.** *"The
+> validator is an oracle, not a dependency"* stands, and the DoD's checkable form
+> of it stands with it: **no code in `src/` reads a verdict from any validator**,
+> the seam is the filesystem, and `xmllint` lives in `tests/`.
+
+**First-class means the boundary is asserted rather than merely observed**, and
+that is a thing this epic can do without acquiring a dependency:
+
+| | |
+|---|---|
+| **S007's architecture test** | *no `src/` code reads a validator verdict* — the boundary defended structurally, which is what "first-class" buys |
+| **every rendering story validates against both DTDs or claims neither** | already the rule; E16 is why |
+| **the invocation is reproducible and archived** | `docs/evidence/EPIC-007a/` — a report corresponds to a package produced by a named tool version |
+
+**The failure mode this forbids is unchanged and worth restating**, because
+"first-class" is the exact word that would license it: building *whatever
+`xmllint` accepts* would replace a public specification with one parser's
+reading of it, and would make the oracle useless as evidence by making it no
+longer independent of us.
+
 ### A persistent property with no acquisition path is incomplete modelling
 
 *The founder's, 2026-08-03, after the third instance in one day. **This is a
@@ -1561,6 +1602,50 @@ make the assertions it is trying to submit.
 materialisation. Not built — one pattern, three instances, and ADR-018 says wait
 for a demonstrated third *need* rather than a third occurrence. *Revisit if a
 fourth appears.*
+
+### What the epic actually built — and the prediction that claim carries
+
+*The founder's, 2026-08-03, at S006. **Recorded as a prediction with a milestone,
+not as canon**, which is the treatment this project gives any claim about work it
+has not yet done.*
+
+The epic was scoped to produce folders, XML, hashes and a DTD-valid package.
+Those turned out to be close to incidental. What it established is **a method for
+integrating an external regulatory standard**:
+
+1. **specifications are primary evidence**, held and cited by level — not
+   summarised, and never restated from memory;
+2. **renderers interpret specifications; they do not hold business rules**;
+3. **authority translations stay at the boundary** — one table per authority, and
+   the domain's taxonomy is never reshaped to match a format's (ADR-048,
+   ADR-055);
+4. **every regulatory fact emitted has an acquisition path** in the domain, or
+   generation refuses;
+5. **parsers validate independently of RegOS's reasoning**, and the dependency
+   never runs the other way;
+6. **refusals are classified** — data completeness, evidence gap, domain
+   capability, historical gap — because each names a different person's next
+   action.
+
+> **The prediction: the second authority is faster because none of that is
+> re-derived.** EMA, Health Canada, TGA, devices — the specifications are not
+> simpler, and the claim is that the *integration* is, because this shape already
+> exists.
+>
+> **Falsified if** the second integration re-derives rather than reuses — if the
+> refusal taxonomy needs different categories, if the boundary-translation rule
+> has to be renegotiated, or if a second renderer cannot be written without
+> reopening ADR-055. **Milestone: the first non-FDA backbone.**
+
+**Why this is not promoted to `docs/engineering/` yet.** One authority is one
+instance, and a method extracted from a single integration is FDA-shaped until
+something else has used it — the same argument ADR-018 makes about code, applied
+to a way of working. The four levels *were* promoted to
+[docs/evidence/](../../evidence/README.md), and the difference is instructive:
+that taxonomy was **worked out here and is not about eCTD**, while this list is a
+description of what one integration did. **Promote it when a second authority has
+followed it**, and if the list changes on the way, that change is the more
+valuable artifact.
 
 ### An observation, deliberately left as one
 
