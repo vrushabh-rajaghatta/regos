@@ -39,13 +39,13 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-**EPIC-010a — Substance & composition.** Planned through Phase 3 on 2026-08-03
-and not started. EPIC-019 merged to `main` as PR #16.
+**EPIC-010a — Substance & composition.** Planned through Phase 3 on 2026-08-03.
+S001 delivered; S002 is next. EPIC-019 merged to `main` as PR #16.
 
 | | |
 |---|---|
-| **ADR-058** | **first, before S002** — the composition model. Named in the plan, not yet written |
-| **S001** | `Substance` — shared and extensible, and the whole of *"which products contain this API?"* |
+| **ADR-058** | ✅ written 2026-08-03 — substances are shared facts, ingredients are roles |
+| **S001** | ✅ `Substance` — shared and extensible, plus the `CodedConcept` seam and `ReferenceData`'s first write path |
 | **S002** | `PharmaceuticalProductDetail` — strength, dose form, route |
 | **S003** | `Ingredient` — composition |
 | **S004** | `MedicinalProductComponent` — the recursive tree |

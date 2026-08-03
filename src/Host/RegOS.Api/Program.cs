@@ -27,6 +27,7 @@ using RegOS.Api.Middleware;
 using RegOS.Api.Tenancy;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.ReferenceData.Application;
+using RegOS.ReferenceData.Infrastructure;
 using RegOS.Persistence;
 using RegOS.Persistence.Initialization;
 using RegOS.Product.Application.DependencyInjection;
@@ -49,6 +50,7 @@ using RegOS.Api.Endpoints.Meetings;
 using RegOS.Api.Endpoints.Correspondence;
 using RegOS.Api.Endpoints.Registrations;
 using RegOS.Api.Endpoints.Studies;
+using RegOS.Api.Endpoints.Substances;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -108,6 +110,7 @@ if (builder.Environment.IsDevelopment())
 }
 
 builder.Services.AddReferenceDataApplication();
+builder.Services.AddReferenceDataInfrastructure();
 
 builder.Services.AddRegulatoryApplicationServices();
 builder.Services.AddRegulatoryApplicationInfrastructure(builder.Configuration);
@@ -317,6 +320,13 @@ studies.MapRegisterNonClinicalStudy();
 studies.MapListStudies();
 studies.MapListStudyFilings();
 studies.MapApplicationStudyCitations();
+
+var substances = app.MapGroup("").WithTags("Substances");
+// Before the list: /api/substances/vocabulary must not be read as a
+// /api/substances/{id} that happens to be spelled "vocabulary".
+substances.MapGetSubstanceVocabulary();
+substances.MapListSubstances();
+substances.MapCreateSubstance();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

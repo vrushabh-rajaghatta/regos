@@ -34,6 +34,8 @@ using CorrespondenceTypeAggregate =
     RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType;
 using AuthorityDivisionAggregate =
     RegOS.ReferenceData.Domain.Regulatory.Authority.AuthorityDivision;
+using SubstanceAggregate =
+    RegOS.ReferenceData.Domain.Substances.Substance;
 using CommitmentAggregate =
     RegOS.Interaction.Domain.Commitments.Commitment;
 using HaMeetingAggregate =
@@ -180,6 +182,14 @@ public sealed class RegOSDbContext : DbContext
         Set<AuthorityDivisionAggregate>();
 
     /// <summary>
+    /// Scientific entities that exist independently of any product. Shared
+    /// catalogue plus a tenant's own — an innovator holds a compound before it
+    /// is in anyone's registry (ADR-058).
+    /// </summary>
+    public DbSet<SubstanceAggregate> Substances =>
+        Set<SubstanceAggregate>();
+
+    /// <summary>
     /// What we promised an authority. Tenant-owned and fail-closed.
     /// </summary>
     public DbSet<CommitmentAggregate> Commitments =>
@@ -287,7 +297,8 @@ public sealed class RegOSDbContext : DbContext
     /// <c>Contacts</c>, <c>OrganizationDivisions</c>.</item>
     /// <item><b>Shared plus extensible</b> — <c>TenantId == null || == CurrentTenant</c>.
     /// The platform ships a baseline the tenant may extend.
-    /// <c>DocumentTypes</c>, <c>RegulatoryTemplates</c>, <c>ContactRoles</c>.</item>
+    /// <c>DocumentTypes</c>, <c>RegulatoryTemplates</c>, <c>ContactRoles</c>,
+    /// <c>AuthorityDivisions</c>, <c>Substances</c>.</item>
     /// <item><b>Global world facts</b> — no filter. RegOS is describing an
     /// external reality that does not differ by tenant. <c>Countries</c>,
     /// <c>Authorities</c>, <c>ApplicationTypes</c>, <c>IdentifierSchemes</c>.</item>
@@ -360,6 +371,15 @@ public sealed class RegOSDbContext : DbContext
         // recording which of its divisions they correspond with, because RegOS
         // cannot ship a complete universe of them.
         modelBuilder.Entity<AuthorityDivisionAggregate>().HasQueryFilter(
+            x => CurrentTenant != null
+                && (x.TenantId == null || x.TenantId == CurrentTenant));
+
+        // The same shape again, and a third distinct argument for it: an
+        // authoritative substance registry *does* exist, and the tenant's
+        // molecule is simply not in it yet. That reason resolves itself when
+        // licensed terminology arrives; AuthorityDivision's never does
+        // (ADR-058 §2).
+        modelBuilder.Entity<SubstanceAggregate>().HasQueryFilter(
             x => CurrentTenant != null
                 && (x.TenantId == null || x.TenantId == CurrentTenant));
 

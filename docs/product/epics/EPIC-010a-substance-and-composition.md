@@ -232,14 +232,30 @@ No `ManufacturingSourceOrganizationId` — Q4 was rejected; the seam is recorded
 
 Each is a vertical slice: domain → persistence → API → UI → test. Cut from `epic/EPIC-010a-substance-and-composition`.
 
-### S001 — `Substance`, shared and extensible
+### S001 — `Substance`, shared and extensible ✅ 2026-08-03
 As a **regulatory user**, I want a substance catalogue I can search and extend, so that our proprietary compounds sit beside the ones everyone knows.
-- [ ] `Substance` root, shared-plus-extensible filter, copying `AuthorityDivision`
-- [ ] `CodedConcept` value object with `System` populated `regos-internal`
-- [ ] Seeded substance set + seeded class/type vocabulary
-- [ ] Create a **tenant-owned** substance; shared rows refuse mutation (D2)
-- [ ] Substance directory UI — search, filter shared vs proprietary
-- [ ] **ADR-058 written first**
+- [x] `Substance` root, shared-plus-extensible filter, copying `AuthorityDivision`
+- [x] `CodedConcept` value object with `System` populated `regos-internal`
+- [x] Seeded substance set + seeded class/type vocabulary
+- [x] Create a **tenant-owned** substance; shared rows refuse mutation (D2)
+- [x] Substance directory UI — search, filter shared vs proprietary
+- [x] **ADR-058 written first**
+
+**Two departures from the plan above, both narrowing and both additive to reverse.**
+
+| | What shipped | Why |
+|---|---|---|
+| `IsActive` | **not built** | The founder scoped lifecycle management to EPIC-012, which leaves nothing in S001 able to write it. A persistent property with no acquisition path is the defect EPIC-007a spent three findings on. |
+| name uniqueness | **built** — a tenant may not add a name already in the catalogue it can see | A unique index covers `(TenantId, Name)` and cannot express *"and not one the shared catalogue already carries"*. Without it the directory forks **Q1**'s answer on its first screen. Exact-name only; the fuzzy matching and merge workflow the backlog calls duplicate detection remains EPIC-012's. |
+
+**How "shared rows refuse mutation" is satisfied:** structurally, not by a guard.
+`ISubstanceRepository` adds and reads, and nothing loads a substance for
+mutation or saves a change — so there is no path to stand a guard on. The guard
+belongs on the first mutation that exists, which is EPIC-012's.
+
+`UniiCode` ships and is writable by a tenant, so the GSRS seam is a column with
+an acquisition path rather than a placeholder; **every seeded row leaves it
+null**, which is the claim ADR-058 §6 requires.
 
 ### S002 — `PharmaceuticalProductDetail`, strength and route
 As a **regulatory user**, I want to record what a product is in its market — dose form, route, strength — so that the market view says more than a name.
