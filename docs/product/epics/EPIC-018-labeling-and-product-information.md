@@ -183,6 +183,22 @@ a tidy document.
 > **`UndesirableEffect.Frequency`** — *very common* … *very rare* — is a coded
 > concept on that aggregate alone. Orthogonal to `Population`, and nothing
 > branches on it.
+>
+> ### The review contract
+>
+> **S004 is reviewed by answering these, not by recapping the epic.** Written
+> down before implementation so the answers cannot be chosen to fit what was
+> built:
+>
+> 1. Did the three `Population` configurations differ **only** by owner and
+>    table name?
+> 2. Was the EF helper therefore **earned** — or refused?
+> 3. Did `Contraindication` and `UndesirableEffect` stay free of independent
+>    history?
+> 4. Did any `if (Type == Artwork)`-style branching appear? (`LocalLabelTypeBranchTests`
+>    answers this without anyone looking.)
+> 5. Did the browser proof show **amendment** on the second parent — one row
+>    corrected, not replaced?
 | **S005** | **`Interaction` + `Interactant`** — **the stop-or-continue point** | full slice | ⚪ |
 | **S006** | **Capstone** — *"which markets is indication X approved in?"* end to end, label workspace on the market view, browser proof, retro | query → UI → test → docs | ⚪ |
 
