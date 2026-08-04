@@ -1,3 +1,4 @@
+using RegOS.ReferenceData.Domain.Substances;
 using RegOS.ReferenceData.Domain.Terminology;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
@@ -52,6 +53,7 @@ public sealed class PharmaceuticalProductDetail
     public const int DescriptionMaxLength = 2000;
 
     private readonly List<CodedConcept> _routesOfAdministration = [];
+    private readonly List<Ingredient> _ingredients = [];
 
     private PharmaceuticalProductDetail()
     {
@@ -96,6 +98,27 @@ public sealed class PharmaceuticalProductDetail
     /// </remarks>
     public IReadOnlyCollection<CodedConcept> RoutesOfAdministration
         => _routesOfAdministration.AsReadOnly();
+
+    /// <summary>
+    /// What this presentation is made of. Empty is ordinary — a presentation is
+    /// recorded before its formulation is stated.
+    /// </summary>
+    public IReadOnlyCollection<Ingredient> Ingredients => _ingredients.AsReadOnly();
+
+    /// <summary>
+    /// True when the composition says what the product works by.
+    /// </summary>
+    /// <remarks>
+    /// <b>A completeness check, deliberately not an invariant.</b> Requiring an
+    /// active on every edit would dictate the order a user types a formulation
+    /// in — excipient first would be refused — and RegOS settled long ago that
+    /// completeness belongs at a gate rather than on every keystroke, which is
+    /// what submission validation is. Exposed so a screen can say the
+    /// composition is unfinished, and so the gate that eventually enforces it
+    /// has something to read.
+    /// </remarks>
+    public bool HasAnActiveIngredient
+        => _ingredients.Any(x => x.Role == IngredientRole.Active);
 
     public DateTime CreatedOn { get; private set; }
 
@@ -181,6 +204,101 @@ public sealed class PharmaceuticalProductDetail
 
             _routesOfAdministration.Add(route);
         }
+    }
+
+    /// <summary>
+    /// Adds a substance to the composition, in the role it plays.
+    /// </summary>
+    /// <remarks>
+    /// <b>One row per substance.</b> The same substance twice is one fact
+    /// stated twice, and it would double every quantity a reader adds up.
+    /// </remarks>
+    public Ingredient AddIngredient(
+        SubstanceId substanceId, IngredientRole role, Strength? strength)
+    {
+        if (substanceId is null)
+            throw new DomainException(IngredientErrors.SubstanceRequired);
+
+        if (_ingredients.Any(x => x.SubstanceId == substanceId))
+            throw new BusinessRuleViolationException(
+                IngredientErrors.SubstanceAlreadyInComposition);
+
+        var ingredient = new Ingredient(
+            IngredientId.New(), substanceId, role, strength);
+
+        _ingredients.Add(ingredient);
+
+        return ingredient;
+    }
+
+    /// <summary>
+    /// Corrects an ingredient's role or its strength.
+    /// </summary>
+    /// <remarks>
+    /// <b>The substance is not changeable, and that is what makes remove
+    /// usable.</b> A different substance is a different ingredient, so swapping
+    /// one is add-then-remove — and because the new active is added first, the
+    /// last-active guard below never blocks it. A restate that could change the
+    /// substance would leave no way to tell a correction from a replacement.
+    /// </remarks>
+    public void RestateIngredient(
+        IngredientId ingredientId, IngredientRole role, Strength? strength)
+    {
+        var existing = _ingredients.FirstOrDefault(x => x.Id == ingredientId)
+            ?? throw new NotFoundException(IngredientErrors.NotFound);
+
+        RequireTheCompositionKeepsAnActive(
+            losing: existing, gaining: role == IngredientRole.Active);
+
+        // Rebuilt rather than mutated in place, so the "an active declares a
+        // strength" rule is checked by the one constructor that owns it rather
+        // than restated here.
+        var corrected = new Ingredient(
+            existing.Id, existing.SubstanceId, role, strength);
+
+        _ingredients[_ingredients.IndexOf(existing)] = corrected;
+    }
+
+    public void RemoveIngredient(IngredientId ingredientId)
+    {
+        var existing = _ingredients.FirstOrDefault(x => x.Id == ingredientId)
+            ?? throw new NotFoundException(IngredientErrors.NotFound);
+
+        RequireTheCompositionKeepsAnActive(losing: existing, gaining: false);
+
+        _ingredients.Remove(existing);
+    }
+
+    /// <summary>
+    /// A composition that has an active may not be left with excipients and no
+    /// active.
+    /// </summary>
+    /// <remarks>
+    /// <b>An anti-corruption rule, not a completeness rule.</b> It stops a
+    /// valid formulation being turned into an incoherent one — a list of
+    /// excipients describing nothing — while leaving
+    /// <see cref="HasAnActiveIngredient"/> to say whether a composition is
+    /// finished.
+    /// <para>
+    /// <b>Emptying the composition entirely is allowed.</b> Removing the last
+    /// ingredient of all is starting over, which is a different act from
+    /// hollowing one out.
+    /// </para>
+    /// </remarks>
+    private void RequireTheCompositionKeepsAnActive(
+        Ingredient losing, bool gaining)
+    {
+        if (losing.Role != IngredientRole.Active || gaining)
+            return;
+
+        var othersRemain = _ingredients.Any(x => x.Id != losing.Id);
+
+        var anotherActiveRemains = _ingredients.Any(
+            x => x.Id != losing.Id && x.Role == IngredientRole.Active);
+
+        if (othersRemain && !anotherActiveRemains)
+            throw new BusinessRuleViolationException(
+                IngredientErrors.CompositionNeedsAnActive);
     }
 
     private static string ValidatedName(string name)

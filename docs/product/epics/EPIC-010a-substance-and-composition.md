@@ -277,11 +277,29 @@ As a **regulatory user**, I want to record what a product is in its market — d
 
 **`AtcCode` is a value object over a string, not a `CodedConcept`** (founder refinement). `("who-atc", …)` would assert WHO named it, and RegOS holds no WHO ATC licence to check that against. The type validates the *shape* — the five-level alternation, partial codes accepted — and derives `Levels` so *"show me every analgesic"* is a prefix match. It cannot validate membership, and its refusal says so.
 
-### S003 — `Ingredient` — composition
+### S003 — `Ingredient` — composition ✅ 2026-08-04
 As a **regulatory user**, I want to state which substances a product contains and in what role, so that composition is data rather than a PDF.
-- [ ] `Ingredient` as an owned child of `PharmaceuticalProductDetail` (D3)
-- [ ] Role + `Strength` per ingredient; at least one active ingredient required
-- [ ] Composition editor
+- [x] `Ingredient` as an owned child of `PharmaceuticalProductDetail` (D3)
+- [x] Role + `Strength` per ingredient
+- [x] `Strength` value object (D4), moved here from S002, with its own measurement vocabulary
+- [x] Composition editor
+
+**Three decisions, taken in the Phase-3 conversation of 2026-08-04.**
+
+| | Decision | Why |
+|---|---|---|
+| **Strength is orthogonal to presentation** | Both units come from a `MeasurementVocabulary` that shares no code with `UnitsOfPresentation` | *Founder instruction.* A denominator that could name an article would make *"500 mg per tablet"* expressible — repeating what the presentation already says, in a second place that can disagree. A point strength has no denominator, and the reader composes it with the dose form. |
+| **The numerator/denominator shape is kept** | Not collapsed to `{Value, Unit}` | A point strength *is* `{Value, Unit}` — a strength with no denominator. Dropping the denominator would make *10 mg/mL* unrepresentable, and S002's own browser spec already put a solution for injection on screen. |
+| **`IngredientRole` is an enum, not a `CodedConcept`** | Departure from the epic's entity table | The test applied: *does a rule branch on this value?* Nothing branches on dose form, route or substance class. Two rules branch on role — a composition may not lose its last active, and an active must declare a strength. A coded concept whose code a rule string-matches is an enum in a costume. **Revisit when a role arrives that no rule branches on** (adjuvant, stabiliser). |
+
+**"At least one active ingredient" is split into two rules**, because the checklist's single sentence turned out to mean two things.
+
+- **An anti-corruption invariant, enforced:** a composition that has an active may not be left with excipients and no active. Removing or demoting the last one is refused while others remain; emptying the composition entirely is allowed, because starting over is a different act from hollowing out.
+- **A completeness statement, not enforced:** `HasAnActiveIngredient` is exposed and the screen says *"this composition does not say what the product works by."* Requiring an active on every edit would dictate the order a user types a formulation in, and RegOS settled long ago that completeness belongs at a gate.
+
+**An active must declare a strength; an excipient need not.** An excipient's quantity is routinely *q.s.*, so its absence is a fact rather than a gap.
+
+**`CodedConceptLookup` extracted.** `MeasurementVocabulary` is the third vocabulary, which is the occurrence ADR-018 was waiting for — S002 deliberately duplicated the resolution and recorded the trigger.
 
 ### S004 — `MedicinalProductComponent` — the recursive tree
 As a **regulatory user**, I want to describe a kit or a co-packaged presentation, so that what the patient receives is represented.

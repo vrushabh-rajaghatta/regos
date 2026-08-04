@@ -179,6 +179,10 @@ referenceData.MapListIdentifierSchemes();
 referenceData.MapListContactRoles();
 referenceData.MapListCorrespondenceTypes();
 referenceData.MapListAuthorityDivisions();
+// Its own list, not folded into the presentation vocabulary: a strength
+// measures a quantity, and offering "vial" beside "mL" in one payload is the
+// first step towards a formulation stating what the presentation already says.
+referenceData.MapListMeasurementUnits();
 
 var authentication = app.MapGroup("").WithTags("Authentication");
 authentication.MapLogin();
@@ -254,6 +258,9 @@ presentations.MapGetPharmaceuticalVocabulary();
 presentations.MapListPresentations();
 presentations.MapAddPresentation();
 presentations.MapRestatePresentation();
+presentations.MapAddIngredient();
+presentations.MapRestateIngredient();
+presentations.MapRemoveIngredient();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

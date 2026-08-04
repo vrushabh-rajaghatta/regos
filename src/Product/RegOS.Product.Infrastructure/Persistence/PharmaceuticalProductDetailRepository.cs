@@ -29,12 +29,24 @@ public sealed class PharmaceuticalProductDetailRepository
         PharmaceuticalProductDetailId id,
         CancellationToken cancellationToken)
     {
-        // Routes included because Restate replaces the collection wholesale: a
-        // load without them would clear an empty list and silently drop every
-        // route the presentation already had. The dose form and unit are owned
-        // one-to-one and load with the row.
+        // Two Includes, each load-bearing for a different rule.
+        //
+        // Routes: Restate replaces the collection wholesale, so a load without
+        // them would clear an empty list and silently drop every route the
+        // presentation already had.
+        //
+        // Ingredients: the aggregate reasons across the whole composition —
+        // it refuses a substance already present, and refuses to leave a
+        // formulation with excipients and no active. Both read the list, so a
+        // load without it would let a duplicate through and hollow out a
+        // composition without noticing. This is the load EPIC-019 got wrong
+        // once already.
+        //
+        // The dose form, unit and each ingredient's strength are owned
+        // one-to-one and load with their row.
         return await _dbContext.PharmaceuticalProductDetails
             .Include(x => x.RoutesOfAdministration)
+            .Include(x => x.Ingredients)
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 

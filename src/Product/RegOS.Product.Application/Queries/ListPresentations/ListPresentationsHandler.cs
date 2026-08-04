@@ -19,7 +19,8 @@ public sealed class ListPresentationsHandler
         CancellationToken cancellationToken = default)
     {
         // Only this tenant's — the global query filter does that, not this
-        // handler (ADR-031).
+        // handler (ADR-031). It does the same for the substances joined below:
+        // the shared catalogue plus the tenant's own, never another's.
         var rows = await _dbContext.PharmaceuticalProductDetails
             .AsNoTracking()
             .Where(x => x.MedicinalProductId == query.MedicinalProductId)
@@ -40,12 +41,31 @@ public sealed class ListPresentationsHandler
                         x.UnitOfPresentation.Display),
                 // Ordered here rather than left to the database. An owned
                 // collection comes back in whatever order Postgres chose, and a
-                // route list that reshuffles between page loads reads as data
+                // list that reshuffles between page loads reads as data
                 // changing when nothing has.
                 Routes = x.RoutesOfAdministration
                     .OrderBy(r => r.Display)
                     .Select(r => new CodedValueDto(r.System, r.Code, r.Display))
-                    .ToList()
+                    .ToList(),
+                // The substance name is joined, never copied onto the
+                // ingredient — the row holds an id so that renaming a substance
+                // renames it everywhere it appears at once. This is the join
+                // the whole epic exists to make possible, read in the
+                // uninteresting direction.
+                Ingredients =
+                    (from ingredient in x.Ingredients
+                     join substance in _dbContext.Substances
+                         on ingredient.SubstanceId equals substance.Id
+                     orderby ingredient.Role, substance.Name
+                     select new
+                     {
+                         ingredient.Id,
+                         ingredient.SubstanceId,
+                         SubstanceName = substance.Name,
+                         SubstanceInn = substance.Inn,
+                         ingredient.Role,
+                         ingredient.Strength
+                     }).ToList()
             })
             .ToListAsync(cancellationToken);
 
@@ -57,7 +77,33 @@ public sealed class ListPresentationsHandler
                 x.Description,
                 x.DoseForm,
                 x.UnitOfPresentation,
-                x.Routes))
+                x.Routes,
+                [.. x.Ingredients.Select(ingredient => new IngredientDto(
+                    ingredient.Id.Value,
+                    ingredient.SubstanceId.Value,
+                    ingredient.SubstanceName,
+                    ingredient.SubstanceInn,
+                    ingredient.Role.ToString(),
+                    Strength(ingredient.Strength)))],
+                x.Ingredients.Any(
+                    ingredient => ingredient.Role == IngredientRole.Active)))
             .ToList();
     }
+
+    private static StrengthDto? Strength(Strength? strength)
+        => strength is null
+            ? null
+            : new StrengthDto(
+                strength.NumeratorValue,
+                new CodedValueDto(
+                    strength.NumeratorUnit.System,
+                    strength.NumeratorUnit.Code,
+                    strength.NumeratorUnit.Display),
+                strength.DenominatorValue,
+                strength.DenominatorUnit is null
+                    ? null
+                    : new CodedValueDto(
+                        strength.DenominatorUnit.System,
+                        strength.DenominatorUnit.Code,
+                        strength.DenominatorUnit.Display));
 }

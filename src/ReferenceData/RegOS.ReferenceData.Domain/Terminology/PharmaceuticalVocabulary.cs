@@ -10,9 +10,10 @@ namespace RegOS.ReferenceData.Domain.Terminology;
 /// every write validates against is a table that only ever gets read; holding
 /// it in code keeps it versioned with the rule that uses it.
 /// <para>
-/// <b>This is the second occurrence of the pattern, not the third.</b> If a
-/// third vocabulary appears, that is when ADR-018 asks whether these should
-/// share a type rather than a shape. Deliberately not extracted now.
+/// <b>The third vocabulary arrived, so the lookup was collapsed</b> into
+/// <see cref="CodedConceptLookup"/> — <see cref="MeasurementVocabulary"/> was
+/// the occurrence ADR-018 was waiting for. The lists themselves stay apart:
+/// they answer different questions, not three shapes of one.
 /// </para>
 /// <para>
 /// <b>These are EDQM's concepts and not EDQM's terms.</b> Dose form, route of
@@ -85,42 +86,11 @@ public static class PharmaceuticalVocabulary
     ];
 
     public static CodedConcept? DoseFormOf(string? code)
-        => Find(DoseForms, code);
+        => CodedConceptLookup.Find(DoseForms, code);
 
     public static CodedConcept? RouteOf(string? code)
-        => Find(RoutesOfAdministration, code);
+        => CodedConceptLookup.Find(RoutesOfAdministration, code);
 
     public static CodedConcept? UnitOfPresentationOf(string? code)
-        => Find(UnitsOfPresentation, code);
-
-    /// <remarks>
-    /// <b>Deliberately a duplicate of <see cref="SubstanceVocabulary"/>'s.</b>
-    /// This is the second occurrence, and ADR-018 abstracts on the third — a
-    /// third vocabulary is what should collapse these two, not a symmetry
-    /// argument between them.
-    /// <para>
-    /// <b>A fresh instance, never the catalogued one.</b> A resolved concept is
-    /// about to be persisted as an owned entity, and EF tracks one against
-    /// exactly one owner — handing out the shared object makes the second
-    /// entity to use it look like it has no value at all. That is how S001's
-    /// seed failed the first time it ran, and each copy carries its own test
-    /// (<c>EachResolutionIsItsOwnInstance</c>) precisely because there are two
-    /// copies.
-    /// </para>
-    /// </remarks>
-    private static CodedConcept? Find(
-        IReadOnlyList<CodedConcept> vocabulary, string? code)
-    {
-        if (string.IsNullOrWhiteSpace(code))
-            return null;
-
-        var trimmed = code.Trim();
-
-        var match = vocabulary.FirstOrDefault(
-            x => string.Equals(x.Code, trimmed, StringComparison.OrdinalIgnoreCase));
-
-        return match is null
-            ? null
-            : CodedConcept.Create(match.System, match.Code, match.Display);
-    }
+        => CodedConceptLookup.Find(UnitsOfPresentation, code);
 }

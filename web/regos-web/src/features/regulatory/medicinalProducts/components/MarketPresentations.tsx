@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { PresentationComposition } from "./PresentationComposition";
 import { PresentationDialog } from "./PresentationDialog";
 import { usePresentations } from "../hooks/usePresentations";
 import { REGOS_INTERNAL, type Presentation } from "../types/Presentation";
@@ -117,6 +118,14 @@ export function MarketPresentations({
                 Edit
               </Button>
             </div>
+
+            {/* Inside the presentation, not beside it: a composition is what
+                *this* administrable form is made of, and a market with three
+                presentations has three of them. */}
+            <PresentationComposition
+              medicinalProductId={medicinalProductId}
+              presentation={presentation}
+            />
           </li>
         ))}
       </ul>

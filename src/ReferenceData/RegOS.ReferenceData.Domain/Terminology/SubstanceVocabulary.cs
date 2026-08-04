@@ -48,31 +48,13 @@ public static class SubstanceVocabulary
     /// The class named by <paramref name="code"/>, or null if RegOS's
     /// vocabulary does not contain it.
     /// </summary>
-    public static CodedConcept? ClassOf(string? code) => Find(Classes, code);
+    public static CodedConcept? ClassOf(string? code)
+        => CodedConceptLookup.Find(Classes, code);
 
     /// <summary>
     /// The type named by <paramref name="code"/>, or null if RegOS's
     /// vocabulary does not contain it.
     /// </summary>
-    public static CodedConcept? TypeOf(string? code) => Find(Types, code);
-
-    private static CodedConcept? Find(
-        IReadOnlyList<CodedConcept> vocabulary, string? code)
-    {
-        if (string.IsNullOrWhiteSpace(code))
-            return null;
-
-        var trimmed = code.Trim();
-
-        var match = vocabulary.FirstOrDefault(
-            x => string.Equals(x.Code, trimmed, StringComparison.OrdinalIgnoreCase));
-
-        // A fresh instance, never the catalogued one. A resolved concept is
-        // about to be persisted as an owned entity, and EF tracks one against
-        // exactly one owner — handing out the shared object would make the
-        // second substance to use it look like it has no class at all.
-        return match is null
-            ? null
-            : CodedConcept.Create(match.System, match.Code, match.Display);
-    }
+    public static CodedConcept? TypeOf(string? code)
+        => CodedConceptLookup.Find(Types, code);
 }

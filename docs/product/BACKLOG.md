@@ -40,14 +40,14 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 ## Now
 
 **EPIC-010a — Substance & composition.** Planned through Phase 3 on 2026-08-03.
-S001 and S002 delivered; S003 is next. EPIC-019 merged to `main` as PR #16.
+S001–S003 delivered; S004 is next. EPIC-019 merged to `main` as PR #16.
 
 | | |
 |---|---|
 | **ADR-058** | ✅ written 2026-08-03 — substances are shared facts, ingredients are roles |
 | **S001** | ✅ `Substance` — shared and extensible, plus the `CodedConcept` seam and `ReferenceData`'s first write path |
 | **S002** | ✅ `PharmaceuticalProductDetail` — dose form, route, unit of presentation, and `AtcCode`. Its own root; EPIC-017's change-case prediction corrected there |
-| **S003** | `Ingredient` — composition, and `Strength` (moved here from S002) |
+| **S003** | ✅ `Ingredient` — composition, `Strength` and the measurement vocabulary. The join that makes *"which products contain substance X?"* answerable |
 | **S004** | `MedicinalProductComponent` — the recursive tree |
 | **S005** | capstone |
 

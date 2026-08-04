@@ -5,7 +5,10 @@ using RegOS.Product.Application.Commands.ArchiveProduct;
 using RegOS.Product.Application.Commands.ChangeMarketStatus;
 using RegOS.Product.Application.Commands.CreateMedicinalProduct;
 using RegOS.Product.Application.Commands.DeactivateMedicinalProduct;
+using RegOS.Product.Application.Commands.AddIngredient;
 using RegOS.Product.Application.Commands.AddPresentation;
+using RegOS.Product.Application.Commands.RemoveIngredient;
+using RegOS.Product.Application.Commands.RestateIngredient;
 using RegOS.Product.Application.Commands.RecordAtcCode;
 using RegOS.Product.Application.Commands.RegisterProduct;
 using RegOS.Product.Application.Commands.RemoveTradeName;
@@ -43,6 +46,10 @@ public static class ProductApplicationServiceCollectionExtensions
         services.AddScoped<AddPresentationHandler>();
         services.AddScoped<RestatePresentationHandler>();
         services.AddScoped<ListPresentationsHandler>();
+
+        services.AddScoped<AddIngredientHandler>();
+        services.AddScoped<RestateIngredientHandler>();
+        services.AddScoped<RemoveIngredientHandler>();
 
         return services;
     }

@@ -105,6 +105,14 @@ public sealed class PharmaceuticalProductDetailConfiguration
             .FindNavigation(nameof(PharmaceuticalProductDetail.RoutesOfAdministration))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
+        // Ownership: presentation (1) -> ingredients (N). The relationship
+        // itself is declared from the Ingredient side, so its shadow foreign
+        // key and the unique index that names it stay together; only the
+        // navigation's access mode belongs here.
+        builder.Metadata
+            .FindNavigation(nameof(PharmaceuticalProductDetail.Ingredients))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
         builder.Property(x => x.CreatedOn)
             .IsRequired();
 
