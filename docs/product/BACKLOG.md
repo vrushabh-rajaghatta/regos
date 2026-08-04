@@ -34,38 +34,45 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | **EPIC-007a** | **eCTD package generation** — the sequence folder, both backbones, delivery; and **the first time RegOS was checked by something that did not come from RegOS** | 🟢 Complete | 7 stories, **closed at Level 2a** · [ADR-049](../adr/ADR-049-generation-derives-transmission-creates.md)…[055](../adr/ADR-055-when-an-authority-required-fact-becomes-a-domain-fact.md) · **S008 (Level 3) carried to EPIC-007b — FDA's example packages are not held and the claim is not made** → [`epics/EPIC-007a-ectd-package-generation.md`](epics/EPIC-007a-ectd-package-generation.md) |
 | **EPIC-019** | **Study registry** — sponsor-owned studies, placement → study, ICH's `file-tag`, **and the Study Tagging File that unblocked Module 4** | 🟢 Complete | S001–S004 + S002b; **S005 deliberately empty — nobody asked** · [ADR-056](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md) · [ADR-057](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) · E33–E35 · **owes the E24 continuity refusal → EPIC-021** → [`epics/EPIC-019-study-registry.md`](epics/EPIC-019-study-registry.md) |
 | **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier (**"Markets"** in the UI), + trade names and market status | 🟢 Complete | 7 stories, 7/7 DoD; [ADR-039](../adr/ADR-039-the-market-local-product-tier.md) → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
-| **EPIC-010a** | **Substance & composition** — the IDMP root: shared substances, presentations, composition, the component tree, and the query the epic existed for — *"which products contain substance X?"* | 🟢 Complete | 5 stories + [ADR-058](../adr/ADR-058-substances-are-shared-facts-ingredients-are-roles.md) · **EPIC-017's change-case prediction corrected there, not only here** · **does not imply IDMP/xEVMPD readiness (D1)** → [`epics/EPIC-010a-substance-and-composition.md`](epics/EPIC-010a-substance-and-composition.md) |
+| **EPIC-010a** | **Substance & composition** — the IDMP root: shared substances, presentations, composition, the component tree, and the query the epic existed for — *"which products contain substance X?"* | 🟢 Complete | 5 stories + [ADR-058](../adr/ADR-058-substances-are-shared-facts-ingredients-are-roles.md); merged to `main` (PR #18) · **EPIC-017's change-case prediction corrected there, not only here** · **does not imply IDMP/xEVMPD readiness (D1)** → [`epics/EPIC-010a-substance-and-composition.md`](epics/EPIC-010a-substance-and-composition.md) |
 
 ---
 
 ## Now
 
-**EPIC-010a — Substance & composition. 🟢 Complete, awaiting merge.**
-All five stories delivered and the retro written (2026-08-04). The branch
-`epic/EPIC-010a-substance-and-composition` holds ADR-058 and S001–S005 as one
-coherent slice; **nothing here is on `main` yet.**
+**EPIC-018 — Labeling & product information. 🟡 In Progress.**
+Pulled into Now 2026-08-04, after EPIC-010a merged to `main` (PR #18). Phase 2
+is signed off and [ADR-059](../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md)
+is written; the branch is `epic/EPIC-018-labeling-and-product-information`.
 
-**Next into Now is EPIC-018** (top of the table below) — pulled in by the
-founder, one epic at a time, after this branch merges.
+> **A clinical statement is a regulatory fact about a product in a market. A
+> label is an editorial artifact that publishes some of those facts at a point
+> in time.** That one sentence decides where indications live, why labels
+> version on their own clock, and why `ProductDocument` stays generic.
 
 | | |
 |---|---|
-| **ADR-058** | ✅ written 2026-08-03 — substances are shared facts, ingredients are roles |
-| **S001** | ✅ `Substance` — shared and extensible, plus the `CodedConcept` seam and `ReferenceData`'s first write path |
-| **S002** | ✅ `PharmaceuticalProductDetail` — dose form, route, unit of presentation, and `AtcCode`. Its own root; EPIC-017's change-case prediction corrected there |
-| **S003** | ✅ `Ingredient` — composition, `Strength` and the measurement vocabulary. The join that makes *"which products contain substance X?"* answerable |
-| **S004** | ✅ `MedicinalProductComponent` — the recursive tree, `ComponentTree`, depth guard and cycle prevention |
-| **S005** | ✅ capstone — *"which products contain substance X?"* end to end, and the Phase-5 retro |
+| **ADR-059** | ✅ written 2026-08-04 — the label hierarchy, the new `Labeling` context, and how shared clinical qualifiers are modelled |
+| **S001** | ⚪ `GlobalLabel` + `GlobalLabelVersion` — the new context, versioned with dated status and effective dating, linked content |
+| **S002** | ⚪ `LocalLabel` + `Artwork` — per market, derived from a core version |
+| **S003** | ⚪ `Indication` + `Population` + `OtherTherapy` — the shared-qualifier decision lands here |
+| **S004** | ⚪ `Contraindication` + `UndesirableEffect` — population's second and third parents |
+| **S005** | ⚪ `Interaction` + `Interactant` — **the stop-or-continue point** |
+| **S006** | ⚪ capstone — *"which markets is indication X approved in?"*, label workspace, browser proof, retro |
 
-> **It does not deliver IDMP/xEVMPD readiness, and says so in D1.** Vocabularies
-> are seeded behind a `CodedConcept` seam; EDQM, WHO ATC and GSRS/UNII are
-> licensed datasets this repository does not hold. **That limitation is stated
-> up front rather than discovered** — which is the EPIC-019 lesson applied
-> before it can repeat: a vocabulary assumed held, found missing one story short
-> of the epic's reason to exist.
+**Flagged in the plan, not hidden:**
 
-**Flagged in the plan, not hidden:** D2 opens the first write path into
-`ReferenceData`, which is Queries-only today and belongs to EPIC-012.
+- **Nothing links a label version to the statements it publishes**, and that is
+  a decision rather than an omission — the link is five versioning questions
+  (partial publication, wording, withdrawal, history, splits) and ADR-059 §3
+  names them rather than answering them with a foreign key.
+- **`ProductDocument` has no market dimension.** It is scoped to
+  `GlobalProductId`, so a local label's content file sits on the global product
+  and the *label* carries the market meaning. Found in Phase 2, not in
+  implementation.
+- **S005 is where to stop if the epic runs long** — decided now rather than
+  under schedule pressure. Cutting it leaves the DoD unmet and the architecture
+  whole.
 
 ### External prerequisites
 
@@ -151,11 +158,15 @@ about EPIC-019, not a fresh one against EPIC-018.
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 1 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations | ⚪ Not Started · planned | EPIC-017 ✅ |
-| 2 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
-| 3 | **EPIC-010b/c** | the remaining IDMP clusters — **still sketches**, re-cut on pull-in | ⚪ Not Started | EPIC-010a |
+| 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
+| 2 | **EPIC-010b/c** | the remaining IDMP clusters — **still sketches**, re-cut on pull-in | ⚪ Not Started | EPIC-010a ✅ |
 
-> **EPIC-021 is placed second rather than last on purpose.** It is small, its
+> **EPIC-018 left this table on 2026-08-04** and is in [Now](#now). It sat at the
+> top of it from the day the runway was written, and nothing ever displaced the
+> argument that put it there — EPIC-007a and EPIC-019 were both explicitly
+> *"EPIC-018 is next either way"*.
+
+> **EPIC-021 is placed ahead of the IDMP tail on purpose.** It is small, its
 > architecture is settled, and what it guards against is silent: a study renamed
 > after filing produces a package FDA accepts and misfiles. The longer RegOS
 > files sequences without it, the more filings exist for it to be wrong about.

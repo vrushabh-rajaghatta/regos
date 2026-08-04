@@ -1,10 +1,14 @@
 # EPIC-018 — Labeling & product information
 
-**Status:** ⚪ Not Started · **Branch:** `epic/EPIC-018-labeling-and-product-information` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 In Progress · **Branch:** `epic/EPIC-018-labeling-and-product-information` (cut 2026-08-04) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The approved **content** of a product — what it treats, who must not take it, what it does to you, what it clashes with — held as structured data per market rather than as a PDF nobody can query.
 
-> **Phase 1 below is settled.** **Phases 2–3 are a sketch**, written so this epic can be picked up months from now without re-deriving it — they are **not approved design**. Confirm, amend or replace them in the Phase-2 conversation when this epic is pulled into **Now**.
+> **Pulled into Now 2026-08-04.** Phase 1 is unchanged. **Phases 2–3 were a
+> sketch and have been replaced** by the design reviewed and signed off in the
+> Phase-2 conversation, recorded as [ADR-059](../../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md).
+> The sketch's own words are kept in [what the sketch got wrong](#what-the-sketch-got-wrong)
+> rather than quietly overwritten.
 
 ---
 
@@ -60,67 +64,110 @@ A regulatory user can hold the **global label** (the company core data sheet) as
 
 ---
 
-## Phase 2 — Domain design *(sketch — not approved)*
+## Phase 2 — Domain design *(approved 2026-08-04)*
 
-### The interesting modelling problem: shared qualifiers
+The guiding principle, and the reason it is written before the entities:
 
-RIM's `Population` has **four optional parent links** — Indication, Contraindication, Undesirable Effect, Interaction — exactly one of which is set. `Other Therapy` has two. This is a polymorphic-parent shape, and it is the design decision of this epic.
+> **A clinical statement is a regulatory fact about a product in a market. A
+> label is an editorial artifact that publishes some of those facts at a point
+> in time.**
 
-Three options, to be settled on pull-in:
+Full argument in [ADR-059](../../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md).
+This section records *what was decided*; the ADR records *why*.
 
-| Option | Shape | Trade-off |
+### The six decisions
+
+| # | Decision | Settled as |
 |---|---|---|
-| **A — four nullable FKs** | RIM's literal shape | Faithful; needs a check constraint that exactly one is set; every query knows about four columns |
-| **B — owned child per parent** | `Indication.Populations`, `Contraindication.Populations`, … | Cleanest aggregate boundaries, no polymorphism; the `Population` *shape* is shared as a value object, the *table* is not |
-| **C — one table + discriminator** | single `Population` table with parent type + id | Fewest tables; loses referential integrity, which is a poor trade in a regulated record |
+| **D1** | **A new `src/Labeling/` bounded context**, holding *both* clusters | ✅ approved — distinct ubiquitous language, distinct primary users (Medical Writing, not Regulatory Operations). Splitting labels from clinical statements would draw a boundary through one editorial act |
+| **D2** | **`Population` is an owned entity per parent**, with its own identity | ✅ approved — it is added, edited, removed, reordered and approved, which is lifecycle, not a value. Mapping duplication is answered by **EF configuration helpers**; a shared *domain* type is not introduced (ADR-018, ES-014) |
+| **D3** | **Clinical statements hang off `MedicinalProduct`**; no link to a label version | ✅ approved — an indication is approved for a product in a market; the label publishes it. The publication link is five versioning questions in a trench coat, and is deliberately deferred |
+| **D4** | **Versioning copies the `RegulatoryTemplate` *pattern*, not its code** | ✅ approved — reuse the root-plus-version shape, draft/publish/supersede and effective dating; reuse neither its `record struct` id nor its ReferenceData assumptions. Identity from `CommitmentId` (ADR-043) |
+| **D5** | **`LocalLabel` references a `ProductDocumentId`**; `ProductDocument` gains nothing | ✅ approved, with the rationale stated as a rule: **documents remain content storage; Labeling owns the regulatory meaning.** Stated so `ProductDocument` does not accrete market semantics one epic at a time |
+| **D6** | **Domain names and screen words are separate**, and the type never follows the screen | ✅ approved — `GlobalLabel` stays `GlobalLabel` whatever users call it out loud |
 
-*Lean: **B***. It keeps each clinical statement a self-contained aggregate, preserves FK integrity, and shares the shape where sharing actually helps (the value object). RIM's four-nullable-FK shape is a **relational-modelling artifact**, not a domain truth — the domain truth is "a clinical statement applies to a population."
+### One departure from the sketch, arising from D1
 
-### Entities *(abbreviated — full RIM attribute lists in the source model)*
+**RIM's local-label object is called `Labeling`; the aggregate here is
+`LocalLabel`.** A context named `Labeling` containing a type named `Labeling`
+reproduces the namespace-equals-type collision that S000 removed fourteen `using`
+aliases to delete. It also names the pair symmetrically with `GlobalLabel`.
+Mechanical reason, not a modelling one — and the only place this epic departs
+from RIM's noun ([ADR-059](../../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) §2).
 
-**`GlobalLabel`** — root, on **Global Product**. Name, type, version number, status + status date (historical), language(s), responsible department/person, change summary, global trade name phonetic spelling, US suffix, sponsor (inherited), `ContentId`s.
+### Aggregates
 
-**`Labeling`** (local label) — root, on **Medicinal Product**. Language, NDC labeler code, SKUs, translations, version number, `DerivedFromLabelingId?` (RIM: "Local/Regional Label Derived From"), `CountryId`s, `ContentId`s, links to packaged product (seam).
+| Root | Hangs from | Owns |
+|---|---|---|
+| **`GlobalLabel`** | `GlobalProductId` | `GlobalLabelVersion` — number, status + status date, effective from/to, change summary, `ProductDocumentId`s |
+| **`LocalLabel`** | `MedicinalProductId` | `Artwork` — language, data-carrier code, SKUs, version, status + date |
+| **`Indication`** | `MedicinalProductId` | `Population`, `OtherTherapy` |
+| **`Contraindication`** | `MedicinalProductId` | `Population`, `OtherTherapy` |
+| **`UndesirableEffect`** | `MedicinalProductId` | `Population` |
+| **`Interaction`** | `MedicinalProductId` | `Population`, `Interactant` |
 
-**`Artwork`** — child of `Labeling`. Language, data-carrier code, SKUs, version, status + status date.
+`LocalLabel` also carries `DerivedFromGlobalLabelVersionId?` — which core version
+this was written from. That is a **derivation** fact, not a publication one, and
+is exactly the link D3 does *not* defer: it says where the text came from, not
+which approved statements it prints.
 
-**`Indication`** — root, on Medicinal Product. Coded disease/symptom/procedure, full text, language, disease status, comorbidity (multiple), intended effect, duration, category, identifier, status + date. Owns `Population`s and `OtherTherapy`s.
+### Screen words
 
-**`Contraindication`**, **`UndesirableEffect`** (symptom/condition/effect, classification, frequency of occurrence), **`Interaction`** (type, effect, incidence, management, severity) + **`Interactant`** (item, optional `SubstanceId` — seam to EPIC-010).
+Recorded in `docs/domain-model/labeling.md` at S001.
 
-**`Population`** — value object / owned entity: age + age unit, age range low/high, gender, race, physiological condition.
+| Domain type | Screen |
+|---|---|
+| `GlobalLabel` | **Global label** |
+| `LocalLabel` | **Local label** |
+| `UndesirableEffect` | **Side effect** |
+| `Population` | **Who it applies to** |
+| `OtherTherapy` | **Used with** |
 
-### Decisions to settle (Phase 2, on pull-in)
+*Global label* is the plain word, held until real users are asked — Medical
+Affairs says *CCDS*, Regulatory says *Core Data Sheet*. Whichever wins, the type
+does not move.
 
-1. **Population modelling — A, B or C** (above). *Lean B.*
-2. **Context placement.** New `src/Labeling/` vs extending `src/Product/`. *Lean: new context* — the clinical-content cluster is large enough (10 objects) to stand alone, and it depends on Product rather than being part of it.
-3. **Do indications live on the label or on the product?** RIM says both (`Medicinal Product → Indication` child, and `Application → Indication` controlled vocabulary). *Lean: on the market-local product*, with labels referencing them — an indication is approved for a product in a market, and appears *in* the label.
-4. **Coded values.** Every clinical field is a RIM `Name/Value Pair` (code + display). Model a `CodedConcept` value object once (`system`, `code`, `display`) and reuse it everywhere, so swapping a seed list for real MedDRA later touches loading, not the model.
-5. **Versioning.** `GlobalLabel` is versioned with historical status; `Labeling` has a version number. *Lean: reuse the `RegulatoryTemplate`/`RegulatoryTemplateVersion` pattern* — it already solves draft → publish → freeze with effective dating, and this is the same problem.
+### What the sketch got wrong
+
+Kept rather than overwritten, because a corrected prediction is worth more than
+a tidy document.
+
+| The sketch said | What changed it |
+|---|---|
+| *"Model a `CodedConcept` value object once (`system`, `code`, `display`) and reuse it everywhere"* — listed as decision 4 | **Already built.** EPIC-010a S001 put it in `ReferenceData.Domain` per [ADR-058](../../adr/ADR-058-substances-are-shared-facts-ingredients-are-roles.md) §3. EPIC-018 inherits it — and inherits its trap: an owned coded value is tracked against exactly one owner, so every lookup returns a fresh instance |
+| *"`Population` — value object / owned entity"* | **Entity, decided.** The sketch left it either/or; lifecycle settles it |
+| *"`Labeling` (local label) — root, on Medicinal Product"* | **Renamed `LocalLabel`**, for the namespace collision above |
+| *"links to `Content`"* — treated as a solved seam | **`ProductDocument` is scoped to `GlobalProductId` and has no market dimension.** Found during Phase 2, not during implementation. D5 is the answer, and it is a rule about ownership of meaning rather than a schema change |
 
 ### Change-case analysis
 
 | Likely future change | Probability | How the design accommodates it |
 |---|---|---|
-| Real terminology (MedDRA/SNOMED) replaces the seed list | **High** | `CodedConcept` carries a `system` from day one |
-| Cross-market divergence reporting (EPIC-011) | High | Structured per-market data is exactly the input |
-| Label change control / approval (EPIC-008) | High | Versioned + dated status already; the workflow attaches |
+| Real terminology (MedDRA/SNOMED/ICD) replaces the seed list | **High** | `CodedConcept.System` carries `regos-internal` from day one; the swap is a data migration |
+| Someone asks which statements a label version printed | **High** | Nothing points that way yet, so the answer is additive. ADR-059 §3 names the five questions it must answer first |
+| Label change control / approval (EPIC-008) | High | Versioned with dated status already; the workflow attaches to it |
+| Cross-market divergence reporting (EPIC-011) | High | Per-market structured statements are exactly the input |
 | SPL / PLR export (EPIC-007) | Medium | Structured sections map to SPL sections |
+| A fifth statement type needs `Population` | Medium | Add the owned collection to the new root — no shared-table migration. A fifth is also the trigger to re-ask ADR-018's question |
 | Artwork tied to specific packaging components | Medium | Nullable seam to `Packaging` (EPIC-010) |
-| A population qualifier needed on a new statement type | Medium | Option B: add the owned collection to the new aggregate — no shared-table migration |
-| Indications approved on different dates per market | Medium | Indication lives on the market-local product; RIM even has "approval date for each indication in a country" on Application |
+| Indications approved on different dates per market | Medium | The statement already lives on the market-local tier |
 
 ---
 
-## Phase 3 — Candidate stories *(sketch — re-slice on pull-in)*
+## Phase 3 — Stories
 
-| # | Story | Slice |
-|---|---|---|
-| **S001** | **`GlobalLabel`** — versioned, dated status, linked content, on the global product | domain → persistence → API → UI → test |
-| **S002** | **`Labeling`** (local) + **`Artwork`** — per market, derived-from link, own version and status | full slice |
-| **S003** | **`Indication`** + **`Population`** (the shared-qualifier decision lands here) + `OtherTherapy` | full slice |
-| **S004** | **`Contraindication`** + **`UndesirableEffect`** — reusing the population shape | full slice |
-| **S005** | **`Interaction`** + **`Interactant`** | full slice |
-| **S006** | **Capstone** — label workspace on the market view, *"which markets is this indication approved in?"*, browser proof, ADR, retro | UI → test → docs |
+| # | Story | Slice | Status |
+|---|---|---|---|
+| **S001** | **`GlobalLabel` + `GlobalLabelVersion`** — the new context, versioned with dated status and effective dating, linked content, on the global product | context → domain → persistence → API → UI → browser proof | ⚪ |
+| **S002** | **`LocalLabel` + `Artwork`** — per market, derived-from link to a core version, own language, version and status | full slice | ⚪ |
+| **S003** | **`Indication` + `Population` + `OtherTherapy`** — D2 lands here, once, on one parent | full slice | ⚪ |
+| **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question is asked out loud | full slice | ⚪ |
+| **S005** | **`Interaction` + `Interactant`** — **the stop-or-continue point** | full slice | ⚪ |
+| **S006** | **Capstone** — *"which markets is indication X approved in?"* end to end, label workspace on the market view, browser proof, retro | query → UI → test → docs | ⚪ |
 
-**ADR to write:** *The label hierarchy, and how shared clinical qualifiers are modelled* — next free number.
+> **S005 is where to stop if the epic runs long**, and that is decided now rather
+> than under pressure. Nothing else depends on interactions; every story before
+> it establishes the backbone. Cutting it leaves the Definition of Done unmet and
+> the architecture whole — which is the better of the two failures available.
+
+**ADR:** [ADR-059](../../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) — written before S001, as canon requires for a new bounded context.
