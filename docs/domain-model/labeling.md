@@ -203,6 +203,25 @@ seam rather than a second packaging model.
 
 ---
 
+# Three kinds of change, kept apart
+
+The context has now met all three, one story at a time, and keeping them
+distinct is what will make it age well.
+
+| What changes | How it is modelled | Because |
+| --- | --- | --- |
+| **A controlled document** | versions / revisions | the wording is the regulated object, and it changes while the position behind it stands |
+| **A regulatory decision** | append-only dated history | approved, expanded, restricted, withdrawn are successive *decisions*, not successive editions |
+| **A clinical concept** | a code | *Type II diabetes mellitus*, *Diabète sucré de type 2* and *Diabetes mellitus Typ 2* are one thing, and only a code says so |
+
+**The discriminator between the first two:** *is the wording the regulated
+object, or is the approval the regulated object?* For a label, wording is the
+artifact. For an indication, approval is the artifact, and the wording is how
+the label communicates it. That is why `LocalLabelRevision` exists and
+`IndicationRevision` does not.
+
+---
+
 # The boundary with `ProductDocument`
 
 > **Documents remain content storage. Labeling owns the regulatory meaning.**
@@ -234,6 +253,34 @@ filter shapes — fail-closed on `TenantId`.
 own.** There is deliberately no `GlobalLabelVersions` set on `RegOSDbContext`:
 every read of a version starts at `GlobalLabels` and reaches versions through
 it. A read that began at the version table would cross every tenant.
+
+---
+
+# `Indication`
+
+What a product is approved to treat in one market. Hangs off
+`MedicinalProductId`; nothing points at a label version (ADR-059 §3).
+
+**A dated history of decisions, not revisions.** `Approved`, `Expanded`,
+`Restricted`, `Withdrawn` are successive regulatory decisions, and the history
+is append-only — an indication must not silently *be* withdrawn, it must have
+*become* withdrawn on a date. There is no transition table: restricted, expanded
+again, withdrawn years later is a coherent sequence, and encoding one company's
+history as universal law is what `RegistrationLifecycle`'s own governing
+principle forbids.
+
+**The condition is coded; the wording is not.** The code is the join key that
+makes the same authorisation recognisable in Japan and France; `LabelText` is
+what this market's label says. `RestateLabelText` leaves the status history
+untouched, which is the whole reason this aggregate has no revisions.
+
+`Population` is an owned entity with identity, and `AmendPopulation` is what
+earns it: correcting 12+ to 6+ keeps the same id, because it is the same
+qualifier. `RemovePopulation` — not retire; a qualifier has no lifecycle, and the
+regulatory history lives in the status entries.
+
+`OtherTherapy.Therapy` is free text: it may be a substance RegOS knows, a drug
+class it does not, or a procedure that is no product at all.
 
 ---
 

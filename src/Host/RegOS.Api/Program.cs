@@ -54,6 +54,7 @@ using RegOS.Api.Endpoints.Substances;
 using RegOS.Api.Endpoints.Presentations;
 using RegOS.Api.Endpoints.Components;
 using RegOS.Api.Endpoints.GlobalLabels;
+using RegOS.Api.Endpoints.Indications;
 using RegOS.Api.Endpoints.LocalLabels;
 using RegOS.Labeling.Application;
 using RegOS.Labeling.Infrastructure;
@@ -299,6 +300,17 @@ localLabels.MapStartLocalLabelRevision();
 localLabels.MapPrepareLocalLabelRevision();
 localLabels.MapPublishLocalLabelRevision();
 localLabels.MapDiscardLocalLabelDraft();
+
+var indications = app.MapGroup("").WithTags("Indications");
+// Before the rest: /api/indications/vocabulary must not be read as an
+// /api/indications/{id} that happens to be spelled "vocabulary".
+indications.MapGetClinicalVocabulary();
+indications.MapListIndications();
+indications.MapRecordIndication();
+indications.MapRestateIndicationText();
+indications.MapRecordIndicationDecision();
+indications.MapIndicationPopulations();
+indications.MapIndicationTherapies();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

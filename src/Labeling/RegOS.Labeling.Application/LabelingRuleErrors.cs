@@ -12,6 +12,9 @@ public static class LabelingRuleErrors
     public const string LocalLabelDoesNotExist =
         "Local label does not exist.";
 
+    public const string IndicationDoesNotExist =
+        "Indication does not exist.";
+
     public const string GlobalProductDoesNotExist =
         "Product does not exist.";
 

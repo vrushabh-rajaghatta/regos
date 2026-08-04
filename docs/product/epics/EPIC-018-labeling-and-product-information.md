@@ -160,7 +160,7 @@ a tidy document.
 |---|---|---|---|
 | **S001** | **`GlobalLabel` + `GlobalLabelVersion`** — the new context, versioned with dated status and effective dating, linked content, on the global product | context → domain → persistence → API → UI → browser proof | ✅ |
 | **S002** | **`LocalLabel` + `LocalLabelRevision`** — the market's own controlled document, its revision history, and artwork as a type rather than an aggregate | full slice | ✅ |
-| **S003** | **`Indication` + `Population` + `OtherTherapy`** — D2 lands here, once, on one parent | full slice | ⚪ |
+| **S003** | **`Indication` + `Population` + `OtherTherapy`** — the authorisation, its dated decision history, and the qualifier that is corrected in place | full slice | ✅ |
 | **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question is asked out loud | full slice | ⚪ |
 | **S005** | **`Interaction` + `Interactant`** — **the stop-or-continue point** | full slice | ⚪ |
 | **S006** | **Capstone** — *"which markets is indication X approved in?"* end to end, label workspace on the market view, browser proof, retro | query → UI → test → docs | ⚪ |
@@ -293,7 +293,49 @@ settles that, whatever else it holds.
 
 ---
 
-## S003 — the criterion it will be reviewed against
+## S003 — what was decided while building it, and how the criterion came out
+
+> **The criterion: does the aggregate grow operations, or only a collection?**
+
+**It grew `AmendPopulation`, and that is the answer.** Correcting a band from
+12+ to 6+ keeps the same `PopulationId` — asserted in the domain tests and again
+in the browser proof, where the row count stays at one through the correction.
+Remove-and-re-add would have said the label once applied to a population it
+never applied to. **D2 stands: `Population` is an entity.**
+
+**One word of the criterion did not survive.** It asked for `Retire`, and the
+operation is `Remove`. A population qualifier has no lifecycle of its own — it
+is part of the statement as it currently stands, and the regulatory history
+lives in `StatusHistory` where the decisions are. A qualifier recorded in error
+is a mistake to correct, not a fact to preserve. Recorded because a criterion
+half-met is worth more said than smoothed over.
+
+| Decision | Why |
+|---|---|
+| **`ClinicalConditionVocabulary`, not `ClinicalVocabulary`** | Contraindications, adverse reactions and physiological conditions are not obviously one list, and the broader name would have been stretched to hold them by whoever needed one first |
+| **The condition is coded and the text is not** | The code is what makes the authorisation comparable across markets; the text is what this market's label says. Same split as `Ingredient`: a coded substance, a strength stated beside it |
+| **`Gender` and `AgeUnit` are coded, not enums** | Nothing branches on either. The "does a rule branch on it?" test, applied a fourth time |
+| **An age bound requires a unit, and a unit requires a bound** | *2 to 12* could be months or years, and a unit with no age says nothing at all. Both refusals name the ambiguity rather than the field |
+| **`OtherTherapy.Therapy` is free text** | It may be a substance RegOS knows, a drug class it does not, or a procedure that is no product at all. A required `SubstanceId` would make two of those three unrecordable — and *"which indications name metformin?"* arrives as an optional link **beside** the text, never instead of it |
+| **`RestateLabelText` is not a decision** | Wording and authorisation move on different clocks, which is the whole reason this aggregate has no revisions. Restating the text leaves the status history untouched, and a test says so |
+
+### What S006 may and may not claim
+
+> **"Demonstrates cross-market coded indication queries using the bundled
+> demonstration vocabulary."**
+
+Not *"supports clinical indication search"*. RegOS ships eight conditions, all
+`regos-internal`, and nobody's real indication is among them. The architecture
+supports a licensed terminology; today's vocabulary exists to exercise the model.
+Stating the narrower claim is the difference between *"we intentionally shipped a
+minimal controlled vocabulary"* and *"we implemented this incorrectly"*.
+
+**Verified:** 19/19 suites, 0 failed, **1378 tests** · **108/108 browser specs**
+· CORS reverted and confirmed absent from `src/`.
+
+---
+
+## S003 — the criterion it was reviewed against
 
 S003 is where D2's original decision — **`Population` is an owned entity, not a
 value object** — gets tested the way S002 tested `LocalLabelRevision`.

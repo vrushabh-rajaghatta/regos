@@ -306,6 +306,112 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("GlobalLabelVersions", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.Indication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LabelText")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("MedicinalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CurrentStatus");
+
+                    b.HasIndex("MedicinalProductId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Indications", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.IndicationStatusEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("IndicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateOnly>("OccurredOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("RecordedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IndicationId", "OccurredOn");
+
+                    b.ToTable("IndicationStatusHistory", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.OtherTherapy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("IndicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Therapy")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IndicationId");
+
+                    b.ToTable("IndicationOtherTherapies", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.Population", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("AgeHigh")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("AgeLow")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("IndicationId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IndicationId");
+
+                    b.ToTable("IndicationPopulations", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.LocalLabels.LocalLabel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2628,6 +2734,212 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.Indication", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("MedicinalProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Condition", b1 =>
+                        {
+                            b1.Property<Guid>("IndicationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("ConditionCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("ConditionDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ConditionSystem");
+
+                            b1.HasKey("IndicationId");
+
+                            b1.HasIndex("Code");
+
+                            b1.ToTable("Indications");
+
+                            b1.WithOwner()
+                                .HasForeignKey("IndicationId");
+                        });
+
+                    b.Navigation("Condition")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.IndicationStatusEntry", b =>
+                {
+                    b.HasOne("RegOS.Labeling.Domain.Aggregates.Indications.Indication", null)
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("IndicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.OtherTherapy", b =>
+                {
+                    b.HasOne("RegOS.Labeling.Domain.Aggregates.Indications.Indication", null)
+                        .WithMany("OtherTherapies")
+                        .HasForeignKey("IndicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Relationship", b1 =>
+                        {
+                            b1.Property<Guid>("OtherTherapyId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("RelationshipCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("RelationshipDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("RelationshipSystem");
+
+                            b1.HasKey("OtherTherapyId");
+
+                            b1.ToTable("IndicationOtherTherapies");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OtherTherapyId");
+                        });
+
+                    b.Navigation("Relationship")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.Population", b =>
+                {
+                    b.HasOne("RegOS.Labeling.Domain.Aggregates.Indications.Indication", null)
+                        .WithMany("Populations")
+                        .HasForeignKey("IndicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "AgeUnit", b1 =>
+                        {
+                            b1.Property<Guid>("PopulationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("AgeUnitCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("AgeUnitDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("AgeUnitSystem");
+
+                            b1.HasKey("PopulationId");
+
+                            b1.ToTable("IndicationPopulations");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PopulationId");
+                        });
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Gender", b1 =>
+                        {
+                            b1.Property<Guid>("PopulationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("GenderCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("GenderDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("GenderSystem");
+
+                            b1.HasKey("PopulationId");
+
+                            b1.ToTable("IndicationPopulations");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PopulationId");
+                        });
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "PhysiologicalCondition", b1 =>
+                        {
+                            b1.Property<Guid>("PopulationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("PhysiologicalConditionCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("PhysiologicalConditionDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("PhysiologicalConditionSystem");
+
+                            b1.HasKey("PopulationId");
+
+                            b1.ToTable("IndicationPopulations");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PopulationId");
+                        });
+
+                    b.Navigation("AgeUnit");
+
+                    b.Navigation("Gender")
+                        .IsRequired();
+
+                    b.Navigation("PhysiologicalCondition");
+                });
+
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.LocalLabels.LocalLabel", b =>
                 {
                     b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
@@ -3681,6 +3993,15 @@ namespace RegOS.Persistence.Migrations
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.GlobalLabels.GlobalLabel", b =>
                 {
                     b.Navigation("Versions");
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.Indication", b =>
+                {
+                    b.Navigation("OtherTherapies");
+
+                    b.Navigation("Populations");
+
+                    b.Navigation("StatusHistory");
                 });
 
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.LocalLabels.LocalLabel", b =>

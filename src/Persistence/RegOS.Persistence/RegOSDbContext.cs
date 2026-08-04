@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RegOS.Labeling.Domain.Aggregates.GlobalLabels;
+using RegOS.Labeling.Domain.Aggregates.Indications;
 using RegOS.Labeling.Domain.Aggregates.LocalLabels;
 using RegOS.Product.Domain.Product;
 
@@ -150,6 +151,17 @@ public sealed class RegOSDbContext : DbContext
     /// </remarks>
     public DbSet<LocalLabel> LocalLabels =>
         Set<LocalLabel>();
+
+    /// <summary>
+    /// What a product is approved to treat in one market — a regulatory fact,
+    /// not an editorial artifact (ADR-059).
+    /// </summary>
+    /// <remarks>
+    /// No set for populations, therapies or status entries: none carries a
+    /// <c>TenantId</c>, so every read of one starts at this filtered root.
+    /// </remarks>
+    public DbSet<Indication> Indications =>
+        Set<Indication>();
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
@@ -393,6 +405,9 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<LocalLabel>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<Indication>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

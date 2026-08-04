@@ -6,7 +6,16 @@ using RegOS.Labeling.Application.Commands.DiscardLocalLabelDraft;
 using RegOS.Labeling.Application.Commands.PrepareLocalLabelRevision;
 using RegOS.Labeling.Application.Commands.PublishLocalLabelRevision;
 using RegOS.Labeling.Application.Commands.StartLocalLabelRevision;
+using RegOS.Labeling.Application.Commands.RecordIndication;
+using RegOS.Labeling.Application.Commands.RestateIndicationText;
+using RegOS.Labeling.Application.Commands.RecordIndicationDecision;
+using RegOS.Labeling.Application.Commands.AddIndicationPopulation;
+using RegOS.Labeling.Application.Commands.AmendIndicationPopulation;
+using RegOS.Labeling.Application.Commands.RemoveIndicationPopulation;
+using RegOS.Labeling.Application.Commands.AddIndicationTherapy;
+using RegOS.Labeling.Application.Commands.RemoveIndicationTherapy;
 using RegOS.Labeling.Application.Queries.ListCoreVersionsForProduct;
+using RegOS.Labeling.Application.Queries.ListIndications;
 using RegOS.Labeling.Application.Queries.ListLocalLabelRevisions;
 using RegOS.Labeling.Application.Queries.ListLocalLabels;
 using RegOS.Labeling.Application.Commands.CreateGlobalLabel;
@@ -52,6 +61,24 @@ public static class DependencyInjection
         services.AddScoped<ListLocalLabelRevisionsHandler>();
 
         services.AddScoped<ListCoreVersionsForProductHandler>();
+
+        services.AddScoped<RecordIndicationHandler>();
+
+        services.AddScoped<RestateIndicationTextHandler>();
+
+        services.AddScoped<RecordIndicationDecisionHandler>();
+
+        services.AddScoped<AddIndicationPopulationHandler>();
+
+        services.AddScoped<AmendIndicationPopulationHandler>();
+
+        services.AddScoped<RemoveIndicationPopulationHandler>();
+
+        services.AddScoped<AddIndicationTherapyHandler>();
+
+        services.AddScoped<RemoveIndicationTherapyHandler>();
+
+        services.AddScoped<ListIndicationsHandler>();
 
         return services;
     }

@@ -9,6 +9,7 @@ import { CreateRegistrationDialog } from "../../registrations/components/CreateR
 import { RegistrationExpiry } from "../../registrations/components/RegistrationExpiry";
 import { RegistrationStatusBadge } from "../../registrations/components/RegistrationStatusBadge";
 import { useProductRegistrations } from "../../registrations/hooks/useProductRegistrations";
+import { MarketIndications } from "@/features/regulatory/indications/components/MarketIndications";
 import { MarketLabels } from "@/features/regulatory/labels/components/MarketLabels";
 
 import { AddTradeNameDialog } from "../components/AddTradeNameDialog";
@@ -129,6 +130,11 @@ export function MedicinalProductPage() {
         globalProductId={globalProductId ?? ""}
         medicinalProductId={market.medicinalProductId}
       />
+
+      {/* After the labels, because it answers a different question about the
+          same market: the labels are what we publish, this is what the
+          authority authorised (ADR-059). */}
+      <MarketIndications medicinalProductId={market.medicinalProductId} />
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">
