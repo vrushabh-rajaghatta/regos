@@ -293,6 +293,25 @@ settles that, whatever else it holds.
 
 ---
 
+## S003 — the criterion it will be reviewed against
+
+S003 is where D2's original decision — **`Population` is an owned entity, not a
+value object** — gets tested the way S002 tested `LocalLabelRevision`.
+
+> **The test is whether the aggregate naturally develops operations, not whether
+> it holds a collection.**
+
+| If `Indication` grows | Then |
+|---|---|
+| `AddPopulation`, `AmendPopulation`, `RetirePopulation` | the entity decision was right: a qualifier that is corrected in place has identity |
+| only `AddPopulation`, with amendment meaning remove-and-re-add | it is a value object, and the decision should be reversed while it is cheap |
+
+Build it **once, on one parent**. The second and third uses arrive in S004, and
+that is when [ADR-018](../../adr/ADR-018-rule-of-three.md)'s question gets asked
+out loud — not before.
+
+---
+
 ## S002 — what was decided while building it
 
 | Decision | Why |
