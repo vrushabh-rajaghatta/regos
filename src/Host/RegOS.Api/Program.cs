@@ -51,6 +51,7 @@ using RegOS.Api.Endpoints.Correspondence;
 using RegOS.Api.Endpoints.Registrations;
 using RegOS.Api.Endpoints.Studies;
 using RegOS.Api.Endpoints.Substances;
+using RegOS.Api.Endpoints.Presentations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -244,6 +245,15 @@ medicinalProducts.MapRemoveTradeName();
 medicinalProducts.MapChangeMarketStatus();
 medicinalProducts.MapActivateMedicinalProduct();
 medicinalProducts.MapDeactivateMedicinalProduct();
+medicinalProducts.MapRecordAtcCode();
+
+var presentations = app.MapGroup("").WithTags("Presentations");
+// Before the rest: /api/presentations/vocabulary must not be read as a
+// /api/presentations/{id} that happens to be spelled "vocabulary".
+presentations.MapGetPharmaceuticalVocabulary();
+presentations.MapListPresentations();
+presentations.MapAddPresentation();
+presentations.MapRestatePresentation();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

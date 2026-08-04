@@ -45,6 +45,7 @@ public sealed class GetMedicinalProductHandler
                 market.Status,
                 market.StatusDate,
                 market.CurrentMarketStatus,
+                market.AtcCode,
                 TradeNames = market.TradeNames
                     .OrderBy(name => name.Name)
                     .Select(name => new
@@ -89,6 +90,7 @@ public sealed class GetMedicinalProductHandler
             row.Status.ToString(),
             row.StatusDate,
             row.CurrentMarketStatus.ToString(),
+            row.AtcCode?.Value,
             history
                 .Where(entry => entry.Status == Domain.Product.MarketStatus.Launched)
                 .Select(entry => (DateOnly?)entry.OccurredOn)

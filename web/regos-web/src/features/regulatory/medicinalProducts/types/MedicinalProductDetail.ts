@@ -29,6 +29,11 @@ export interface MedicinalProductDetail {
   statusDate: string;
   /** Whether the product is on sale — a different question from `status`. */
   marketStatus: string;
+  /**
+   * As the tenant supplied it, and not verified — RegOS holds no WHO ATC index.
+   * A plain string because that is the whole of the claim.
+   */
+  atcCode: string | null;
   /** Derived from the history, never stored. */
   launchedOn: string | null;
   tradeNames: TradeName[];

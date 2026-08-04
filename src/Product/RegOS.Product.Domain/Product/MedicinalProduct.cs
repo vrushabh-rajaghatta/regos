@@ -112,6 +112,25 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
     public IReadOnlyCollection<MarketStatusEntry> MarketStatusHistory
         => _marketStatusHistory.AsReadOnly();
 
+    /// <summary>
+    /// How this product is classified therapeutically, as the tenant supplied
+    /// it. Null is ordinary — a market presence exists long before anyone
+    /// records a classification.
+    /// </summary>
+    /// <remarks>
+    /// <b>A single column, per EPIC-017's change-case analysis</b> — <em>"single
+    /// column now; owned collection later, no data loss"</em>. It is here rather
+    /// than on <see cref="GlobalProduct"/> because that is where that analysis
+    /// put it, and because a classification can legitimately differ between
+    /// jurisdictions.
+    /// <para>
+    /// See <see cref="AtcCode"/> for why it is not a <c>CodedConcept</c>: RegOS
+    /// holds no WHO ATC licence, so the only claim it can honestly make is that
+    /// the tenant supplied this.
+    /// </para>
+    /// </remarks>
+    public AtcCode? AtcCode { get; private set; }
+
     /// <param name="statusDate">
     /// The business date this market-local record came into being — supplied,
     /// never read from the clock, so a migrated portfolio can state when the
@@ -353,5 +372,20 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
                 MedicinalProductErrors.TradeNameNotFound);
 
         _tradeNames.Remove(tradeName);
+    }
+
+    /// <summary>
+    /// Records how this product is classified, or clears the classification.
+    /// </summary>
+    /// <remarks>
+    /// <b>Set and clear are one method, not two.</b> An ATC code is a single
+    /// current fact with no history and no lifecycle — unlike market status,
+    /// which is why that one appends and this one overwrites. A blank value
+    /// means <em>"we do not have this"</em>, which is a legitimate correction
+    /// rather than a separate act needing its own verb.
+    /// </remarks>
+    public void RecordAtcCode(string? atcCode)
+    {
+        AtcCode = AtcCode.CreateOrNull(atcCode);
     }
 }

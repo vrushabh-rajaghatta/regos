@@ -5,9 +5,13 @@ using RegOS.Product.Application.Commands.ArchiveProduct;
 using RegOS.Product.Application.Commands.ChangeMarketStatus;
 using RegOS.Product.Application.Commands.CreateMedicinalProduct;
 using RegOS.Product.Application.Commands.DeactivateMedicinalProduct;
+using RegOS.Product.Application.Commands.AddPresentation;
+using RegOS.Product.Application.Commands.RecordAtcCode;
 using RegOS.Product.Application.Commands.RegisterProduct;
 using RegOS.Product.Application.Commands.RemoveTradeName;
+using RegOS.Product.Application.Commands.RestatePresentation;
 using RegOS.Product.Application.Commands.UpdateProduct;
+using RegOS.Product.Application.Queries.ListPresentations;
 using RegOS.Product.Application.Queries.GetProduct;
 using RegOS.Product.Application.Queries.GetMedicinalProduct;
 using RegOS.Product.Application.Queries.ListMedicinalProducts;
@@ -34,6 +38,11 @@ public static class ProductApplicationServiceCollectionExtensions
         services.AddScoped<ChangeMarketStatusHandler>();
         services.AddScoped<ActivateMedicinalProductHandler>();
         services.AddScoped<DeactivateMedicinalProductHandler>();
+        services.AddScoped<RecordAtcCodeHandler>();
+
+        services.AddScoped<AddPresentationHandler>();
+        services.AddScoped<RestatePresentationHandler>();
+        services.AddScoped<ListPresentationsHandler>();
 
         return services;
     }

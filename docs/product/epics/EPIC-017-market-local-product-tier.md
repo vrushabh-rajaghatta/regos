@@ -215,13 +215,31 @@ and meeting statuses; **that** is where the shared pattern earns extraction.
 
 | Likely future change | Probability | How the design accommodates it |
 |---|---|---|
-| Strengths, dosage forms, presentations (EPIC-010) | **High** | Children of `MedicinalProduct` — the tier is precisely what makes them placeable |
+| Strengths, dosage forms, presentations (EPIC-010) | **High** | ~~Children of `MedicinalProduct`~~ — **the tier was right, the shape was not. See the note below.** |
 | Local labels (EPIC-018) | **High** | Hangs off this tier; blocked without it |
 | `Product Family` tier added above | Medium | Inserting **above** a root is one nullable FK — deliberately why it is deferred |
 | Several medicinal products per (product, country) | Medium | No uniqueness constraint on the pair — same reasoning as EPIC-005 decision 4 |
 | ATC codes become multiple | Medium | Single column now; owned collection later, no data loss |
 | A product is marketed under different names in one country over time | Medium | Trade names are child rows; add effective dating if it becomes real |
 | MAH transfer | Medium | Holder is a field, not an ownership edge (EPIC-005 decision 5) |
+
+> ⚠️ **Corrected 2026-08-04 by [EPIC-010a](EPIC-010a-substance-and-composition.md) S002.**
+> The first row predicted presentations would be **children** of
+> `MedicinalProduct`. They are not: `PharmaceuticalProductDetail` is its **own
+> root**. The prediction was made before composition was designed, and what it
+> could not see is that a presentation owns `Ingredient` — so as a child it
+> would drag composition into the market aggregate, and every trade-name edit
+> would load and re-save it.
+>
+> **The deciding argument is the consistency boundary, not depth.** Composition
+> changes through a variation; a market presence changes through launches,
+> withdrawals, names and licences. Those are different clocks — the same
+> argument this epic used to keep `MedicinalProduct` apart from `Registration`,
+> applied one tier down.
+>
+> **The tier itself was right, and that is the row's real claim**: without it
+> there is nothing for a presentation to belong to. The ATC row below is
+> unchanged and shipped exactly as written — a single nullable column.
 
 ---
 

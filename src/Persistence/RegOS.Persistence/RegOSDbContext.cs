@@ -107,6 +107,14 @@ public sealed class RegOSDbContext : DbContext
     public DbSet<MedicinalProduct> MedicinalProducts =>
         Set<MedicinalProduct>();
 
+    /// <summary>
+    /// What a product physically is in one market. Screen word:
+    /// <b>Presentation</b>. Its own root rather than a child of the market —
+    /// composition and commerce move on different clocks (EPIC-010a S002).
+    /// </summary>
+    public DbSet<PharmaceuticalProductDetail> PharmaceuticalProductDetails =>
+        Set<PharmaceuticalProductDetail>();
+
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
 
@@ -291,7 +299,7 @@ public sealed class RegOSDbContext : DbContext
     /// <list type="number">
     /// <item><b>Fail-closed tenant-owned</b> — <c>x.TenantId == CurrentTenant</c>.
     /// The tenant owns the data. <c>Users</c>, <c>Products</c>,
-    /// <c>MedicinalProducts</c>,
+    /// <c>MedicinalProducts</c>, <c>PharmaceuticalProductDetails</c>,
     /// <c>RegulatoryApplications</c>, <c>Submissions</c>, <c>ProductDocuments</c>,
     /// <c>Registrations</c>, <c>Organizations</c>, <c>OrganizationSites</c>,
     /// <c>Contacts</c>, <c>OrganizationDivisions</c>.</item>
@@ -333,6 +341,9 @@ public sealed class RegOSDbContext : DbContext
         // a filter that reached through a parent would not apply to the
         // registration joins that are its hottest path.
         modelBuilder.Entity<MedicinalProduct>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<PharmaceuticalProductDetail>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

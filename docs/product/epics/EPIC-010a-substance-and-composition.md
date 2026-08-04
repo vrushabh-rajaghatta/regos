@@ -257,12 +257,25 @@ belongs on the first mutation that exists, which is EPIC-012's.
 an acquisition path rather than a placeholder; **every seeded row leaves it
 null**, which is the claim ADR-058 §6 requires.
 
-### S002 — `PharmaceuticalProductDetail`, strength and route
-As a **regulatory user**, I want to record what a product is in its market — dose form, route, strength — so that the market view says more than a name.
-- [ ] `PharmaceuticalProductDetail` on `MedicinalProduct`
-- [ ] `Strength` value object (D4); seeded dose-form, route and unit vocabulary
-- [ ] `RoutesOfAdministration` as an owned collection (D6)
-- [ ] Presentation panel on the market view
+### S002 — `PharmaceuticalProductDetail`, dose form and route ✅ 2026-08-04
+As a **regulatory user**, I want to record what a product is in its market — dose form, route, unit of presentation — so that the market view says more than a name.
+- [x] `PharmaceuticalProductDetail` as its own root, hanging off `MedicinalProduct`
+- [x] Seeded dose-form, route and unit-of-presentation vocabulary
+- [x] `RoutesOfAdministration` as an owned collection (D6)
+- [x] Presentation panel on the market view
+- [x] `AtcCode` on `MedicinalProduct`, as a value object over a string
+
+**Three decisions, taken in the Phase-3 conversation of 2026-08-04.**
+
+| | Decision | Why |
+|---|---|---|
+| **Root, not child** | `PharmaceuticalProductDetail` is its own aggregate | Composition and commerce move on different clocks. As a child it would drag `Ingredient` into the market aggregate, so every trade-name edit would load and re-save composition — and each load is one more `Include` to remember, which EPIC-019 has already paid for once. **This supersedes EPIC-017's change-case prediction**, and a correction note is recorded there. |
+| **Several per market** | No uniqueness on `(MedicinalProductId, Name)` | 10 mg, 20 mg and 40 mg tablets are one commercial presence. Forcing 1:1 would make a tenant duplicate the whole market — its trade names, its history, its licences — to record the second strength. |
+| **`Strength` moved to S003** | Not built here | The checklist above originally placed the value object in S002, but the entity table puts the field on `Ingredient`. S002 would have shipped a value object nothing constructs — the defect S001 declined for `IsActive`. The vocabularies do not overlap: unit of presentation counts articles, strength units measure quantity. |
+
+**`Version` not built.** RIM carries one; nothing writes or reads it. Recorded as a seam.
+
+**`AtcCode` is a value object over a string, not a `CodedConcept`** (founder refinement). `("who-atc", …)` would assert WHO named it, and RegOS holds no WHO ATC licence to check that against. The type validates the *shape* — the five-level alternation, partial codes accepted — and derives `Levels` so *"show me every analgesic"* is a prefix match. It cannot validate membership, and its refusal says so.
 
 ### S003 — `Ingredient` — composition
 As a **regulatory user**, I want to state which substances a product contains and in what role, so that composition is data rather than a PDF.

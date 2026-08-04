@@ -14,6 +14,7 @@ using RegOS.ReferenceData.Application.Queries.Organization.ListContactRoles;
 using RegOS.ReferenceData.Application.Queries.Organization.ListIdentifierSchemes;
 using RegOS.ReferenceData.Application.Queries.Substances.ListSubstances;
 using RegOS.ReferenceData.Application.Queries.Substances.GetSubstanceVocabulary;
+using RegOS.ReferenceData.Application.Queries.Presentations.GetPharmaceuticalVocabulary;
 using RegOS.ReferenceData.Application.Commands.CreateSubstance;
 
 namespace RegOS.ReferenceData.Application;
@@ -40,6 +41,7 @@ public static class DependencyInjection
 
         services.AddScoped<ListSubstancesHandler>();
         services.AddScoped<GetSubstanceVocabularyHandler>();
+        services.AddScoped<GetPharmaceuticalVocabularyHandler>();
 
         // The context's first command handler (ADR-058 §5). Everything above
         // it reads; this one writes, and only one thing — a tenant-owned

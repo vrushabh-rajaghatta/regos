@@ -27,6 +27,10 @@ export function MarketOverview({
     { label: "Launched on", value: market.launchedOn ?? "—" },
     { label: "Trade names", value: String(market.tradeNames.length) },
     { label: "Authorisations", value: String(registrationCount) },
+    // Recorded as given, not verified — RegOS holds no WHO ATC index. An em
+    // dash rather than "Unknown": nobody has said, which is different from
+    // having looked and found nothing.
+    { label: "ATC code", value: market.atcCode ?? "—" },
     {
       label: "Record",
       value: market.status === "Active" ? "In use" : "Retired",
