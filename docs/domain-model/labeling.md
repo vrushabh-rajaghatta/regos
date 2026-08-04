@@ -208,11 +208,16 @@ seam rather than a second packaging model.
 The context has now met all three, one story at a time, and keeping them
 distinct is what will make it age well.
 
-| What changes | How it is modelled | Because |
+| The thing | Its history | Because |
 | --- | --- | --- |
-| **A controlled document** | versions / revisions | the wording is the regulated object, and it changes while the position behind it stands |
-| **A regulatory decision** | append-only dated history | approved, expanded, restricted, withdrawn are successive *decisions*, not successive editions |
-| **A clinical concept** | a code | *Type II diabetes mellitus*, *Diabète sucré de type 2* and *Diabetes mellitus Typ 2* are one thing, and only a code says so |
+| `GlobalLabel` | **version** | the company's scientific position evolves, and each issue is an edition of it |
+| `LocalLabel` | **revision** | one authority approves, delays, amends and republishes that position on its own clock |
+| `Indication` | **status history** | approved, expanded, restricted, withdrawn are successive *decisions*, not successive editions |
+| a clinical concept | **a code** | *Type 2 diabetes mellitus*, *Diabète sucré de type 2* and *Diabetes mellitus Typ 2* are one thing, and only a code says so |
+
+**Three different answers because they are three different kinds of change**, and
+the first two are separate rows on purpose: a generic versioning abstraction over
+both would have made a rule added to one lifecycle reach the other.
 
 **The discriminator between the first two:** *is the wording the regulated
 object, or is the approval the regulated object?* For a label, wording is the
