@@ -45,6 +45,22 @@ public sealed class AggregateChildArchitectureTests
     /// columns <c>NOT NULL</c> — which is a schema change to a shipped table and
     /// therefore its own decision, not something this test's arrival should make
     /// for somebody. Recorded in BACKLOG's standing-debt table (2026-08-04).
+    /// <para>
+    /// <b>Removing an entry means writing the migration, not deleting the
+    /// string.</b> <c>NULL → NOT NULL</c> is a behavioural change: it fails
+    /// against data that already holds a null, so retiring one of these is a
+    /// review of the existing rows as much as of the configuration. The
+    /// companion test below enforces the ordering — an entry cannot stay here
+    /// once fixed — but nothing can enforce that the fix was considered, which
+    /// is why it is written down.
+    /// </para>
+    /// <para>
+    /// <c>ContactRoleAssignment</c> is not equal to the other four.
+    /// Its unique index on <c>(ContactId, RoleId)</c> reads as <em>one role per
+    /// contact</em> and does not hold, because Postgres treats NULLs as
+    /// distinct. That is an integrity gap; the rest are orphans nobody can
+    /// currently create.
+    /// </para>
     /// </remarks>
     private static readonly string[] Grandfathered =
     [

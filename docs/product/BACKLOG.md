@@ -136,7 +136,8 @@ about EPIC-019, not a fresh one against EPIC-018.
 | 15 legacy `record struct` ids | ADR-043 migration, **a whole context at a time, when that context is being worked on anyway** |
 | a clean-clone CI check | EPIC-015 — the rule is fixed, the class of defect is not |
 | **no contact edit screen** | a phone recorded before `ContactPhone.Kind` existed cannot be given one — EPIC-016's surface, found by EPIC-007a |
-| **five nullable child foreign keys** | `ContactEmail`, `ContactPhone`, `ContactRoleAssignment`, `OrganizationIdentifier`, `SiteIdentifier` — all EPIC-016's, all the same missing `IsRequired()`. Found by `AggregateChildArchitectureTests` when it was written (EPIC-018 S001) and grandfathered rather than fixed: it is a schema change to shipped tables, which is a decision rather than a side effect. **`ContactRoleAssignment`'s unique index on `(ContactId, RoleId)` does not constrain parentless rows** — Postgres treats NULLs as distinct |
+| **`ContactRoleAssignment`'s uniqueness does not hold** | **Behavioural, not relational — the reason this sits above the four below.** Its unique index on `(ContactId, RoleId)` reads as *one role per contact* and is not: `ContactId` is nullable, and Postgres treats NULLs as distinct, so `(NULL, Reviewer)` may be inserted without limit. An integrity gap the aggregate is currently the only thing preventing |
+| four more nullable child foreign keys | `ContactEmail`, `ContactPhone`, `OrganizationIdentifier`, `SiteIdentifier` — same missing `IsRequired()`, no unique index behind it, so the consequence stops at "an orphan is representable". Found with the row above by `AggregateChildArchitectureTests` (EPIC-018 S001) and grandfathered rather than fixed: `NULL → NOT NULL` on a shipped table is a behavioural change, not a formatting one |
 
 ## Next
 
