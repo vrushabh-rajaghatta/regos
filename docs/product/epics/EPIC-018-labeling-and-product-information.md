@@ -159,7 +159,7 @@ a tidy document.
 | # | Story | Slice | Status |
 |---|---|---|---|
 | **S001** | **`GlobalLabel` + `GlobalLabelVersion`** — the new context, versioned with dated status and effective dating, linked content, on the global product | context → domain → persistence → API → UI → browser proof | ✅ |
-| **S002** | **`LocalLabel` + `Artwork`** — per market, derived-from link to a core version, own language, version and status | full slice | ⚪ |
+| **S002** | **`LocalLabel` + `Artwork`** — per market, derived-from link to a core version, own language and status. **Shape unsettled — see below** | full slice | ⚪ |
 | **S003** | **`Indication` + `Population` + `OtherTherapy`** — D2 lands here, once, on one parent | full slice | ⚪ |
 | **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question is asked out loud | full slice | ⚪ |
 | **S005** | **`Interaction` + `Interactant`** — **the stop-or-continue point** | full slice | ⚪ |
@@ -171,6 +171,65 @@ a tidy document.
 > the architecture whole — which is the better of the two failures available.
 
 **ADR:** [ADR-059](../../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) — written before S001, as canon requires for a new bounded context.
+
+---
+
+## S002 — one objective before any design
+
+**S002 is not designed, deliberately.** Its shape turns on a workflow question
+nobody here can answer from RIM, and the epic opens with validating it rather
+than with modelling.
+
+> **Can the identity of the current local label change while its parent global
+> label version stays the same?**
+
+That is the discriminator, and it is sharper than *"does `LocalLabel` have a
+version lifecycle?"* because it says **why** a version would exist.
+
+```
+Global Label v7
+      ├── Japan PDF A   effective 2025-01-01
+      └── Japan PDF B   effective 2025-03-15   (artwork correction)
+```
+
+Nothing changed globally. The derived-from link is identical. The regulatory
+artifact changed. **That is not metadata about the current label; it is
+history** — and a single `ProductDocumentId` on `LocalLabel` would be losing
+information rather than simplifying.
+
+### The question to put to a labelling lead
+
+Not a modelling question. A workflow one:
+
+> *"Japan has adopted global label v7. Six weeks later you find a typo in the
+> Japanese PDF. Do you replace the document attached to v7, or do you issue a
+> corrected local revision?"*
+
+| Answer | Model |
+|---|---|
+| *"We replace the document."* | scalar fields on `LocalLabel`. Versioning it would invent history that cannot happen |
+| *"Every issued label is immutable; we issue a revision."* | `LocalLabelVersion`, justified by observed behaviour rather than by symmetry with `GlobalLabel` |
+
+### The invariant either answer confirms
+
+> **A local label version exists if — and only if — a market can issue several
+> distinct regulatory artifacts while remaining derived from the same global
+> label revision.**
+
+### Two things already settled, whichever way it goes
+
+**Independent document evolution creates the history; audit merely obliges us to
+retain it.** Not the other way round. An earlier draft of this analysis had
+*"a regulator may ask what the Japanese label said on 3 March 2025"* as the
+reason to version, which would have let a compliance requirement justify an
+aggregate. It is the business behaviour that creates history; the regulator only
+makes discarding it unacceptable.
+
+**`LocalLabel` is not a projection over `GlobalLabel`.** Adoption lag settles
+this on its own: a market may adopt v7 months after it is issued, may skip v6
+entirely, and carries its own effective date, approval date and adoption state.
+None of that is derivable from the global label, so it is stored — regardless of
+whether it is versioned.
 
 ---
 
