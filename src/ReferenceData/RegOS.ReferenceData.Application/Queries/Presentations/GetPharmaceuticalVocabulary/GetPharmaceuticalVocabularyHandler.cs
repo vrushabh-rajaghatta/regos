@@ -16,7 +16,8 @@ public sealed class GetPharmaceuticalVocabularyHandler
         return Task.FromResult(new PharmaceuticalVocabularyDto(
             PharmaceuticalVocabulary.DoseForms.Select(Dto).ToList(),
             PharmaceuticalVocabulary.RoutesOfAdministration.Select(Dto).ToList(),
-            PharmaceuticalVocabulary.UnitsOfPresentation.Select(Dto).ToList()));
+            PharmaceuticalVocabulary.UnitsOfPresentation.Select(Dto).ToList(),
+            PharmaceuticalVocabulary.ComponentTypes.Select(Dto).ToList()));
     }
 
     private static PharmaceuticalConceptDto Dto(CodedConcept concept)

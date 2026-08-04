@@ -10,6 +10,10 @@ public static class PharmaceuticalVocabularyErrors
         => $"\"{code}\" is not a route of administration RegOS knows. "
             + $"Accepted: {Codes(PharmaceuticalVocabulary.RoutesOfAdministration)}.";
 
+    public static string UnknownComponentType(string? code)
+        => $"\"{code}\" is not a component type RegOS knows. "
+            + $"Accepted: {Codes(PharmaceuticalVocabulary.ComponentTypes)}.";
+
     public static string UnknownUnitOfPresentation(string? code)
         => $"\"{code}\" is not a unit of presentation RegOS knows. "
             + $"Accepted: {Codes(PharmaceuticalVocabulary.UnitsOfPresentation)}.";

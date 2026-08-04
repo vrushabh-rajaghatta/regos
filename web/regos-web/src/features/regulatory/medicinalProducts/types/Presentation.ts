@@ -80,6 +80,11 @@ export interface PharmaceuticalVocabulary {
   doseForms: CodedValue[];
   routesOfAdministration: CodedValue[];
   unitsOfPresentation: CodedValue[];
+  /** What a physical article can be — a vial, a kit. Overlaps
+   * `unitsOfPresentation` almost entirely, and is still its own list: one says
+   * what a strength is counted in, the other what the patient is handed, and
+   * merging them would put "kit" in a strength picker. */
+  componentTypes: CodedValue[];
 }
 
 /**

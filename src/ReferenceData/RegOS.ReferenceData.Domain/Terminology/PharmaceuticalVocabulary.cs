@@ -85,8 +85,44 @@ public static class PharmaceuticalVocabulary
         CodedConcept.Internal("PATCH", "Patch")
     ];
 
+    /// <summary>
+    /// The physical articles a product is assembled from — a vial, a syringe,
+    /// the kit that holds them.
+    /// </summary>
+    /// <remarks>
+    /// <b>This list overlaps <see cref="UnitsOfPresentation"/> almost entirely,
+    /// and they are still two lists.</b> Both name physical articles, for two
+    /// different purposes: one says what a strength is counted in, the other
+    /// says what the patient is handed. The overlap is why the difference is
+    /// worth stating rather than left as a coincidence — merging them would put
+    /// <c>KIT</c> in a strength picker, and <em>"10 mg per kit"</em> is not a
+    /// sentence.
+    /// <para>
+    /// <c>KIT</c> and <c>DEVICE</c> are what the two lists do not share, and
+    /// they are the reason this one exists.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<CodedConcept> ComponentTypes { get; } =
+    [
+        CodedConcept.Internal("KIT", "Kit"),
+        CodedConcept.Internal("VIAL", "Vial"),
+        CodedConcept.Internal("AMPOULE", "Ampoule"),
+        CodedConcept.Internal("PRE_FILLED_SYRINGE", "Pre-filled syringe"),
+        CodedConcept.Internal("PRE_FILLED_PEN", "Pre-filled pen"),
+        CodedConcept.Internal("BOTTLE", "Bottle"),
+        CodedConcept.Internal("SACHET", "Sachet"),
+        CodedConcept.Internal("TUBE", "Tube"),
+        CodedConcept.Internal("BLISTER", "Blister"),
+        CodedConcept.Internal("DEVICE", "Device"),
+        CodedConcept.Internal("SOLVENT", "Solvent"),
+        CodedConcept.Internal("DILUENT", "Diluent")
+    ];
+
     public static CodedConcept? DoseFormOf(string? code)
         => CodedConceptLookup.Find(DoseForms, code);
+
+    public static CodedConcept? ComponentTypeOf(string? code)
+        => CodedConceptLookup.Find(ComponentTypes, code);
 
     public static CodedConcept? RouteOf(string? code)
         => CodedConceptLookup.Find(RoutesOfAdministration, code);

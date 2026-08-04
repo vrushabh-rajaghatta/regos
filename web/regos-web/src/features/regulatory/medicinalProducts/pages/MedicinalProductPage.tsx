@@ -13,6 +13,7 @@ import { AddTradeNameDialog } from "../components/AddTradeNameDialog";
 import { AtcCodeDialog } from "../components/AtcCodeDialog";
 import { ChangeMarketStatusDialog } from "../components/ChangeMarketStatusDialog";
 import { MarketActivationDialog } from "../components/MarketActivationDialog";
+import { MarketComponents } from "../components/MarketComponents";
 import { MarketOverview } from "../components/MarketOverview";
 import { MarketPresentations } from "../components/MarketPresentations";
 import { MarketStatusTimeline } from "../components/MarketStatusTimeline";
@@ -114,6 +115,10 @@ export function MedicinalProductPage() {
           called — and because composition (S003) hangs from a presentation,
           so this is the section that grows. */}
       <MarketPresentations medicinalProductId={market.medicinalProductId} />
+
+      {/* After presentations, because it answers the other half of the same
+          question: what the product *is* when given, then what is in the box. */}
+      <MarketComponents medicinalProductId={market.medicinalProductId} />
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">

@@ -52,6 +52,7 @@ using RegOS.Api.Endpoints.Registrations;
 using RegOS.Api.Endpoints.Studies;
 using RegOS.Api.Endpoints.Substances;
 using RegOS.Api.Endpoints.Presentations;
+using RegOS.Api.Endpoints.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -261,6 +262,13 @@ presentations.MapRestatePresentation();
 presentations.MapAddIngredient();
 presentations.MapRestateIngredient();
 presentations.MapRemoveIngredient();
+
+var components = app.MapGroup("").WithTags("Components");
+components.MapListComponents();
+components.MapAddComponent();
+components.MapRestateComponent();
+components.MapMoveComponent();
+components.MapRemoveComponent();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

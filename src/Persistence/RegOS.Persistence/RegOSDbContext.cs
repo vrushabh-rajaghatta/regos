@@ -115,6 +115,14 @@ public sealed class RegOSDbContext : DbContext
     public DbSet<PharmaceuticalProductDetail> PharmaceuticalProductDetails =>
         Set<PharmaceuticalProductDetail>();
 
+    /// <summary>
+    /// What the patient physically receives — a vial, a pen, the kit holding
+    /// them. Recursive through a nullable parent; the acyclicity is a domain
+    /// rule, not a constraint here (EPIC-010a S004).
+    /// </summary>
+    public DbSet<MedicinalProductComponent> MedicinalProductComponents =>
+        Set<MedicinalProductComponent>();
+
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
 
@@ -300,6 +308,7 @@ public sealed class RegOSDbContext : DbContext
     /// <item><b>Fail-closed tenant-owned</b> — <c>x.TenantId == CurrentTenant</c>.
     /// The tenant owns the data. <c>Users</c>, <c>Products</c>,
     /// <c>MedicinalProducts</c>, <c>PharmaceuticalProductDetails</c>,
+    /// <c>MedicinalProductComponents</c>,
     /// <c>RegulatoryApplications</c>, <c>Submissions</c>, <c>ProductDocuments</c>,
     /// <c>Registrations</c>, <c>Organizations</c>, <c>OrganizationSites</c>,
     /// <c>Contacts</c>, <c>OrganizationDivisions</c>.</item>
@@ -344,6 +353,9 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<PharmaceuticalProductDetail>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<MedicinalProductComponent>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

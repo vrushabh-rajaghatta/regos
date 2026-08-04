@@ -301,11 +301,40 @@ As a **regulatory user**, I want to state which substances a product contains an
 
 **`CodedConceptLookup` extracted.** `MeasurementVocabulary` is the third vocabulary, which is the occurrence ADR-018 was waiting for — S002 deliberately duplicated the resolution and recorded the trigger.
 
-### S004 — `MedicinalProductComponent` — the recursive tree
+### S004 — `MedicinalProductComponent` — the recursive tree ✅ 2026-08-04
 As a **regulatory user**, I want to describe a kit or a co-packaged presentation, so that what the patient receives is represented.
-- [ ] Recursion via adjacency list, depth guard, cycle prevention (D5)
-- [ ] **Depth test** — a component within a component within a component
-- [ ] Component tree UI
+- [x] Recursion via adjacency list, depth guard, cycle prevention (D5)
+- [x] **Depth test** — a component within a component within a component, and the fourth refused
+- [x] Component tree UI
+
+**The design question S004 had to answer first:** the depth and cycle rules need
+the whole tree, but each component is its own root and a root can only see
+itself. The answer is **`ComponentTree`** — a pure domain structure over one
+market's components, passed into every operation that changes the shape:
+
+```
+component.ReparentTo(newParentId, tree)   →  the tree refuses a cycle or an over-deep move
+```
+
+Nothing is encoded in persistence (Postgres cannot express acyclicity for an
+adjacency list without a trigger), the guard and the mutation cannot be
+separated, and there is **one home for traversal** rather than recursive helpers
+accumulating across handlers — the read uses the same walk, so a row's depth on
+screen is the depth the guard measured.
+
+| | Decision | Why |
+|---|---|---|
+| **`MaxDepth = 3`** | a domain constant, not a schema limit | The schema represents whatever tree it is given; the domain decides which trees are accepted, so changing it is a decision rather than a migration. Three is one level past anything demonstrated — a pen is one, a kit and its contents is two. |
+| **Move is built, though the epic did not list it** | `PUT /api/components/{id}/parent` | Without it a cycle is impossible by construction and the guard would be vacuous. It is also the correction path for an article put at the top level by mistake. |
+| **Remove refuses rather than cascades** | a component holding others must be emptied first | Removing a kit and silently taking its contents is quiet data loss. |
+| **`ComponentTypes` is its own vocabulary** | overlaps `UnitsOfPresentation` almost entirely | One says what a strength is counted in, the other what the patient is handed. Merging them would put `KIT` in a strength picker, and *"10 mg per kit"* is not a sentence. |
+
+**A test that could not be written, and what replaced it.** An attempt to force
+two components into a cycle — to exercise the visited-set guards in the walks —
+failed: every route goes through `RequireCanReparent`, and swapping the order
+only changes which move is refused. The test now asserts *that*, and the guards
+stay unexercised on purpose — they protect against database state the domain
+cannot produce, and a walk that hangs starves a thread pool.
 
 ### S005 — Capstone
 As a **regulatory user**, I want to ask which products contain a substance, so that an impact assessment is a query.
