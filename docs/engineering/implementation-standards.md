@@ -7,11 +7,11 @@
 
 **Status:** Approved
 
-**Version:** 1.0
+**Version:** 1.1
 
 **Effective Date:** 2026-07-08
 
-**Last Reviewed:** 2026-07-08
+**Last Reviewed:** 2026-08-04
 
 **Next Review:** 2027-07-08
 
@@ -304,10 +304,38 @@ Before implementing a capability, verify the following.
 - [ ] The capability is independently testable.
 - [ ] Architectural changes requiring an ADR have been identified.
 
+## When the capability adds an aggregate
+
+Three items, added because each has cost a build cycle in consecutive epics.
+They are here **and** enforced — a checklist depends on somebody reading it, and
+EPIC-010a's retrospective recorded two of these before EPIC-018 hit one anyway.
+
+- [ ] **The constructor takes only scalars and identifiers.** EF binds
+      constructor parameters by name from *mapped properties*, and an owned
+      value object is not one — it cannot be bound to a parameter at all. Either
+      take only scalars and set the owned value afterwards (`HaCorrespondence`),
+      or use a private parameterless constructor with an object-initializer
+      factory (`GlobalLabel`, `PharmaceuticalProductDetail`).
+- [ ] **Every owned value object is resolved fresh per owner.** An owned value is
+      tracked against exactly one owner; sharing one instance across two
+      aggregates persists nulls on the second. A vocabulary lookup returns a
+      copy, guarded by an `EachResolutionIsItsOwnInstance` test.
+- [ ] **The generated migration has no nullable shadow foreign key.** A shadow FK
+      declared only from the parent side is nullable by default. An orphan
+      becomes representable, and — because Postgres treats NULLs as distinct —
+      any unique index naming that column silently stops constraining the
+      parentless rows.
+
+> **Enforced by `AggregateChildArchitectureTests`** (in
+> `RegOS.Platform.Application.Tests`, where the EF model is available). It
+> carries a shrink-only grandfathered list for the five children that predate
+> it, and a companion test that fails if an entry goes stale.
+
 ---
 
 # Change History
 
 | Version | Date | Summary |
 |----------|------------|-------------------------------------------|
+| 1.1 | 2026-08-04 | Aggregate checklist: constructor binding, fresh owned values, nullable shadow FKs — each now also enforced by a test. |
 | 1.0 | 2026-07-08 | Initial approved version. |
