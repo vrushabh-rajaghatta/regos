@@ -35,44 +35,30 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | **EPIC-019** | **Study registry** — sponsor-owned studies, placement → study, ICH's `file-tag`, **and the Study Tagging File that unblocked Module 4** | 🟢 Complete | S001–S004 + S002b; **S005 deliberately empty — nobody asked** · [ADR-056](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md) · [ADR-057](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) · E33–E35 · **owes the E24 continuity refusal → EPIC-021** → [`epics/EPIC-019-study-registry.md`](epics/EPIC-019-study-registry.md) |
 | **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier (**"Markets"** in the UI), + trade names and market status | 🟢 Complete | 7 stories, 7/7 DoD; [ADR-039](../adr/ADR-039-the-market-local-product-tier.md) → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
 | **EPIC-010a** | **Substance & composition** — the IDMP root: shared substances, presentations, composition, the component tree, and the query the epic existed for — *"which products contain substance X?"* | 🟢 Complete | 5 stories + [ADR-058](../adr/ADR-058-substances-are-shared-facts-ingredients-are-roles.md); merged to `main` (PR #18) · **EPIC-017's change-case prediction corrected there, not only here** · **does not imply IDMP/xEVMPD readiness (D1)** → [`epics/EPIC-010a-substance-and-composition.md`](epics/EPIC-010a-substance-and-composition.md) |
+| **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations, and the question it existed for — *"which markets is this product approved for this condition in?"* | 🟢 Complete | 6 stories, DoD audited line by line; [ADR-059](../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) · **artwork shipped as a label type rather than a child aggregate — capability met, shape changed** · **nothing links a label version to the statements it publishes, and that is a decision (ADR-059 §3)** → [`epics/EPIC-018-labeling-and-product-information.md`](epics/EPIC-018-labeling-and-product-information.md) |
 
 ---
 
 ## Now
 
-**EPIC-018 — Labeling & product information. 🟡 In Progress.**
-Pulled into Now 2026-08-04, after EPIC-010a merged to `main` (PR #18). Phase 2
-is signed off and [ADR-059](../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md)
-is written; the branch is `epic/EPIC-018-labeling-and-product-information`.
+**Nothing in progress.** EPIC-018 merged to `main` on 2026-08-04 and the next
+epic is the founder's call — the recommendation is recorded in [Next](#next).
 
-> **A clinical statement is a regulatory fact about a product in a market. A
-> label is an editorial artifact that publishes some of those facts at a point
-> in time.** That one sentence decides where indications live, why labels
-> version on their own clock, and why `ProductDocument` stays generic.
-
-| | |
-|---|---|
-| **ADR-059** | ✅ written 2026-08-04 — the label hierarchy, the new `Labeling` context, and how shared clinical qualifiers are modelled |
-| **S001** | ✅ `GlobalLabel` + `GlobalLabelVersion` — the `src/Labeling/` context, draft → in force → superseded, and the content link that proves ADR-059 §6 |
-| **S002** | ✅ `LocalLabel` + `LocalLabelRevision` — the market's own approved document, its revision history, and artwork as a type rather than a fourth aggregate |
-| **S003** | ✅ `Indication` + `Population` + `OtherTherapy` — the authorisation with a dated decision history rather than revisions, and the qualifier corrected in place |
-| **S004** | ✅ `Contraindication` + `UndesirableEffect` — population's second and third parents; the EF helper earned, and neither statement owns a history |
-| **S005** | ✅ `DrugInteraction` + `Interactant` — the fourth statement, the at-least-one invariant, and the substance seam `OtherTherapy` predicted |
-| **S006** | ⚪ capstone — *"which markets is indication X approved in?"*, label workspace, browser proof, retro |
-
-**Flagged in the plan, not hidden:**
-
-- **Nothing links a label version to the statements it publishes**, and that is
-  a decision rather than an omission — the link is five versioning questions
-  (partial publication, wording, withdrawal, history, splits) and ADR-059 §3
-  names them rather than answering them with a foreign key.
-- **`ProductDocument` has no market dimension.** It is scoped to
-  `GlobalProductId`, so a local label's content file sits on the global product
-  and the *label* carries the market meaning. Found in Phase 2, not in
-  implementation.
-- **S005 is where to stop if the epic runs long** — decided now rather than
-  under schedule pressure. Cutting it leaves the DoD unmet and the architecture
-  whole.
+> **What EPIC-018 leaves standing, so it is not rediscovered as a defect:**
+>
+> - **Nothing links a label version to the statements it publishes**, and that
+>   is a decision rather than an omission — the link is five versioning
+>   questions (partial publication, wording, withdrawal, history, splits) and
+>   [ADR-059](../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) §3
+>   names them rather than answering them with a foreign key. Nobody has asked.
+> - **`ProductDocument` has no market dimension.** It is scoped to
+>   `GlobalProductId`, so a local label's content file sits on the global
+>   product and the *label* carries the market meaning.
+> - **A label cannot be renamed or retired** — global or local. Known gap,
+>   stated rather than hidden.
+> - **`LocalLabelRevision.DataCarrierCode` has no pack to be on.** Artwork's
+>   one identifying attribute exists; pack size, SKU and GTIN were refused as
+>   EPIC-010b's model rather than built twice.
 
 ### External prerequisites
 
@@ -100,33 +86,14 @@ whoever can go and fetch one.*
 > package FDA rejects at the gateway — a worse failure than not shipping the
 > feature, because it fails after filing rather than on screen.
 
-### The recommendation that put it there
-
-> **EPIC-019 — Study registry — before EPIC-018.** Stated as a recommendation
-> rather than a decision, because reordering the runway is the founder's.
-> **Taken 2026-08-03.**
-
-**EPIC-007a changed the facts under this table.** FDA requires a Study Tagging
-File for every file in eCTD 4.2.x and 5.3.1.x–5.3.5.x (**E21**), the FDA IND
-blueprint seeds 4.2.1–4.2.3, and every IND has nonclinical content. So:
-
-> **No package can be generated for any submission with Module 4 content**, and
-> `SequenceFolderGenerator` refuses one by name
-> ([ADR-054](../adr/ADR-054-a-study-tagging-file-is-a-projection-over-a-study.md) §6).
-
-That is not a gap eCTD work can close. **A study is a business entity that
-documents are *about*, and nothing in RegOS knows one exists.**
-
-| | |
-|---|---|
-| **What it unblocks** | the whole of Module 4, and Module 5's study sections — the largest single hole in package generation |
-| **What it costs** | EPIC-019 was scoped as *"no dependencies, good filler"*. It is neither of those now |
-| **What it needs first** | ~~an ADR: where does a `Study` live?~~ **Answered: [ADR-056](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md)** — study identity is owned by the sponsor, not by a submission, so it is its own context |
-
-**What reverses it:** a customer waiting on labeling, or a judgement that
-breadth matters more than depth right now. EPIC-018 is next in the table either
-way, and the argument that put it there is untouched — this is a new argument
-about EPIC-019, not a fresh one against EPIC-018.
+> **Historical — the EPIC-019-before-EPIC-018 call, made 2026-08-03.** Both have
+> shipped and the call is recorded rather than live. EPIC-007a had changed the
+> facts underneath the table: FDA requires a Study Tagging File for every file in
+> eCTD 4.2.x and 5.3.1.x–5.3.5.x (**E21**), so **no package could be generated
+> for any submission with Module 4 content** — and nothing in RegOS knew a study
+> existed. That was not a gap eCTD work could close. The reasoning is kept
+> because the *shape* of it recurs: **a downstream epic can discover that an
+> upstream one is blocked on an entity nobody planned.**
 
 **Standing debt, carried deliberately and not attached to any epic:**
 
@@ -138,6 +105,7 @@ about EPIC-019, not a fresh one against EPIC-018.
 | **no contact edit screen** | a phone recorded before `ContactPhone.Kind` existed cannot be given one — EPIC-016's surface, found by EPIC-007a |
 | **`ContactRoleAssignment`'s uniqueness does not hold** | **Behavioural, not relational — the reason this sits above the four below.** Its unique index on `(ContactId, RoleId)` reads as *one role per contact* and is not: `ContactId` is nullable, and Postgres treats NULLs as distinct, so `(NULL, Reviewer)` may be inserted without limit. An integrity gap the aggregate is currently the only thing preventing |
 | four more nullable child foreign keys | `ContactEmail`, `ContactPhone`, `OrganizationIdentifier`, `SiteIdentifier` — same missing `IsRequired()`, no unique index behind it, so the consequence stops at "an orphan is representable". Found with the row above by `AggregateChildArchitectureTests` (EPIC-018 S001) and grandfathered rather than fixed: `NULL → NOT NULL` on a shipped table is a behavioural change, not a formatting one |
+| **`npm run lint` fails at baseline** | Six problems, none from any current epic: `react-refresh/only-export-components` in two shadcn files, three *"incompatible library"* compiler warnings, and a `setState`-in-effect error in `ReportStudyDialog`. **The reason this is listed rather than fixed:** EPIC-018 S006 found that `npm run build` had been broken since S001 and no story ran it — a gate nobody executes is a convention wearing a test's clothes. `build` is now in the loop; `lint` needs its baseline cleared before it can join, and that is not a story's side job |
 
 ## Next
 
@@ -160,23 +128,67 @@ about EPIC-019, not a fresh one against EPIC-018.
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
-| 2 | **EPIC-010b/c** | the remaining IDMP clusters — **still sketches**, re-cut on pull-in | ⚪ Not Started | EPIC-010a ✅ |
+| 1 | **EPIC-010b** | **Presentation & packaging** — `PackagedProduct`, the recursive `Packaging` tree, legal status of supply; **still a sketch**, re-cut on pull-in | ⚪ Not Started | EPIC-010a ✅ · EPIC-017 ✅ · EPIC-018 ✅ |
+| 2 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
+| 3 | **EPIC-010c** | **Manufacturing** — the most self-contained cluster; can slip without blocking anything | ⚪ Not Started | EPIC-010a ✅ · EPIC-016 ✅ |
 
-> **EPIC-018 left this table on 2026-08-04** and is in [Now](#now). It sat at the
-> top of it from the day the runway was written, and nothing ever displaced the
-> argument that put it there — EPIC-007a and EPIC-019 were both explicitly
+> **EPIC-018 left this table on 2026-08-04** and shipped the same day. It sat at
+> the top of it from the day the runway was written, and nothing ever displaced
+> the argument that put it there — EPIC-007a and EPIC-019 were both explicitly
 > *"EPIC-018 is next either way"*.
 
-> **EPIC-021 is placed ahead of the IDMP tail on purpose.** It is small, its
-> architecture is settled, and what it guards against is silent: a study renamed
-> after filing produces a package FDA accepts and misfiles. The longer RegOS
-> files sequences without it, the more filings exist for it to be wrong about.
+### The recommendation now in the top row
 
-### Why EPIC-007a is recommended over the runway's next step
+> **EPIC-010b — Presentation & packaging — before EPIC-021.** Stated as a
+> recommendation rather than a decision, because reordering the runway is the
+> founder's. **Recorded 2026-08-04.**
 
-The [runway](#the-runway) says **EPIC-018**, and by RIM coverage it is plainly
-right — 10 objects against 7a's zero. Three things outweigh that:
+**EPIC-018 paid three debts into 10b**, which is the change since this table was
+last ordered:
+
+| Deferred by EPIC-018 | With the reason |
+|---|---|
+| Artwork ↔ packaging component linkage | *"Needs `Packaging` → EPIC-010. Nullable seam only."* |
+| SKU, pack size, GTIN | *"EPIC-010's packaging model, and building a second one here would be the speculative creation ADR-018 forbids"* |
+| `LocalLabelRevision.DataCarrierCode` | shipped alone — a barcode with no pack to be on |
+
+**And 10b's one open modelling question was answered last week.** The umbrella
+epic wrote that `Ingredient`'s polymorphic parent is *"the same problem EPIC-018
+solves for `Population` — **reuse whatever decision that epic made**"*. It made
+it, and proved it on four owners: **one CLR type, owned per parent, its own
+table, an EF configuration helper earned by demonstrated schema equivalence, and
+no shared domain base type.** 10b inherits a settled answer rather than
+re-deriving one.
+
+It also carries the umbrella's **open decision 5** — *does `Registration` point
+at `PackagedProduct`?* — which is what finally lets a licence say **which pack**
+it authorises, and is a real gap in EPIC-005's model.
+
+By the test recorded at the foot of this section: RegOS knows what is *in* a
+product and **nothing about what it is sold as**. That is an absent area, not a
+coherent one being deepened.
+
+**Why EPIC-021 moves down, having been #1.** Its argument was *"the longer RegOS
+files sequences without it, the more filings exist for it to be wrong about"* —
+and **that premise is not true yet.** RegOS has filed nothing, so the debt is not
+compounding, and [ADR-057](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md)'s
+own Revisit-When names the trigger as *"a second sequence files the same study"*,
+which nothing has done. It closes zero RIM objects and deepens an area that is
+already coherent. **Correct work, wrong week** — it becomes urgent the day a real
+second sequence exists, and its architecture is settled so it stays cheap to take.
+
+**What reverses this:** a customer filing sequences, or a judgement that closing
+EPIC-019's owed refusal matters more than opening packaging. Both are value
+calls, and value calls are the founder's.
+
+### Historical — why EPIC-007a was recommended over the runway's next step
+
+> **Made 2026-08-02, taken, and shipped.** Kept because the three arguments are
+> the reusable part: they are how to weigh *proof* against *coverage*, and that
+> question recurs every time the runway says one thing and the risk says another.
+
+The [runway](#the-runway) said **EPIC-018**, and by RIM coverage it was plainly
+right — 10 objects against 7a's zero. Three things outweighed that:
 
 1. **Four carried hypotheses resolve there and nowhere else.** Hypotheses 4–7
    are *regulatory evidence*: whether a moved document is `delete`+`new`,
@@ -214,7 +226,6 @@ and value calls are the founder's.
 
 | ID | Epic | Status | Notes |
 |---|---|---|---|
-| **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations | ⚪ Not Started | needs EPIC-017 · planned → [`epics/EPIC-018-labeling-and-product-information.md`](epics/EPIC-018-labeling-and-product-information.md) |
 | **EPIC-010** | **IDMP / product data depth** — substances, ingredients, strength, presentation, packaging, manufacturing | ⚪ Not Started | needs EPIC-016 + EPIC-017 · **split into 10a/10b/10c before cutting a branch** · umbrella → [`epics/EPIC-010-idmp-product-data-depth.md`](epics/EPIC-010-idmp-product-data-depth.md) |
 | **EPIC-021** | **Cross-sequence continuity** — the checks FDA's review tooling needs and no DTD can express: a study filed twice under two titles, an instance qualifier that drifts, a `study-id` that changes | ⚪ Not Started | **owed by EPIC-019**, scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) — the check belongs in the generator, reading frozen publication facts, adding no dependency in any direction. **Architecture settled; implementation deferred** because it needs a second sequence filing the same study. E24, E17, E18 |
 | **EPIC-020** | **Regulatory process & planning** — objectives, plan/step templates, live plans and dated steps; RIM's spine | ⚪ Not Started | needs EPIC-004 + EPIC-006 + EPIC-017 · deliberately last · planned → [`epics/EPIC-020-regulatory-process-and-planning.md`](epics/EPIC-020-regulatory-process-and-planning.md) |
@@ -253,11 +264,18 @@ Three divergences are **not** gaps and should be defended, not closed:
 | 2 | **EPIC-017** Market-local product tier | 3 | → ~28% | 🟢 |
 | 3 | **EPIC-006** HA interactions | 5 | → ~37% | 🟢 |
 | 4 | **EPIC-004** Sequences & lifecycle | deepens Submission (13% → high) + 1 | **→ ~39%** | 🟢 |
-| 5 | **EPIC-018** Labeling & product information | 10 | → ~55% | ⚪ |
+| 5 | **EPIC-018** Labeling & product information | 10 | → ~55% | 🟢 |
 | — | *taken out of order 2026-08-03* — EPIC-019 shipped before 018, because Module 4 was blocked and labeling was not | | | |
 | 6 | **EPIC-019** Study registry | 2 | → ~59% | 🟢 |
-| 7 | **EPIC-010** IDMP depth (10a/10b/10c) | 16 | → ~87% | ⚪ |
+| 7 | **EPIC-010** IDMP depth (10a 🟢 / 10b / 10c) | 16 | → ~87% | 🟡 |
 | 8 | **EPIC-020** Process & planning | 6 | → ~98% | ⚪ |
+
+> **EPIC-018's ten, counted honestly.** Nine aggregates cover the ten RIM
+> objects: **Artwork is not its own aggregate** — it is a `LocalLabel` of type
+> `ARTWORK` with its own dated revisions, because a printed carton proved to be
+> another controlled local label rather than a child entity. The capability is
+> there; the shape is not RIM's. Recorded so the coverage figure is not read as
+> a claim about structure.
 
 > **EPIC-007a closes no RIM objects, and that is the honest cost of
 > recommending it.** RIM is an object model; a package builder produces a
