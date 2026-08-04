@@ -128,6 +128,42 @@ public static class ClinicalConditionVocabulary
         CodedConcept.Internal("ALTERNATIVE", "As an alternative to")
     ];
 
+    /// <summary>What kind of thing this product interacts with.</summary>
+    /// <remarks>
+    /// Not derivable from the interactant, which is why it is recorded. "St
+    /// John's wort" is a herbal product and a CYP3A4 inducer; which of those a
+    /// label means is the label's statement, not ours to infer.
+    /// </remarks>
+    public static IReadOnlyList<CodedConcept> InteractionTypes { get; } =
+    [
+        CodedConcept.Internal("DRUG-DRUG", "With another medicine"),
+        CodedConcept.Internal("DRUG-FOOD", "With food or drink"),
+        CodedConcept.Internal("DRUG-DISEASE", "With a condition"),
+        CodedConcept.Internal("DRUG-LAB", "With a laboratory test")
+    ];
+
+    /// <summary>
+    /// How much the interaction matters clinically, as the label states it.
+    /// </summary>
+    /// <remarks>
+    /// Nullable on the aggregate: many labels describe an interaction and its
+    /// management without grading it, and inventing a grade would be RegOS
+    /// asserting a clinical judgement nobody made.
+    /// </remarks>
+    public static IReadOnlyList<CodedConcept> InteractionSeverities { get; } =
+    [
+        CodedConcept.Internal("CONTRAINDICATED", "Contraindicated"),
+        CodedConcept.Internal("MAJOR", "Major"),
+        CodedConcept.Internal("MODERATE", "Moderate"),
+        CodedConcept.Internal("MINOR", "Minor")
+    ];
+
+    public static CodedConcept? InteractionTypeOf(string? code)
+        => CodedConceptLookup.Find(InteractionTypes, code);
+
+    public static CodedConcept? InteractionSeverityOf(string? code)
+        => CodedConceptLookup.Find(InteractionSeverities, code);
+
     public static CodedConcept? ConditionOf(string? code)
         => CodedConceptLookup.Find(Conditions, code);
 

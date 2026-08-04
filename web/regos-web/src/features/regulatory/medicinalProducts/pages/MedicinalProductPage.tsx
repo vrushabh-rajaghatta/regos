@@ -10,6 +10,7 @@ import { RegistrationExpiry } from "../../registrations/components/RegistrationE
 import { RegistrationStatusBadge } from "../../registrations/components/RegistrationStatusBadge";
 import { useProductRegistrations } from "../../registrations/hooks/useProductRegistrations";
 import { MarketClinicalStatements } from "@/features/regulatory/indications/components/MarketClinicalStatements";
+import { MarketInteractions } from "@/features/regulatory/indications/components/MarketInteractions";
 import { MarketIndications } from "@/features/regulatory/indications/components/MarketIndications";
 import { MarketLabels } from "@/features/regulatory/labels/components/MarketLabels";
 
@@ -142,6 +143,10 @@ export function MedicinalProductPage() {
       <MarketClinicalStatements
         medicinalProductId={market.medicinalProductId}
       />
+
+      {/* Last, in the order a label reads: what it is for, who must not have
+          it, what it does to them, and what it clashes with. */}
+      <MarketInteractions medicinalProductId={market.medicinalProductId} />
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">

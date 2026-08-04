@@ -21,6 +21,9 @@ public sealed class GetClinicalVocabularyHandler
             ClinicalConditionVocabulary.Genders.Select(Dto).ToList(),
             ClinicalConditionVocabulary.AgeUnits.Select(Dto).ToList(),
             ClinicalConditionVocabulary.TherapyRelationships
+                .Select(Dto).ToList(),
+            ClinicalConditionVocabulary.InteractionTypes.Select(Dto).ToList(),
+            ClinicalConditionVocabulary.InteractionSeverities
                 .Select(Dto).ToList()));
     }
 

@@ -39,6 +39,9 @@ public static class LabelingRuleErrors
     public const string ContentBelongsToAnotherProduct =
         "That document belongs to a different product.";
 
+    public const string SubstanceDoesNotExist =
+        "That substance is not in the catalogue.";
+
     public const string ContentDoesNotExist =
         "Document does not exist.";
 }

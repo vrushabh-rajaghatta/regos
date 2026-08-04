@@ -25,7 +25,14 @@ using RegOS.Labeling.Application.Commands.RestateUndesirableEffectText;
 using RegOS.Labeling.Application.Commands.AddUndesirableEffectPopulation;
 using RegOS.Labeling.Application.Commands.AmendUndesirableEffectPopulation;
 using RegOS.Labeling.Application.Commands.RemoveUndesirableEffectPopulation;
+using RegOS.Labeling.Application.Commands.RecordDrugInteraction;
+using RegOS.Labeling.Application.Commands.AddInteractant;
+using RegOS.Labeling.Application.Commands.RemoveInteractant;
+using RegOS.Labeling.Application.Commands.AddDrugInteractionPopulation;
+using RegOS.Labeling.Application.Commands.AmendDrugInteractionPopulation;
+using RegOS.Labeling.Application.Commands.RemoveDrugInteractionPopulation;
 using RegOS.Labeling.Application.Queries.ListContraindications;
+using RegOS.Labeling.Application.Queries.ListDrugInteractions;
 using RegOS.Labeling.Application.Queries.ListIndications;
 using RegOS.Labeling.Application.Queries.ListUndesirableEffects;
 using RegOS.Labeling.Application.Queries.ListLocalLabelRevisions;
@@ -115,6 +122,20 @@ public static class DependencyInjection
         services.AddScoped<ListContraindicationsHandler>();
 
         services.AddScoped<ListUndesirableEffectsHandler>();
+
+        services.AddScoped<RecordDrugInteractionHandler>();
+
+        services.AddScoped<AddInteractantHandler>();
+
+        services.AddScoped<RemoveInteractantHandler>();
+
+        services.AddScoped<AddDrugInteractionPopulationHandler>();
+
+        services.AddScoped<AmendDrugInteractionPopulationHandler>();
+
+        services.AddScoped<RemoveDrugInteractionPopulationHandler>();
+
+        services.AddScoped<ListDrugInteractionsHandler>();
 
         return services;
     }

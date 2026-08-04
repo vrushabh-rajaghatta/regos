@@ -319,6 +319,7 @@ indications.MapIndicationTherapies();
 var clinicalStatements = app.MapGroup("").WithTags("Clinical Statements");
 clinicalStatements.MapContraindications();
 clinicalStatements.MapUndesirableEffects();
+clinicalStatements.MapDrugInteractions();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

@@ -214,7 +214,8 @@ distinct is what will make it age well.
 | `LocalLabel` | **revision** | one authority approves, delays, amends and republishes that position on its own clock |
 | `Indication` | **status history** | approved, expanded, restricted, withdrawn are successive *decisions*, not successive editions |
 | `Contraindication` | **the label revision that published it** | it is content inside an approved label, not something an authority acts on directly |
-| `UndesirableEffect` | **the label revision that published it** | same, plus a `Frequency` — the one attribute the three statement types do not share |
+| `UndesirableEffect` | **the label revision that published it** | same, plus a `Frequency` — recorded as the label states it, never computed |
+| `DrugInteraction` | **the label revision that published it** | same again, and the only statement that must name what it is *with* |
 | a clinical concept | **a code** | *Type 2 diabetes mellitus*, *Diabète sucré de type 2* and *Diabetes mellitus Typ 2* are one thing, and only a code says so |
 
 **Five answers, because they are different kinds of change.** The first two are
@@ -344,6 +345,27 @@ at that point it stops being one shape and should stop being one class.
 
 `OtherTherapy` stays on `Indication` alone. Phase 1 allows it on contraindications
 too; nobody asked for it, so it remains at one use.
+
+# `DrugInteraction`
+
+**Named for a namespace, not a model.** RIM calls it `Interaction`;
+`RegOS.Interaction` is already the health-authority context (ADR-040), so the
+bare noun would force an alias wherever both are visible. Second mechanical
+departure from RIM's noun after `LocalLabel`, same reason. The screen says
+**Interactions**.
+
+**The one invariant this context did not already have: an interaction must name
+at least one `Interactant`.** Every other statement is meaningful alone. An
+interaction with nothing to interact with is not under-specified — it is not a
+statement — so the first interactant is supplied at creation and the last one
+cannot be removed.
+
+`Interactant.SubstanceId` is **optional, and beside the text rather than instead
+of it**. Most interactants are not compounds RegOS knows: grapefruit juice,
+alcohol, *CYP3A4 inhibitors*. Set the link and *"which of our products interact
+with warfarin?"* is a join; leave it null and the label still says what it says.
+This is the seam `OtherTherapy` said would arrive when someone needed the
+question asked backwards.
 
 ---
 

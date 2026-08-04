@@ -9,4 +9,5 @@
 export type StatementKind =
   | "indications"
   | "contraindications"
-  | "undesirable-effects";
+  | "undesirable-effects"
+  | "interactions";

@@ -11,4 +11,6 @@ public sealed record ClinicalVocabularyDto(
     IReadOnlyList<CodedConceptDto> PhysiologicalConditions,
     IReadOnlyList<CodedConceptDto> Genders,
     IReadOnlyList<CodedConceptDto> AgeUnits,
-    IReadOnlyList<CodedConceptDto> TherapyRelationships);
+    IReadOnlyList<CodedConceptDto> TherapyRelationships,
+    IReadOnlyList<CodedConceptDto> InteractionTypes,
+    IReadOnlyList<CodedConceptDto> InteractionSeverities);

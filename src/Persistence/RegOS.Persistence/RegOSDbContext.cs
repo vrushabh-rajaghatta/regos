@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RegOS.Labeling.Domain.Aggregates.GlobalLabels;
 using RegOS.Labeling.Domain.Aggregates.Contraindications;
 using RegOS.Labeling.Domain.Aggregates.Indications;
+using RegOS.Labeling.Domain.Aggregates.DrugInteractions;
 using RegOS.Labeling.Domain.Aggregates.UndesirableEffects;
 using RegOS.Labeling.Domain.Aggregates.LocalLabels;
 using RegOS.Product.Domain.Product;
@@ -176,6 +177,14 @@ public sealed class RegOSDbContext : DbContext
 
     public DbSet<UndesirableEffect> UndesirableEffects =>
         Set<UndesirableEffect>();
+
+    /// <summary>
+    /// What this product clashes with here. Its interactants may point at a
+    /// <c>Substance</c>, which is what makes "which of our products interact
+    /// with warfarin?" a join rather than a string match (EPIC-018 S005).
+    /// </summary>
+    public DbSet<DrugInteraction> Interactions =>
+        Set<DrugInteraction>();
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
@@ -428,6 +437,9 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<UndesirableEffect>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<DrugInteraction>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

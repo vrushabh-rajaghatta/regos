@@ -57,7 +57,7 @@ is written; the branch is `epic/EPIC-018-labeling-and-product-information`.
 | **S002** | ✅ `LocalLabel` + `LocalLabelRevision` — the market's own approved document, its revision history, and artwork as a type rather than a fourth aggregate |
 | **S003** | ✅ `Indication` + `Population` + `OtherTherapy` — the authorisation with a dated decision history rather than revisions, and the qualifier corrected in place |
 | **S004** | ✅ `Contraindication` + `UndesirableEffect` — population's second and third parents; the EF helper earned, and neither statement owns a history |
-| **S005** | ⚪ `Interaction` + `Interactant` — **the stop-or-continue point** |
+| **S005** | ✅ `DrugInteraction` + `Interactant` — the fourth statement, the at-least-one invariant, and the substance seam `OtherTherapy` predicted |
 | **S006** | ⚪ capstone — *"which markets is indication X approved in?"*, label workspace, browser proof, retro |
 
 **Flagged in the plan, not hidden:**

@@ -199,7 +199,7 @@ a tidy document.
 >    answers this without anyone looking.)
 > 5. Did the browser proof show **amendment** on the second parent — one row
 >    corrected, not replaced?
-| **S005** | **`Interaction` + `Interactant`** — the fourth clinical statement, and the substance seam | full slice | 🟡 |
+| **S005** | **`DrugInteraction` + `Interactant`** — the fourth clinical statement, and the substance seam | full slice | ✅ |
 
 > **Continued rather than stopped, 2026-08-04.** S005 was designated the clean
 > stop point because nothing depends on it — and it still is. But *"a good place
@@ -366,6 +366,59 @@ version, which would have let a compliance requirement justify an aggregate.
 
 **`LocalLabel` is not a projection over `GlobalLabel`** — adoption lag alone
 settles that, whatever else it holds.
+
+---
+
+## S005 — the hypothesis, answered
+
+**It held.** A coded statement on the market-local tier, an owned population that
+amends in place on a fourth parent, no history of its own, one browser proof.
+The falsifier — *a history, a lifecycle, or a `Population` that differs* — was
+not triggered: the fourth call to `ClinicalStatementConfiguration.Populations`
+takes the same two strings as the other three.
+
+### The two new things, both asserted
+
+**An interaction must name at least one interactant.** The first *at-least-one*
+invariant in the context, and it is genuinely different from the others: a
+contraindication with no population applies to everyone, and an indication with
+no therapy is simply unqualified — but an interaction with nothing to interact
+with is not an under-specified statement, it is not a statement. The interactant
+is therefore supplied to `Record` rather than added afterwards, and
+`RemoveInteractant` refuses the last one.
+
+**The substance seam arrived exactly as `OtherTherapy` predicted it would** —
+*"an optional link beside the text, never instead of it"*. Most interactants are
+not compounds RegOS knows: grapefruit juice, alcohol, *CYP3A4 inhibitors*. A
+required `SubstanceId` would make the ordinary case unrecordable. Set, and
+*"which of our products interact with warfarin?"* is a join; unset, the text
+still says what the label says.
+
+### One thing the compiler found
+
+**RIM's `Interaction` collides with a bounded context.** `RegOS.Interaction` is
+the health authority's letters, questions and meetings (ADR-040), so the bare
+noun forces a `using` alias in every file that sees both — the collision this
+epic renamed `Labeling` to `LocalLabel` to avoid. The aggregate is
+`DrugInteraction`; the screen still says **Interactions**.
+
+**Second mechanical departure from RIM's noun, and the second time the reason
+was a namespace rather than a modelling judgement.** Worth noticing as a pattern:
+RIM names objects as though nothing else exists in the system, and a codebase
+with bounded contexts cannot take every noun at face value.
+
+### Decisions made while building
+
+| Decision | Why |
+|---|---|
+| **`Incidence` dropped from Phase 1's attribute list** | Frequency-shaped, and `UndesirableEffect` already carries frequency. Nobody asked for it here, and two ways to say how often something happens is one too many |
+| **`Severity` and `Management` are both nullable** | Many labels describe an interaction and what to do about it without grading it. Inventing a grade would assert a clinical judgement nobody made |
+| **`InteractionType` is recorded, not derived** | *St John's wort* is a herbal product and a CYP3A4 inducer; which one a label means is the label's statement, not ours to infer from the interactant |
+| **The interactant FK is `Restrict`** | Deleting a substance must not silently rewrite what a label says |
+| **`MarketInteractions` is its own component** | An interaction names what it is *with*, and that list is never empty — a different shape from the other two statements, so not a third section of theirs |
+
+**Verified:** 19/19 suites, 0 failed, **1405 tests** · **110/110 browser specs**
+· CORS reverted and confirmed absent from `src/`.
 
 ---
 

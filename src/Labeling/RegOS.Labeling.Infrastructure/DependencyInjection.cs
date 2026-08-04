@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Labeling.Domain.Aggregates.GlobalLabels;
 using RegOS.Labeling.Domain.Aggregates.Contraindications;
+using RegOS.Labeling.Domain.Aggregates.DrugInteractions;
 using RegOS.Labeling.Domain.Aggregates.Indications;
 using RegOS.Labeling.Domain.Aggregates.UndesirableEffects;
 using RegOS.Labeling.Domain.Aggregates.LocalLabels;
@@ -23,6 +24,8 @@ public static class DependencyInjection
         services.AddScoped<IContraindicationRepository, ContraindicationRepository>();
 
         services.AddScoped<IUndesirableEffectRepository, UndesirableEffectRepository>();
+
+        services.AddScoped<IDrugInteractionRepository, DrugInteractionRepository>();
 
         return services;
     }

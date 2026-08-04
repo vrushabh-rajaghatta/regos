@@ -66,6 +66,8 @@ export interface Indication {
 
 export interface ClinicalVocabulary {
   conditions: CodedConcept[];
+  interactionTypes: CodedConcept[];
+  interactionSeverities: CodedConcept[];
   /** Undesirable effects only — the one list the three do not share. */
   frequencies: CodedConcept[];
   physiologicalConditions: CodedConcept[];
@@ -107,5 +109,32 @@ export interface UndesirableEffect {
   labelText: string;
   frequencyCode: string | null;
   frequencyDisplay: string | null;
+  populations: Population[];
+}
+
+/**
+ * What this product clashes with here.
+ *
+ * `substanceId` on an interactant is the optional seam: set, the interaction is
+ * joinable to the catalogue; null, the text still says what the label says. Most
+ * interactants — grapefruit juice, alcohol, "CYP3A4 inhibitors" — are not
+ * substances RegOS knows.
+ */
+export interface Interactant {
+  id: string;
+  description: string;
+  substanceId: string | null;
+  substanceName: string | null;
+}
+
+export interface DrugInteraction {
+  id: string;
+  interactionTypeCode: string;
+  interactionTypeDisplay: string;
+  labelText: string;
+  management: string | null;
+  severityCode: string | null;
+  severityDisplay: string | null;
+  interactants: Interactant[];
   populations: Population[];
 }
