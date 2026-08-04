@@ -40,7 +40,11 @@ Run as **three epics**, cut when this is pulled into Now. Suggested IDs at that 
 
 Do not attempt all three in one branch — it would be the largest epic in the project by a wide margin and would sit unmerged for months, against the flow's *"keep epics small enough to complete before they drift."*
 
-> **10a was cut and planned on 2026-08-03** → **[EPIC-010a — Substance & composition](EPIC-010a-substance-and-composition.md)**, which carries the settled Phase 2 and Phase 3 for cluster A and supersedes the sketches below **for that cluster only**. Decisions 1–4 and 6 were settled there; decision 5 (`Registration` → `PackagedProduct`) remains open and belongs to 10b. The sketches below stand unchanged for **10b** and **10c**.
+> **10a was cut and planned on 2026-08-03** → **[EPIC-010a — Substance & composition](EPIC-010a-substance-and-composition.md)**, which carries the settled Phase 2 and Phase 3 for cluster A and supersedes the sketches below **for that cluster only**. Decisions 1–4 and 6 were settled there; decision 5 (`Registration` → `PackagedProduct`) remained open and belonged to 10b.
+>
+> **10b was cut and planned on 2026-08-04** → **[EPIC-010b — Packs & supply](EPIC-010b-packs-and-supply.md)**, carrying clusters **B + C** and superseding the sketches below for them. **Renamed on pull-in** — the sketch says *"Presentation & packaging"*, and presentation shipped in 10a S002. **Decision 5 was answered, and not as RIM states it:** a licence authorises *many* packs, and the link lives on the pack, so `Registration` is not changed at all. The sketch's *"two self-referencing hierarchies — decide once, apply to both"* turned out to be half right: one **pattern**, applied twice, but they are two **structures**, and 10b's D1 gives the discriminator the sketch lacked.
+>
+> The sketches below stand unchanged for **10c** only.
 
 ### In scope ✅ *(across the three splits)*
 - **`Substance`** — substance name, class, type, CAS number, INN, chem/bio description, molecular formula, UNII code + name.

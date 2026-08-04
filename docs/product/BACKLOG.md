@@ -41,8 +41,42 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-**Nothing in progress.** EPIC-018 merged to `main` on 2026-08-04 and the next
-epic is the founder's call — the recommendation is recorded in [Next](#next).
+**EPIC-010b — Packs & supply. 🟡 In Progress.**
+Pulled into Now 2026-08-04, after EPIC-018 merged to `main` (PR #19). Cut from
+the [EPIC-010 umbrella](epics/EPIC-010-idmp-product-data-depth.md) (clusters B
+and C), **renamed on pull-in** — presentation shipped in 10a S002 — and planned
+to [`epics/EPIC-010b-packs-and-supply.md`](epics/EPIC-010b-packs-and-supply.md).
+Phase 2 signed off; the branch is `epic/EPIC-010b-packs-and-supply`.
+
+> **A pack is how a medicine is supplied, not what it is.** That sentence
+> decides why packaging is a second tree rather than a reuse of `ComponentTree`,
+> why legal status sits on the pack, and why appearance does not.
+
+| | |
+|---|---|
+| **ADR-061** | ⚪ before S001 — why packaging is not composition, why there are two recursions, and why `Registration` does not point at the pack |
+| **S001** | ⚪ `PackagedProduct` — the pack: description, size, the market's pack code, dated marketing status |
+| **S002** | ⚪ `PackageItem` + `PackagingTree` — the recursion, depth- and cycle-guarded |
+| **S003** | ⚪ `LegalStatusOfSupply` + `ShelfLifeStorage` |
+| **S004** | ⚪ `Appearance` on the presentation, and artwork's pack link — EPIC-018's debt paid |
+| **S005** | ⚪ Capstone — a registration authorises packs; browser proof; retro |
+
+**Flagged in the plan, not hidden:**
+
+- **`OtherCharacteristics` and `Devices` are refused, not deferred** — one is a
+  name/value bag RIM itself could not classify, the other is already a
+  `MedicinalProductComponent`. **The epic closes 5 of cluster B+C's 7 objects**,
+  said here so the coverage figure is never read as a claim about the other two.
+- **S004 is where to stop if it runs long** — decided now rather than under
+  pressure.
+
+> **What EPIC-018 left standing, still standing:** nothing links a label version
+> to the statements it publishes ([ADR-059](../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) §3);
+> `ProductDocument` has no market dimension; a label cannot be renamed or
+> retired. **`LocalLabelRevision.DataCarrierCode` stops being an orphan here** —
+> EPIC-010b D6 gives it a pack to point at, and deliberately keeps both codes,
+> because what the company registers and what the artwork prints are different
+> truths that are *meant* to be able to disagree.
 
 > **What EPIC-018 leaves standing, so it is not rediscovered as a defect:**
 >
@@ -128,20 +162,22 @@ whoever can go and fetch one.*
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 1 | **EPIC-010b** | **Presentation & packaging** — `PackagedProduct`, the recursive `Packaging` tree, legal status of supply; **still a sketch**, re-cut on pull-in | ⚪ Not Started | EPIC-010a ✅ · EPIC-017 ✅ · EPIC-018 ✅ |
-| 2 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
-| 3 | **EPIC-010c** | **Manufacturing** — the most self-contained cluster; can slip without blocking anything | ⚪ Not Started | EPIC-010a ✅ · EPIC-016 ✅ |
+| 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
+| 2 | **EPIC-010c** | **Manufacturing** — the most self-contained cluster; can slip without blocking anything. **Still a sketch**, re-cut on pull-in | ⚪ Not Started | EPIC-010a ✅ · EPIC-016 ✅ |
+
+> **EPIC-010b left this table on 2026-08-04** and is in [Now](#now), taken on the
+> recommendation below.
 
 > **EPIC-018 left this table on 2026-08-04** and shipped the same day. It sat at
 > the top of it from the day the runway was written, and nothing ever displaced
 > the argument that put it there — EPIC-007a and EPIC-019 were both explicitly
 > *"EPIC-018 is next either way"*.
 
-### The recommendation now in the top row
+### The recommendation that took EPIC-010b
 
-> **EPIC-010b — Presentation & packaging — before EPIC-021.** Stated as a
-> recommendation rather than a decision, because reordering the runway is the
-> founder's. **Recorded 2026-08-04.**
+> **EPIC-010b — before EPIC-021.** Stated as a recommendation rather than a
+> decision, because reordering the runway is the founder's. **Recorded and taken
+> 2026-08-04.**
 
 **EPIC-018 paid three debts into 10b**, which is the change since this table was
 last ordered:
@@ -255,6 +291,7 @@ Three divergences are **not** gaps and should be defended, not closed:
 1. **The dossier blueprint engine.** `RegulatoryTemplate` → `Version` → `TemplateSection` → `RequiredDocument` → `ValidationRule` has **no RIM equivalent**. RIM's nearest neighbour (Process Plan Template) is a *process timeline* template, not dossier content structure. RIM assumes a content plan is authored per submission; we derive it from governed metadata. **That gap is the product.**
 2. **Tenancy.** RIM is a single-enterprise model with no tenant concept. `TenantId` + fail-closed filters (ADR-030–032), and the Tenant/Organization split, are additions — and a better answer than RIM's, which conflates "us" with "a regulatory party".
 3. **Bitemporal status history.** RIM annotates attributes "Single / Historical" and stops. `RegistrationStatusEntry` distinguishes `OccurredOn` from `RecordedOnUtc`, so a migrated 2019 authorisation reads honestly. **Better than the spec.**
+4. **A licence authorises many packs, and the pack names the licence.** RIM says `License → Packaged Product`, *Parent, **Single***. One EU marketing authorisation covers several pack sizes and one US NDA covers several package configurations, so *Single* is wrong. RegOS puts a nullable `RegistrationId` on the pack instead — **because a pack exists before its licence does**, the same reasoning EPIC-017 used for markets. It also answers *"which packs are still unlicensed?"* without inventing a planned registration, and leaves `Registration` untouched (EPIC-010b D2, ADR-061).
 
 ### The runway
 
