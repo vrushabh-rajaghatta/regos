@@ -5,9 +5,22 @@ using RegOS.Product.Application.Commands.ArchiveProduct;
 using RegOS.Product.Application.Commands.ChangeMarketStatus;
 using RegOS.Product.Application.Commands.CreateMedicinalProduct;
 using RegOS.Product.Application.Commands.DeactivateMedicinalProduct;
+using RegOS.Product.Application.Commands.AddComponent;
+using RegOS.Product.Application.Commands.AddIngredient;
+using RegOS.Product.Application.Commands.MoveComponent;
+using RegOS.Product.Application.Commands.RemoveComponent;
+using RegOS.Product.Application.Commands.RestateComponent;
+using RegOS.Product.Application.Commands.AddPresentation;
+using RegOS.Product.Application.Commands.RemoveIngredient;
+using RegOS.Product.Application.Commands.RestateIngredient;
+using RegOS.Product.Application.Commands.RecordAtcCode;
 using RegOS.Product.Application.Commands.RegisterProduct;
 using RegOS.Product.Application.Commands.RemoveTradeName;
+using RegOS.Product.Application.Commands.RestatePresentation;
 using RegOS.Product.Application.Commands.UpdateProduct;
+using RegOS.Product.Application.Queries.ListComponents;
+using RegOS.Product.Application.Queries.ListProductsContainingSubstance;
+using RegOS.Product.Application.Queries.ListPresentations;
 using RegOS.Product.Application.Queries.GetProduct;
 using RegOS.Product.Application.Queries.GetMedicinalProduct;
 using RegOS.Product.Application.Queries.ListMedicinalProducts;
@@ -34,6 +47,24 @@ public static class ProductApplicationServiceCollectionExtensions
         services.AddScoped<ChangeMarketStatusHandler>();
         services.AddScoped<ActivateMedicinalProductHandler>();
         services.AddScoped<DeactivateMedicinalProductHandler>();
+        services.AddScoped<RecordAtcCodeHandler>();
+
+        services.AddScoped<AddPresentationHandler>();
+        services.AddScoped<RestatePresentationHandler>();
+        services.AddScoped<ListPresentationsHandler>();
+
+        services.AddScoped<AddIngredientHandler>();
+        services.AddScoped<RestateIngredientHandler>();
+        services.AddScoped<RemoveIngredientHandler>();
+
+        services.AddScoped<AddComponentHandler>();
+        services.AddScoped<RestateComponentHandler>();
+        services.AddScoped<MoveComponentHandler>();
+        services.AddScoped<RemoveComponentHandler>();
+        services.AddScoped<ListComponentsHandler>();
+
+        // The capstone read: Substance -> Ingredient -> presentation -> market.
+        services.AddScoped<ListProductsContainingSubstanceHandler>();
 
         return services;
     }

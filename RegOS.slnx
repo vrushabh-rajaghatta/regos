@@ -20,6 +20,7 @@
   <Folder Name="/src/ReferenceData/">
     <Project Path="src/ReferenceData/RegOS.ReferenceData.Application/RegOS.ReferenceData.Application.csproj" />
     <Project Path="src/ReferenceData/RegOS.ReferenceData.Domain/RegOS.ReferenceData.Domain.csproj" />
+    <Project Path="src/ReferenceData/RegOS.ReferenceData.Infrastructure/RegOS.ReferenceData.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Product/">
     <Project Path="src/Product/RegOS.Product.Application/RegOS.Product.Application.csproj" />

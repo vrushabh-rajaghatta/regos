@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\Platform\RegOS.Platform.Application\RegOS.Platform.Application.csproj" />
     <ProjectReference Include="..\..\Platform\RegOS.Platform.Infrastructure\RegOS.Platform.Infrastructure.csproj" />
     <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Application\RegOS.ReferenceData.Application.csproj" />
+    <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Infrastructure\RegOS.ReferenceData.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Submission\RegOS.Submission.Application\RegOS.Submission.Application.csproj" />
     <ProjectReference Include="..\..\Submission\RegOS.Submission.Infrastructure\RegOS.Submission.Infrastructure.csproj" />
     <ProjectReference Include="..\..\ProductDocument\RegOS.ProductDocument.Application\RegOS.ProductDocument.Application.csproj" />

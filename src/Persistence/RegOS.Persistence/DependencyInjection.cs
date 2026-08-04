@@ -41,6 +41,9 @@ public static class DependencyInjection
         services.AddScoped<IDataInitializer, CorrespondenceTypeDataInitializer>();
         // After GeographyAndRegulatoryInitializer: divisions reference authorities.
         services.AddScoped<IDataInitializer, AuthorityDivisionDataInitializer>();
+        // References nothing — a substance is a fact about the world, which is
+        // why it depends on no other seed and no tenant.
+        services.AddScoped<IDataInitializer, SubstanceDataInitializer>();
         // After application types and authorities: a template references both.
         services.AddScoped<IDataInitializer, RegulatoryTemplateDataInitializer>();
 

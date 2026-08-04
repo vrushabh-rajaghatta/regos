@@ -10,9 +10,12 @@ import { RegistrationExpiry } from "../../registrations/components/RegistrationE
 import { RegistrationStatusBadge } from "../../registrations/components/RegistrationStatusBadge";
 import { useProductRegistrations } from "../../registrations/hooks/useProductRegistrations";
 import { AddTradeNameDialog } from "../components/AddTradeNameDialog";
+import { AtcCodeDialog } from "../components/AtcCodeDialog";
 import { ChangeMarketStatusDialog } from "../components/ChangeMarketStatusDialog";
 import { MarketActivationDialog } from "../components/MarketActivationDialog";
+import { MarketComponents } from "../components/MarketComponents";
 import { MarketOverview } from "../components/MarketOverview";
+import { MarketPresentations } from "../components/MarketPresentations";
 import { MarketStatusTimeline } from "../components/MarketStatusTimeline";
 import { MarketTradeNames } from "../components/MarketTradeNames";
 import { useMedicinalProduct } from "../hooks/useMedicinalProduct";
@@ -38,6 +41,7 @@ export function MedicinalProductPage() {
   const [restatusing, setRestatusing] = useState(false);
   const [retiring, setRetiring] = useState(false);
   const [registering, setRegistering] = useState(false);
+  const [classifying, setClassifying] = useState(false);
 
   const { data: market, isLoading, error } = useMedicinalProduct(
     medicinalProductId!
@@ -90,6 +94,10 @@ export function MedicinalProductPage() {
         description={`${market.productName} — ${market.productCode}`}
         actions={
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setClassifying(true)}>
+              ATC code
+            </Button>
+
             <Button variant="outline" onClick={() => setRetiring(true)}>
               {market.status === "Inactive" ? "Restore" : "Retire"}
             </Button>
@@ -102,6 +110,15 @@ export function MedicinalProductPage() {
       />
 
       <MarketOverview market={market} registrationCount={held.length} />
+
+      {/* Above trade names, because what a product *is* precedes what it is
+          called — and because composition (S003) hangs from a presentation,
+          so this is the section that grows. */}
+      <MarketPresentations medicinalProductId={market.medicinalProductId} />
+
+      {/* After presentations, because it answers the other half of the same
+          question: what the product *is* when given, then what is in the box. */}
+      <MarketComponents medicinalProductId={market.medicinalProductId} />
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">
@@ -215,6 +232,13 @@ export function MedicinalProductPage() {
         countryName={market.countryName}
         open={restatusing}
         onOpenChange={setRestatusing}
+      />
+
+      <AtcCodeDialog
+        medicinalProductId={market.medicinalProductId}
+        currentAtcCode={market.atcCode}
+        open={classifying}
+        onOpenChange={setClassifying}
       />
 
       <MarketActivationDialog

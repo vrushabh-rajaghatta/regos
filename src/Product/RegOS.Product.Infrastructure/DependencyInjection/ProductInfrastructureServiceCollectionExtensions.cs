@@ -19,6 +19,14 @@ public static class ProductInfrastructureServiceCollectionExtensions
             IMedicinalProductRepository, MedicinalProductRepository>();
         services.AddScoped<IMedicinalProductPolicy, MedicinalProductPolicy>();
 
+        services.AddScoped<
+            IPharmaceuticalProductDetailRepository,
+            PharmaceuticalProductDetailRepository>();
+
+        services.AddScoped<
+            IMedicinalProductComponentRepository,
+            MedicinalProductComponentRepository>();
+
         return services;
     }
 }

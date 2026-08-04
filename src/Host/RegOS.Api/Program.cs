@@ -27,6 +27,7 @@ using RegOS.Api.Middleware;
 using RegOS.Api.Tenancy;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.ReferenceData.Application;
+using RegOS.ReferenceData.Infrastructure;
 using RegOS.Persistence;
 using RegOS.Persistence.Initialization;
 using RegOS.Product.Application.DependencyInjection;
@@ -49,6 +50,9 @@ using RegOS.Api.Endpoints.Meetings;
 using RegOS.Api.Endpoints.Correspondence;
 using RegOS.Api.Endpoints.Registrations;
 using RegOS.Api.Endpoints.Studies;
+using RegOS.Api.Endpoints.Substances;
+using RegOS.Api.Endpoints.Presentations;
+using RegOS.Api.Endpoints.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -108,6 +112,7 @@ if (builder.Environment.IsDevelopment())
 }
 
 builder.Services.AddReferenceDataApplication();
+builder.Services.AddReferenceDataInfrastructure();
 
 builder.Services.AddRegulatoryApplicationServices();
 builder.Services.AddRegulatoryApplicationInfrastructure(builder.Configuration);
@@ -175,6 +180,10 @@ referenceData.MapListIdentifierSchemes();
 referenceData.MapListContactRoles();
 referenceData.MapListCorrespondenceTypes();
 referenceData.MapListAuthorityDivisions();
+// Its own list, not folded into the presentation vocabulary: a strength
+// measures a quantity, and offering "vial" beside "mL" in one payload is the
+// first step towards a formulation stating what the presentation already says.
+referenceData.MapListMeasurementUnits();
 
 var authentication = app.MapGroup("").WithTags("Authentication");
 authentication.MapLogin();
@@ -241,6 +250,25 @@ medicinalProducts.MapRemoveTradeName();
 medicinalProducts.MapChangeMarketStatus();
 medicinalProducts.MapActivateMedicinalProduct();
 medicinalProducts.MapDeactivateMedicinalProduct();
+medicinalProducts.MapRecordAtcCode();
+
+var presentations = app.MapGroup("").WithTags("Presentations");
+// Before the rest: /api/presentations/vocabulary must not be read as a
+// /api/presentations/{id} that happens to be spelled "vocabulary".
+presentations.MapGetPharmaceuticalVocabulary();
+presentations.MapListPresentations();
+presentations.MapAddPresentation();
+presentations.MapRestatePresentation();
+presentations.MapAddIngredient();
+presentations.MapRestateIngredient();
+presentations.MapRemoveIngredient();
+
+var components = app.MapGroup("").WithTags("Components");
+components.MapListComponents();
+components.MapAddComponent();
+components.MapRestateComponent();
+components.MapMoveComponent();
+components.MapRemoveComponent();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();
@@ -317,6 +345,14 @@ studies.MapRegisterNonClinicalStudy();
 studies.MapListStudies();
 studies.MapListStudyFilings();
 studies.MapApplicationStudyCitations();
+
+var substances = app.MapGroup("").WithTags("Substances");
+// Before the list: /api/substances/vocabulary must not be read as a
+// /api/substances/{id} that happens to be spelled "vocabulary".
+substances.MapGetSubstanceVocabulary();
+substances.MapListSubstances();
+substances.MapCreateSubstance();
+substances.MapListProductsContainingSubstance();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

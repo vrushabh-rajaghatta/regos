@@ -53,6 +53,21 @@ public sealed class MedicinalProductConfiguration
             .HasConversion<int>()
             .IsRequired();
 
+        // A single nullable column, per EPIC-017's change-case analysis. Stored
+        // as the string it is: a value object over a code the tenant supplied,
+        // deliberately not a CodedConcept, because RegOS holds no WHO ATC
+        // licence to name as its system (ADR-058 §6).
+        builder.Property(x => x.AtcCode)
+            .HasConversion(
+                code => code!.Value,
+                value => AtcCode.Create(value))
+            .HasMaxLength(AtcCode.MaxLength);
+
+        // "Which of our markets are analgesics?" is a prefix match on this
+        // column — the reason AtcCode.Levels is derived rather than a table of
+        // parent codes.
+        builder.HasIndex(x => x.AtcCode);
+
         // Cross-aggregate foreign keys; the domain exposes no navigation
         // properties. Restrict on both: a global product or a country that a
         // market presence names must never be deleted out from under it.

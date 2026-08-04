@@ -34,6 +34,8 @@ using CorrespondenceTypeAggregate =
     RegOS.ReferenceData.Domain.Regulatory.Correspondence.CorrespondenceType;
 using AuthorityDivisionAggregate =
     RegOS.ReferenceData.Domain.Regulatory.Authority.AuthorityDivision;
+using SubstanceAggregate =
+    RegOS.ReferenceData.Domain.Substances.Substance;
 using CommitmentAggregate =
     RegOS.Interaction.Domain.Commitments.Commitment;
 using HaMeetingAggregate =
@@ -104,6 +106,22 @@ public sealed class RegOSDbContext : DbContext
     /// </summary>
     public DbSet<MedicinalProduct> MedicinalProducts =>
         Set<MedicinalProduct>();
+
+    /// <summary>
+    /// What a product physically is in one market. Screen word:
+    /// <b>Presentation</b>. Its own root rather than a child of the market —
+    /// composition and commerce move on different clocks (EPIC-010a S002).
+    /// </summary>
+    public DbSet<PharmaceuticalProductDetail> PharmaceuticalProductDetails =>
+        Set<PharmaceuticalProductDetail>();
+
+    /// <summary>
+    /// What the patient physically receives — a vial, a pen, the kit holding
+    /// them. Recursive through a nullable parent; the acyclicity is a domain
+    /// rule, not a constraint here (EPIC-010a S004).
+    /// </summary>
+    public DbSet<MedicinalProductComponent> MedicinalProductComponents =>
+        Set<MedicinalProductComponent>();
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
@@ -178,6 +196,14 @@ public sealed class RegOSDbContext : DbContext
     /// </summary>
     public DbSet<AuthorityDivisionAggregate> AuthorityDivisions =>
         Set<AuthorityDivisionAggregate>();
+
+    /// <summary>
+    /// Scientific entities that exist independently of any product. Shared
+    /// catalogue plus a tenant's own — an innovator holds a compound before it
+    /// is in anyone's registry (ADR-058).
+    /// </summary>
+    public DbSet<SubstanceAggregate> Substances =>
+        Set<SubstanceAggregate>();
 
     /// <summary>
     /// What we promised an authority. Tenant-owned and fail-closed.
@@ -281,13 +307,15 @@ public sealed class RegOSDbContext : DbContext
     /// <list type="number">
     /// <item><b>Fail-closed tenant-owned</b> — <c>x.TenantId == CurrentTenant</c>.
     /// The tenant owns the data. <c>Users</c>, <c>Products</c>,
-    /// <c>MedicinalProducts</c>,
+    /// <c>MedicinalProducts</c>, <c>PharmaceuticalProductDetails</c>,
+    /// <c>MedicinalProductComponents</c>,
     /// <c>RegulatoryApplications</c>, <c>Submissions</c>, <c>ProductDocuments</c>,
     /// <c>Registrations</c>, <c>Organizations</c>, <c>OrganizationSites</c>,
     /// <c>Contacts</c>, <c>OrganizationDivisions</c>.</item>
     /// <item><b>Shared plus extensible</b> — <c>TenantId == null || == CurrentTenant</c>.
     /// The platform ships a baseline the tenant may extend.
-    /// <c>DocumentTypes</c>, <c>RegulatoryTemplates</c>, <c>ContactRoles</c>.</item>
+    /// <c>DocumentTypes</c>, <c>RegulatoryTemplates</c>, <c>ContactRoles</c>,
+    /// <c>AuthorityDivisions</c>, <c>Substances</c>.</item>
     /// <item><b>Global world facts</b> — no filter. RegOS is describing an
     /// external reality that does not differ by tenant. <c>Countries</c>,
     /// <c>Authorities</c>, <c>ApplicationTypes</c>, <c>IdentifierSchemes</c>.</item>
@@ -322,6 +350,12 @@ public sealed class RegOSDbContext : DbContext
         // a filter that reached through a parent would not apply to the
         // registration joins that are its hottest path.
         modelBuilder.Entity<MedicinalProduct>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<PharmaceuticalProductDetail>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<MedicinalProductComponent>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(
@@ -360,6 +394,15 @@ public sealed class RegOSDbContext : DbContext
         // recording which of its divisions they correspond with, because RegOS
         // cannot ship a complete universe of them.
         modelBuilder.Entity<AuthorityDivisionAggregate>().HasQueryFilter(
+            x => CurrentTenant != null
+                && (x.TenantId == null || x.TenantId == CurrentTenant));
+
+        // The same shape again, and a third distinct argument for it: an
+        // authoritative substance registry *does* exist, and the tenant's
+        // molecule is simply not in it yet. That reason resolves itself when
+        // licensed terminology arrives; AuthorityDivision's never does
+        // (ADR-058 §2).
+        modelBuilder.Entity<SubstanceAggregate>().HasQueryFilter(
             x => CurrentTenant != null
                 && (x.TenantId == null || x.TenantId == CurrentTenant));
 

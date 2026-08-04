@@ -34,22 +34,28 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | **EPIC-007a** | **eCTD package generation** — the sequence folder, both backbones, delivery; and **the first time RegOS was checked by something that did not come from RegOS** | 🟢 Complete | 7 stories, **closed at Level 2a** · [ADR-049](../adr/ADR-049-generation-derives-transmission-creates.md)…[055](../adr/ADR-055-when-an-authority-required-fact-becomes-a-domain-fact.md) · **S008 (Level 3) carried to EPIC-007b — FDA's example packages are not held and the claim is not made** → [`epics/EPIC-007a-ectd-package-generation.md`](epics/EPIC-007a-ectd-package-generation.md) |
 | **EPIC-019** | **Study registry** — sponsor-owned studies, placement → study, ICH's `file-tag`, **and the Study Tagging File that unblocked Module 4** | 🟢 Complete | S001–S004 + S002b; **S005 deliberately empty — nobody asked** · [ADR-056](../adr/ADR-056-study-identity-is-owned-by-the-sponsor.md) · [ADR-057](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) · E33–E35 · **owes the E24 continuity refusal → EPIC-021** → [`epics/EPIC-019-study-registry.md`](epics/EPIC-019-study-registry.md) |
 | **EPIC-017** | **The market-local product tier** — the missing Medicinal Product tier (**"Markets"** in the UI), + trade names and market status | 🟢 Complete | 7 stories, 7/7 DoD; [ADR-039](../adr/ADR-039-the-market-local-product-tier.md) → [`epics/EPIC-017-market-local-product-tier.md`](epics/EPIC-017-market-local-product-tier.md) |
+| **EPIC-010a** | **Substance & composition** — the IDMP root: shared substances, presentations, composition, the component tree, and the query the epic existed for — *"which products contain substance X?"* | 🟢 Complete | 5 stories + [ADR-058](../adr/ADR-058-substances-are-shared-facts-ingredients-are-roles.md) · **EPIC-017's change-case prediction corrected there, not only here** · **does not imply IDMP/xEVMPD readiness (D1)** → [`epics/EPIC-010a-substance-and-composition.md`](epics/EPIC-010a-substance-and-composition.md) |
 
 ---
 
 ## Now
 
-**EPIC-010a — Substance & composition.** Planned through Phase 3 on 2026-08-03
-and not started. EPIC-019 merged to `main` as PR #16.
+**EPIC-010a — Substance & composition. 🟢 Complete, awaiting merge.**
+All five stories delivered and the retro written (2026-08-04). The branch
+`epic/EPIC-010a-substance-and-composition` holds ADR-058 and S001–S005 as one
+coherent slice; **nothing here is on `main` yet.**
+
+**Next into Now is EPIC-018** (top of the table below) — pulled in by the
+founder, one epic at a time, after this branch merges.
 
 | | |
 |---|---|
-| **ADR-058** | **first, before S002** — the composition model. Named in the plan, not yet written |
-| **S001** | `Substance` — shared and extensible, and the whole of *"which products contain this API?"* |
-| **S002** | `PharmaceuticalProductDetail` — strength, dose form, route |
-| **S003** | `Ingredient` — composition |
-| **S004** | `MedicinalProductComponent` — the recursive tree |
-| **S005** | capstone |
+| **ADR-058** | ✅ written 2026-08-03 — substances are shared facts, ingredients are roles |
+| **S001** | ✅ `Substance` — shared and extensible, plus the `CodedConcept` seam and `ReferenceData`'s first write path |
+| **S002** | ✅ `PharmaceuticalProductDetail` — dose form, route, unit of presentation, and `AtcCode`. Its own root; EPIC-017's change-case prediction corrected there |
+| **S003** | ✅ `Ingredient` — composition, `Strength` and the measurement vocabulary. The join that makes *"which products contain substance X?"* answerable |
+| **S004** | ✅ `MedicinalProductComponent` — the recursive tree, `ComponentTree`, depth guard and cycle prevention |
+| **S005** | ✅ capstone — *"which products contain substance X?"* end to end, and the Phase-5 retro |
 
 > **It does not deliver IDMP/xEVMPD readiness, and says so in D1.** Vocabularies
 > are seeded behind a `CodedConcept` seam; EDQM, WHO ATC and GSRS/UNII are

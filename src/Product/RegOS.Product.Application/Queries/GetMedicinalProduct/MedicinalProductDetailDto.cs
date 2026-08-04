@@ -12,6 +12,10 @@ namespace RegOS.Product.Application.Queries.GetMedicinalProduct;
 /// Derived from <paramref name="MarketStatusHistory"/>, never stored — the
 /// business date of the first entry reaching <c>Launched</c>.
 /// </param>
+/// <param name="AtcCode">
+/// As the tenant supplied it, and not verified: RegOS holds no WHO ATC index
+/// (ADR-058 §6). Sent as a plain string because that is the whole of the claim.
+/// </param>
 public sealed record MedicinalProductDetailDto(
     Guid MedicinalProductId,
     Guid GlobalProductId,
@@ -23,6 +27,7 @@ public sealed record MedicinalProductDetailDto(
     string Status,
     DateOnly StatusDate,
     string MarketStatus,
+    string? AtcCode,
     DateOnly? LaunchedOn,
     IReadOnlyList<TradeNameDto> TradeNames,
     IReadOnlyList<MarketStatusEntryDto> MarketStatusHistory);

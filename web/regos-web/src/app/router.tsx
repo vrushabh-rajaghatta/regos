@@ -39,6 +39,7 @@ import { DueWorkPage } from "@/features/regulatory/dueWork/pages/DueWorkPage";
 import { MeetingsPage } from "@/features/regulatory/meetings/pages/MeetingsPage";
 import { InspectionsPage } from "@/features/regulatory/inspections/pages/InspectionsPage";
 import { StudiesPage } from "@/features/regulatory/studies/pages/StudiesPage";
+import { SubstancesPage } from "@/features/regulatory/substances/pages/SubstancesPage";
 import { CorrespondencePage } from "@/features/regulatory/correspondence/pages/CorrespondencePage";
 import { CorrespondenceDetailPage } from "@/features/regulatory/correspondence/pages/CorrespondenceDetailPage";
 import { OrganizationsPage } from "@/features/regulatory/organizations/pages/OrganizationsPage";
@@ -337,6 +338,14 @@ export const router = createBrowserRouter([
               {
                 path: "studies",
                 element: <StudiesPage />,
+              },
+              // A sibling of Products, not a page beneath one: a substance is
+              // a fact about the world that exists whether or not any product
+              // contains it, which is what makes "which products contain
+              // substance X?" askable backwards (ADR-058).
+              {
+                path: "substances",
+                element: <SubstancesPage />,
               },
               {
                 path: "meetings",

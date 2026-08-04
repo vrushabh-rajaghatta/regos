@@ -58,12 +58,18 @@ They differ here on purpose, and both are binding.
 | --- | --- |
 | `MedicinalProduct` | **Market** |
 | `GlobalProduct` | **Product** |
+| `PharmaceuticalProductDetail` | **Presentation** |
 | `Registration` | **Registration** / *market authorisation* in prose |
 
 RIM's `Medicinal Product` keeps the model precise and is what a future
 contributor will search for. **"Market"** is what a regulatory user says out
 loud — *"we're in Canada"* — and it is what the screens show: a product page
 lists its **Markets**, and an authorisation is recorded against one.
+
+`PharmaceuticalProductDetail` is IDMP's term for the administrable form — what
+the product physically *is*, as against what it is called or whether it is on
+sale. Nobody says it out loud. **"Presentation"** is the word a regulatory user
+uses for the same thing, and it is what the market page shows.
 
 The screen's word must never reach a type, and the type's word must never reach
 a label without a reason to prefer it.

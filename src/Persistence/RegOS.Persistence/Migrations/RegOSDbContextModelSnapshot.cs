@@ -863,6 +863,32 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("Products", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.Product.Domain.Product.Ingredient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PharmaceuticalProductDetailId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("SubstanceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubstanceId");
+
+                    b.HasIndex("PharmaceuticalProductDetailId", "SubstanceId")
+                        .IsUnique();
+
+                    b.ToTable("Ingredients", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Product.Domain.Product.MarketStatusEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -898,6 +924,10 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AtcCode")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
                     b.Property<Guid>("CountryId")
                         .HasColumnType("uuid");
 
@@ -920,6 +950,8 @@ namespace RegOS.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AtcCode");
+
                     b.HasIndex("TenantId");
 
                     b.HasIndex("CountryId", "CurrentMarketStatus");
@@ -927,6 +959,79 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("GlobalProductId", "CountryId");
 
                     b.ToTable("MedicinalProducts", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.MedicinalProductComponent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("MedicinalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid?>("ParentComponentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicinalProductId");
+
+                    b.HasIndex("ParentComponentId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("MedicinalProductComponents", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.PharmaceuticalProductDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("MedicinalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicinalProductId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("PharmaceuticalProductDetails", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.Product.Domain.Product.TradeName", b =>
@@ -1579,6 +1684,50 @@ namespace RegOS.Persistence.Migrations
                         .HasFilter("\"Token\" IS NOT NULL");
 
                     b.ToTable("SubmissionTypes", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Substances.Substance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CasNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Inn")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("MolecularFormula")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UniiCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("Substances", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.Registration", b =>
@@ -2482,6 +2631,113 @@ namespace RegOS.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RegOS.Product.Domain.Product.Ingredient", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.PharmaceuticalProductDetail", null)
+                        .WithMany("Ingredients")
+                        .HasForeignKey("PharmaceuticalProductDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.ReferenceData.Domain.Substances.Substance", null)
+                        .WithMany()
+                        .HasForeignKey("SubstanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsOne("RegOS.Product.Domain.Product.Strength", "Strength", b1 =>
+                        {
+                            b1.Property<Guid>("IngredientId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal?>("DenominatorValue")
+                                .HasPrecision(18, 6)
+                                .HasColumnType("numeric(18,6)")
+                                .HasColumnName("StrengthDenominatorValue");
+
+                            b1.Property<decimal>("NumeratorValue")
+                                .HasPrecision(18, 6)
+                                .HasColumnType("numeric(18,6)")
+                                .HasColumnName("StrengthNumeratorValue");
+
+                            b1.HasKey("IngredientId");
+
+                            b1.ToTable("Ingredients");
+
+                            b1.WithOwner()
+                                .HasForeignKey("IngredientId");
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "DenominatorUnit", b2 =>
+                                {
+                                    b2.Property<Guid>("StrengthIngredientId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("StrengthDenominatorUnitCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("StrengthDenominatorUnitDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("StrengthDenominatorUnitSystem");
+
+                                    b2.HasKey("StrengthIngredientId");
+
+                                    b2.ToTable("Ingredients");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("StrengthIngredientId");
+                                });
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "NumeratorUnit", b2 =>
+                                {
+                                    b2.Property<Guid>("StrengthIngredientId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("StrengthNumeratorUnitCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("StrengthNumeratorUnitDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("StrengthNumeratorUnitSystem");
+
+                                    b2.HasKey("StrengthIngredientId");
+
+                                    b2.ToTable("Ingredients");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("StrengthIngredientId");
+                                });
+
+                            b1.Navigation("DenominatorUnit");
+
+                            b1.Navigation("NumeratorUnit")
+                                .IsRequired();
+                        });
+
+                    b.Navigation("Strength");
+                });
+
             modelBuilder.Entity("RegOS.Product.Domain.Product.MarketStatusEntry", b =>
                 {
                     b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
@@ -2504,6 +2760,235 @@ namespace RegOS.Persistence.Migrations
                         .HasForeignKey("GlobalProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.MedicinalProductComponent", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("MedicinalProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProductComponent", null)
+                        .WithMany()
+                        .HasForeignKey("ParentComponentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "ComponentType", b1 =>
+                        {
+                            b1.Property<Guid>("MedicinalProductComponentId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("ComponentTypeCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("ComponentTypeDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ComponentTypeSystem");
+
+                            b1.HasKey("MedicinalProductComponentId");
+
+                            b1.ToTable("MedicinalProductComponents");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MedicinalProductComponentId");
+                        });
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "DoseForm", b1 =>
+                        {
+                            b1.Property<Guid>("MedicinalProductComponentId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("DoseFormCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("DoseFormDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("DoseFormSystem");
+
+                            b1.HasKey("MedicinalProductComponentId");
+
+                            b1.ToTable("MedicinalProductComponents");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MedicinalProductComponentId");
+                        });
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "UnitOfPresentation", b1 =>
+                        {
+                            b1.Property<Guid>("MedicinalProductComponentId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("UnitOfPresentationCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("UnitOfPresentationDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("UnitOfPresentationSystem");
+
+                            b1.HasKey("MedicinalProductComponentId");
+
+                            b1.ToTable("MedicinalProductComponents");
+
+                            b1.WithOwner()
+                                .HasForeignKey("MedicinalProductComponentId");
+                        });
+
+                    b.Navigation("ComponentType")
+                        .IsRequired();
+
+                    b.Navigation("DoseForm");
+
+                    b.Navigation("UnitOfPresentation");
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.PharmaceuticalProductDetail", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("MedicinalProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "DoseForm", b1 =>
+                        {
+                            b1.Property<Guid>("PharmaceuticalProductDetailId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("DoseFormCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("DoseFormDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("DoseFormSystem");
+
+                            b1.HasKey("PharmaceuticalProductDetailId");
+
+                            b1.ToTable("PharmaceuticalProductDetails");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PharmaceuticalProductDetailId");
+                        });
+
+                    b.OwnsMany("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "RoutesOfAdministration", b1 =>
+                        {
+                            b1.Property<Guid>("PharmaceuticalProductDetailId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)");
+
+                            b1.HasKey("PharmaceuticalProductDetailId", "Id");
+
+                            b1.HasIndex("PharmaceuticalProductDetailId", "Code")
+                                .IsUnique();
+
+                            b1.ToTable("PharmaceuticalProductRoutes", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("PharmaceuticalProductDetailId");
+                        });
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "UnitOfPresentation", b1 =>
+                        {
+                            b1.Property<Guid>("PharmaceuticalProductDetailId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("UnitOfPresentationCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("UnitOfPresentationDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("UnitOfPresentationSystem");
+
+                            b1.HasKey("PharmaceuticalProductDetailId");
+
+                            b1.ToTable("PharmaceuticalProductDetails");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PharmaceuticalProductDetailId");
+                        });
+
+                    b.Navigation("DoseForm")
+                        .IsRequired();
+
+                    b.Navigation("RoutesOfAdministration");
+
+                    b.Navigation("UnitOfPresentation");
                 });
 
             modelBuilder.Entity("RegOS.Product.Domain.Product.TradeName", b =>
@@ -2651,6 +3136,77 @@ namespace RegOS.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AuthorityId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.ReferenceData.Domain.Substances.Substance", b =>
+                {
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "SubstanceClass", b1 =>
+                        {
+                            b1.Property<Guid>("SubstanceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("SubstanceClassCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("SubstanceClassDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("SubstanceClassSystem");
+
+                            b1.HasKey("SubstanceId");
+
+                            b1.ToTable("Substances");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubstanceId");
+                        });
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "SubstanceType", b1 =>
+                        {
+                            b1.Property<Guid>("SubstanceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("SubstanceTypeCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("SubstanceTypeDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("SubstanceTypeSystem");
+
+                            b1.HasKey("SubstanceId");
+
+                            b1.ToTable("Substances");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubstanceId");
+                        });
+
+                    b.Navigation("SubstanceClass")
+                        .IsRequired();
+
+                    b.Navigation("SubstanceType")
                         .IsRequired();
                 });
 
@@ -2888,6 +3444,11 @@ namespace RegOS.Persistence.Migrations
                     b.Navigation("MarketStatusHistory");
 
                     b.Navigation("TradeNames");
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.PharmaceuticalProductDetail", b =>
+                {
+                    b.Navigation("Ingredients");
                 });
 
             modelBuilder.Entity("RegOS.ProductDocument.Domain.Aggregates.ProductDocument", b =>
