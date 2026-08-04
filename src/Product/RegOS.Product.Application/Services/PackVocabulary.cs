@@ -14,6 +14,18 @@ namespace RegOS.Product.Application.Services;
 /// </remarks>
 internal static class PackVocabulary
 {
+    public static CodedConcept PackageItemType(string? code)
+        => PackagingVocabulary.PackageItemTypeOf(code)
+            ?? throw new DomainException(
+                PackagingVocabularyErrors.UnknownPackageItemType(code));
+
+    public static CodedConcept? Material(string? code)
+        => string.IsNullOrWhiteSpace(code)
+            ? null
+            : PackagingVocabulary.MaterialOf(code)
+                ?? throw new DomainException(
+                    PackagingVocabularyErrors.UnknownMaterial(code));
+
     public static CodedConcept? UnitOfPresentation(string? code)
         => string.IsNullOrWhiteSpace(code)
             ? null

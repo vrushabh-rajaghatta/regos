@@ -8,6 +8,11 @@ using RegOS.Product.Application.Commands.DeactivateMedicinalProduct;
 using RegOS.Product.Application.Commands.AddComponent;
 using RegOS.Product.Application.Commands.AddIngredient;
 using RegOS.Product.Application.Commands.AddPack;
+using RegOS.Product.Application.Commands.AddPackageItem;
+using RegOS.Product.Application.Commands.MovePackageItem;
+using RegOS.Product.Application.Commands.RemovePackageItem;
+using RegOS.Product.Application.Commands.RestatePackageItem;
+using RegOS.Product.Application.Queries.ListPackageItems;
 using RegOS.Product.Application.Commands.ChangePackMarketingStatus;
 using RegOS.Product.Application.Commands.RestatePack;
 using RegOS.Product.Application.Queries.ListPacks;
@@ -71,6 +76,12 @@ public static class ProductApplicationServiceCollectionExtensions
         services.AddScoped<RestatePackHandler>();
         services.AddScoped<ChangePackMarketingStatusHandler>();
         services.AddScoped<ListPacksHandler>();
+
+        services.AddScoped<AddPackageItemHandler>();
+        services.AddScoped<RestatePackageItemHandler>();
+        services.AddScoped<MovePackageItemHandler>();
+        services.AddScoped<RemovePackageItemHandler>();
+        services.AddScoped<ListPackageItemsHandler>();
 
         // The capstone read: Substance -> Ingredient -> presentation -> market.
         services.AddScoped<ListProductsContainingSubstanceHandler>();

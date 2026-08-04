@@ -143,6 +143,14 @@ public sealed class RegOSDbContext : DbContext
         Set<PackagedProduct>();
 
     /// <summary>
+    /// The layers of a pack — the carton, the blisters inside it. Recursive
+    /// through a nullable parent; the acyclicity is a domain rule, not a
+    /// constraint here (ADR-061 §2).
+    /// </summary>
+    public DbSet<PackageItem> PackageItems =>
+        Set<PackageItem>();
+
+    /// <summary>
     /// A label held above any market — the core data sheet and its siblings
     /// (ADR-059).
     /// </summary>
@@ -438,6 +446,12 @@ public sealed class RegOSDbContext : DbContext
         // tenant rather than inheriting the market's (ADR-061). Its marketing
         // status history carries none and is reachable only through it.
         modelBuilder.Entity<PackagedProduct>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // A layer is a root in its own right, like a component: every rule
+        // about the tree loads all of them, and a filter reaching through the
+        // pack would not apply to that load.
+        modelBuilder.Entity<PackageItem>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // A label is tenant-owned, so it takes the first of ADR-038's three

@@ -31,6 +31,8 @@ public static class ProductInfrastructureServiceCollectionExtensions
             IPackagedProductRepository,
             PackagedProductRepository>();
 
+        services.AddScoped<IPackageItemRepository, PackageItemRepository>();
+
         return services;
     }
 }

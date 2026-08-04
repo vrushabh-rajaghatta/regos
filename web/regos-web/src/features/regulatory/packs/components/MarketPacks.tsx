@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { PackContents } from "./PackContents";
 import { PackDialog } from "./PackDialog";
 import { PackStatusDialog } from "./PackStatusDialog";
 import { packStatusLabel } from "../constants/packStatuses";
@@ -124,6 +125,9 @@ export function MarketPacks({ medicinalProductId }: MarketPacksProps) {
                 Change status
               </Button>
             </div>
+
+            {/* What is in the box, beneath what the box is. */}
+            <PackContents packagedProductId={pack.id} />
 
             {/* Every dated point, never rewritten — a pack discontinued in 2024
                 and entered today still says 2024. */}
