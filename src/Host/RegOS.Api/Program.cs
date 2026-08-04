@@ -352,6 +352,7 @@ var substances = app.MapGroup("").WithTags("Substances");
 substances.MapGetSubstanceVocabulary();
 substances.MapListSubstances();
 substances.MapCreateSubstance();
+substances.MapListProductsContainingSubstance();
 
 var productDocuments = app.MapGroup("").WithTags("Product Documents");
 productDocuments.MapUploadProductDocument();

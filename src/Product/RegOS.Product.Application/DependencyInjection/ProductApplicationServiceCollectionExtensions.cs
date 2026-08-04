@@ -19,6 +19,7 @@ using RegOS.Product.Application.Commands.RemoveTradeName;
 using RegOS.Product.Application.Commands.RestatePresentation;
 using RegOS.Product.Application.Commands.UpdateProduct;
 using RegOS.Product.Application.Queries.ListComponents;
+using RegOS.Product.Application.Queries.ListProductsContainingSubstance;
 using RegOS.Product.Application.Queries.ListPresentations;
 using RegOS.Product.Application.Queries.GetProduct;
 using RegOS.Product.Application.Queries.GetMedicinalProduct;
@@ -61,6 +62,9 @@ public static class ProductApplicationServiceCollectionExtensions
         services.AddScoped<MoveComponentHandler>();
         services.AddScoped<RemoveComponentHandler>();
         services.AddScoped<ListComponentsHandler>();
+
+        // The capstone read: Substance -> Ingredient -> presentation -> market.
+        services.AddScoped<ListProductsContainingSubstanceHandler>();
 
         return services;
     }

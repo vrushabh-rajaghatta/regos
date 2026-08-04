@@ -1,6 +1,6 @@
 # EPIC-010a — Substance & composition
 
-**Status:** ⚪ Not Started · **Branch:** `epic/EPIC-010a-substance-and-composition` (cut at Phase 2) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 Complete — S001–S005 delivered, retro below · **Branch:** `epic/EPIC-010a-substance-and-composition` (cut at Phase 2) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The first of three splits of **[EPIC-010](EPIC-010-idmp-product-data-depth.md)** — cluster **A**, the IDMP root. What a product is *made of*: which substances, in what role, at what strength, in what dose form, by what route.
 
@@ -336,10 +336,107 @@ only changes which move is refused. The test now asserts *that*, and the guards
 stay unexercised on purpose — they protect against database state the domain
 cannot produce, and a walk that hangs starves a thread pool.
 
-### S005 — Capstone
+### S005 — Capstone ✅ 2026-08-04
 As a **regulatory user**, I want to ask which products contain a substance, so that an impact assessment is a query.
-- [ ] *"Which products contain substance X?"* across markets, through the API and the UI
-- [ ] Browser proof: seed a substance → add a proprietary one → build a presentation with two ingredients → ask the question
-- [ ] Retro, per Phase 5 — every decision above gets an outcome, including any that failed
+- [x] *"Which products contain substance X?"* across markets, through the API and the UI
+- [x] Browser proof of the whole chain, in the order a person would live it
+- [x] Retro, per Phase 5 — below
 
-**Done when:** tests green · browser-verified · epic branch not left broken · ADR-058 merged before S002.
+**Done when:** tests green ✅ · browser-verified ✅ · epic branch not left broken ✅ · ADR-058 merged before S002 ✅
+
+`GET /api/substances/{id}/products`, and the panel that asks it sits on the
+substance's own row. The handler lives in **`Product.Application`**: `Product →
+ReferenceData` is an established edge and the reverse is not, so placing it
+beside `Substance` would invert a dependency for a read. The same reasoning
+ADR-058 §3 used for `CodedConcept`, and the shape EPIC-019 used for
+`ListStudyFilings` — *a real question spanning two contexts is a read, and a
+read grants nobody write ownership.*
+
+**One isolation decision worth knowing.** The walk starts at the presentation,
+not at the ingredient. A query filter applies per entity type, and `Ingredient`
+is a child with no `TenantId` and therefore no filter — `Set<Ingredient>()`
+would read every tenant's compositions. Starting from the fail-closed
+`PharmaceuticalProductDetails` is what confines the join to the caller.
+
+**The answer carries market status**, because an impact assessment is about what
+is on sale. A planned market and a launched one are very different phone calls.
+
+---
+
+## Phase 5 — Retro
+
+### What shipped, against the Phase-1 question
+
+| | Question | Answered? |
+|---|---|---|
+| **Q1** | *"Which of our products contain substance X?"* | ✅ End to end, and browser-proved across two markets |
+| **Q2** | *"What is in this product, at what strength, in what dose form, by what route?"* | ✅ Presentation + composition on the market page |
+| **Q3** | *"What does the patient physically receive?"* | ✅ Component tree, three levels, depth-tested |
+| **Q4** | *"Which products use a substance sourced from site Y?"* | **Rejected in Phase 2, and stayed rejected.** No column was added. |
+
+**1319 tests, 18/18 suites · 105/105 browser specs · five additive migrations.**
+
+### Four decisions changed during implementation
+
+Not mistakes — each is a case where building the next story revealed something
+the plan could not have known. Recorded so future planning documents are read as
+what they are: the best guess before the work.
+
+| Decision | Planned | Implemented | What changed it |
+|---|---|---|---|
+| `CodedConcept` location | `src/Product/` | `ReferenceData.Domain` | Dependency analysis: `Substance` carries two of them, so `Product` as its home would invert `Product → ReferenceData`. Corrected in **ADR-058 §3** before any code. |
+| `PharmaceuticalProductDetail` | child of `MedicinalProduct` (EPIC-017's prediction) | its own root | `Ingredient` established a separate consistency boundary. As a child it would drag composition into the market aggregate, so every trade-name edit would load and re-save it. Correction note recorded **in EPIC-017**, not only here. |
+| `Strength` | S002 | S003 | Its first consumer is `Ingredient`. Shipping it in S002 would have been a value object nothing constructs. |
+| `IngredientRole` | `CodedConcept` | `enum` | Two rules branch on it. A coded concept whose code a rule string-matches is an enum in a costume. |
+
+**The test that produced all four:** *does a rule branch on this value, and what
+is the smallest thing that can enforce it?* It placed `CodedConcept`, split
+`Strength` from presentation units, made `IngredientRole` an enum, and produced
+`ComponentTree`.
+
+### What the change-case analysis got right, and what it missed
+
+**Right.** `CodedConcept.System` earned its place three times over — every
+vocabulary shipped is `regos-internal` and says so, in code, in the seed file and
+on screen. The nullable `Inn` was exactly the field a proprietary compound
+needed. Ingredients-at-component-level stayed unbuilt and nothing missed them.
+
+**Missed — three things the table did not predict:**
+
+1. **An owned `CodedConcept` cannot be shared between owners.** EF tracks one
+   against exactly one owner, so the six-compound seed persisted five substances
+   with a null class. Caught by the API tests, and now guarded in one place.
+2. **A shadow foreign key is nullable by default**, which is the
+   *optional-FK-severs-instead-of-deleting* trap the identity conventions
+   already name. Hit on `Ingredient`.
+3. **`Ingredient` needed a parameterless constructor** that `TradeName` beside
+   it does not — owned types cannot bind to constructor parameters.
+
+All three are persistence-shaped, none was visible from the domain model, and
+each cost one build-test cycle. **That is the argument for the browser suite
+rather than for a better model.**
+
+### Decisions to promote
+
+- **"Does a rule branch on it?"** is the test that separates terminology from a
+  domain type. Worth a line in the implementation standards; it is not currently
+  written anywhere.
+- **A rule about a structure belongs on a type that *is* the structure.**
+  `ComponentTree` is the instance; the general form is that an invariant no
+  single aggregate can see needs a domain type that can. Candidate ADR when a
+  second one appears — not yet.
+- **`CodedConceptLookup` was extracted on the third occurrence, not the
+  second**, and the second copy carried a comment saying so. ADR-018 worked
+  exactly as written, and that is worth knowing.
+
+### Carry-forward
+
+| | Inherited by |
+|---|---|
+| `Version` on `PharmaceuticalProductDetail` — seam recorded, not built | whichever epic demonstrates a reader |
+| Sourcing (`Ingredient → Organization`) — Q4, rejected | **EPIC-010c** (cluster D) |
+| Ingredients beneath a component — one parent demonstrated, not two | evaluate at the **second** occurrence (D3) |
+| Steward CRUD, change control, shared-row editing on `Substance` | **EPIC-012** |
+| Unit conversion — `Strength` equality is literal, `10 mg/mL ≠ 1 g/100 mL` | whichever epic needs comparison or xEVMPD render |
+| `RouteOfAdministration` on studies should resolve to the same `CodedConcept` | **EPIC-019 S005** — 10a established the shape |
+| **Completion of EPIC-010a does not imply IDMP or xEVMPD readiness** (D1) | stated at the start, still true at the end |

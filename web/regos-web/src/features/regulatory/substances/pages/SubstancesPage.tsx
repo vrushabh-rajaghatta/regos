@@ -7,6 +7,7 @@ import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { AddSubstanceDialog } from "../components/AddSubstanceDialog";
+import { SubstanceUsage } from "../components/SubstanceUsage";
 import { useSubstances } from "../hooks/useSubstances";
 import {
   REGOS_INTERNAL,
@@ -134,6 +135,11 @@ export function SubstancesPage() {
             {substance.description && (
               <p className="mt-1 text-sm">{substance.description}</p>
             )}
+
+            {/* The inverse question, on the substance's own row: "which
+                products contain this?" — the question the whole epic exists to
+                answer, and the only one that reads the composition backwards. */}
+            <SubstanceUsage substanceId={substance.id} />
 
             {(substance.casNumber || substance.uniiCode) && (
               <p className="mt-1 font-mono text-xs text-muted-foreground">
