@@ -192,7 +192,10 @@ at a filtered root; no `DbSet` is exposed for owned children.
 | `ShelfLifeStorage` | **Shelf life & storage** |
 | `PhysicalCharacteristics` | **Appearance** |
 
-Recorded in [docs/domain-model/product.md](../../domain-model/product.md) at S001.
+Recorded in [docs/domain-model/product.md](../../domain-model/product.md) — **at
+S003, not S001 as planned.** The pairs were used in code from S001 and written
+down two stories late; noted rather than quietly corrected, because "the screen
+word is binding" is worth less if the register lags the code.
 
 ### What the umbrella sketch got wrong
 
@@ -237,9 +240,9 @@ arrive with:
 
 | # | Story | Slice | Status |
 |---|---|---|---|
-| **S001** | **`PackagedProduct`** — the pack: description, size, the market's pack code, dated marketing status | full slice | ⚪ |
-| **S002** | **`PackageItem` + `PackagingTree`** — the recursion, depth- and cycle-guarded; material is what makes it not a component | full slice | ⚪ |
-| **S003** | **`LegalStatusOfSupply` + `ShelfLifeStorage`** — how it is supplied, how long it lasts | full slice | ⚪ |
+| **S001** | **`PackagedProduct`** — the pack: description, size, the market's pack code, dated marketing status | full slice | ✅ |
+| **S002** | **`PackageItem` + `PackagingTree`** — the recursion, depth- and cycle-guarded; material is what makes it not a component | full slice | ✅ |
+| **S003** | **`LegalStatusOfSupply` + `ShelfLifeStorage`** — how it is supplied, how long it lasts | full slice | ✅ |
 | **S004** | **`Appearance` on the presentation, and artwork's pack link** — the two describing facts, and EPIC-018's debt paid | full slice | ⚪ |
 | **S005** | **Capstone** — a registration authorises packs; *"which packs are authorised here, and how are they supplied?"*; browser proof; retro | query → UI → test → docs | ⚪ |
 
@@ -247,6 +250,37 @@ arrive with:
 > pressure. Appearance and the artwork link are the least load-bearing: nothing
 > depends on them, and cutting them leaves the Definition of Done short and the
 > model whole — the better of the two failures available.
+
+### S003 — what was decided while building
+
+**The discriminator, used a third time — and it gave a third answer.** D1 put
+the packaging tree on the pack, D5 put appearance on the *presentation*, and
+S003 puts legal status and shelf life back on the pack. Three uses, three
+independent answers, which is the first evidence the question is doing work
+rather than confirming what was already assumed.
+
+Shelf life is a pack fact for a physical reason, not a filing one: **the
+container closure system is what the stability data was generated against.** The
+same tablets in an alu-alu blister and an HDPE bottle keep for different lengths
+of time — which is `PackageItem.Material` from S002 earning its place.
+
+| | Decided | Why |
+|---|---|---|
+| **One value object, not two fields** | `ShelfLifeStorage` holds the period, the label's wording **and** the storage conditions | *"36 months"* alone is not a fact; *"36 months below 25 °C"* is. Split, a pack could keep a shelf life whose precondition had been deleted |
+| **Required, not nullable** | `PackagedProduct.ShelfLife` is never null; `ShelfLifeStorage.NotStated` is the empty value | EF reads an *optional* owned reference back as null when every column it shares is null — and a pack whose only statement is *"protect from light"* has exactly that, so its conditions would vanish on reload while the write succeeded. `IsStated` then says out loud what a nullable navigation would only imply |
+| **`NO_SPECIAL_PRECAUTIONS` is a value** | and it may not sit beside another condition | An SmPC that says *"does not require any special storage conditions"* has been **checked**; an empty list means nobody has said. Two different regulatory statements, and the model refuses to blur them |
+| **A fourth vocabulary** | `SupplyVocabulary` — *how may it be handed over, and how must it be kept?* | Each list now answers one sentence. The period units are **not** in `MeasurementVocabulary`, and that vocabulary's own reason for existing is the argument: it is kept apart from presentation units so *"500 mg per tablet"* cannot be expressed, and `MONTH` beside `MG` would make **"500 months"** a legal strength |
+| **Undated legal status** | recorded, with the seam named | A reclassification is a real regulatory event and nobody has asked to keep its history. If they do, the shape is `PackageMarketingStatusEntry`'s exactly — the **fourth** identical status history, and therefore ADR-018's demonstration |
+| **Two domain methods, one command** | `Classify` and `StateShelfLife` stay apart; `StatePackSupply` submits both | The two facts move on different clocks and neither can make the other incoherent, which is the test `Describe` groups by. They share a form because one person states both in one sitting |
+
+**`StateShelfLife` takes the whole value object, never its parts.** There is no
+`SetShelfLifePeriod` beside a `SetStorageConditions`, because two setters would
+let the period be changed without the conditions it is only true under.
+
+**The falsifier ran against Postgres, not memory.** `pack-supply.spec.ts` states
+storage conditions *and nothing else*, saves, and reloads the page — the exact
+shape that would have exposed an optional owned reference silently dropping its
+child table. A domain test could not have caught it.
 
 ### The verification loop
 

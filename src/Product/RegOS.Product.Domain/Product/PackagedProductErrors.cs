@@ -52,11 +52,13 @@ public static class PackagedProductErrors
     public const string NoteTooLong =
         "The note is too long.";
 
-    public const string RegistrationRequired =
-        "Name the registration that authorises this pack.";
-
-    public const string AlreadyAuthorised =
-        "This pack is already authorised under a registration.";
+    /// <remarks>
+    /// A pack always carries a shelf-life statement, and
+    /// <c>ShelfLifeStorage.NotStated</c> is the empty one — so null is a caller
+    /// mistake rather than a way to clear it.
+    /// </remarks>
+    public const string ShelfLifeRequired =
+        "A pack always has a shelf-life statement, even an empty one.";
 
     public static string AlreadyInMarketingStatus(PackageMarketingStatus status)
         => $"This pack is already {status}.";

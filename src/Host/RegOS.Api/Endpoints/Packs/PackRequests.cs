@@ -24,6 +24,29 @@ public sealed record RestatePackRequest(
     string? PackSizeUnitCode,
     string? PackCode);
 
+/// <summary>
+/// How this pack may be handed over, and how long it keeps.
+/// </summary>
+/// <remarks>
+/// One request over two facts, because one person states both in one sitting.
+/// The aggregate keeps them apart — they move on different clocks.
+/// </remarks>
+/// <param name="ShelfLifeValue">
+/// Sent with <paramref name="ShelfLifeUnitCode"/> or not at all, for the reason
+/// a pack size is: <em>36</em> alone could be days, months or years.
+/// </param>
+/// <param name="StorageConditionCodes">
+/// Absent or empty means nobody has stated any, which is not the same as
+/// <c>NO_SPECIAL_PRECAUTIONS</c> — that one is a conclusion, and it may not be
+/// sent beside another condition.
+/// </param>
+public sealed record StatePackSupplyRequest(
+    string? LegalStatusOfSupplyCode,
+    decimal? ShelfLifeValue,
+    string? ShelfLifeUnitCode,
+    string? ShelfLifeText,
+    IReadOnlyList<string>? StorageConditionCodes);
+
 /// <remarks>
 /// The enum on the wire, matching <c>ChangeMarketStatusRequest</c> one tier up:
 /// an unrecognised word is refused by model binding rather than by a string

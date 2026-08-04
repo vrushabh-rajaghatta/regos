@@ -15,6 +15,7 @@ using RegOS.Product.Application.Commands.RestatePackageItem;
 using RegOS.Product.Application.Queries.ListPackageItems;
 using RegOS.Product.Application.Commands.ChangePackMarketingStatus;
 using RegOS.Product.Application.Commands.RestatePack;
+using RegOS.Product.Application.Commands.StatePackSupply;
 using RegOS.Product.Application.Queries.ListPacks;
 using RegOS.Product.Application.Commands.MoveComponent;
 using RegOS.Product.Application.Commands.RemoveComponent;
@@ -75,6 +76,7 @@ public static class ProductApplicationServiceCollectionExtensions
         services.AddScoped<AddPackHandler>();
         services.AddScoped<RestatePackHandler>();
         services.AddScoped<ChangePackMarketingStatusHandler>();
+        services.AddScoped<StatePackSupplyHandler>();
         services.AddScoped<ListPacksHandler>();
 
         services.AddScoped<AddPackageItemHandler>();

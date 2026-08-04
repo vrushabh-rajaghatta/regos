@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PackContents } from "./PackContents";
 import { PackDialog } from "./PackDialog";
 import { PackStatusDialog } from "./PackStatusDialog";
+import { PackSupply } from "./PackSupply";
 import { packStatusLabel } from "../constants/packStatuses";
 import { usePacks } from "../hooks/usePacks";
 import type { Pack } from "../types/Pack";
@@ -23,8 +24,8 @@ interface MarketPacksProps {
  * ordinary, and the 30 and the 100 can be on sale and discontinued
  * independently, which is why each carries its own dated status.
  *
- * What is inside a pack, how it may be supplied and how long it lasts arrive in
- * S002 and S003.
+ * What is inside each pack sits beneath it (S002), and how it may be supplied
+ * and how long it keeps beside that (S003).
  */
 export function MarketPacks({ medicinalProductId }: MarketPacksProps) {
   const [adding, setAdding] = useState(false);
@@ -125,6 +126,10 @@ export function MarketPacks({ medicinalProductId }: MarketPacksProps) {
                 Change status
               </Button>
             </div>
+
+            {/* How it may be handed over and how long it keeps — both facts
+                about the pack, not about the product (ADR-061 §1). */}
+            <PackSupply medicinalProductId={medicinalProductId} pack={pack} />
 
             {/* What is in the box, beneath what the box is. */}
             <PackContents packagedProductId={pack.id} />

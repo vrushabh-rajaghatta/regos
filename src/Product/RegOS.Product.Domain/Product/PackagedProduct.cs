@@ -106,6 +106,40 @@ public sealed class PackagedProduct : AggregateRoot<PackagedProductId>
     public PackageMarketingStatus CurrentMarketingStatus { get; private set; }
 
     /// <summary>
+    /// Who may hand this pack over — prescription only, pharmacy, general sale.
+    /// Screen word: <b>Legal status</b>. Null until it is classified.
+    /// </summary>
+    /// <remarks>
+    /// <b>On the pack, and that is the decision</b> (ADR-061 §1's discriminator
+    /// again): a 16-tablet pack of paracetamol may be general sale where a
+    /// 100-tablet pack of the same tablets is pharmacy-only. The restriction
+    /// follows the quantity supplied, not the active substance, so it cannot
+    /// live on the product or the presentation.
+    /// <para>
+    /// <b>Undated, deliberately.</b> A reclassification is a real regulatory
+    /// event and nobody has asked to keep its history. If that changes, the
+    /// shape is <see cref="PackageMarketingStatusEntry"/>'s exactly — which
+    /// would make it the <em>fourth</em> identical status history, and
+    /// therefore the demonstration
+    /// <see href="../../../docs/adr/ADR-018-rule-of-three.md">ADR-018</see>
+    /// asks for before the pattern is abstracted.
+    /// </para>
+    /// </remarks>
+    public CodedConcept? LegalStatusOfSupply { get; private set; }
+
+    /// <summary>
+    /// How long the pack keeps and how it must be stored. Screen word:
+    /// <b>Shelf life &amp; storage</b>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Never null.</b> A pack nobody has spoken about carries
+    /// <see cref="ShelfLifeStorage.NotStated"/>, and
+    /// <see cref="ShelfLifeStorage.IsStated"/> says which — a named question
+    /// rather than a null check.
+    /// </remarks>
+    public ShelfLifeStorage ShelfLife { get; private set; } = ShelfLifeStorage.NotStated;
+
+    /// <summary>
     /// Every marketing status this pack has held, oldest first. Append-only.
     /// </summary>
     public IReadOnlyCollection<PackageMarketingStatusEntry> MarketingStatusHistory
@@ -197,6 +231,43 @@ public sealed class PackagedProduct : AggregateRoot<PackagedProductId>
         PackSizeQuantity = packSizeQuantity;
         PackSizeUnit = packSizeUnit;
         PackCode = string.IsNullOrWhiteSpace(packCode) ? null : packCode.Trim();
+    }
+
+    /// <summary>
+    /// Records who may hand this pack over. Null withdraws the classification.
+    /// </summary>
+    /// <remarks>
+    /// <b>Its own method, not part of <see cref="StateShelfLife"/>.</b> The two
+    /// facts move on different clocks — a reclassification is a regulatory
+    /// decision, a shelf-life extension arrives by variation — and neither can
+    /// make the other incoherent, which is the test <see cref="Describe"/> is
+    /// grouped by. The application layer submits them together because one
+    /// person states them in one sitting; the aggregate keeps them apart
+    /// because they are two facts.
+    /// </remarks>
+    public void Classify(CodedConcept? legalStatusOfSupply)
+    {
+        LegalStatusOfSupply = legalStatusOfSupply;
+    }
+
+    /// <summary>
+    /// States how long the pack keeps and how it must be stored.
+    /// </summary>
+    /// <remarks>
+    /// <b>Takes the whole statement, never its parts.</b> There is no
+    /// <c>SetShelfLifePeriod</c> beside a <c>SetStorageConditions</c>, because
+    /// the period is only true under the conditions and two setters would let
+    /// one be changed without the other. <see cref="ShelfLifeStorage"/> checks
+    /// its own coherence in its factory; this method only refuses the absence
+    /// of a statement, and <see cref="ShelfLifeStorage.NotStated"/> is how a
+    /// caller withdraws one.
+    /// </remarks>
+    public void StateShelfLife(ShelfLifeStorage shelfLife)
+    {
+        if (shelfLife is null)
+            throw new DomainException(PackagedProductErrors.ShelfLifeRequired);
+
+        ShelfLife = shelfLife;
     }
 
     /// <summary>

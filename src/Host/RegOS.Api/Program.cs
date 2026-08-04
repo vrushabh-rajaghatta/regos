@@ -268,9 +268,11 @@ var packs = app.MapGroup("").WithTags("Packs");
 // Before the rest: /api/packaged-products/vocabulary must not be read as a
 // /api/packaged-products/{id} that happens to be spelled "vocabulary".
 packs.MapGetPackagingVocabulary();
+packs.MapGetSupplyVocabulary();
 packs.MapListPacks();
 packs.MapAddPack();
 packs.MapRestatePack();
+packs.MapStatePackSupply();
 packs.MapChangePackMarketingStatus();
 packs.MapPackageItems();
 
