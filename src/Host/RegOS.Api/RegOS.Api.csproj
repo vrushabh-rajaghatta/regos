@@ -31,6 +31,8 @@
     <ProjectReference Include="..\..\Interaction\RegOS.Interaction.Infrastructure\RegOS.Interaction.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Study\RegOS.Study.Application\RegOS.Study.Application.csproj" />
     <ProjectReference Include="..\..\Study\RegOS.Study.Infrastructure\RegOS.Study.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Labeling\RegOS.Labeling.Application\RegOS.Labeling.Application.csproj" />
+    <ProjectReference Include="..\..\Labeling\RegOS.Labeling.Infrastructure\RegOS.Labeling.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

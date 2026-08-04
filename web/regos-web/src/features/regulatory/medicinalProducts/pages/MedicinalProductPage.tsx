@@ -9,6 +9,11 @@ import { CreateRegistrationDialog } from "../../registrations/components/CreateR
 import { RegistrationExpiry } from "../../registrations/components/RegistrationExpiry";
 import { RegistrationStatusBadge } from "../../registrations/components/RegistrationStatusBadge";
 import { useProductRegistrations } from "../../registrations/hooks/useProductRegistrations";
+import { MarketClinicalStatements } from "@/features/regulatory/indications/components/MarketClinicalStatements";
+import { MarketInteractions } from "@/features/regulatory/indications/components/MarketInteractions";
+import { MarketIndications } from "@/features/regulatory/indications/components/MarketIndications";
+import { MarketLabels } from "@/features/regulatory/labels/components/MarketLabels";
+
 import { AddTradeNameDialog } from "../components/AddTradeNameDialog";
 import { AtcCodeDialog } from "../components/AtcCodeDialog";
 import { ChangeMarketStatusDialog } from "../components/ChangeMarketStatusDialog";
@@ -119,6 +124,29 @@ export function MedicinalProductPage() {
       {/* After presentations, because it answers the other half of the same
           question: what the product *is* when given, then what is in the box. */}
       <MarketComponents medicinalProductId={market.medicinalProductId} />
+
+      {/* What this authority approved, on its own clock. Deliberately on the
+          market page and not the product's: the core label is the company's
+          position, this is one regulator's decision about it (ADR-059). */}
+      <MarketLabels
+        globalProductId={globalProductId ?? ""}
+        medicinalProductId={market.medicinalProductId}
+      />
+
+      {/* After the labels, because it answers a different question about the
+          same market: the labels are what we publish, this is what the
+          authority authorised (ADR-059). */}
+      <MarketIndications medicinalProductId={market.medicinalProductId} />
+
+      {/* After the indications, in the order a label reads: what it is for,
+          then who must not have it, then what it does to them. */}
+      <MarketClinicalStatements
+        medicinalProductId={market.medicinalProductId}
+      />
+
+      {/* Last, in the order a label reads: what it is for, who must not have
+          it, what it does to them, and what it clashes with. */}
+      <MarketInteractions medicinalProductId={market.medicinalProductId} />
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">

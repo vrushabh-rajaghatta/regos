@@ -1,15 +1,12 @@
-/**
- * A term drawn from a controlled vocabulary.
- *
- * `system` travels to the client on purpose. Every term RegOS ships today is
- * `regos-internal`, and a screen showing "Tablet" without saying whose word it
- * is implies terminology the platform does not hold (ADR-058 §6).
- */
-export interface CodedValue {
-  system: string;
-  code: string;
-  display: string;
-}
+import type { CodedConcept } from "@/shared/types/CodedConcept";
+
+export type { CodedConcept };
+
+// `CodedValue` was this feature's own name for the shape the substance
+// directory already called `CodedConcept`. The label vocabulary was the third
+// to need it, which is when ADR-018 says to stop copying — the type now lives
+// in shared/types and the alias is kept so callers read unchanged.
+export type CodedValue = CodedConcept;
 
 /**
  * What a product physically is in one market. The domain calls it a
@@ -109,4 +106,4 @@ export interface IngredientBody {
   denominatorUnitCode: string | null;
 }
 
-export const REGOS_INTERNAL = "regos-internal";
+export { REGOS_INTERNAL } from "@/shared/types/CodedConcept";

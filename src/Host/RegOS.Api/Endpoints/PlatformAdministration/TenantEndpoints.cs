@@ -1,5 +1,4 @@
 using RegOS.Api.Authentication;
-using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Platform.Application.Commands.ActivateTenant;
 using RegOS.Platform.Application.Commands.CreateTenant;
 using RegOS.Platform.Application.Commands.DeactivateTenant;
@@ -31,8 +30,7 @@ public static class TenantEndpoints
         tenants.MapPost("/", CreateAsync)
             .WithName("CreateTenant")
             .WithSummary(
-                "Provision a customer: tenant, mirror organization, "
-                + "invited administrator");
+                "Provision a customer: tenant and invited administrator");
 
         tenants.MapPut("/{id:guid}", RenameAsync)
             .WithName("RenameTenant");
@@ -63,7 +61,6 @@ public static class TenantEndpoints
         var result = await handler.HandleAsync(
             new CreateTenantCommand(
                 request.Name,
-                request.OrganizationType,
                 request.AdminEmail,
                 request.AdminFirstName,
                 request.AdminLastName),
@@ -121,7 +118,6 @@ public static class TenantEndpoints
 
 public sealed record CreateTenantRequest(
     string? Name,
-    OrganizationType OrganizationType,
     string? AdminEmail,
     string? AdminFirstName,
     string? AdminLastName);

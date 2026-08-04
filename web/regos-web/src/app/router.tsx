@@ -60,6 +60,7 @@ import { SessionsPage } from "@/features/settings/pages/SessionsPage";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
 import { TemplateListPage } from "@/features/regulatory/templates/pages/TemplateListPage";
 import { TemplateDetailPage } from "@/features/regulatory/templates/pages/TemplateDetailPage";
+import { ProductLabelsPage } from "@/features/regulatory/labels/pages/ProductLabelsPage";
 import { ProductRegistrationsPage } from "@/features/regulatory/registrations/pages/ProductRegistrationsPage";
 import { MedicinalProductPage } from "@/features/regulatory/medicinalProducts/pages/MedicinalProductPage";
 import { RegistrationMarketsPage } from "@/features/regulatory/registrations/pages/RegistrationMarketsPage";
@@ -189,6 +190,14 @@ export const router = createBrowserRouter([
                       {
                         path: "registrations",
                         element: <ProductRegistrationsPage />,
+                      },
+                      // The labels held above any market (EPIC-018 S001). A
+                      // sibling of registrations rather than a child: what the
+                      // company says and what a regulator has authorised are
+                      // different facts on different clocks (ADR-059).
+                      {
+                        path: "labels",
+                        element: <ProductLabelsPage />,
                       },
                       // One market, as its own working surface (EPIC-017 S004).
                       // Nested inside the product workspace rather than beside

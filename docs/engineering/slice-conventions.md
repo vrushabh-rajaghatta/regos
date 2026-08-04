@@ -1,6 +1,6 @@
 # Slice Conventions
 
-**Status:** Active · **Effective:** 2026-07-31 ·
+**Status:** Active · **Effective:** 2026-08-04 ·
 **Enforced by:** `tests/Architecture/RegOS.Architecture.Tests`
 
 > The mechanical companion to [implementation-standards.md](implementation-standards.md).
@@ -182,7 +182,7 @@ and a bundle file hides its contents from both.
 ```
 src/<Context>/
 ├── RegOS.<Context>.Domain/
-│   └── Aggregates/<Aggregate>/
+│   └── Aggregates/<Aggregate>s/        plural — see the folder-naming note below
 │       ├── <Aggregate>.cs              private ctor + Create() factory
 │       ├── <Aggregate>Id.cs            : StronglyTypedId — ES-020, not a record struct
 │       ├── <Aggregate>Errors.cs
@@ -349,11 +349,21 @@ vs `Infrastructure/Persistence/`, `DependencyInjection.cs` vs
 `DependencyInjection/<X>ServiceCollectionExtensions.cs`. New contexts should
 follow the left-hand form.
 
+> **The aggregate folder is plural: `Domain/Aggregates/<X>s/`.** A singular
+> folder makes the namespace equal the type name — `Aggregates.Registration`
+> holding `Registration` — which is the collision S000 removed fourteen `using`
+> aliases to delete, and which `RegOSDbContext` still carries an alias for.
+> `Labeling` (EPIC-018 S001) is the first context written this way:
+> `Aggregates/GlobalLabels/` holds `GlobalLabel`, and nothing needs an alias to
+> name it. Existing singular folders are not worth renaming; new ones should not
+> be created.
+
 ---
 
 # Change History
 
 | Version | Date | Summary |
 |---|---|---|
+| 1.2 | 2026-08-04 | The aggregate folder is plural, so the namespace never equals the type name (EPIC-018 S001). |
 | 1.1 | 2026-07-31 | SC-002's grandfathered list emptied (EPIC-017 S001). |
 | 1.0 | 2026-07-31 | Initial version. Five backend rules put under test; five frontend rules documented. |

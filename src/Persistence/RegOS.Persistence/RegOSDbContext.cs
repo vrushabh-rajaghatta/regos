@@ -1,4 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using RegOS.Labeling.Domain.Aggregates.GlobalLabels;
+using RegOS.Labeling.Domain.Aggregates.Contraindications;
+using RegOS.Labeling.Domain.Aggregates.Indications;
+using RegOS.Labeling.Domain.Aggregates.DrugInteractions;
+using RegOS.Labeling.Domain.Aggregates.UndesirableEffects;
+using RegOS.Labeling.Domain.Aggregates.LocalLabels;
 using RegOS.Product.Domain.Product;
 
 using RegOS.SharedKernel.Abstractions;
@@ -122,6 +128,63 @@ public sealed class RegOSDbContext : DbContext
     /// </summary>
     public DbSet<MedicinalProductComponent> MedicinalProductComponents =>
         Set<MedicinalProductComponent>();
+
+    /// <summary>
+    /// A label held above any market — the core data sheet and its siblings
+    /// (ADR-059).
+    /// </summary>
+    /// <remarks>
+    /// <b>There is deliberately no <c>GlobalLabelVersions</c> set.</b> A version
+    /// carries no <c>TenantId</c> and therefore has no query filter of its own,
+    /// so <c>Set&lt;GlobalLabelVersion&gt;()</c> would read every tenant's
+    /// issues. Every read of a version starts here, at the filtered root — the
+    /// isolation lesson EPIC-010a's capstone paid for.
+    /// </remarks>
+    public DbSet<GlobalLabel> GlobalLabels =>
+        Set<GlobalLabel>();
+
+    /// <summary>
+    /// A market's own controlled labelling document — what an authority
+    /// approved, as against what the company holds centrally (ADR-059).
+    /// </summary>
+    /// <remarks>
+    /// No <c>LocalLabelRevisions</c> set either, for the same reason: a
+    /// revision carries no <c>TenantId</c> and has no filter of its own, so
+    /// every read of one starts here.
+    /// </remarks>
+    public DbSet<LocalLabel> LocalLabels =>
+        Set<LocalLabel>();
+
+    /// <summary>
+    /// What a product is approved to treat in one market — a regulatory fact,
+    /// not an editorial artifact (ADR-059).
+    /// </summary>
+    /// <remarks>
+    /// No set for populations, therapies or status entries: none carries a
+    /// <c>TenantId</c>, so every read of one starts at this filtered root.
+    /// </remarks>
+    public DbSet<Indication> Indications =>
+        Set<Indication>();
+
+    /// <summary>
+    /// Who must not be given this product here, and what it does to people who
+    /// are. Neither owns a history: both are content inside an approved label,
+    /// so the <c>LocalLabelRevision</c> that published them is their history
+    /// (EPIC-018 S004).
+    /// </summary>
+    public DbSet<Contraindication> Contraindications =>
+        Set<Contraindication>();
+
+    public DbSet<UndesirableEffect> UndesirableEffects =>
+        Set<UndesirableEffect>();
+
+    /// <summary>
+    /// What this product clashes with here. Its interactants may point at a
+    /// <c>Substance</c>, which is what makes "which of our products interact
+    /// with warfarin?" a join rather than a string match (EPIC-018 S005).
+    /// </summary>
+    public DbSet<DrugInteraction> Interactions =>
+        Set<DrugInteraction>();
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
@@ -356,6 +419,27 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<MedicinalProductComponent>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // A label is tenant-owned, so it takes the first of ADR-038's three
+        // filter shapes. Its versions carry no TenantId and are reachable only
+        // through it (ADR-059).
+        modelBuilder.Entity<GlobalLabel>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<LocalLabel>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<Indication>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<Contraindication>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<UndesirableEffect>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<DrugInteraction>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

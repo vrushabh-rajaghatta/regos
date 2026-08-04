@@ -66,7 +66,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [029](ADR-029-sessions-record-minimal-device-context.md) | A session is first-class, and records minimal device context | Accepted | Current |
 | [030](ADR-030-tenant-is-its-own-aggregate.md) | Tenant is its own aggregate, separate from Organization | Accepted | Current |
 | [031](ADR-031-tenant-isolation-by-query-filters.md) | Tenant isolation is enforced by global query filters | Accepted (amended by 032) | Current |
-| [032](ADR-032-organizations-are-tenant-owned.md) | Organizations are tenant-owned, not shared | Accepted | Current |
+| [032](ADR-032-organizations-are-tenant-owned.md) | Organizations are tenant-owned, not shared | Accepted (amended by 060) | Current |
 | [033](ADR-033-three-roles-and-where-authority-lives.md) | Three roles, and where authority lives | Accepted | Current |
 | [034](ADR-034-regulatory-templates-are-versioned-shared-blueprints.md) | Regulatory templates are versioned blueprints, shared by default | Accepted | Current |
 | [035](ADR-035-submissions-bind-to-a-published-template-version.md) | A submission binds to a published template version | Accepted | Current |
@@ -93,6 +93,8 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [056](ADR-056-study-identity-is-owned-by-the-sponsor.md) | Study identity is owned by the sponsor, not by a submission | Accepted | Direction |
 | [057](ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) | A filed artifact is projected from a snapshot; continuity is enforced at the boundary | Accepted | Current |
 | [058](ADR-058-substances-are-shared-facts-ingredients-are-roles.md) | Substances are shared facts; ingredients are the roles they play | Accepted | Direction |
+| [059](ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) | Clinical statements are regulatory facts; labels are published editorial artifacts | Accepted | Direction |
+| [060](ADR-060-a-tenant-provisions-without-an-organization.md) | A tenant provisions without an organization | Accepted | Current |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

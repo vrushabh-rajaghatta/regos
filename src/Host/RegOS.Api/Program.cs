@@ -53,6 +53,12 @@ using RegOS.Api.Endpoints.Studies;
 using RegOS.Api.Endpoints.Substances;
 using RegOS.Api.Endpoints.Presentations;
 using RegOS.Api.Endpoints.Components;
+using RegOS.Api.Endpoints.GlobalLabels;
+using RegOS.Api.Endpoints.ClinicalStatements;
+using RegOS.Api.Endpoints.Indications;
+using RegOS.Api.Endpoints.LocalLabels;
+using RegOS.Labeling.Application;
+using RegOS.Labeling.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -131,6 +137,9 @@ builder.Services.AddInteractionInfrastructure();
 
 builder.Services.AddStudyApplication();
 builder.Services.AddStudyInfrastructure();
+
+builder.Services.AddLabelingApplication();
+builder.Services.AddLabelingInfrastructure();
 
 var app = builder.Build();
 
@@ -269,6 +278,49 @@ components.MapAddComponent();
 components.MapRestateComponent();
 components.MapMoveComponent();
 components.MapRemoveComponent();
+
+var globalLabels = app.MapGroup("").WithTags("Global Labels");
+// Before the rest: /api/labels/vocabulary is its own route, and the label
+// routes below are all /api/global-labels — no collision, but the vocabulary
+// stays first for the same reason presentations' does.
+globalLabels.MapGetLabelVocabulary();
+globalLabels.MapListGlobalLabels();
+globalLabels.MapCreateGlobalLabel();
+globalLabels.MapListGlobalLabelVersions();
+globalLabels.MapStartGlobalLabelDraft();
+globalLabels.MapAttachGlobalLabelContent();
+globalLabels.MapPublishGlobalLabelVersion();
+globalLabels.MapDiscardGlobalLabelDraft();
+
+var localLabels = app.MapGroup("").WithTags("Local Labels");
+localLabels.MapListCoreVersionsForProduct();
+localLabels.MapListLocalLabels();
+localLabels.MapCreateLocalLabel();
+localLabels.MapListLocalLabelRevisions();
+localLabels.MapStartLocalLabelRevision();
+localLabels.MapPrepareLocalLabelRevision();
+localLabels.MapPublishLocalLabelRevision();
+localLabels.MapDiscardLocalLabelDraft();
+
+var indications = app.MapGroup("").WithTags("Indications");
+// Before the rest: /api/indications/vocabulary must not be read as an
+// /api/indications/{id} that happens to be spelled "vocabulary".
+indications.MapGetClinicalVocabulary();
+indications.MapListIndications();
+indications.MapListMarketsForCondition();
+indications.MapRecordIndication();
+indications.MapRestateIndicationText();
+indications.MapRecordIndicationDecision();
+indications.MapIndicationPopulations();
+indications.MapIndicationTherapies();
+
+// Contraindications and undesirable effects: the same five capabilities each,
+// and deliberately no decision route — both are content inside an approved
+// label, so a label revision is what changes them (EPIC-018 S004).
+var clinicalStatements = app.MapGroup("").WithTags("Clinical Statements");
+clinicalStatements.MapContraindications();
+clinicalStatements.MapUndesirableEffects();
+clinicalStatements.MapDrugInteractions();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

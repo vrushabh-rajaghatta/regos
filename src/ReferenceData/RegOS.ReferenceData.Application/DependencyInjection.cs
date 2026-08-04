@@ -16,6 +16,8 @@ using RegOS.ReferenceData.Application.Queries.Substances.ListSubstances;
 using RegOS.ReferenceData.Application.Queries.Substances.GetSubstanceVocabulary;
 using RegOS.ReferenceData.Application.Queries.Presentations.GetPharmaceuticalVocabulary;
 using RegOS.ReferenceData.Application.Queries.Measurement.ListMeasurementUnits;
+using RegOS.ReferenceData.Application.Queries.Labels.GetLabelVocabulary;
+using RegOS.ReferenceData.Application.Queries.Clinical.GetClinicalVocabulary;
 using RegOS.ReferenceData.Application.Commands.CreateSubstance;
 
 namespace RegOS.ReferenceData.Application;
@@ -43,6 +45,8 @@ public static class DependencyInjection
         services.AddScoped<ListSubstancesHandler>();
         services.AddScoped<GetSubstanceVocabularyHandler>();
         services.AddScoped<GetPharmaceuticalVocabularyHandler>();
+        services.AddScoped<GetLabelVocabularyHandler>();
+        services.AddScoped<GetClinicalVocabularyHandler>();
         services.AddScoped<ListMeasurementUnitsHandler>();
 
         // The context's first command handler (ADR-058 §5). Everything above

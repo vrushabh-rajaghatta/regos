@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
+import { ProductIndicationMarkets } from "../../indications/components/ProductIndicationMarkets";
 import { AddMarketDialog } from "../../medicinalProducts/components/AddMarketDialog";
 import { MarketTradeNames } from "../../medicinalProducts/components/MarketTradeNames";
 import { marketStatusLabel } from "../../medicinalProducts/constants/marketStatuses";
@@ -162,6 +163,12 @@ export function ProductRegistrationsPage() {
           </div>
         )}
       </section>
+
+      {/* The markets above are where the product is present; this asks which of
+          them is approved for a given condition. It sits here rather than with
+          the global labels because the answer is about markets, and a global
+          label is above all of them (EPIC-018 S006). */}
+      <ProductIndicationMarkets globalProductId={globalProductId!} />
 
       {isLoading && (
         <p className="text-muted-foreground">Loading registrations...</p>

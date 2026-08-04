@@ -36,7 +36,7 @@ regulatory party. The two directories share seeded guids because the
 | `RegulatoryApplication.TenantId` | **Tenant** (owner) | Filtered; stamped from `ITenantContext` at creation |
 | `RegulatoryApplication.ApplicantOrganizationId` | **Applicant** (business data) | Explicit command property, FK → `Organizations`. Names who the filing is for, not who owns the record. Since ADR-032 the applicant must exist in the caller's own registry |
 | `Submission.TenantId`, `SubmissionSnapshot.TenantId`, `ProductDocument.TenantId` | **Tenant**, derived from parent | Filtered; a child structurally cannot disagree with its parent's tenant |
-| `Organization.TenantId` | **Tenant** (registry owner) | Filtered (ADR-032). The org sharing its owning tenant's guid is that tenant's own company — the mirror entry |
+| `Organization.TenantId` | **Tenant** (registry owner) | Filtered (ADR-032). Stamped from `ITenantContext`; every entry is recorded by the tenant itself, provisioning creates none (ADR-060) |
 
 ## Enforcement (ADR-031)
 

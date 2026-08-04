@@ -53,11 +53,11 @@ is written; the branch is `epic/EPIC-018-labeling-and-product-information`.
 | | |
 |---|---|
 | **ADR-059** | ✅ written 2026-08-04 — the label hierarchy, the new `Labeling` context, and how shared clinical qualifiers are modelled |
-| **S001** | ⚪ `GlobalLabel` + `GlobalLabelVersion` — the new context, versioned with dated status and effective dating, linked content |
-| **S002** | ⚪ `LocalLabel` + `Artwork` — per market, derived from a core version |
-| **S003** | ⚪ `Indication` + `Population` + `OtherTherapy` — the shared-qualifier decision lands here |
-| **S004** | ⚪ `Contraindication` + `UndesirableEffect` — population's second and third parents |
-| **S005** | ⚪ `Interaction` + `Interactant` — **the stop-or-continue point** |
+| **S001** | ✅ `GlobalLabel` + `GlobalLabelVersion` — the `src/Labeling/` context, draft → in force → superseded, and the content link that proves ADR-059 §6 |
+| **S002** | ✅ `LocalLabel` + `LocalLabelRevision` — the market's own approved document, its revision history, and artwork as a type rather than a fourth aggregate |
+| **S003** | ✅ `Indication` + `Population` + `OtherTherapy` — the authorisation with a dated decision history rather than revisions, and the qualifier corrected in place |
+| **S004** | ✅ `Contraindication` + `UndesirableEffect` — population's second and third parents; the EF helper earned, and neither statement owns a history |
+| **S005** | ✅ `DrugInteraction` + `Interactant` — the fourth statement, the at-least-one invariant, and the substance seam `OtherTherapy` predicted |
 | **S006** | ⚪ capstone — *"which markets is indication X approved in?"*, label workspace, browser proof, retro |
 
 **Flagged in the plan, not hidden:**
@@ -136,6 +136,8 @@ about EPIC-019, not a fresh one against EPIC-018.
 | 15 legacy `record struct` ids | ADR-043 migration, **a whole context at a time, when that context is being worked on anyway** |
 | a clean-clone CI check | EPIC-015 — the rule is fixed, the class of defect is not |
 | **no contact edit screen** | a phone recorded before `ContactPhone.Kind` existed cannot be given one — EPIC-016's surface, found by EPIC-007a |
+| **`ContactRoleAssignment`'s uniqueness does not hold** | **Behavioural, not relational — the reason this sits above the four below.** Its unique index on `(ContactId, RoleId)` reads as *one role per contact* and is not: `ContactId` is nullable, and Postgres treats NULLs as distinct, so `(NULL, Reviewer)` may be inserted without limit. An integrity gap the aggregate is currently the only thing preventing |
+| four more nullable child foreign keys | `ContactEmail`, `ContactPhone`, `OrganizationIdentifier`, `SiteIdentifier` — same missing `IsRequired()`, no unique index behind it, so the consequence stops at "an orphan is representable". Found with the row above by `AggregateChildArchitectureTests` (EPIC-018 S001) and grandfathered rather than fixed: `NULL → NOT NULL` on a shipped table is a behavioural change, not a formatting one |
 
 ## Next
 

@@ -6,11 +6,11 @@ using FluentAssertions;
 namespace RegOS.Api.Tests;
 
 /// <summary>
-/// The whole provisioning story (ADR-030/032/033), through the real pipeline:
-/// the platform administrator creates a tenant; the tenant arrives with its
-/// mirror organization and an invited administrator; the administrator accepts,
-/// signs in, sees exactly their own world; and a retired tenant's sessions
-/// die at the next refresh.
+/// The whole provisioning story (ADR-030/033/060), through the real pipeline:
+/// the platform administrator creates a tenant; the tenant arrives with an
+/// invited administrator and an empty organization registry; the administrator
+/// accepts, signs in, sees exactly their own world; and a retired tenant's
+/// sessions die at the next refresh.
 /// </summary>
 [Collection(ApiCollection.Name)]
 public sealed class TenantProvisioningTests : IAsyncLifetime
@@ -43,9 +43,9 @@ public sealed class TenantProvisioningTests : IAsyncLifetime
 
         foreach (var id in _tenantIds)
         {
-            // The mirror organization first (no cascade between them), then
-            // the tenant. Raw SQL: the API offers no tenant deletion, on
-            // purpose.
+            // Anything the tenant's own administrator recorded first (no
+            // cascade), then the tenant. Raw SQL: the API offers no tenant
+            // deletion, on purpose.
             await UserStore.ExecuteAsync(
                 """DELETE FROM "Organizations" WHERE "TenantId" = @id""", id);
             await UserStore.ExecuteAsync(
@@ -65,7 +65,6 @@ public sealed class TenantProvisioningTests : IAsyncLifetime
             new
             {
                 name,
-                organizationType = "MarketingAuthorizationHolder",
                 adminEmail = email,
                 adminFirstName = "First",
                 adminLastName = "Administrator"
@@ -100,7 +99,7 @@ public sealed class TenantProvisioningTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Provisioning_creates_tenant_mirror_and_invited_admin()
+    public async Task Provisioning_creates_a_tenant_and_its_invited_admin()
     {
         var (tenantId, email, token) = await ProvisionAsync(
             $"Prov Tenant {Guid.NewGuid():N}");
@@ -118,15 +117,16 @@ public sealed class TenantProvisioningTests : IAsyncLifetime
         body!["tenantId"].ToString().Should().Be(tenantId.ToString());
         body["role"].ToString().Should().Be("TenantAdministrator");
 
-        // Their registry holds exactly the mirror entry, guid-shared with the
-        // tenant (ADR-032) — the default applicant for their filings.
+        // Their registry starts empty (ADR-060). Provisioning asserts no
+        // regulatory party on the customer's behalf — not even the customer
+        // itself; the administrator records that, and nothing arrives here
+        // carrying the tenant's guid.
         var organizations = await admin.SendAsync(
             _client, HttpMethod.Get, "/api/organizations");
         var registry = await organizations.Content
             .ReadFromJsonAsync<List<Dictionary<string, object>>>();
 
-        registry.Should().ContainSingle();
-        registry![0]["id"].ToString().Should().Be(tenantId.ToString());
+        registry.Should().BeEmpty();
     }
 
     [Fact]

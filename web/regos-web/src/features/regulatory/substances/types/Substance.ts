@@ -1,16 +1,6 @@
-/**
- * A term drawn from a controlled vocabulary.
- *
- * `system` travels to the client on purpose. During MVP every value RegOS
- * ships is `regos-internal`, and a screen that showed "Chemical" without
- * saying whose word it is would imply an authority the platform does not have
- * (ADR-058 §6).
- */
-export interface CodedConcept {
-  system: string;
-  code: string;
-  display: string;
-}
+import type { CodedConcept } from "@/shared/types/CodedConcept";
+
+export type { CodedConcept };
 
 /**
  * A substance as the directory lists it.
@@ -39,4 +29,4 @@ export interface SubstanceVocabulary {
 /** Which half of the directory to show. Mirrors the API's `origin`. */
 export type SubstanceOrigin = "Any" | "Shared" | "Proprietary";
 
-export const REGOS_INTERNAL = "regos-internal";
+export { REGOS_INTERNAL } from "@/shared/types/CodedConcept";

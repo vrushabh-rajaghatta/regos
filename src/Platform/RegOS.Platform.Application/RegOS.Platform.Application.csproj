@@ -2,10 +2,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RegOS.Platform.Domain\RegOS.Platform.Domain.csproj" />
-    <!-- A genuine domain dependency, not the old tenant-key coupling:
-         tenant provisioning names a regulatory party (the mirror organization,
-         ADR-032), exactly as RegulatoryApplication.Domain names its applicant. -->
-    <ProjectReference Include="..\..\Organization\RegOS.Organization.Domain\RegOS.Organization.Domain.csproj" />
+    <!-- No reference to Organization.Domain: since ADR-060 provisioning names
+         an account, not a regulatory party. Platform has no business knowing
+         what an OrganizationType is. -->
     <ProjectReference Include="..\..\Persistence\RegOS.Persistence\RegOS.Persistence.csproj" />
   </ItemGroup>
 
