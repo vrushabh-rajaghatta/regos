@@ -161,7 +161,28 @@ a tidy document.
 | **S001** | **`GlobalLabel` + `GlobalLabelVersion`** — the new context, versioned with dated status and effective dating, linked content, on the global product | context → domain → persistence → API → UI → browser proof | ✅ |
 | **S002** | **`LocalLabel` + `LocalLabelRevision`** — the market's own controlled document, its revision history, and artwork as a type rather than an aggregate | full slice | ✅ |
 | **S003** | **`Indication` + `Population` + `OtherTherapy`** — the authorisation, its dated decision history, and the qualifier that is corrected in place | full slice | ✅ |
-| **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question is asked out loud | full slice | ⚪ |
+| **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question is asked out loud | full slice | 🟡 |
+
+> **S004's design, signed off 2026-08-04.** Stated as a hypothesis with a
+> falsifier, so the outcome is reviewable rather than a judgement made at the
+> end:
+>
+> **Hypothesis** — if `Population`'s second and third EF configurations differ
+> only by table name and foreign-key name, the persistence helper is earned.
+> **Falsifier** — if either aggregate introduces a different rule or a different
+> shape, do not abstract it. **A shared *domain* type is not on the table either
+> way** (ADR-018, ES-014, and the owned-entity ownership problem ADR-058 already
+> paid for).
+>
+> **Neither aggregate gets a `StatusHistory`**, and that asymmetry is the design.
+> See [the rule in the domain model](../../domain-model/labeling.md): an
+> indication is an authorisation the authority acts on directly; a
+> contraindication and an undesirable effect are content inside an approved
+> label, so their history is the `LocalLabelRevision` that published them.
+>
+> **`UndesirableEffect.Frequency`** — *very common* … *very rare* — is a coded
+> concept on that aggregate alone. Orthogonal to `Population`, and nothing
+> branches on it.
 | **S005** | **`Interaction` + `Interactant`** — **the stop-or-continue point** | full slice | ⚪ |
 | **S006** | **Capstone** — *"which markets is indication X approved in?"* end to end, label workspace on the market view, browser proof, retro | query → UI → test → docs | ⚪ |
 

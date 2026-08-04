@@ -213,11 +213,32 @@ distinct is what will make it age well.
 | `GlobalLabel` | **version** | the company's scientific position evolves, and each issue is an edition of it |
 | `LocalLabel` | **revision** | one authority approves, delays, amends and republishes that position on its own clock |
 | `Indication` | **status history** | approved, expanded, restricted, withdrawn are successive *decisions*, not successive editions |
+| `Contraindication` | **the label revision that published it** | — |
+| `UndesirableEffect` | **the label revision that published it** | — |
 | a clinical concept | **a code** | *Type 2 diabetes mellitus*, *Diabète sucré de type 2* and *Diabetes mellitus Typ 2* are one thing, and only a code says so |
 
-**Three different answers because they are three different kinds of change**, and
-the first two are separate rows on purpose: a generic versioning abstraction over
-both would have made a rule added to one lifecycle reach the other.
+**Five answers, because they are different kinds of change.** The first two are
+separate rows on purpose: a generic versioning abstraction over both would let a
+rule added to one lifecycle reach the other.
+
+## The rule the last three rows encode
+
+> **A clinical statement owns history only when the authority regulates *it*.
+> Otherwise its historical context is the label revision that published it.**
+
+This is why three aggregates that all look like "structured clinical statements"
+are not shaped alike, and the difference is regulatory practice rather than a
+preference for asymmetry:
+
+| | What the authority acts on | So |
+| --- | --- | --- |
+| `Indication` | **the authorisation itself** — a new indication is granted, a paediatric extension approved, a use restricted, an indication withdrawn | it owns the history of those decisions |
+| `Contraindication`, `UndesirableEffect` | **the approved labelling document** — nobody files a variation to *"withdraw contraindication #4"*; they file a revised SmPC or package insert | history belongs to the `LocalLabelRevision`, and giving them one of their own would invent a lifecycle no regulator operates |
+
+**The falsifier, recorded because it is the thing that would overturn this:** a
+market withdrawing a single contraindication with no new approved labelling
+document. That is not how labelling works — the authority controls the approved
+label, and the label is the regulated artifact.
 
 **The discriminator between the first two:** *is the wording the regulated
 object, or is the approval the regulated object?* For a label, wording is the
