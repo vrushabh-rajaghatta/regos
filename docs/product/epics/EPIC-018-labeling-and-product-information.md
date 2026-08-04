@@ -199,7 +199,27 @@ a tidy document.
 >    answers this without anyone looking.)
 > 5. Did the browser proof show **amendment** on the second parent — one row
 >    corrected, not replaced?
-| **S005** | **`Interaction` + `Interactant`** — **the stop-or-continue point** | full slice | ⚪ |
+| **S005** | **`Interaction` + `Interactant`** — the fourth clinical statement, and the substance seam | full slice | 🟡 |
+
+> **Continued rather than stopped, 2026-08-04.** S005 was designated the clean
+> stop point because nothing depends on it — and it still is. But *"a good place
+> to stop if priorities change"* and *"a good place to declare the epic
+> complete"* are different decisions, and no external pressure is forcing the
+> second. Stopping here would make S006's retro say *"the architecture is
+> complete, and the epic does not meet its own Definition of Done"* — honest, and
+> only worth saying if something made it necessary.
+>
+> **Hypothesis.** S005 is an application of settled patterns, not a modelling
+> exercise: a coded statement on the market-local tier, owned populations, no
+> history of its own, and a browser proof. **Two things are new** — an
+> `Interaction` must name at least one `Interactant` (the first *at-least-one*
+> invariant in the context), and an interactant may optionally point at a
+> `Substance`, which is the seam `OtherTherapy` said would arrive "beside the
+> text, never instead of it".
+>
+> **Falsifier.** If an interaction needs its own history, a lifecycle, or a
+> `Population` that differs from the other three, it is not an application of
+> settled patterns and should be reviewed on its own merits.
 | **S006** | **Capstone** — *"which markets is indication X approved in?"* end to end, label workspace on the market view, browser proof, retro | query → UI → test → docs | ⚪ |
 
 > **For the retro, recorded now so it is not reconstructed later.** EPIC-018 used
