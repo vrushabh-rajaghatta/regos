@@ -20,6 +20,6 @@ public sealed class GetPharmaceuticalVocabularyHandler
             PharmaceuticalVocabulary.ComponentTypes.Select(Dto).ToList()));
     }
 
-    private static PharmaceuticalConceptDto Dto(CodedConcept concept)
+    private static CodedConceptDto Dto(CodedConcept concept)
         => new(concept.System, concept.Code, concept.Display);
 }

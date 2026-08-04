@@ -13,12 +13,7 @@ namespace RegOS.ReferenceData.Application.Queries.Presentations.GetPharmaceutica
 /// quantity, whereas "vial" beside "mL" invites exactly that.
 /// </param>
 public sealed record PharmaceuticalVocabularyDto(
-    IReadOnlyList<PharmaceuticalConceptDto> DoseForms,
-    IReadOnlyList<PharmaceuticalConceptDto> RoutesOfAdministration,
-    IReadOnlyList<PharmaceuticalConceptDto> UnitsOfPresentation,
-    IReadOnlyList<PharmaceuticalConceptDto> ComponentTypes);
-
-public sealed record PharmaceuticalConceptDto(
-    string System,
-    string Code,
-    string Display);
+    IReadOnlyList<CodedConceptDto> DoseForms,
+    IReadOnlyList<CodedConceptDto> RoutesOfAdministration,
+    IReadOnlyList<CodedConceptDto> UnitsOfPresentation,
+    IReadOnlyList<CodedConceptDto> ComponentTypes);

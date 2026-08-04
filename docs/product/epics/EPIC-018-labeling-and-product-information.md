@@ -158,7 +158,7 @@ a tidy document.
 
 | # | Story | Slice | Status |
 |---|---|---|---|
-| **S001** | **`GlobalLabel` + `GlobalLabelVersion`** — the new context, versioned with dated status and effective dating, linked content, on the global product | context → domain → persistence → API → UI → browser proof | ⚪ |
+| **S001** | **`GlobalLabel` + `GlobalLabelVersion`** — the new context, versioned with dated status and effective dating, linked content, on the global product | context → domain → persistence → API → UI → browser proof | ✅ |
 | **S002** | **`LocalLabel` + `Artwork`** — per market, derived-from link to a core version, own language, version and status | full slice | ⚪ |
 | **S003** | **`Indication` + `Population` + `OtherTherapy`** — D2 lands here, once, on one parent | full slice | ⚪ |
 | **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question is asked out loud | full slice | ⚪ |
@@ -171,3 +171,30 @@ a tidy document.
 > the architecture whole — which is the better of the two failures available.
 
 **ADR:** [ADR-059](../../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) — written before S001, as canon requires for a new bounded context.
+
+---
+
+## S001 — what was decided while building it
+
+Recorded here rather than only in the commit, because each was a call the Phase-2
+design did not make.
+
+| Decision | Why |
+|---|---|
+| **No `Status` on `GlobalLabel`** | A label's meaningful lifecycle lives in its versions. "Retire this label" is a capability nobody asked for, and a column that is always `Active` is a field nobody filled in — the call `Substance` made on `IsActive`. **Known gap: a label cannot be renamed or retired**, stated so it is recognised as deferred rather than reported as a defect |
+| **`DiscardDraft`, the one deletion here** | Without it a draft started by mistake is permanent: the one-open-draft rule blocks a replacement, and publishing needs content nobody intends to attach. It does not contradict ES-018 — a draft has never been in force, was never cited, and never described what the company said. The guard is `Draft`, not "not in force" |
+| **Publishing requires content** | A version with no document is a number, and a number is not a label. This is what makes the `ProductDocumentId` link load-bearing rather than decorative, and it is the rule the browser proof exercises first |
+| **Publish and supersede are one act** | A label family with two versions in force is not a state a company can be in. The supersede date is computed — the day before the replacement takes effect — because a caller who could supply it could leave a gap or an overlap |
+| **`Aggregates/GlobalLabels/`, plural** | A singular folder makes the namespace equal the type name, which is the collision S000 removed fourteen `using` aliases to delete. Recorded in [slice-conventions](../../engineering/slice-conventions.md) v1.2, and `RegOSDbContext` names `GlobalLabel` with no alias as a result |
+| **`CodedConceptDto` consolidated** | The label vocabulary was the **third** consumer, and the second had quietly written its own copy under a different name (`PharmaceuticalConceptDto`). Same on the frontend — `CodedConcept` and `CodedValue` are now one type in `shared/types/`. ADR-018's demonstrated need, retired opportunistically because this slice was already in those files |
+
+**What the design did not predict, and cost a build cycle:** `GlobalLabel` needs
+a *parameterless* constructor where `GlobalProduct` beside it does not — EF binds
+constructor parameters from mapped properties, and an owned value object is not
+one. That is the third persistence-shaped surprise in two epics, and it was in
+EPIC-010a's retro. **Reading the retro would have caught it; the design review
+did not.**
+
+**Verified:** 19/19 test suites, 0 failed, 1335 tests · 106/106 browser specs
+against an isolated stack (API 5301, web 5174, throwaway database) · CORS
+widening reverted and confirmed absent from `src/`.

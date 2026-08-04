@@ -122,7 +122,7 @@ lives in `RegOS.Persistence`, not beside the aggregate.
 
 Contexts today: Platform · Organization · Product · ProductDocument ·
 RegulatoryApplication · Submission · Registration · Interaction · Study ·
-ReferenceData.
+ReferenceData · Labeling.
 
 ---
 

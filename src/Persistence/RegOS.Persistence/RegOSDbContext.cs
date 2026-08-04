@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RegOS.Labeling.Domain.Aggregates.GlobalLabels;
 using RegOS.Product.Domain.Product;
 
 using RegOS.SharedKernel.Abstractions;
@@ -122,6 +123,20 @@ public sealed class RegOSDbContext : DbContext
     /// </summary>
     public DbSet<MedicinalProductComponent> MedicinalProductComponents =>
         Set<MedicinalProductComponent>();
+
+    /// <summary>
+    /// A label held above any market — the core data sheet and its siblings
+    /// (ADR-059).
+    /// </summary>
+    /// <remarks>
+    /// <b>There is deliberately no <c>GlobalLabelVersions</c> set.</b> A version
+    /// carries no <c>TenantId</c> and therefore has no query filter of its own,
+    /// so <c>Set&lt;GlobalLabelVersion&gt;()</c> would read every tenant's
+    /// issues. Every read of a version starts here, at the filtered root — the
+    /// isolation lesson EPIC-010a's capstone paid for.
+    /// </remarks>
+    public DbSet<GlobalLabel> GlobalLabels =>
+        Set<GlobalLabel>();
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
@@ -356,6 +371,12 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<MedicinalProductComponent>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // A label is tenant-owned, so it takes the first of ADR-038's three
+        // filter shapes. Its versions carry no TenantId and are reachable only
+        // through it (ADR-059).
+        modelBuilder.Entity<GlobalLabel>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

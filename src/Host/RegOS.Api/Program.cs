@@ -53,6 +53,9 @@ using RegOS.Api.Endpoints.Studies;
 using RegOS.Api.Endpoints.Substances;
 using RegOS.Api.Endpoints.Presentations;
 using RegOS.Api.Endpoints.Components;
+using RegOS.Api.Endpoints.GlobalLabels;
+using RegOS.Labeling.Application;
+using RegOS.Labeling.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -131,6 +134,9 @@ builder.Services.AddInteractionInfrastructure();
 
 builder.Services.AddStudyApplication();
 builder.Services.AddStudyInfrastructure();
+
+builder.Services.AddLabelingApplication();
+builder.Services.AddLabelingInfrastructure();
 
 var app = builder.Build();
 
@@ -269,6 +275,19 @@ components.MapAddComponent();
 components.MapRestateComponent();
 components.MapMoveComponent();
 components.MapRemoveComponent();
+
+var globalLabels = app.MapGroup("").WithTags("Global Labels");
+// Before the rest: /api/labels/vocabulary is its own route, and the label
+// routes below are all /api/global-labels — no collision, but the vocabulary
+// stays first for the same reason presentations' does.
+globalLabels.MapGetLabelVocabulary();
+globalLabels.MapListGlobalLabels();
+globalLabels.MapCreateGlobalLabel();
+globalLabels.MapListGlobalLabelVersions();
+globalLabels.MapStartGlobalLabelDraft();
+globalLabels.MapAttachGlobalLabelContent();
+globalLabels.MapPublishGlobalLabelVersion();
+globalLabels.MapDiscardGlobalLabelDraft();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

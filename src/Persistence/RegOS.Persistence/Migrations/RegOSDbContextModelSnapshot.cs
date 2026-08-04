@@ -236,6 +236,76 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("HaMeetings", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.GlobalLabels.GlobalLabel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GlobalProductId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("GlobalLabels", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.GlobalLabels.GlobalLabelVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ChangeSummary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("ContentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("GlobalLabelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("PublishedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GlobalLabelId", "Status");
+
+                    b.HasIndex("GlobalLabelId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("GlobalLabelVersions", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2427,6 +2497,58 @@ namespace RegOS.Persistence.Migrations
                     b.Navigation("History");
                 });
 
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.GlobalLabels.GlobalLabel", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("GlobalProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "LabelType", b1 =>
+                        {
+                            b1.Property<Guid>("GlobalLabelId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("LabelTypeCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("LabelTypeDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("LabelTypeSystem");
+
+                            b1.HasKey("GlobalLabelId");
+
+                            b1.ToTable("GlobalLabels");
+
+                            b1.WithOwner()
+                                .HasForeignKey("GlobalLabelId");
+                        });
+
+                    b.Navigation("LabelType")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.GlobalLabels.GlobalLabelVersion", b =>
+                {
+                    b.HasOne("RegOS.Labeling.Domain.Aggregates.GlobalLabels.GlobalLabel", null)
+                        .WithMany("Versions")
+                        .HasForeignKey("GlobalLabelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
                 {
                     b.HasOne("RegOS.ReferenceData.Domain.Geography.Country.Country", null)
@@ -3418,6 +3540,11 @@ namespace RegOS.Persistence.Migrations
                         .HasForeignKey("SubmissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.GlobalLabels.GlobalLabel", b =>
+                {
+                    b.Navigation("Versions");
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>

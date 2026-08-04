@@ -53,7 +53,7 @@ is written; the branch is `epic/EPIC-018-labeling-and-product-information`.
 | | |
 |---|---|
 | **ADR-059** | ✅ written 2026-08-04 — the label hierarchy, the new `Labeling` context, and how shared clinical qualifiers are modelled |
-| **S001** | ⚪ `GlobalLabel` + `GlobalLabelVersion` — the new context, versioned with dated status and effective dating, linked content |
+| **S001** | ✅ `GlobalLabel` + `GlobalLabelVersion` — the `src/Labeling/` context, draft → in force → superseded, and the content link that proves ADR-059 §6 |
 | **S002** | ⚪ `LocalLabel` + `Artwork` — per market, derived from a core version |
 | **S003** | ⚪ `Indication` + `Population` + `OtherTherapy` — the shared-qualifier decision lands here |
 | **S004** | ⚪ `Contraindication` + `UndesirableEffect` — population's second and third parents |
