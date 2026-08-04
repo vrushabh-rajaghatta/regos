@@ -41,8 +41,9 @@ under licence EU/1/26/1234 — instead of that being a sentence in a PDF.
 ### In scope ✅
 
 - **`PackagedProduct`** — description, pack size (quantity + `UnitOfPresentation`),
-  the market's own pack code, dated marketing status, and the licence that
-  authorises it.
+  the market's own pack code, dated marketing status.
+- **`PackAuthorisation`** — in the **Registration** context: which packs a licence
+  authorises, and the date each was authorised.
 - **`PackageItem`** — the recursive containment tree: carton → blister → tablet,
   with **material**, depth-guarded and cycle-guarded.
 - **`LegalStatusOfSupply`** — coded, **on the pack**.
@@ -100,7 +101,7 @@ records *why*.
 | # | Decision | Settled as |
 |---|---|---|
 | **D1** | **`PackagedProduct` + a recursive `PackageItem`** — a **second** tree, distinct from `ComponentTree` | ✅ approved — the discriminator is below. `PackagingTree` copies `ComponentTree`'s **pattern, not its code**, exactly as EPIC-018 D4 copied `RegulatoryTemplate`'s versioning. **Second occurrence: duplicate and observe** ([ADR-018](../../adr/ADR-018-rule-of-three.md)); no generic `RecursiveTree<T>` |
-| **D2** | **A registration authorises many packs, and the link lives on the pack** | ✅ approved — RIM says `License → Packaged Product`, *Single*, and that is wrong for real authorisations. `PackagedProduct.RegistrationId?` is nullable because **a pack exists before its licence does**. `Registration` is not touched |
+| **D2** | **A registration authorises many packs, as a dated relationship owned by the Registration context** | ✅ approved, **corrected at S001** — RIM says `License → Packaged Product`, *Single*, and that is wrong for real authorisations. The design first put a nullable `RegistrationId` on the pack; **the dependency graph forbids it**, and `PackAuthorisation(RegistrationId, PackagedProductId, AuthorisedOn)` is better anyway. `Registration` is still not touched, and `Product` stays independent. See [the correction](#d2-corrected-at-s001) |
 | **D3** | **Legal status of supply is on the pack** | ✅ approved — a 16-tablet pack of paracetamol may be general sale while a 100-tablet pack is pharmacy-only. The restriction differs by presentation, not by active substance |
 | **D4** | **Shelf life as value + coded unit, with the label's wording beside it** | ✅ approved — `ShelfLifeValue` + `ShelfLifeUnit`, `ShelfLifeText`, and storage conditions coded. **Not `ShelfLifeMonths`**: normalising *"3 years"* to `36` would be the first unit conversion in RegOS, against 10a's recorded position that `Strength` equality is literal |
 | **D5** | **Appearance on the presentation; `OtherCharacteristics` and `Devices` refused** | ✅ approved — a tablet looks the same whichever carton it is in, which is **D1's discriminator applied a second time** |
@@ -147,8 +148,35 @@ records why that keeps happening).
 | **`ShelfLifeStorage`** | owned by `PackagedProduct` | `StorageCondition` — coded, several may apply at once |
 | **`PhysicalCharacteristics`** | owned by `PharmaceuticalProductDetail` | — |
 
-`PackagedProduct` also carries `RegistrationId?` (D2) and
-`LegalStatusOfSupply` (D3, coded).
+`PackagedProduct` carries `LegalStatusOfSupply` (D3, coded) and **no
+registration link at all** — authorisation lives in the Registration context
+(D2, corrected).
+
+| Root | Hangs from | Owns |
+|---|---|---|
+| **`PackAuthorisation`** | `RegistrationId` (Registration context) | — names a `PackagedProductId` and the date it was authorised |
+
+### D2, corrected at S001
+
+**The design said the link lives on the pack. It is not implementable.**
+`Registration.Domain` already references `Product.Domain`, so
+`PackagedProduct.RegistrationId` would close a dependency cycle — found by the
+compiler while writing the aggregate, not by review.
+
+Three options existed; the chosen one is better than what it replaced:
+
+| | |
+|---|---|
+| **`PackAuthorisation` in the Registration context** | ✅ **taken.** Registration can name both types, `Registration` itself stays untouched, and the relationship gains **a date** — packs frequently arrive years after the original authorisation, by variation, and a foreign key cannot carry that |
+| A raw `Guid?` on the pack | ❌ the first untyped cross-aggregate reference in the codebase, justified only by the cycle it dodges |
+| `RegistrationId` into `SharedKernel` | ❌ ADR-017 scopes it to primitives and abstractions; a regulatory concept does not belong there |
+
+**It also leaves somewhere to grow.** *Which variation authorised this pack?
+Which submission introduced it? Which sequence first approved it?* are all
+properties of the authorisation event and none of them properties of the pack.
+
+ADR-061 §3 was **amended rather than superseded** — four commits old, unmerged,
+relied upon by nothing, and an ADR should record what was built.
 
 **Every root carries `TenantId`** and a fail-closed query filter
 ([ADR-031](../../adr/ADR-031-tenant-isolation-by-query-filters.md)). Reads start
@@ -185,7 +213,7 @@ a tidy document.
 | xEVMPD / IDMP render (EPIC-007b) | **High** | The packaging tree is the payload's shape; `CodedConcept.System` is the seam for real terminology |
 | A real supply-classification terminology (EDQM) replaces the seed | **High** | Same seam — a data migration, not a redesign |
 | Pack-level shortage / discontinuation reporting | **High** | The dated marketing status is already per pack |
-| A pack authorised under two licences | Medium | Today's `RegistrationId?` is single. A second demonstration turns it into a child collection — additive, and **only then** |
+| An authorisation needs to name what carried it — a variation, a submission, a sequence | Medium | `PackAuthorisation` is where those go. None is built until one is asked for |
 | In-use shelf life becomes structured | Medium | `ShelfLifeText` holds it today; a second value + unit is additive |
 | Device-led combination products need a UDI | Medium | The demonstration D5 asks for. Additive on `MedicinalProductComponent` |
 | Deeper packaging nesting than three levels | Low | The depth limit is a domain constant, so changing it is a decision rather than a migration — the same call `ComponentTree` made |
@@ -199,8 +227,9 @@ arrive with:
 1. **Why packaging is not composition** — the discriminator.
 2. **Why RegOS has two recursive structures** — and why the second was
    duplicated rather than abstracted.
-3. **Why `Registration` does not point at `PackagedProduct`** — the departure
-   from RIM's cardinality, and why the link sits on the pack.
+3. **Why authorisation is a dated relationship owned by Registration** — the
+   departure from RIM's cardinality, and why the link is not a foreign key on
+   either aggregate.
 
 ---
 
