@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using RegOS.Labeling.Domain.Aggregates.GlobalLabels;
+using RegOS.Labeling.Domain.Aggregates.Contraindications;
 using RegOS.Labeling.Domain.Aggregates.Indications;
+using RegOS.Labeling.Domain.Aggregates.UndesirableEffects;
 using RegOS.Labeling.Domain.Aggregates.LocalLabels;
 using RegOS.Product.Domain.Product;
 
@@ -162,6 +164,18 @@ public sealed class RegOSDbContext : DbContext
     /// </remarks>
     public DbSet<Indication> Indications =>
         Set<Indication>();
+
+    /// <summary>
+    /// Who must not be given this product here, and what it does to people who
+    /// are. Neither owns a history: both are content inside an approved label,
+    /// so the <c>LocalLabelRevision</c> that published them is their history
+    /// (EPIC-018 S004).
+    /// </summary>
+    public DbSet<Contraindication> Contraindications =>
+        Set<Contraindication>();
+
+    public DbSet<UndesirableEffect> UndesirableEffects =>
+        Set<UndesirableEffect>();
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
@@ -408,6 +422,12 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<Indication>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<Contraindication>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<UndesirableEffect>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

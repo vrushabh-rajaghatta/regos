@@ -15,6 +15,7 @@ public sealed class GetClinicalVocabularyHandler
     {
         return Task.FromResult(new ClinicalVocabularyDto(
             ClinicalConditionVocabulary.Conditions.Select(Dto).ToList(),
+            ClinicalConditionVocabulary.Frequencies.Select(Dto).ToList(),
             ClinicalConditionVocabulary.PhysiologicalConditions
                 .Select(Dto).ToList(),
             ClinicalConditionVocabulary.Genders.Select(Dto).ToList(),

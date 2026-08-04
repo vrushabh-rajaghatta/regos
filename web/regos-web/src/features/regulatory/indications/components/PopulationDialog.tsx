@@ -6,18 +6,21 @@ import {
 } from "@/components/ui/dialog";
 
 import type { Population } from "../types/Indication";
+import type { StatementKind } from "../types/StatementKind";
 
 import { PopulationForm } from "./PopulationForm";
 
 interface PopulationDialogProps {
-  indicationId: string;
+  kind: StatementKind;
+  statementId: string;
   population?: Population;
   open: boolean;
   onOpenChange(open: boolean): void;
 }
 
 export function PopulationDialog({
-  indicationId,
+  kind,
+  statementId,
   population,
   open,
   onOpenChange,
@@ -32,7 +35,8 @@ export function PopulationDialog({
         </DialogHeader>
 
         <PopulationForm
-          indicationId={indicationId}
+          kind={kind}
+          statementId={statementId}
           population={population}
           onSuccess={() => onOpenChange(false)}
         />

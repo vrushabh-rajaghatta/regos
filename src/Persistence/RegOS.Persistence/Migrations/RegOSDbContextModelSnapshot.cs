@@ -236,6 +236,34 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("HaMeetings", (string)null);
                 });
 
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Contraindications.Contraindication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LabelText")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("MedicinalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicinalProductId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("Contraindications", (string)null);
+                });
+
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.GlobalLabels.GlobalLabel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -387,31 +415,6 @@ namespace RegOS.Persistence.Migrations
                     b.ToTable("IndicationOtherTherapies", (string)null);
                 });
 
-            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.Population", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("AgeHigh")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("AgeLow")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid>("IndicationId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IndicationId");
-
-                    b.ToTable("IndicationPopulations", (string)null);
-                });
-
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.LocalLabels.LocalLabel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -489,6 +492,34 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("LocalLabelId", "Status");
 
                     b.ToTable("LocalLabelRevisions", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.UndesirableEffects.UndesirableEffect", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LabelText")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("MedicinalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicinalProductId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("UndesirableEffects", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
@@ -2682,6 +2713,181 @@ namespace RegOS.Persistence.Migrations
                     b.Navigation("History");
                 });
 
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Contraindications.Contraindication", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("MedicinalProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Condition", b1 =>
+                        {
+                            b1.Property<Guid>("ContraindicationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("ConditionCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("ConditionDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ConditionSystem");
+
+                            b1.HasKey("ContraindicationId");
+
+                            b1.HasIndex("Code");
+
+                            b1.ToTable("Contraindications");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ContraindicationId");
+                        });
+
+                    b.OwnsMany("RegOS.Labeling.Domain.Aggregates.ClinicalStatements.Population", "Populations", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int?>("AgeHigh")
+                                .HasColumnType("integer");
+
+                            b1.Property<int?>("AgeLow")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("ContraindicationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Description")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ContraindicationId");
+
+                            b1.ToTable("ContraindicationPopulations", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("ContraindicationId");
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "AgeUnit", b2 =>
+                                {
+                                    b2.Property<Guid>("PopulationId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("AgeUnitCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("AgeUnitDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("AgeUnitSystem");
+
+                                    b2.HasKey("PopulationId");
+
+                                    b2.ToTable("ContraindicationPopulations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PopulationId");
+                                });
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Gender", b2 =>
+                                {
+                                    b2.Property<Guid>("PopulationId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("GenderCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("GenderDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("GenderSystem");
+
+                                    b2.HasKey("PopulationId");
+
+                                    b2.ToTable("ContraindicationPopulations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PopulationId");
+                                });
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "PhysiologicalCondition", b2 =>
+                                {
+                                    b2.Property<Guid>("PopulationId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("PhysiologicalConditionCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("PhysiologicalConditionDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("PhysiologicalConditionSystem");
+
+                                    b2.HasKey("PopulationId");
+
+                                    b2.ToTable("ContraindicationPopulations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PopulationId");
+                                });
+
+                            b1.Navigation("AgeUnit");
+
+                            b1.Navigation("Gender")
+                                .IsRequired();
+
+                            b1.Navigation("PhysiologicalCondition");
+                        });
+
+                    b.Navigation("Condition")
+                        .IsRequired();
+
+                    b.Navigation("Populations");
+                });
+
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.GlobalLabels.GlobalLabel", b =>
                 {
                     b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
@@ -2775,8 +2981,138 @@ namespace RegOS.Persistence.Migrations
                                 .HasForeignKey("IndicationId");
                         });
 
+                    b.OwnsMany("RegOS.Labeling.Domain.Aggregates.ClinicalStatements.Population", "Populations", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int?>("AgeHigh")
+                                .HasColumnType("integer");
+
+                            b1.Property<int?>("AgeLow")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Description")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<Guid>("IndicationId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("IndicationId");
+
+                            b1.ToTable("IndicationPopulations", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("IndicationId");
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "AgeUnit", b2 =>
+                                {
+                                    b2.Property<Guid>("PopulationId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("AgeUnitCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("AgeUnitDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("AgeUnitSystem");
+
+                                    b2.HasKey("PopulationId");
+
+                                    b2.ToTable("IndicationPopulations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PopulationId");
+                                });
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Gender", b2 =>
+                                {
+                                    b2.Property<Guid>("PopulationId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("GenderCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("GenderDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("GenderSystem");
+
+                                    b2.HasKey("PopulationId");
+
+                                    b2.ToTable("IndicationPopulations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PopulationId");
+                                });
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "PhysiologicalCondition", b2 =>
+                                {
+                                    b2.Property<Guid>("PopulationId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("PhysiologicalConditionCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("PhysiologicalConditionDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("PhysiologicalConditionSystem");
+
+                                    b2.HasKey("PopulationId");
+
+                                    b2.ToTable("IndicationPopulations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PopulationId");
+                                });
+
+                            b1.Navigation("AgeUnit");
+
+                            b1.Navigation("Gender")
+                                .IsRequired();
+
+                            b1.Navigation("PhysiologicalCondition");
+                        });
+
                     b.Navigation("Condition")
                         .IsRequired();
+
+                    b.Navigation("Populations");
                 });
 
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.IndicationStatusEntry", b =>
@@ -2829,115 +3165,6 @@ namespace RegOS.Persistence.Migrations
 
                     b.Navigation("Relationship")
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.Population", b =>
-                {
-                    b.HasOne("RegOS.Labeling.Domain.Aggregates.Indications.Indication", null)
-                        .WithMany("Populations")
-                        .HasForeignKey("IndicationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "AgeUnit", b1 =>
-                        {
-                            b1.Property<Guid>("PopulationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Code")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("AgeUnitCode");
-
-                            b1.Property<string>("Display")
-                                .IsRequired()
-                                .HasMaxLength(250)
-                                .HasColumnType("character varying(250)")
-                                .HasColumnName("AgeUnitDisplay");
-
-                            b1.Property<string>("System")
-                                .IsRequired()
-                                .HasMaxLength(50)
-                                .HasColumnType("character varying(50)")
-                                .HasColumnName("AgeUnitSystem");
-
-                            b1.HasKey("PopulationId");
-
-                            b1.ToTable("IndicationPopulations");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PopulationId");
-                        });
-
-                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Gender", b1 =>
-                        {
-                            b1.Property<Guid>("PopulationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Code")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("GenderCode");
-
-                            b1.Property<string>("Display")
-                                .IsRequired()
-                                .HasMaxLength(250)
-                                .HasColumnType("character varying(250)")
-                                .HasColumnName("GenderDisplay");
-
-                            b1.Property<string>("System")
-                                .IsRequired()
-                                .HasMaxLength(50)
-                                .HasColumnType("character varying(50)")
-                                .HasColumnName("GenderSystem");
-
-                            b1.HasKey("PopulationId");
-
-                            b1.ToTable("IndicationPopulations");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PopulationId");
-                        });
-
-                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "PhysiologicalCondition", b1 =>
-                        {
-                            b1.Property<Guid>("PopulationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Code")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("PhysiologicalConditionCode");
-
-                            b1.Property<string>("Display")
-                                .IsRequired()
-                                .HasMaxLength(250)
-                                .HasColumnType("character varying(250)")
-                                .HasColumnName("PhysiologicalConditionDisplay");
-
-                            b1.Property<string>("System")
-                                .IsRequired()
-                                .HasMaxLength(50)
-                                .HasColumnType("character varying(50)")
-                                .HasColumnName("PhysiologicalConditionSystem");
-
-                            b1.HasKey("PopulationId");
-
-                            b1.ToTable("IndicationPopulations");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PopulationId");
-                        });
-
-                    b.Navigation("AgeUnit");
-
-                    b.Navigation("Gender")
-                        .IsRequired();
-
-                    b.Navigation("PhysiologicalCondition");
                 });
 
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.LocalLabels.LocalLabel", b =>
@@ -2995,6 +3222,214 @@ namespace RegOS.Persistence.Migrations
                         .HasForeignKey("LocalLabelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.UndesirableEffects.UndesirableEffect", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("MedicinalProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Effect", b1 =>
+                        {
+                            b1.Property<Guid>("UndesirableEffectId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("EffectCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("EffectDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("EffectSystem");
+
+                            b1.HasKey("UndesirableEffectId");
+
+                            b1.HasIndex("Code");
+
+                            b1.ToTable("UndesirableEffects");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UndesirableEffectId");
+                        });
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Frequency", b1 =>
+                        {
+                            b1.Property<Guid>("UndesirableEffectId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("FrequencyCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("FrequencyDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("FrequencySystem");
+
+                            b1.HasKey("UndesirableEffectId");
+
+                            b1.ToTable("UndesirableEffects");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UndesirableEffectId");
+                        });
+
+                    b.OwnsMany("RegOS.Labeling.Domain.Aggregates.ClinicalStatements.Population", "Populations", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int?>("AgeHigh")
+                                .HasColumnType("integer");
+
+                            b1.Property<int?>("AgeLow")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Description")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<Guid>("UndesirableEffectId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("UndesirableEffectId");
+
+                            b1.ToTable("UndesirableEffectPopulations", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("UndesirableEffectId");
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "AgeUnit", b2 =>
+                                {
+                                    b2.Property<Guid>("PopulationId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("AgeUnitCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("AgeUnitDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("AgeUnitSystem");
+
+                                    b2.HasKey("PopulationId");
+
+                                    b2.ToTable("UndesirableEffectPopulations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PopulationId");
+                                });
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Gender", b2 =>
+                                {
+                                    b2.Property<Guid>("PopulationId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("GenderCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("GenderDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("GenderSystem");
+
+                                    b2.HasKey("PopulationId");
+
+                                    b2.ToTable("UndesirableEffectPopulations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PopulationId");
+                                });
+
+                            b1.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "PhysiologicalCondition", b2 =>
+                                {
+                                    b2.Property<Guid>("PopulationId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<string>("Code")
+                                        .IsRequired()
+                                        .HasMaxLength(100)
+                                        .HasColumnType("character varying(100)")
+                                        .HasColumnName("PhysiologicalConditionCode");
+
+                                    b2.Property<string>("Display")
+                                        .IsRequired()
+                                        .HasMaxLength(250)
+                                        .HasColumnType("character varying(250)")
+                                        .HasColumnName("PhysiologicalConditionDisplay");
+
+                                    b2.Property<string>("System")
+                                        .IsRequired()
+                                        .HasMaxLength(50)
+                                        .HasColumnType("character varying(50)")
+                                        .HasColumnName("PhysiologicalConditionSystem");
+
+                                    b2.HasKey("PopulationId");
+
+                                    b2.ToTable("UndesirableEffectPopulations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("PopulationId");
+                                });
+
+                            b1.Navigation("AgeUnit");
+
+                            b1.Navigation("Gender")
+                                .IsRequired();
+
+                            b1.Navigation("PhysiologicalCondition");
+                        });
+
+                    b.Navigation("Effect")
+                        .IsRequired();
+
+                    b.Navigation("Frequency");
+
+                    b.Navigation("Populations");
                 });
 
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.Contact.Contact", b =>
@@ -3998,8 +4433,6 @@ namespace RegOS.Persistence.Migrations
             modelBuilder.Entity("RegOS.Labeling.Domain.Aggregates.Indications.Indication", b =>
                 {
                     b.Navigation("OtherTherapies");
-
-                    b.Navigation("Populations");
 
                     b.Navigation("StatusHistory");
                 });

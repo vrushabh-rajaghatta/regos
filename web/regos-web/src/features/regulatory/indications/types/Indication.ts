@@ -66,6 +66,8 @@ export interface Indication {
 
 export interface ClinicalVocabulary {
   conditions: CodedConcept[];
+  /** Undesirable effects only — the one list the three do not share. */
+  frequencies: CodedConcept[];
   physiologicalConditions: CodedConcept[];
   genders: CodedConcept[];
   ageUnits: CodedConcept[];
@@ -79,4 +81,31 @@ export interface PopulationBody {
   genderCode: string;
   physiologicalConditionCode: string | null;
   description: string | null;
+}
+
+/** Who must not be given this product here. */
+export interface Contraindication {
+  id: string;
+  conditionCode: string;
+  conditionDisplay: string;
+  conditionSystem: string;
+  labelText: string;
+  populations: Population[];
+}
+
+/**
+ * A side effect the approved label lists.
+ *
+ * `frequencyCode` null is ordinary: a label may list an effect without stating
+ * a band, and *not known* is itself one.
+ */
+export interface UndesirableEffect {
+  id: string;
+  effectCode: string;
+  effectDisplay: string;
+  effectSystem: string;
+  labelText: string;
+  frequencyCode: string | null;
+  frequencyDisplay: string | null;
+  populations: Population[];
 }

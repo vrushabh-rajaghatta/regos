@@ -7,6 +7,7 @@ namespace RegOS.ReferenceData.Application.Queries.Clinical.GetClinicalVocabulary
 /// </param>
 public sealed record ClinicalVocabularyDto(
     IReadOnlyList<CodedConceptDto> Conditions,
+    IReadOnlyList<CodedConceptDto> Frequencies,
     IReadOnlyList<CodedConceptDto> PhysiologicalConditions,
     IReadOnlyList<CodedConceptDto> Genders,
     IReadOnlyList<CodedConceptDto> AgeUnits,

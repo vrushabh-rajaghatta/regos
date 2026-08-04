@@ -1,13 +1,16 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import { detailOf } from "@/shared/api/problemDetail";
 
+import type { StatementKind } from "../types/StatementKind";
+
 /** Removes a qualifier recorded in error. */
-export async function removeIndicationPopulation(
-  indicationId: string,
+export async function removeStatementPopulation(
+  kind: StatementKind,
+  statementId: string,
   populationId: string,
 ): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/api/indications/${indicationId}/populations/${populationId}`),
+    buildUrl(`/api/${kind}/${statementId}/populations/${populationId}`),
     { method: "DELETE" },
   );
 

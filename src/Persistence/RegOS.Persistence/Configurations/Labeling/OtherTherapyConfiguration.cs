@@ -27,7 +27,7 @@ public sealed class OtherTherapyConfiguration
 
         builder.OwnsOne(
             x => x.Relationship,
-            IndicationConfiguration.ConceptColumns<OtherTherapy>("Relationship"));
+            CodedConceptColumns.Of<OtherTherapy>("Relationship"));
 
         builder.Navigation(x => x.Relationship).IsRequired();
 

@@ -18,8 +18,9 @@ import {
 } from "@/components/ui/select";
 
 import { useClinicalVocabulary } from "../hooks/useClinicalVocabulary";
-import { useSaveIndicationPopulation } from "../hooks/useSaveIndicationPopulation";
+import { useSaveStatementPopulation } from "../hooks/useSaveStatementPopulation";
 import type { Population } from "../types/Indication";
+import type { StatementKind } from "../types/StatementKind";
 import {
   chosen,
   NONE,
@@ -28,7 +29,9 @@ import {
 } from "../validation/populationSchema";
 
 interface PopulationFormProps {
-  indicationId: string;
+  /** Which statement owns it — the same form serves all three. */
+  kind: StatementKind;
+  statementId: string;
   /** Present when correcting an existing qualifier in place. */
   population?: Population;
   onSuccess(): void;
@@ -42,11 +45,12 @@ interface PopulationFormProps {
  * through a correction rather than being replaced by a new one (EPIC-018 D2).
  */
 export function PopulationForm({
-  indicationId,
+  kind,
+  statementId,
   population,
   onSuccess,
 }: PopulationFormProps) {
-  const mutation = useSaveIndicationPopulation();
+  const mutation = useSaveStatementPopulation();
   const { data: vocabulary, isLoading } = useClinicalVocabulary();
 
   const {
@@ -69,7 +73,8 @@ export function PopulationForm({
   async function onSubmit(values: PopulationFormValues) {
     try {
       await mutation.mutateAsync({
-        indicationId,
+        kind,
+        statementId,
         populationId: population?.id ?? null,
         body: {
           ageLow: values.ageLow?.trim() ? Number(values.ageLow) : null,

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 import { useIndications } from "../hooks/useIndications";
 import { useRecordIndicationDecision } from "../hooks/useRecordIndicationDecision";
-import { useRemoveIndicationPopulation } from "../hooks/useRemoveIndicationPopulation";
+import { useRemoveStatementPopulation } from "../hooks/useRemoveStatementPopulation";
 import type { Indication, Population } from "../types/Indication";
 import { REGOS_INTERNAL } from "../types/Indication";
 
@@ -46,7 +46,7 @@ export function MarketIndications({
 
   const { data, isLoading, error } = useIndications(medicinalProductId);
   const decision = useRecordIndicationDecision();
-  const removePopulation = useRemoveIndicationPopulation();
+  const removePopulation = useRemoveStatementPopulation();
 
   const indications = data ?? [];
 
@@ -187,7 +187,8 @@ export function MarketIndications({
                     className="h-6 px-2 text-xs"
                     onClick={() =>
                       removePopulation.mutate({
-                        indicationId: indication.id,
+                        kind: "indications",
+                        statementId: indication.id,
                         populationId: population.id,
                       })
                     }
@@ -265,7 +266,8 @@ export function MarketIndications({
 
       {editing && (
         <PopulationDialog
-          indicationId={editing.indicationId}
+          kind="indications"
+          statementId={editing.indicationId}
           population={editing.population}
           open
           onOpenChange={(next) => !next && setEditing(null)}

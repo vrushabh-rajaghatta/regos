@@ -1,28 +1,31 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { saveIndicationPopulation } from "../api/saveIndicationPopulation";
+import { saveStatementPopulation } from "../api/saveStatementPopulation";
 import type { PopulationBody } from "../types/Indication";
+import type { StatementKind } from "../types/StatementKind";
 
 interface SaveInput {
-  indicationId: string;
+  kind: StatementKind;
+  statementId: string;
   /** Null adds; an id **amends that qualifier in place** (EPIC-018 D2). */
   populationId: string | null;
   body: PopulationBody;
 }
 
-export function useSaveIndicationPopulation() {
+export function useSaveStatementPopulation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (input: SaveInput) =>
-      saveIndicationPopulation(
-        input.indicationId,
+      saveStatementPopulation(
+        input.kind,
+        input.statementId,
         input.populationId,
         input.body,
       ),
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["indications"] });
+    onSuccess: (_result, input) => {
+      queryClient.invalidateQueries({ queryKey: [input.kind] });
     },
   });
 }

@@ -1,5 +1,6 @@
 using FluentAssertions;
 
+using RegOS.Labeling.Domain.Aggregates.ClinicalStatements;
 using RegOS.Labeling.Domain.Aggregates.Indications;
 using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Exceptions;
@@ -67,7 +68,7 @@ public sealed class IndicationTests
         var record = () => AnIndication("NOT-A-CONDITION");
 
         record.Should().Throw<DomainException>()
-            .WithMessage(IndicationErrors.ConditionNotRecognised);
+            .WithMessage(ClinicalStatementErrors.ConditionNotRecognised);
     }
 
     /// <summary>
@@ -222,7 +223,7 @@ public sealed class IndicationTests
             PopulationId.New(), 1, 2, "YEAR", "ALL", null, null);
 
         amend.Should().Throw<NotFoundException>()
-            .WithMessage(IndicationErrors.PopulationNotFound);
+            .WithMessage(ClinicalStatementErrors.PopulationNotFound);
     }
 
     [Fact]
@@ -244,7 +245,7 @@ public sealed class IndicationTests
         var add = () => indication.AddPopulation(2, 12, null, "ALL", null, null);
 
         add.Should().Throw<DomainException>()
-            .WithMessage(IndicationErrors.AgeUnitRequired);
+            .WithMessage(ClinicalStatementErrors.AgeUnitRequired);
     }
 
     [Fact]
@@ -256,7 +257,7 @@ public sealed class IndicationTests
             null, null, "YEAR", "ALL", null, null);
 
         add.Should().Throw<DomainException>()
-            .WithMessage(IndicationErrors.AgeUnitWithoutRange);
+            .WithMessage(ClinicalStatementErrors.AgeUnitWithoutRange);
     }
 
     [Fact]
@@ -268,7 +269,7 @@ public sealed class IndicationTests
             12, 2, "YEAR", "ALL", null, null);
 
         add.Should().Throw<DomainException>()
-            .WithMessage(IndicationErrors.AgeRangeInverted);
+            .WithMessage(ClinicalStatementErrors.AgeRangeInverted);
     }
 
     [Fact]

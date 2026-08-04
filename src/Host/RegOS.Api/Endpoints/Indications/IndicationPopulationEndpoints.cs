@@ -1,6 +1,7 @@
 using RegOS.Labeling.Application.Commands.AddIndicationPopulation;
 using RegOS.Labeling.Application.Commands.AmendIndicationPopulation;
 using RegOS.Labeling.Application.Commands.RemoveIndicationPopulation;
+using RegOS.Labeling.Domain.Aggregates.ClinicalStatements;
 using RegOS.Labeling.Domain.Aggregates.Indications;
 
 namespace RegOS.Api.Endpoints.Indications;

@@ -1,6 +1,6 @@
 using RegOS.SharedKernel.Primitives;
 
-namespace RegOS.Labeling.Domain.Aggregates.Indications;
+namespace RegOS.Labeling.Domain.Aggregates.ClinicalStatements;
 
 public sealed class PopulationId : StronglyTypedId
 {

@@ -161,7 +161,7 @@ a tidy document.
 | **S001** | **`GlobalLabel` + `GlobalLabelVersion`** — the new context, versioned with dated status and effective dating, linked content, on the global product | context → domain → persistence → API → UI → browser proof | ✅ |
 | **S002** | **`LocalLabel` + `LocalLabelRevision`** — the market's own controlled document, its revision history, and artwork as a type rather than an aggregate | full slice | ✅ |
 | **S003** | **`Indication` + `Population` + `OtherTherapy`** — the authorisation, its dated decision history, and the qualifier that is corrected in place | full slice | ✅ |
-| **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question is asked out loud | full slice | 🟡 |
+| **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question was asked out loud | full slice | ✅ |
 
 > **S004's design, signed off 2026-08-04.** Stated as a hypothesis with a
 > falsifier, so the outcome is reviewable rather than a judgement made at the
@@ -327,6 +327,57 @@ version, which would have let a compliance requirement justify an aggregate.
 
 **`LocalLabel` is not a projection over `GlobalLabel`** — adoption lag alone
 settles that, whatever else it holds.
+
+---
+
+## S004 — the review contract, answered
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | Did the three `Population` configurations differ **only** by owner and table name? | **Yes**, and more strongly than expected — see below |
+| 2 | Was the EF helper **earned**? | **Yes.** `ClinicalStatementConfiguration.Populations(builder, table, ownerKey)`, called three times with two strings |
+| 3 | Did `Contraindication` and `UndesirableEffect` stay free of independent history? | **Yes**, and a test asserts it rather than a comment claiming it |
+| 4 | Did any `if (Type == Artwork)`-style branching appear? | **No.** `LocalLabelTypeBranchTests` is green without anyone looking |
+| 5 | Did the browser proof show **amendment** on the second parent? | **Yes** — and the third. One row through the correction, twice |
+
+### The evidence for Q1 is stronger than a diff
+
+The two new population tables are column-for-column identical to each other,
+differing only in the foreign-key name. But the decisive fact is what the
+migration **did not** contain:
+
+> **`IndicationPopulations` appears zero times in the S004 migration.**
+
+Converting S003's population from a standalone entity to an owned collection
+*through the shared helper* produced **no schema change at all**. The helper does
+not approximate the original mapping; it reproduces it exactly. If the shapes had
+differed anywhere — a nullability, a length, an index — the migration would have
+said so.
+
+### What the implementation forced, and it was not a preference
+
+Three aggregates cannot own one entity type with three tables: EF scopes an owned
+type per owner, which is what turns one CLR class into three entity types. So
+`PopulationConfiguration` had to become an `OwnsMany` helper or be copied twice.
+**The hypothesis was answerable because the alternative was concrete.**
+
+A side effect worth noting: owned collections load with their owner, so the three
+repositories need no `Include` for populations — the EPIC-004 S005 failure mode
+(a rule reading a collection that was never loaded) is unreachable by
+construction rather than by discipline.
+
+### Decisions made while building
+
+| Decision | Why |
+|---|---|
+| **One `Population` CLR type, moved to `Aggregates/ClinicalStatements/`** | The third demonstrated need (ADR-018). This is **not** the shared *base type across aggregate roots* ADR-059 §4 forbids — nothing couples the three roots, and either may grow a rule the other does not, at which point it stops being one shape and should stop being one class |
+| **`ClinicalCondition` is two static helpers, not a base class** | Inheritance would put a rule added for undesirable effects into the contraindication that never asked for one |
+| **`OtherTherapy` is *not* on `Contraindication`** | Phase 1 allows it; the DoD does not require it; nobody asked. Its second use would have been speculative creation, so it stays at one and `OtherTherapy` stays in `Indications/` |
+| **`ClinicalStatementErrors` split out of `IndicationErrors`** | So `Contraindication` does not reach into `Indications` to say *"that age needs a unit"*. The messages did not change — only where they live |
+| **The frontend population form is parameterised by `StatementKind`** | Same story as the persistence helper, one layer up: one form, one schema, one save call, three route bases |
+
+**Verified:** 19/19 suites, 0 failed, **1391 tests** · **109/109 browser specs**
+· CORS reverted and confirmed absent from `src/`.
 
 ---
 

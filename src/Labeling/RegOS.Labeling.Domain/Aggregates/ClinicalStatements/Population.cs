@@ -2,7 +2,7 @@ using RegOS.ReferenceData.Domain.Terminology;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 
-namespace RegOS.Labeling.Domain.Aggregates.Indications;
+namespace RegOS.Labeling.Domain.Aggregates.ClinicalStatements;
 
 /// <summary>
 /// Who a clinical statement applies to — an age band, a gender, a
@@ -15,9 +15,17 @@ namespace RegOS.Labeling.Domain.Aggregates.Indications;
 /// <see cref="Amend"/>. If that ever collapses into remove-and-re-add, this
 /// should become a value object while doing so is still cheap.
 /// <para>
-/// Owned by exactly one clinical statement. The <em>shape</em> is shared with
-/// the statement types S004 adds; the table is not, because an owned value is
-/// tracked against exactly one owner.
+/// <b>Owned by exactly one clinical statement, and mapped three times.</b> The
+/// <em>shape</em> is shared — S004 confirmed the second and third owners need
+/// the same fields and the same rules — while each owner keeps its own table,
+/// because an owned entity is tracked against exactly one owner (ADR-058).
+/// <para>
+/// One CLR type rather than three, on ADR-018's third demonstrated need. This is
+/// not the shared <em>base type across aggregate roots</em> ADR-059 §4 forbids:
+/// nothing here couples <c>Indication</c> to <c>Contraindication</c>, and either
+/// may grow a rule the other does not without touching this file — at which
+/// point it stops being one shape and should stop being one class.
+/// </para>
 /// </para>
 /// </remarks>
 public sealed class Population : Entity<PopulationId>
@@ -100,10 +108,10 @@ public sealed class Population : Entity<PopulationId>
         string? description)
     {
         if (ageLow is < 0 || ageHigh is < 0)
-            throw new DomainException(IndicationErrors.AgeCannotBeNegative);
+            throw new DomainException(ClinicalStatementErrors.AgeCannotBeNegative);
 
         if (ageLow is { } low && ageHigh is { } high && low > high)
-            throw new DomainException(IndicationErrors.AgeRangeInverted);
+            throw new DomainException(ClinicalStatementErrors.AgeRangeInverted);
 
         // A bound with no unit is not a statement anyone can act on, and a unit
         // with no bound says nothing at all.
@@ -111,21 +119,21 @@ public sealed class Population : Entity<PopulationId>
         var unit = ClinicalConditionVocabulary.AgeUnitOf(ageUnitCode);
 
         if (hasBound && unit is null)
-            throw new DomainException(IndicationErrors.AgeUnitRequired);
+            throw new DomainException(ClinicalStatementErrors.AgeUnitRequired);
 
         if (!hasBound && unit is not null)
-            throw new DomainException(IndicationErrors.AgeUnitWithoutRange);
+            throw new DomainException(ClinicalStatementErrors.AgeUnitWithoutRange);
 
         if (ageUnitCode is not null && !string.IsNullOrWhiteSpace(ageUnitCode)
             && unit is null)
         {
-            throw new DomainException(IndicationErrors.AgeUnitNotRecognised);
+            throw new DomainException(ClinicalStatementErrors.AgeUnitNotRecognised);
         }
 
         if (description is not null
             && description.Trim().Length > DescriptionMaxLength)
         {
-            throw new DomainException(IndicationErrors.DescriptionTooLong);
+            throw new DomainException(ClinicalStatementErrors.DescriptionTooLong);
         }
 
         AgeLow = ageLow;
@@ -134,7 +142,7 @@ public sealed class Population : Entity<PopulationId>
 
         Gender = ClinicalConditionVocabulary.GenderOf(genderCode)
                  ?? throw new DomainException(
-                     IndicationErrors.GenderNotRecognised);
+                     ClinicalStatementErrors.GenderNotRecognised);
 
         PhysiologicalCondition = string.IsNullOrWhiteSpace(
                 physiologicalConditionCode)
@@ -142,7 +150,7 @@ public sealed class Population : Entity<PopulationId>
             : ClinicalConditionVocabulary.PhysiologicalConditionOf(
                   physiologicalConditionCode)
               ?? throw new DomainException(
-                  IndicationErrors.PhysiologicalConditionNotRecognised);
+                  ClinicalStatementErrors.PhysiologicalConditionNotRecognised);
 
         Description = string.IsNullOrWhiteSpace(description)
             ? null

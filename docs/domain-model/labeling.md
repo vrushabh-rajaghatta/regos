@@ -8,7 +8,7 @@ Owner: Architecture Review Board
 
 Status: Approved
 
-Version: 1.1
+Version: 1.2
 
 Last Reviewed: 2026-08-04
 
@@ -213,8 +213,8 @@ distinct is what will make it age well.
 | `GlobalLabel` | **version** | the company's scientific position evolves, and each issue is an edition of it |
 | `LocalLabel` | **revision** | one authority approves, delays, amends and republishes that position on its own clock |
 | `Indication` | **status history** | approved, expanded, restricted, withdrawn are successive *decisions*, not successive editions |
-| `Contraindication` | **the label revision that published it** | — |
-| `UndesirableEffect` | **the label revision that published it** | — |
+| `Contraindication` | **the label revision that published it** | it is content inside an approved label, not something an authority acts on directly |
+| `UndesirableEffect` | **the label revision that published it** | same, plus a `Frequency` — the one attribute the three statement types do not share |
 | a clinical concept | **a code** | *Type 2 diabetes mellitus*, *Diabète sucré de type 2* and *Diabetes mellitus Typ 2* are one thing, and only a code says so |
 
 **Five answers, because they are different kinds of change.** The first two are
@@ -310,6 +310,43 @@ class it does not, or a procedure that is no product at all.
 
 ---
 
+# `Contraindication` and `UndesirableEffect`
+
+Structured statements inside this market's approved label. Both hang off
+`MedicinalProductId`, both carry a coded condition and the label's wording, and
+**neither owns a history** — see the rule above.
+
+`UndesirableEffect.Frequency` — *very common* through *very rare*, plus *not
+known* — is the only attribute the three statement types do not share. It is
+**recorded, never computed**: the bands have numeric thresholds resting on trial
+data RegOS does not hold, and deriving one would assert a calculation nobody
+performed. Null is ordinary.
+
+## `Population`, mapped three times
+
+One CLR type in `Aggregates/ClinicalStatements/`, owned by each statement as its
+own collection, in its own table. **Confirmed rather than assumed:** S004's
+hypothesis was that the second and third configurations would differ from the
+first only by table and foreign-key name, and the migration that added them left
+`IndicationPopulations` completely untouched — the shared helper reproduces the
+original mapping exactly.
+
+**Owned, not a standalone entity**, because three aggregates cannot own one
+entity type with three tables: EF scopes an owned type per owner, which is what
+turns one class into three entity types. A useful consequence — owned
+collections load with their owner, so no repository needs an `Include` for them,
+and the "rule reads a collection that was never loaded" failure is unreachable
+by construction.
+
+**This is not the shared base type across aggregate roots ADR-059 §4 forbids.**
+Nothing couples the three roots; either may grow a rule the other does not, and
+at that point it stops being one shape and should stop being one class.
+
+`OtherTherapy` stays on `Indication` alone. Phase 1 allows it on contraindications
+too; nobody asked for it, so it remains at one use.
+
+---
+
 # Not here yet, and why
 
 | | |
@@ -327,5 +364,6 @@ class it does not, or a procedure that is no product at all.
 
 | Version | Date       | Summary |
 | ------- | ---------- | ------- |
+| 1.2     | 2026-08-04 | EPIC-018 S003–S004: `Indication`'s dated decisions, `Contraindication` and `UndesirableEffect` without histories, and `Population` mapped three times. |
 | 1.1     | 2026-08-04 | EPIC-018 S002: `LocalLabel`/`LocalLabelRevision`, artwork as a type, and the approval-versus-effect split. |
 | 1.0     | 2026-08-04 | EPIC-018 S001: the `Labeling` context, `GlobalLabel`/`GlobalLabelVersion`, and the domain-word/screen-word pairs. |

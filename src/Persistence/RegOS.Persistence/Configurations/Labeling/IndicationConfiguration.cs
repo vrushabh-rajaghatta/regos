@@ -52,17 +52,18 @@ public sealed class IndicationConfiguration
         // it shares the root's table.
         builder.OwnsOne(x => x.Condition, concept =>
         {
-            ConceptColumns<Indication>("Condition")(concept);
+            CodedConceptColumns.Of<Indication>("Condition")(concept);
 
             concept.HasIndex(x => x.Code);
         });
 
         builder.Navigation(x => x.Condition).IsRequired();
 
-        builder.HasMany(x => x.Populations)
-            .WithOne()
-            .HasForeignKey("IndicationId")
-            .OnDelete(DeleteBehavior.Cascade);
+        // The shared mapping, one of three identical calls (EPIC-018 S004).
+        builder.OwnsMany(
+            x => x.Populations,
+            populations => ClinicalStatementConfiguration.Populations(
+                populations, "IndicationPopulations", "IndicationId"));
 
         builder.Metadata
             .FindNavigation(nameof(Indication.Populations))!
@@ -107,31 +108,4 @@ public sealed class IndicationConfiguration
         // root, then narrows to what is actually authorised.
         builder.HasIndex(x => x.CurrentStatus);
     }
-
-    /// <summary>
-    /// The three columns a coded value occupies, parameterised only by prefix.
-    /// </summary>
-    internal static Action<OwnedNavigationBuilder<TOwner, CodedConcept>>
-        ConceptColumns<TOwner>(string prefix, bool required = true)
-        where TOwner : class
-        => concept =>
-        {
-            var system = concept.Property(x => x.System)
-                .HasColumnName($"{prefix}System")
-                .HasMaxLength(CodedConcept.SystemMaxLength);
-
-            var code = concept.Property(x => x.Code)
-                .HasColumnName($"{prefix}Code")
-                .HasMaxLength(CodedConcept.CodeMaxLength);
-
-            var display = concept.Property(x => x.Display)
-                .HasColumnName($"{prefix}Display")
-                .HasMaxLength(CodedConcept.DisplayMaxLength);
-
-            if (!required) return;
-
-            system.IsRequired();
-            code.IsRequired();
-            display.IsRequired();
-        };
 }

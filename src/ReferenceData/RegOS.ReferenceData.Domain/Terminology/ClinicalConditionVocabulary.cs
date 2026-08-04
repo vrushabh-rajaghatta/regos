@@ -42,7 +42,46 @@ public static class ClinicalConditionVocabulary
         CodedConcept.Internal("MDD", "Major depressive disorder"),
         CodedConcept.Internal("EPILEPSY", "Epilepsy"),
         CodedConcept.Internal("PAIN-MOD", "Moderate to severe pain"),
-        CodedConcept.Internal("BACT-INF", "Bacterial infection")
+        CodedConcept.Internal("BACT-INF", "Bacterial infection"),
+
+        // Added in S004, because a contraindication was not expressible without
+        // them. The commonest contraindication in pharmaceutical labelling is
+        // hypersensitivity to the product itself, and a vocabulary that could
+        // not say it would have made the aggregate look usable and not be.
+        CodedConcept.Internal("HYPERSENS-AS", "Hypersensitivity to the active substance"),
+        CodedConcept.Internal("HYPERSENS-EX", "Hypersensitivity to any excipient"),
+        CodedConcept.Internal("SEVERE-RENAL", "Severe renal impairment"),
+        CodedConcept.Internal("SEVERE-HEPATIC", "Severe hepatic impairment"),
+        CodedConcept.Internal("NAUSEA", "Nausea"),
+        CodedConcept.Internal("HEADACHE", "Headache"),
+        CodedConcept.Internal("DIARRHOEA", "Diarrhoea"),
+        CodedConcept.Internal("ANAPHYLAXIS", "Anaphylactic reaction")
+    ];
+
+    /// <summary>
+    /// How often an undesirable effect occurs, in the bands a summary of
+    /// product characteristics uses.
+    /// </summary>
+    /// <remarks>
+    /// <b>On <c>UndesirableEffect</c> alone.</b> Nothing else carries it, and
+    /// nothing branches on it — it is a coded clinical concept, orthogonal to
+    /// the population a statement applies to, and it is the one attribute S004
+    /// found that the three statement types do not share.
+    /// <para>
+    /// The bands are the industry's ordinary ones. The thresholds behind them
+    /// (≥1/10, ≥1/100, …) are deliberately not modelled: RegOS records what the
+    /// label says, and a computed frequency would be RegOS asserting a
+    /// calculation it did not perform.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<CodedConcept> Frequencies { get; } =
+    [
+        CodedConcept.Internal("VERY-COMMON", "Very common"),
+        CodedConcept.Internal("COMMON", "Common"),
+        CodedConcept.Internal("UNCOMMON", "Uncommon"),
+        CodedConcept.Internal("RARE", "Rare"),
+        CodedConcept.Internal("VERY-RARE", "Very rare"),
+        CodedConcept.Internal("NOT-KNOWN", "Not known")
     ];
 
     /// <summary>
@@ -91,6 +130,9 @@ public static class ClinicalConditionVocabulary
 
     public static CodedConcept? ConditionOf(string? code)
         => CodedConceptLookup.Find(Conditions, code);
+
+    public static CodedConcept? FrequencyOf(string? code)
+        => CodedConceptLookup.Find(Frequencies, code);
 
     public static CodedConcept? PhysiologicalConditionOf(string? code)
         => CodedConceptLookup.Find(PhysiologicalConditions, code);

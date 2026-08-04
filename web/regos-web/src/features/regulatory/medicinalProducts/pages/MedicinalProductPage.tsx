@@ -9,6 +9,7 @@ import { CreateRegistrationDialog } from "../../registrations/components/CreateR
 import { RegistrationExpiry } from "../../registrations/components/RegistrationExpiry";
 import { RegistrationStatusBadge } from "../../registrations/components/RegistrationStatusBadge";
 import { useProductRegistrations } from "../../registrations/hooks/useProductRegistrations";
+import { MarketClinicalStatements } from "@/features/regulatory/indications/components/MarketClinicalStatements";
 import { MarketIndications } from "@/features/regulatory/indications/components/MarketIndications";
 import { MarketLabels } from "@/features/regulatory/labels/components/MarketLabels";
 
@@ -135,6 +136,12 @@ export function MedicinalProductPage() {
           same market: the labels are what we publish, this is what the
           authority authorised (ADR-059). */}
       <MarketIndications medicinalProductId={market.medicinalProductId} />
+
+      {/* After the indications, in the order a label reads: what it is for,
+          then who must not have it, then what it does to them. */}
+      <MarketClinicalStatements
+        medicinalProductId={market.medicinalProductId}
+      />
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">

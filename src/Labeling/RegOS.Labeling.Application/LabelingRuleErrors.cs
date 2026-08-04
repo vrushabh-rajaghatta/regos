@@ -15,6 +15,14 @@ public static class LabelingRuleErrors
     public const string IndicationDoesNotExist =
         "Indication does not exist.";
 
+    /// <summary>
+    /// Shared by contraindications and undesirable effects. One message rather
+    /// than two, because a caller who sent the wrong id learns nothing useful
+    /// from being told which of the two kinds it was not.
+    /// </summary>
+    public const string ClinicalStatementDoesNotExist =
+        "That clinical statement does not exist.";
+
     public const string GlobalProductDoesNotExist =
         "Product does not exist.";
 

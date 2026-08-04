@@ -54,6 +54,7 @@ using RegOS.Api.Endpoints.Substances;
 using RegOS.Api.Endpoints.Presentations;
 using RegOS.Api.Endpoints.Components;
 using RegOS.Api.Endpoints.GlobalLabels;
+using RegOS.Api.Endpoints.ClinicalStatements;
 using RegOS.Api.Endpoints.Indications;
 using RegOS.Api.Endpoints.LocalLabels;
 using RegOS.Labeling.Application;
@@ -311,6 +312,13 @@ indications.MapRestateIndicationText();
 indications.MapRecordIndicationDecision();
 indications.MapIndicationPopulations();
 indications.MapIndicationTherapies();
+
+// Contraindications and undesirable effects: the same five capabilities each,
+// and deliberately no decision route — both are content inside an approved
+// label, so a label revision is what changes them (EPIC-018 S004).
+var clinicalStatements = app.MapGroup("").WithTags("Clinical Statements");
+clinicalStatements.MapContraindications();
+clinicalStatements.MapUndesirableEffects();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

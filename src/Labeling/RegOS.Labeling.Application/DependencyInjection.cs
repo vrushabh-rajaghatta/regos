@@ -15,7 +15,19 @@ using RegOS.Labeling.Application.Commands.RemoveIndicationPopulation;
 using RegOS.Labeling.Application.Commands.AddIndicationTherapy;
 using RegOS.Labeling.Application.Commands.RemoveIndicationTherapy;
 using RegOS.Labeling.Application.Queries.ListCoreVersionsForProduct;
+using RegOS.Labeling.Application.Commands.RecordContraindication;
+using RegOS.Labeling.Application.Commands.RestateContraindicationText;
+using RegOS.Labeling.Application.Commands.AddContraindicationPopulation;
+using RegOS.Labeling.Application.Commands.AmendContraindicationPopulation;
+using RegOS.Labeling.Application.Commands.RemoveContraindicationPopulation;
+using RegOS.Labeling.Application.Commands.RecordUndesirableEffect;
+using RegOS.Labeling.Application.Commands.RestateUndesirableEffectText;
+using RegOS.Labeling.Application.Commands.AddUndesirableEffectPopulation;
+using RegOS.Labeling.Application.Commands.AmendUndesirableEffectPopulation;
+using RegOS.Labeling.Application.Commands.RemoveUndesirableEffectPopulation;
+using RegOS.Labeling.Application.Queries.ListContraindications;
 using RegOS.Labeling.Application.Queries.ListIndications;
+using RegOS.Labeling.Application.Queries.ListUndesirableEffects;
 using RegOS.Labeling.Application.Queries.ListLocalLabelRevisions;
 using RegOS.Labeling.Application.Queries.ListLocalLabels;
 using RegOS.Labeling.Application.Commands.CreateGlobalLabel;
@@ -79,6 +91,30 @@ public static class DependencyInjection
         services.AddScoped<RemoveIndicationTherapyHandler>();
 
         services.AddScoped<ListIndicationsHandler>();
+
+        services.AddScoped<RecordContraindicationHandler>();
+
+        services.AddScoped<RestateContraindicationTextHandler>();
+
+        services.AddScoped<AddContraindicationPopulationHandler>();
+
+        services.AddScoped<AmendContraindicationPopulationHandler>();
+
+        services.AddScoped<RemoveContraindicationPopulationHandler>();
+
+        services.AddScoped<RecordUndesirableEffectHandler>();
+
+        services.AddScoped<RestateUndesirableEffectTextHandler>();
+
+        services.AddScoped<AddUndesirableEffectPopulationHandler>();
+
+        services.AddScoped<AmendUndesirableEffectPopulationHandler>();
+
+        services.AddScoped<RemoveUndesirableEffectPopulationHandler>();
+
+        services.AddScoped<ListContraindicationsHandler>();
+
+        services.AddScoped<ListUndesirableEffectsHandler>();
 
         return services;
     }

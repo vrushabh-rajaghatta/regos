@@ -1,3 +1,4 @@
+using RegOS.Labeling.Domain.Aggregates.ClinicalStatements;
 using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.Terminology;
 using RegOS.SharedKernel.Abstractions;
@@ -92,11 +93,11 @@ public sealed class Indication : AggregateRoot<IndicationId>
         DateTime createdOnUtc)
     {
         if (tenantId is null)
-            throw new DomainException(IndicationErrors.TenantRequired);
+            throw new DomainException(ClinicalStatementErrors.TenantRequired);
 
         if (medicinalProductId is null)
             throw new DomainException(
-                IndicationErrors.MedicinalProductRequired);
+                ClinicalStatementErrors.MedicinalProductRequired);
 
         if (approvedOn == default)
             throw new DomainException(IndicationErrors.OccurredOnRequired);
@@ -106,8 +107,8 @@ public sealed class Indication : AggregateRoot<IndicationId>
             Id = IndicationId.New(),
             TenantId = tenantId,
             MedicinalProductId = medicinalProductId,
-            Condition = ResolveCondition(conditionCode),
-            LabelText = NormalizeText(labelText),
+            Condition = ClinicalCondition.Resolve(conditionCode),
+            LabelText = Text(labelText),
             CreatedOnUtc = createdOnUtc
         };
 
@@ -129,7 +130,7 @@ public sealed class Indication : AggregateRoot<IndicationId>
     /// authority approved.
     /// </remarks>
     public void RestateLabelText(string? labelText)
-        => LabelText = NormalizeText(labelText);
+        => LabelText = Text(labelText);
 
     /// <summary>
     /// Records what an authority decided, and when.
@@ -258,27 +259,9 @@ public sealed class Indication : AggregateRoot<IndicationId>
 
     private Population PopulationOf(PopulationId populationId)
         => _populations.FirstOrDefault(x => x.Id == populationId)
-           ?? throw new NotFoundException(IndicationErrors.PopulationNotFound);
+           ?? throw new NotFoundException(ClinicalStatementErrors.PopulationNotFound);
 
-    private static string NormalizeText(string? labelText)
-    {
-        if (string.IsNullOrWhiteSpace(labelText))
-            throw new DomainException(IndicationErrors.LabelTextRequired);
-
-        var trimmed = labelText.Trim();
-
-        return trimmed.Length > LabelTextMaxLength
-            ? throw new DomainException(IndicationErrors.LabelTextTooLong)
-            : trimmed;
-    }
-
-    private static CodedConcept ResolveCondition(string? conditionCode)
-    {
-        if (string.IsNullOrWhiteSpace(conditionCode))
-            throw new DomainException(IndicationErrors.ConditionRequired);
-
-        return ClinicalConditionVocabulary.ConditionOf(conditionCode)
-               ?? throw new DomainException(
-                   IndicationErrors.ConditionNotRecognised);
-    }
+    private static string Text(string? labelText)
+        => ClinicalCondition.NormalizeText(
+            labelText, LabelTextMaxLength, IndicationErrors.LabelTextTooLong);
 }
