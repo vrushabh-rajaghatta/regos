@@ -222,6 +222,52 @@ a tidy document.
 > settled patterns and should be reviewed on its own merits.
 | **S006** | **Capstone** — *"which markets is indication X approved in?"* end to end, label workspace on the market view, browser proof, retro | query → UI → test → docs | ⚪ |
 
+> **S006's design, signed off 2026-08-04. It is a verification story, not a
+> modelling one** — and the hypothesis is written to be independently falsifiable:
+>
+> > **If the capstone query can be implemented entirely as a read over the
+> > existing model, EPIC-018 captured the necessary regulatory facts without
+> > introducing reporting-specific structures.**
+>
+> **Falsifier.** If answering it needs a stored field, a projection table, a
+> denormalised summary or a join RegOS cannot express through its filtered roots,
+> the model was incomplete — and the retro says where.
+>
+> Note what is under test. Not *"can we write the SQL"*, but **does the domain
+> already hold every fact the question needs**.
+>
+> ### The question contains a false premise
+>
+> There is no cross-market *"indication X"*. France's indication and Canada's are
+> separate aggregates with separate wording, populations and decision histories.
+> **What they share is the condition code** — so the query is keyed on a code, not
+> on an indication id, and is named `ListMarketsForCondition` for what it takes.
+>
+> [`IndicationSummary.ConditionCode`](../../../src/Labeling/RegOS.Labeling.Application/Queries/ListIndications/IndicationSummary.cs)
+> has said so since S003: *"The join key. Type 2 diabetes mellitus and Diabète
+> sucré de type 2 share it; the label texts do not."* This is
+> [ADR-058](../../adr/ADR-058-substances-are-shared-facts-ingredients-are-roles.md) §1's
+> backwards question finally being asked.
+>
+> ### The four decisions
+>
+> | # | Decision | Why |
+> |---|---|---|
+> | **D1** | **Product-scoped**, `/api/products/{globalProductId}/indications/{conditionCode}/markets` | Nobody asks *"where is diabetes approved?"* — they ask *"where is **this product** approved for diabetes?"*. A tenant-wide answer conflates product A in Japan with product B in Canada, which is not a regulatory question |
+> | **D2** | **"Approved in" is a status filter** | The read must separate *approved here* from *was approved here once*. **The capstone is the first read that depends on S003's decision being right** — which is what makes it the falsifier rather than a demo |
+> | **D3** | **Return every market that has an indication for that condition, with its current standing** | Not *"every market that records the condition"* — that is a persistence query. This is a regulatory fact. `Japan Approved · France Withdrawn · Canada Approved` is more informative than a silent filter, and it avoids inventing a second endpoint for the same question asked with the opposite sign |
+> | **D4** | **The picker is the bundled vocabulary, and "no market" is a legitimate answer** | Eight `regos-internal` conditions, visibly a demonstration set. It also shows the query is driven by the coded condition rather than by whatever happens to be recorded |
+>
+> ### What it must not become
+>
+> EPIC-011 owns cross-market comparison. **One condition at a time, no matrix, no
+> wording diff.** Each row shows that market's label text beside the shared code —
+> ADR-059's principle visible in one table — but **showing is not comparing**.
+>
+> The pressure after S006 will be *"since we already have the data…"*: side-by-side
+> wording, population comparison, a matrix, a diff. That is the boundary that moves
+> when nobody names it, so it is named here.
+
 > **For the retro, recorded now so it is not reconstructed later.** EPIC-018 used
 > one loop five times, and it produced better decisions than design-first-defend-later:
 >
@@ -240,6 +286,20 @@ a tidy document.
 > standard.** If S006 confirms it, `implementation-standards.md` is where it
 > belongs — second use observe, third use evaluate, the same discipline the loop
 > itself enforces.
+
+> **The second retro theme, named 2026-08-04, and the stronger of the two.**
+>
+> > **EPIC-018 repeatedly replaced conventions with model-enforced correctness.**
+>
+> Publishing requires a document. A revision cannot take effect before it was
+> approved. Interactants cannot become empty. Owned collections removed the
+> `Include`-dependent correctness that broke EPIC-004 S005. Architectural tests
+> replaced checklist items. Watchpoint tests detect drift nobody is watching for.
+>
+> It cuts across all six stories, and it is a stronger architectural observation
+> than any single implementation decision in them — because each instance moved a
+> correctness obligation off a developer's memory and into something that fails
+> loudly.
 
 > **S005 is where to stop if the epic runs long**, and that is decided now rather
 > than under pressure. Nothing else depends on interactions; every story before
