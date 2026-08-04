@@ -21,13 +21,6 @@ import {
 } from "../hooks/useTenants";
 import type { CreateTenantRequest } from "../types/CreateTenantRequest";
 
-const organizationTypes = [
-  "MarketingAuthorizationHolder",
-  "Manufacturer",
-  "Sponsor",
-  "ContractResearchOrganization",
-] as const;
-
 export function TenantsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -129,7 +122,6 @@ function CreateTenantDialog({
 
   const [form, setForm] = useState<CreateTenantRequest>({
     name: "",
-    organizationType: "MarketingAuthorizationHolder",
     adminEmail: "",
     adminFirstName: "",
     adminLastName: "",
@@ -146,7 +138,6 @@ function CreateTenantDialog({
         onOpenChange(false);
         setForm({
           name: "",
-          organizationType: "MarketingAuthorizationHolder",
           adminEmail: "",
           adminFirstName: "",
           adminLastName: "",
@@ -161,9 +152,10 @@ function CreateTenantDialog({
         <DialogHeader>
           <DialogTitle>Create Tenant</DialogTitle>
           <DialogDescription>
-            Provisions the tenant with its own organization registry and
-            invites its first administrator — they set their password by
-            accepting the invitation; no password is created here.
+            Provisions the tenant and invites its first administrator — they
+            set their password by accepting the invitation; no password is
+            created here. Their organization registry starts empty: they
+            record their own company, and everyone they work with.
           </DialogDescription>
         </DialogHeader>
 
@@ -176,27 +168,6 @@ function CreateTenantDialog({
               onChange={(e) => set({ name: e.target.value })}
               required
             />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="tenant-org-type">Organization type</Label>
-            <select
-              id="tenant-org-type"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              value={form.organizationType}
-              onChange={(e) =>
-                set({
-                  organizationType: e.target
-                    .value as CreateTenantRequest["organizationType"],
-                })
-              }
-            >
-              {organizationTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

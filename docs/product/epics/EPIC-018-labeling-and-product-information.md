@@ -202,6 +202,25 @@ a tidy document.
 | **S005** | **`Interaction` + `Interactant`** — **the stop-or-continue point** | full slice | ⚪ |
 | **S006** | **Capstone** — *"which markets is indication X approved in?"* end to end, label workspace on the market view, browser proof, retro | query → UI → test → docs | ⚪ |
 
+> **For the retro, recorded now so it is not reconstructed later.** EPIC-018 used
+> one loop five times, and it produced better decisions than design-first-defend-later:
+>
+> 1. **State the modelling hypothesis.**
+> 2. **State the falsifier** — what would make it wrong.
+> 3. **Implement.**
+> 4. **Gather evidence**, ideally from something that is not an opinion: a
+>    compiler, a migration diff, a browser assertion.
+> 5. **Record why the hypothesis survived — or did not.**
+>
+> Applied to: local revisions (S002), `Population`'s identity (S003), the
+> persistence helper (S004), the absence of a status history (S004), and the
+> artwork watchpoint (armed, still unfired).
+>
+> **It is one epic's experience, so it is material for the retro and not yet a
+> standard.** If S006 confirms it, `implementation-standards.md` is where it
+> belongs — second use observe, third use evaluate, the same discipline the loop
+> itself enforces.
+
 > **S005 is where to stop if the epic runs long**, and that is decided now rather
 > than under pressure. Nothing else depends on interactions; every story before
 > it establishes the backbone. Cutting it leaves the Definition of Done unmet and

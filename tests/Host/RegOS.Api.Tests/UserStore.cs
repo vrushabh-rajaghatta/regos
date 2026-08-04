@@ -78,8 +78,8 @@ internal static class UserStore
         return values;
     }
 
-    // Internal, not private: the tenant-provisioning tests clean up rows
-    // (Tenants, mirror Organizations) the API deliberately cannot delete.
+    // Internal, not private: the tenant-provisioning tests clean up Tenants,
+    // which the API deliberately cannot delete.
     internal static async Task ExecuteAsync(string sql, object value)
     {
         await using var connection = new NpgsqlConnection(ConnectionString);

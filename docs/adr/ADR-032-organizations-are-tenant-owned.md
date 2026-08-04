@@ -3,6 +3,9 @@
 **Status:** Accepted · **Date:** 2026-07-21 ·
 **Amends:** [ADR-031](ADR-031-tenant-isolation-by-query-filters.md) (tier
 classification) ·
+**Amended by:** [ADR-060](ADR-060-a-tenant-provisions-without-an-organization.md)
+— the *mirror entry* below is retired; a tenant now provisions with an empty
+registry. Everything else in this ADR stands. ·
 **Related:** [ADR-030](ADR-030-tenant-is-its-own-aggregate.md) (tenant split),
 [ADR-013](ADR-013-ambient-tenant-context.md) (ambient tenant context)
 

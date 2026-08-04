@@ -9,12 +9,24 @@ namespace RegOS.Persistence.Configurations.Labeling;
 /// The mapping every clinical statement's population collection shares.
 /// </summary>
 /// <remarks>
-/// <b>Earned, not assumed.</b> EPIC-018 S004's hypothesis was that the second
-/// and third uses of <see cref="Population"/> would differ from the first
-/// <em>only</em> by table name. They do — the fields, the nullability, the four
-/// coded values and the required owner key are identical in all three — so the
-/// helper takes one parameter and the falsifier ("if either introduces a
-/// different rule or shape, do not abstract it") was not triggered.
+/// <b>Extracted after demonstrating schema equivalence across three owners</b>
+/// — not to reduce duplication, and the distinction matters because it is what
+/// makes the justification durable.
+/// <para>
+/// The evidence is EF's own: replacing S003's hand-written
+/// <c>PopulationConfiguration</c> with this helper generated <b>no migration
+/// for <c>IndicationPopulations</c> at all</b>. A migration is the ORM's
+/// description of the persisted model, so a mapping that produces an empty diff
+/// is not "equivalent by inspection" — it is equivalent according to the thing
+/// that defines the schema. Had a nullability, a length or an index differed,
+/// the migration would have said so.
+/// </para>
+/// <para>
+/// EPIC-018 S004's falsifier — <em>"if either aggregate introduces a different
+/// rule or a different shape, do not abstract it"</em> — was therefore not
+/// triggered. If a fourth owner ever needs a different column, the honest move
+/// is a second helper, not a parameter on this one.
+/// </para>
 /// <para>
 /// <b>Persistence mechanics only.</b> There is no shared domain base type across
 /// the three roots, and there is no shared table: an owned entity is tracked

@@ -4,11 +4,11 @@ using RegOS.SharedKernel.Exceptions;
 namespace RegOS.Platform.Application.Commands.RenameTenant;
 
 /// <summary>
-/// Load, invoke the aggregate behaviour, persist. Deliberately does NOT
-/// rename the mirror organization: the tenant's name is an account label,
-/// the organization's legal name is a regulatory fact, and after provisioning
-/// they diverge freely — a rebrand of the account is not a change of legal
-/// entity (ADR-032).
+/// Load, invoke the aggregate behaviour, persist. The tenant's name is an
+/// account label and reaches nothing else: provisioning creates no
+/// organization to keep in step (ADR-060), and a tenant's own company — once
+/// its administrator records one — carries a legal name renamed through the
+/// organization registry, on its own terms.
 /// </summary>
 public sealed class RenameTenantHandler
 {
