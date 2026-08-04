@@ -54,6 +54,7 @@ using RegOS.Api.Endpoints.Substances;
 using RegOS.Api.Endpoints.Presentations;
 using RegOS.Api.Endpoints.Components;
 using RegOS.Api.Endpoints.GlobalLabels;
+using RegOS.Api.Endpoints.LocalLabels;
 using RegOS.Labeling.Application;
 using RegOS.Labeling.Infrastructure;
 
@@ -288,6 +289,16 @@ globalLabels.MapStartGlobalLabelDraft();
 globalLabels.MapAttachGlobalLabelContent();
 globalLabels.MapPublishGlobalLabelVersion();
 globalLabels.MapDiscardGlobalLabelDraft();
+
+var localLabels = app.MapGroup("").WithTags("Local Labels");
+localLabels.MapListCoreVersionsForProduct();
+localLabels.MapListLocalLabels();
+localLabels.MapCreateLocalLabel();
+localLabels.MapListLocalLabelRevisions();
+localLabels.MapStartLocalLabelRevision();
+localLabels.MapPrepareLocalLabelRevision();
+localLabels.MapPublishLocalLabelRevision();
+localLabels.MapDiscardLocalLabelDraft();
 
 var regulatoryApplications = app.MapGroup("").WithTags("Regulatory Applications");
 regulatoryApplications.MapCreateRegulatoryApplication();

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Labeling.Domain.Aggregates.GlobalLabels;
+using RegOS.Labeling.Domain.Aggregates.LocalLabels;
 using RegOS.Labeling.Infrastructure.Repositories;
 
 namespace RegOS.Labeling.Infrastructure;
@@ -11,6 +12,8 @@ public static class DependencyInjection
         this IServiceCollection services)
     {
         services.AddScoped<IGlobalLabelRepository, GlobalLabelRepository>();
+
+        services.AddScoped<ILocalLabelRepository, LocalLabelRepository>();
 
         return services;
     }

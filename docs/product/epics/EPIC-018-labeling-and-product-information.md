@@ -159,7 +159,7 @@ a tidy document.
 | # | Story | Slice | Status |
 |---|---|---|---|
 | **S001** | **`GlobalLabel` + `GlobalLabelVersion`** — the new context, versioned with dated status and effective dating, linked content, on the global product | context → domain → persistence → API → UI → browser proof | ✅ |
-| **S002** | **`LocalLabel` + `LocalLabelRevision`** — the market's own controlled document, with its own revision history, derived from a core version. **Shape answered below; four decisions open** | full slice | ⚪ |
+| **S002** | **`LocalLabel` + `LocalLabelRevision`** — the market's own controlled document, its revision history, and artwork as a type rather than an aggregate | full slice | ✅ |
 | **S003** | **`Indication` + `Population` + `OtherTherapy`** — D2 lands here, once, on one parent | full slice | ⚪ |
 | **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question is asked out loud | full slice | ⚪ |
 | **S005** | **`Interaction` + `Interactant`** — **the stop-or-continue point** | full slice | ⚪ |
@@ -244,6 +244,43 @@ status vocabularies are not assumed to match until a rule says they do.
 the process; EPIC-018 records the *dated facts* it produces, and the process
 itself stays EPIC-008's (see Out of scope).
 
+### The four decisions that followed *(approved 2026-08-04)*
+
+| # | Decision | Settled as |
+|---|---|---|
+| **D1** | **`LocalLabelRevision`, not `LocalLabelVersion`** | ✅ — the asymmetry is the point. *Version* is the company's word for its evolving position; *revision* is the authority's word for a controlled document it approved. Two names in one context is a standing reminder that the rules differ |
+| **D2** | **Artwork is a `LocalLabel` type, not a fourth aggregate** | ✅ **for this epic**, with a watchpoint below. Prescribing information, patient leaflet and carton artwork are all controlled, authority-approved, market-specific, derived and revision-controlled — one lifecycle, one approval model, one set of APIs and one browser experience |
+| **D3** | **`DerivedFromGlobalLabelVersionId` is nullable** | ✅ — a migrated portfolio will not know which core version Revision 9 came from, and a local-first company holds approved labelling before any core label exists here. Required would force people to invent history, which is always the wrong trade |
+| **D4** | **`ApprovedOn` is separate from `EffectiveFrom`/`EffectiveTo`** | ✅ — *approved 12 May, effective 1 June* and *approved 12 May, effective immediately* both occur. **A revision cannot enter force without an approval date**: the local analogue of *publishing requires a document*, and a statement about the artifact's truth rather than a workflow step |
+
+### The artwork watchpoint
+
+> **Split when artwork develops its own persistent invariants — not when it
+> acquires more attributes.**
+
+Nullable columns are not the signal. `AtcCode` on `MedicinalProduct` is one
+already, and it has caused nobody any trouble. The signal is **branching**:
+
+```csharp
+if (Type == Artwork)   // ← more than occasionally, and the aggregate is asking to split
+{
+    …
+}
+```
+
+If pack size, SKU, GTIN, barcode, printer and pack configuration stop being
+optional metadata and become *mandatory business concepts*, they are no longer
+decorations on a label — they are the identity of a different thing, and
+`CartonArtwork` should be its own root.
+
+**The test to apply:** does every invariant apply equally to every local label
+type? While the answer is yes, one aggregate. The moment the domain is written
+with type checks, that answer has changed.
+
+*S002 arms this as `LocalLabelTypeBranchTests` once `LocalLabelType` exists — a
+count over `src/Labeling/**/Domain`, not a judgement call made a year from now
+by whoever is reading.*
+
 ### Two things settled on the way
 
 **Independent document evolution creates the history; audit merely obliges us to
@@ -253,6 +290,22 @@ version, which would have let a compliance requirement justify an aggregate.
 
 **`LocalLabel` is not a projection over `GlobalLabel`** — adoption lag alone
 settles that, whatever else it holds.
+
+---
+
+## S002 — what was decided while building it
+
+| Decision | Why |
+|---|---|
+| **A revision cannot take effect before it was approved** | Not in the design, and not a workflow rule: a label in force ahead of its own approval is not a state that exists. Same day is allowed — *effective immediately* is ordinary |
+| **`LocalLabelRevisionStatus` is its own enum**, three identical words to the global one | Merging them would let a rule added to one lifecycle silently reach the other, which is the exact coupling D1 renamed the type to prevent |
+| **`PrepareRevision` restates rather than patches** | Document, derivation, artwork code and summary are settled together. A caller able to change the document without the derivation could point a translation of core v7 at a file that says v8 |
+| **A `core-versions` query, flattened across the product's core labels** | The question a person asks while preparing a Japanese revision is *"which core version is this?"*, not *"which core label, then which version"*. Drafts are excluded — a market cannot descend from something the company has not issued. Superseded ones are included, because a market catching up is the ordinary case |
+| **`DataCarrierCode` only; no SKUs** | Artwork's one identifying attribute is one nullable column. Pack size, SKU and GTIN are EPIC-010's packaging model, and building a second one here would be the speculative creation ADR-018 forbids |
+| **Markets are created through the UI in the browser proof** | The `/master-data/countries` route is unprefixed (an SC-001 grandfathered entry) and resolving it from a spec would bake that in. Clicking through the market page is what a user does anyway |
+
+**Verified:** 19/19 suites, 0 failed, **1355 tests** · **107/107 browser specs**
+against an isolated stack · CORS reverted and confirmed absent from `src/`.
 
 ---
 

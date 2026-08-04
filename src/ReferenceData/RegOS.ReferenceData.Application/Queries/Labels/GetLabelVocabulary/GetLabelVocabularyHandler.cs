@@ -15,8 +15,10 @@ public sealed class GetLabelVocabularyHandler
         CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new LabelVocabularyDto(
-            LabelVocabulary.GlobalLabelTypes
-                .Select(x => new CodedConceptDto(x.System, x.Code, x.Display))
-                .ToList()));
+            LabelVocabulary.GlobalLabelTypes.Select(Dto).ToList(),
+            LabelVocabulary.LocalLabelTypes.Select(Dto).ToList()));
     }
+
+    private static CodedConceptDto Dto(CodedConcept concept)
+        => new(concept.System, concept.Code, concept.Display);
 }

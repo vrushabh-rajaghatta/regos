@@ -9,8 +9,14 @@ public static class LabelingRuleErrors
     public const string GlobalLabelDoesNotExist =
         "Label does not exist.";
 
+    public const string LocalLabelDoesNotExist =
+        "Local label does not exist.";
+
     public const string GlobalProductDoesNotExist =
         "Product does not exist.";
+
+    public const string MedicinalProductDoesNotExist =
+        "Market does not exist.";
 
     /// <summary>
     /// <b>The anti-corruption check that keeps ADR-059 §6 honest.</b> Labeling

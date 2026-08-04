@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RegOS.Labeling.Domain.Aggregates.GlobalLabels;
+using RegOS.Labeling.Domain.Aggregates.LocalLabels;
 using RegOS.Product.Domain.Product;
 
 using RegOS.SharedKernel.Abstractions;
@@ -137,6 +138,18 @@ public sealed class RegOSDbContext : DbContext
     /// </remarks>
     public DbSet<GlobalLabel> GlobalLabels =>
         Set<GlobalLabel>();
+
+    /// <summary>
+    /// A market's own controlled labelling document — what an authority
+    /// approved, as against what the company holds centrally (ADR-059).
+    /// </summary>
+    /// <remarks>
+    /// No <c>LocalLabelRevisions</c> set either, for the same reason: a
+    /// revision carries no <c>TenantId</c> and has no filter of its own, so
+    /// every read of one starts here.
+    /// </remarks>
+    public DbSet<LocalLabel> LocalLabels =>
+        Set<LocalLabel>();
 
     public DbSet<RegulatoryApplicationAggregate> RegulatoryApplications =>
         Set<RegulatoryApplicationAggregate>();
@@ -377,6 +390,9 @@ public sealed class RegOSDbContext : DbContext
         // filter shapes. Its versions carry no TenantId and are reachable only
         // through it (ADR-059).
         modelBuilder.Entity<GlobalLabel>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<LocalLabel>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegulatoryApplicationAggregate>().HasQueryFilter(

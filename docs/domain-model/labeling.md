@@ -8,7 +8,7 @@ Owner: Architecture Review Board
 
 Status: Approved
 
-Version: 1.0
+Version: 1.1
 
 Last Reviewed: 2026-08-04
 
@@ -66,14 +66,32 @@ a label without a reason to prefer it.
 
 ---
 
-# What exists today (S001)
+# What exists today (S001–S002)
 
 ```
 GlobalProduct
-  └── GlobalLabel               the core data sheet and its siblings
-        └── GlobalLabelVersion  draft → in force → superseded
+  └── GlobalLabel                the core data sheet and its siblings
+        └── GlobalLabelVersion   draft → in force → superseded
               └── ContentId ──→ ProductDocument
+
+MedicinalProduct  (the market)
+  └── LocalLabel                 what this authority approved
+        └── LocalLabelRevision   draft → in force → superseded
+              ├── ContentId ──→ ProductDocument
+              └── DerivedFromGlobalLabelVersionId?  ──→ GlobalLabelVersion
 ```
+
+**The two tiers are versioned for unrelated reasons**, and the different words
+are the reminder:
+
+| | Versioned because | Word |
+| --- | --- | --- |
+| `GlobalLabel` | the company's scientific position evolves | **version** |
+| `LocalLabel` | each authority approves, delays, amends and republishes that position independently | **revision** |
+
+They intersect only through `DerivedFromGlobalLabelVersionId`. Nothing inherits,
+and neither status enum is shared — a rule added to one must never reach the
+other by accident.
 
 ## `GlobalLabel`
 
@@ -126,6 +144,65 @@ is as untouchable as the current one.
 
 ---
 
+# `LocalLabel`
+
+A market's own controlled labelling document, hanging off `MedicinalProductId`.
+**It carries no country** — the market-local tier already answers which
+jurisdiction this is (ADR-039), and a second copy could disagree.
+
+One `LocalLabel` is one *(document, language)* pair: a market with two languages
+holds two labels, because each is separately approved. Nothing enforces
+uniqueness on the triple, for the reason `GlobalLabel` and `MedicinalProduct`
+enforce none either.
+
+## Carton artwork is a type, not an aggregate
+
+Prescribing information, patient information leaflet, carton artwork and
+container label are all `LabelType` values. A printed carton is a controlled
+document an authority approved, revised on its own history and derived from a
+core position — which is what every other entry is. Giving it its own root would
+duplicate the revision logic, the approval rules, the effective dating, the
+derivation, the API and the browser proof in order to hold a nullable column.
+
+> **The watchpoint: split when artwork develops its own persistent invariants,
+> not when it acquires more attributes.** Nullable columns are not the signal;
+> `if (Type == Artwork)` is. `LocalLabelTypeBranchTests` counts those branches so
+> the question is asked by the build.
+
+## `LocalLabelRevision`
+
+| State | Means |
+| --- | --- |
+| `Draft` | being prepared; the only state in which anything can change |
+| `InForce` | approved and current in this market; **at most one** |
+| `Superseded` | replaced by a later revision, and retained |
+
+Four rules carry it, and only the first two mirror the global tier:
+
+1. **At most one draft**, numbered one past the highest ever issued.
+2. **Publishing and superseding are one act**, with the retired revision's
+   `EffectiveTo` computed as the day before its replacement takes effect.
+3. **Approval and effect are separate facts.** *Approved 12 May, effective 1
+   June* and *approved 12 May, effective immediately* both occur. A revision
+   **cannot enter force without an `ApprovedOn`** — a label in force that no
+   authority approved is a false statement about a regulated document — and it
+   cannot take effect before the day it was approved.
+4. **The derivation is optional.** A migrated portfolio does not know which core
+   version revision 9 came from, and a local-first company holds approved
+   labelling before any core label exists here. Requiring it would force somebody
+   to invent history.
+
+**A draft is the only thing that can be discarded.** An approved labelling
+document is a controlled record, and overwriting one is a governance failure
+rather than an edit — which is why the refusal says *"start a new revision"*
+rather than *"not allowed"*.
+
+`DataCarrierCode` is artwork's one identifying attribute. SKUs and pack
+configuration are deliberately absent: packaging is EPIC-010's, and this is the
+seam rather than a second packaging model.
+
+---
+
 # The boundary with `ProductDocument`
 
 > **Documents remain content storage. Labeling owns the regulatory meaning.**
@@ -164,7 +241,8 @@ it. A read that began at the version table would cross every tenant.
 
 | | |
 | --- | --- |
-| `LocalLabel`, `Artwork` | S002 |
+| Renaming or retiring a `LocalLabel` | nobody has asked; same call as `GlobalLabel` |
+| SKUs, pack size, GTIN, printer | EPIC-010's packaging model, not a second one here |
 | `Indication`, `Contraindication`, `UndesirableEffect`, `Interaction`, `Population` | S003–S005, hanging off `MedicinalProduct` |
 | **What a label version published** | deliberately absent. It is five versioning questions — partial publication, wording, withdrawal, historical wording, splits — and ADR-059 §3 names them rather than answering them with a foreign key |
 | Renaming or retiring a label | nobody has asked; the gap is known, not hidden |
@@ -176,4 +254,5 @@ it. A read that began at the version table would cross every tenant.
 
 | Version | Date       | Summary |
 | ------- | ---------- | ------- |
+| 1.1     | 2026-08-04 | EPIC-018 S002: `LocalLabel`/`LocalLabelRevision`, artwork as a type, and the approval-versus-effect split. |
 | 1.0     | 2026-08-04 | EPIC-018 S001: the `Labeling` context, `GlobalLabel`/`GlobalLabelVersion`, and the domain-word/screen-word pairs. |

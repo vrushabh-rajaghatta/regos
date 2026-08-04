@@ -45,4 +45,65 @@ export interface GlobalLabelVersion {
 
 export interface LabelVocabulary {
   globalLabelTypes: CodedConcept[];
+  /** Carton artwork is one of these, not a separate thing (EPIC-018 D2). */
+  localLabelTypes: CodedConcept[];
+}
+
+/**
+ * A market's own controlled labelling document. The domain calls it a
+ * `LocalLabel`; the screen calls it a **local label**.
+ *
+ * `approvedOn` and `effectiveFrom` are two fields on purpose — *approved 12
+ * May, effective 1 June* and *approved 12 May, effective immediately* both
+ * occur, and a screen showing one date could not tell them apart.
+ */
+export interface LocalLabel {
+  id: string;
+  labelTypeCode: string;
+  labelTypeDisplay: string;
+  labelTypeSystem: string;
+  language: string;
+  revisionInForceNumber: number | null;
+  approvedOn: string | null;
+  effectiveFrom: string | null;
+  draftRevisionId: string | null;
+  draftRevisionNumber: number | null;
+  revisionCount: number;
+}
+
+export type LocalLabelRevisionStatus = "Draft" | "InForce" | "Superseded";
+
+/**
+ * `derivedFromGlobalLabelVersionNumber` being null is legitimate, not an error:
+ * a migrated portfolio does not know which core version a historical revision
+ * came from (EPIC-018 D3).
+ */
+export interface LocalLabelRevision {
+  id: string;
+  revisionNumber: number;
+  status: LocalLabelRevisionStatus;
+  contentId: string | null;
+  derivedFromGlobalLabelVersionId: string | null;
+  derivedFromGlobalLabelVersionNumber: number | null;
+  dataCarrierCode: string | null;
+  changeSummary: string | null;
+  approvedOn: string | null;
+  effectiveFrom: string | null;
+  effectiveTo: string | null;
+}
+
+/**
+ * A core-label version a market can say it was written from.
+ *
+ * Flattened across the product's core labels, and including superseded ones:
+ * a market catching up may be adopting a version the company has already moved
+ * past, which is ordinary rather than an error.
+ */
+export interface CoreVersionOption {
+  id: string;
+  globalLabelId: string;
+  labelName: string;
+  versionNumber: number;
+  status: string;
+  effectiveFrom: string | null;
 }

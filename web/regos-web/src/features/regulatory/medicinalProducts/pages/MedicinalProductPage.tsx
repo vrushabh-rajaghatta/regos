@@ -9,6 +9,8 @@ import { CreateRegistrationDialog } from "../../registrations/components/CreateR
 import { RegistrationExpiry } from "../../registrations/components/RegistrationExpiry";
 import { RegistrationStatusBadge } from "../../registrations/components/RegistrationStatusBadge";
 import { useProductRegistrations } from "../../registrations/hooks/useProductRegistrations";
+import { MarketLabels } from "@/features/regulatory/labels/components/MarketLabels";
+
 import { AddTradeNameDialog } from "../components/AddTradeNameDialog";
 import { AtcCodeDialog } from "../components/AtcCodeDialog";
 import { ChangeMarketStatusDialog } from "../components/ChangeMarketStatusDialog";
@@ -119,6 +121,14 @@ export function MedicinalProductPage() {
       {/* After presentations, because it answers the other half of the same
           question: what the product *is* when given, then what is in the box. */}
       <MarketComponents medicinalProductId={market.medicinalProductId} />
+
+      {/* What this authority approved, on its own clock. Deliberately on the
+          market page and not the product's: the core label is the company's
+          position, this is one regulator's decision about it (ADR-059). */}
+      <MarketLabels
+        globalProductId={globalProductId ?? ""}
+        medicinalProductId={market.medicinalProductId}
+      />
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">
