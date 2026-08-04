@@ -128,13 +128,19 @@ export function GlobalLabelVersions({
                   tracking the server's. */}
               <Select
                 value={version.contentId ?? ""}
-                onValueChange={(contentId) =>
+                onValueChange={(contentId) => {
+                  // The Select signals "cleared" with null. Nothing here offers
+                  // that gesture, and detaching a document from a version is not
+                  // a capability — publishing requires content, so a version
+                  // that lost its document would be a state the domain refuses.
+                  if (!contentId) return;
+
                   attach.mutate({
                     globalLabelId,
                     versionId: version.id,
                     contentId,
-                  })
-                }
+                  });
+                }}
               >
                 <SelectTrigger className="w-72" data-testid="label-content">
                   <SelectValue placeholder="Attach the label document" />
