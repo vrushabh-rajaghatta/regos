@@ -1,6 +1,6 @@
 # EPIC-018 — Labeling & product information
 
-**Status:** 🟡 In Progress · **Branch:** `epic/EPIC-018-labeling-and-product-information` (cut 2026-08-04) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** ✅ Complete (2026-08-04) · **Branch:** `epic/EPIC-018-labeling-and-product-information` (cut 2026-08-04) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The approved **content** of a product — what it treats, who must not take it, what it does to you, what it clashes with — held as structured data per market rather than as a PDF nobody can query.
 
@@ -220,7 +220,7 @@ a tidy document.
 > **Falsifier.** If an interaction needs its own history, a lifecycle, or a
 > `Population` that differs from the other three, it is not an application of
 > settled patterns and should be reviewed on its own merits.
-| **S006** | **Capstone** — *"which markets is indication X approved in?"* end to end, label workspace on the market view, browser proof, retro | query → UI → test → docs | ⚪ |
+| **S006** | **Capstone** — *"which markets is indication X approved in?"* end to end, label workspace on the market view, browser proof, retro | query → UI → test → docs | ✅ |
 
 > **S006's design, signed off 2026-08-04. It is a verification story, not a
 > modelling one** — and the hypothesis is written to be independently falsifiable:
@@ -307,6 +307,163 @@ a tidy document.
 > the architecture whole — which is the better of the two failures available.
 
 **ADR:** [ADR-059](../../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) — written before S001, as canon requires for a new bounded context.
+
+---
+
+## S006 — the capstone, and what it proved
+
+> **The hypothesis:** if the capstone query is a pure read over the existing
+> model, EPIC-018 captured the necessary regulatory facts without introducing
+> reporting-specific structures.
+
+**It held, and the evidence is not an opinion:**
+
+```
+$ dotnet ef migrations has-pending-model-changes
+No changes have been made to the model since the last migration.
+```
+
+No column, no projection table, no stored summary, no denormalised count. The
+capstone is `ListMarketsForCondition` — one handler, one endpoint, one screen —
+reading facts that S003 had already put in the right shape.
+
+### What made it possible, named precisely
+
+| The read needs | Which exists because |
+|---|---|
+| A key that means the same thing in two markets | **S003 coded the condition.** `IndicationSummary.ConditionCode` was documented as *"the join key"* three stories before anything joined on it |
+| To tell *approved here* from *was approved here once* | **S003 gave an indication a dated decision history.** Until now that was a modelling claim; this is the first read that **depends** on it |
+| To reach markets and countries from a statement | **The market-local tier (EPIC-017).** An indication hangs off `MedicinalProduct`, so "which markets" is a join, not a design problem |
+
+### Decisions made while building
+
+| Decision | Why |
+|---|---|
+| **`IsAnAuthorisation` is a static predicate on `Indication`**, not a comparison inside the query | *"Is this product approved for that?"* is a domain question. Three of the four statuses are authorisations — `Expanded` widened one and `Restricted` narrowed one — and a query that spelled out `!= Withdrawn` would let a fifth status answer by accident. A theory pins all four; a second test fails if the enum grows |
+| **Static, not a computed property** | A get-only property on an aggregate is one more thing for EF to have an opinion about, and this epic has already paid three times for persistence-shaped surprises. A static method is not a mapped member under any convention |
+| **The section sits on the product's *markets* page**, not with the global labels | The answer is about markets. `ProductLabelsPage` says of itself that it *"deliberately says nothing about markets"*, and that was worth preserving |
+| **The picker offers the whole vocabulary**, not only conditions already recorded | A second "which conditions exist here" query would have been the cheaper-looking option and the less honest one. *"No market records this indication"* is an answer, and it is the one that shows the read is driven by the code |
+| **The condition is URL-encoded in the route** | `PAIN-MOD` is safe today. The seam exists so a licensed terminology's codes do not become a routing bug later |
+
+### The gate that was not being run
+
+**`npm run build` had failed since S001** — a `Select` whose `onValueChange`
+emits `string | null` against a handler typed for `string`. S002, S003, S004 and
+S005 were each verified as complete with that break in the tree.
+
+It survived because the verification loop was `dotnet test` plus Playwright, and
+**the browser proof runs against `vite dev`, which does not typecheck.** The
+frontend had a gate; nothing ran it. Fixed in `2a82753`, and the loop now ends
+with `npm run build`.
+
+`npm run lint` also fails at baseline — six problems, none of them from this
+epic — and is left alone here rather than fixed inside a story that did not
+cause it.
+
+**Verified:** 19/19 suites, 0 failed, **1410 tests** · **111/111 browser specs**
+against an isolated stack (API 5301, web 5174, `regos_s006`) · CORS reverted and
+confirmed absent from `src/`.
+
+---
+
+## Definition of Done — the audit
+
+Checked line by line rather than declared met.
+
+| The DoD said | Outcome |
+|---|---|
+| A global label exists for a global product, versioned, with a dated status history and a linked content file | ✅ S001 |
+| A local label exists for a market-local product, records the global label it derives from, and carries its own language and version | ✅ S002 |
+| Artwork can be attached to a local label with its own dated status | ⚠️ **Capability met, shape changed** — see below |
+| Indications, contraindications, undesirable effects and interactions recorded against a market-local product, each optionally scoped to a population | ✅ S003–S005 |
+| The same population shape serves all four — proven by a test under at least two different parents | ✅ S004 proved the second and third parents; S005 the fourth |
+| *"Which markets is indication X approved in?"* answerable through the API | ✅ S006 |
+| Browser proof: global label → local label for one market → indication with a paediatric population → seen on the market view | ✅ S006, walked in one pass rather than assembled from five specs |
+| ADR for the label hierarchy and the shared-qualifier modelling | ✅ ADR-059 |
+
+### The one that changed shape
+
+Phase 1 expected `LocalLabel` to **own** an `Artwork` child. What exists is
+artwork **as** a `LocalLabel` of type `ARTWORK`, with its own dated revisions and
+its own data-carrier code — a sibling, not a child.
+
+**The capability matches the intent; the aggregate shape changed because artwork
+proved to be another controlled local label rather than a child entity.** A
+printed carton is a document an authority approved, on its own approval clock.
+That is not a compromise, and it is not a Phase-1 error worth hiding: it is what
+the epic learned.
+
+The watchpoint armed at S002 — `LocalLabelTypeBranchTests`, which fails when
+`if (Type == Artwork)` branching starts accumulating — **has not fired across
+four stories**. If it does, the conversation it opens is extracting
+`CartonArtwork`, and the evidence for that conversation will already be in the
+test output.
+
+---
+
+## Retro
+
+### What EPIC-018 did that is worth repeating
+
+**1. It stated hypotheses that could fail, then went and looked.**
+
+Five times: local revisions (S002), `Population`'s identity (S003), the
+persistence helper (S004), the absence of a status history (S004), the capstone
+read (S006). Each with a falsifier written *before* implementation, and each
+resolved by something that is not an opinion — a compiler error, a migration
+diff that contained `IndicationPopulations` zero times, a row count that stayed
+at one through a correction, `has-pending-model-changes` reporting nothing.
+
+**One criterion was only half met, and that is recorded too**: S003 asked for
+`RetirePopulation` and got `Remove`. A qualifier has no lifecycle of its own.
+
+> **Still not promoted to a standard.** One epic's experience. `implementation-standards.md`
+> is where it belongs *if a second epic independently benefits* — second use
+> observe, third use evaluate, which is the same discipline the loop enforces.
+> The next epic to try it should say whether it helped.
+
+**2. It repeatedly replaced conventions with model-enforced correctness.**
+
+The stronger of the two themes, because each instance moved a correctness
+obligation off somebody's memory and into something that fails loudly:
+
+| Was a convention | Became |
+|---|---|
+| "Attach the document before publishing" | `PublishRequiresContent` — the version refuses |
+| "Don't back-date an effective date" | The revision refuses to take effect before it was approved |
+| "An interaction should name what it interacts with" | The last interactant cannot be removed |
+| "Remember to `Include` the populations" | Owned collections load with their owner — the EPIC-004 S005 failure mode is unreachable by construction |
+| A three-item aggregate checklist | `AggregateChildArchitectureTests` — and it immediately found five nullable foreign keys nobody was looking for |
+| "Watch out for artwork branching" | `LocalLabelTypeBranchTests`, armed and quiet |
+| "Only Withdrawn isn't an approval" | `Indication.IsAnAuthorisation`, with a test that fails if a fifth status appears |
+
+**And one counter-example, which is why the theme is worth stating rather than
+celebrating:** the frontend build gate existed the whole time and was simply not
+run. A check that nobody executes is a convention wearing a test's clothes.
+
+### RIM's nouns are named in isolation
+
+Twice this epic, RIM's object name could not be used as-is:
+
+- **`Labeling`** → `LocalLabel`, because the context is called `Labeling`.
+- **`Interaction`** → `DrugInteraction`, because `RegOS.Interaction` is a bounded
+  context (ADR-040).
+
+Not two annoyances — one pattern. **RIM names objects as though nothing else
+exists in the system; a bounded-context codebase names them in the presence of
+everything else.** That is why some RIM nouns transfer directly and others need
+adaptation, and it is a reason to expect the next RIM-derived epic to rename one
+or two things for mechanical reasons. Both departures are recorded in ADR-059 §2
+and here, so neither reads later as drift from the source model.
+
+### What the next epic should carry forward
+
+| | |
+|---|---|
+| **Read the previous retro before the design review.** | S001 lost a build cycle to EF's constructor binding — a surprise EPIC-010a's retro had already recorded. The design review did not catch it; the retro would have |
+| **`npm run build` joins the verification loop.** | Alongside `dotnet test RegOS.slnx` and the browser suite |
+| **The five nullable Organization foreign keys are still standing**, with `ContactRoleAssignment` elevated. | Its consequence is behavioural, not merely relational. Every removal from that grandfathered list should be a migration and a conscious review, never a quietly deleted string |
+| **The deferred link stays deferred.** | Nothing points from a label version to the statements it published. ADR-059 §3 names the five versioning questions that must be answered first, and no one has asked for it |
 
 ---
 

@@ -8,7 +8,7 @@ Owner: Architecture Review Board
 
 Status: Approved
 
-Version: 1.2
+Version: 1.3
 
 Last Reviewed: 2026-08-04
 
@@ -309,6 +309,43 @@ regulatory history lives in the status entries.
 `OtherTherapy.Therapy` is free text: it may be a substance RegOS knows, a drug
 class it does not, or a procedure that is no product at all.
 
+## Three of the four statuses are authorisations
+
+`Indication.IsAnAuthorisation(status)` — a static predicate, deliberately not a
+comparison written out inside a query.
+
+`Expanded` widened an authorisation and `Restricted` narrowed one; **both are
+still authorisations.** Only `Withdrawn` ends it. *"Is this product approved for
+that?"* is a domain question, and a read that spelled the rule out for itself
+would let a fifth status answer by accident. A theory pins all four, and a second
+test fails when the enum grows — so the new status has to be classified
+deliberately.
+
+It is static rather than a computed property because a get-only member on an
+aggregate is one more thing for EF to have an opinion about, and this context has
+already paid three times for persistence-shaped surprises.
+
+## The question this makes answerable
+
+> **"Which markets is this product approved for this condition in?"**
+> `ListMarketsForCondition` — a product, a condition **code**, its markets.
+
+**Keyed on the code, because the question contains a false premise.** There is no
+cross-market "indication X": France's indication and Japan's are separate
+aggregates with separate wording, qualifiers and decision histories. The code is
+the only thing they share, which is why coding it was worth doing (ADR-058 §1 —
+a coded id makes a question askable backwards).
+
+Every market that has an indication for the condition is returned **with its
+current standing**, approved or not. A silently filtered list would need a second
+endpoint to answer *"and where did we lose it?"*.
+
+Each row shows that market's own wording beside the shared code — a coded
+regulatory fact published in each market's words, which is
+[ADR-059](../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md)'s
+principle in one table. **Showing is not comparing:** side-by-side wording,
+population diffs and divergence reporting are EPIC-011.
+
 ---
 
 # `Contraindication` and `UndesirableEffect`
@@ -374,6 +411,7 @@ question asked backwards.
 | | |
 | --- | --- |
 | Renaming or retiring a `LocalLabel` | nobody has asked; same call as `GlobalLabel` |
+| Cross-market **comparison** — side-by-side wording, population diffs, a matrix | EPIC-011. `ListMarketsForCondition` answers one condition at a time on purpose; this epic delivers the data those charts would read |
 | SKUs, pack size, GTIN, printer | EPIC-010's packaging model, not a second one here |
 | `Indication`, `Contraindication`, `UndesirableEffect`, `Interaction`, `Population` | S003–S005, hanging off `MedicinalProduct` |
 | **What a label version published** | deliberately absent. It is five versioning questions — partial publication, wording, withdrawal, historical wording, splits — and ADR-059 §3 names them rather than answering them with a foreign key |
@@ -386,6 +424,7 @@ question asked backwards.
 
 | Version | Date       | Summary |
 | ------- | ---------- | ------- |
+| 1.3     | 2026-08-04 | EPIC-018 S005–S006: `IsAnAuthorisation` and the cross-market question the coded condition makes answerable — plus `DrugInteraction`/`Interactant`, written into the doc at S005 but not versioned then. |
 | 1.2     | 2026-08-04 | EPIC-018 S003–S004: `Indication`'s dated decisions, `Contraindication` and `UndesirableEffect` without histories, and `Population` mapped three times. |
 | 1.1     | 2026-08-04 | EPIC-018 S002: `LocalLabel`/`LocalLabelRevision`, artwork as a type, and the approval-versus-effect split. |
 | 1.0     | 2026-08-04 | EPIC-018 S001: the `Labeling` context, `GlobalLabel`/`GlobalLabelVersion`, and the domain-word/screen-word pairs. |
