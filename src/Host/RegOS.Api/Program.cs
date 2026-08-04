@@ -9,6 +9,7 @@ using RegOS.Api.Endpoints.OrganizationDivisions;
 using RegOS.Api.Endpoints.Platform;
 using RegOS.Api.Endpoints.PlatformAdministration;
 using RegOS.Api.Endpoints.MedicinalProducts;
+using RegOS.Api.Endpoints.Packs;
 using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
@@ -260,6 +261,14 @@ medicinalProducts.MapChangeMarketStatus();
 medicinalProducts.MapActivateMedicinalProduct();
 medicinalProducts.MapDeactivateMedicinalProduct();
 medicinalProducts.MapRecordAtcCode();
+
+// What the market actually sells. Screen word "Pack"; the route says
+// packaged-products, because routes take the domain noun (ADR-061).
+var packs = app.MapGroup("").WithTags("Packs");
+packs.MapListPacks();
+packs.MapAddPack();
+packs.MapRestatePack();
+packs.MapChangePackMarketingStatus();
 
 var presentations = app.MapGroup("").WithTags("Presentations");
 // Before the rest: /api/presentations/vocabulary must not be read as a

@@ -27,6 +27,10 @@ public static class ProductInfrastructureServiceCollectionExtensions
             IMedicinalProductComponentRepository,
             MedicinalProductComponentRepository>();
 
+        services.AddScoped<
+            IPackagedProductRepository,
+            PackagedProductRepository>();
+
         return services;
     }
 }

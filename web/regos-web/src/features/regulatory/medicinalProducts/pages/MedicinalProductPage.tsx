@@ -13,6 +13,7 @@ import { MarketClinicalStatements } from "@/features/regulatory/indications/comp
 import { MarketInteractions } from "@/features/regulatory/indications/components/MarketInteractions";
 import { MarketIndications } from "@/features/regulatory/indications/components/MarketIndications";
 import { MarketLabels } from "@/features/regulatory/labels/components/MarketLabels";
+import { MarketPacks } from "@/features/regulatory/packs/components/MarketPacks";
 
 import { AddTradeNameDialog } from "../components/AddTradeNameDialog";
 import { AtcCodeDialog } from "../components/AtcCodeDialog";
@@ -124,6 +125,10 @@ export function MedicinalProductPage() {
       {/* After presentations, because it answers the other half of the same
           question: what the product *is* when given, then what is in the box. */}
       <MarketComponents medicinalProductId={market.medicinalProductId} />
+
+      {/* What the market sells, beneath what the product is. A pack is how a
+          medicine is supplied, not what it is (ADR-061). */}
+      <MarketPacks medicinalProductId={market.medicinalProductId} />
 
       {/* What this authority approved, on its own clock. Deliberately on the
           market page and not the product's: the core label is the company's

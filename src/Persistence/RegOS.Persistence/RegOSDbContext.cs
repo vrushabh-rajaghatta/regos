@@ -130,6 +130,19 @@ public sealed class RegOSDbContext : DbContext
         Set<MedicinalProductComponent>();
 
     /// <summary>
+    /// What a market actually sells — a carton of thirty, a single vial. Screen
+    /// word: <b>Pack</b> (ADR-061).
+    /// </summary>
+    /// <remarks>
+    /// <b>No <c>PackageMarketingStatusHistory</c> set.</b> An entry carries no
+    /// <c>TenantId</c> and therefore no query filter of its own, so exposing one
+    /// would read every tenant's history. Every read starts here, at the
+    /// filtered root.
+    /// </remarks>
+    public DbSet<PackagedProduct> PackagedProducts =>
+        Set<PackagedProduct>();
+
+    /// <summary>
     /// A label held above any market — the core data sheet and its siblings
     /// (ADR-059).
     /// </summary>
@@ -419,6 +432,12 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<MedicinalProductComponent>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        // A pack is a root, loaded and queried directly, so it carries its own
+        // tenant rather than inheriting the market's (ADR-061). Its marketing
+        // status history carries none and is reachable only through it.
+        modelBuilder.Entity<PackagedProduct>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // A label is tenant-owned, so it takes the first of ADR-038's three
