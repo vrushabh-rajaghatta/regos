@@ -159,7 +159,7 @@ a tidy document.
 | # | Story | Slice | Status |
 |---|---|---|---|
 | **S001** | **`GlobalLabel` + `GlobalLabelVersion`** — the new context, versioned with dated status and effective dating, linked content, on the global product | context → domain → persistence → API → UI → browser proof | ✅ |
-| **S002** | **`LocalLabel` + `Artwork`** — per market, derived-from link to a core version, own language and status. **Shape unsettled — see below** | full slice | ⚪ |
+| **S002** | **`LocalLabel` + `LocalLabelRevision`** — the market's own controlled document, with its own revision history, derived from a core version. **Shape answered below; four decisions open** | full slice | ⚪ |
 | **S003** | **`Indication` + `Population` + `OtherTherapy`** — D2 lands here, once, on one parent | full slice | ⚪ |
 | **S004** | **`Contraindication` + `UndesirableEffect`** — the second and third uses of the population shape, and where ADR-018's question is asked out loud | full slice | ⚪ |
 | **S005** | **`Interaction` + `Interactant`** — **the stop-or-continue point** | full slice | ⚪ |
@@ -174,62 +174,85 @@ a tidy document.
 
 ---
 
-## S002 — one objective before any design
+## S002 — the workflow question, and its answer
 
-**S002 is not designed, deliberately.** Its shape turns on a workflow question
-nobody here can answer from RIM, and the epic opens with validating it rather
-than with modelling.
+The story was parked on one question, because its shape could not be settled
+from RIM:
 
 > **Can the identity of the current local label change while its parent global
 > label version stays the same?**
 
-That is the discriminator, and it is sharper than *"does `LocalLabel` have a
-version lifecycle?"* because it says **why** a version would exist.
+**Answered 2026-08-04: yes, and not marginally.** The founder's answer is
+recorded here at length because it is the justification for a versioned local
+model, and a future reader should be able to check the reasoning rather than
+inherit the conclusion.
+
+### Why, in the industry's terms rather than the model's
+
+> **A core label is the company's scientific position. A local label is a
+> regulatory artifact approved by one health authority.** Related, and not the
+> same document — which is why the regulator regulates the second.
 
 ```
-Global Label v7
-      ├── Japan PDF A   effective 2025-01-01
-      └── Japan PDF B   effective 2025-03-15   (artwork correction)
+CCDS v7 published
+      │  translation · artwork · assessment · submission
+      │  PMDA review · questions · approval
+      ▼
+Japan Label Revision 14      effective 3 Oct 2026, derived from CCDS v7
 ```
 
-Nothing changed globally. The derived-from link is identical. The regulatory
-artifact changed. **That is not metadata about the current label; it is
-history** — and a single `ProductDocumentId` on `LocalLabel` would be losing
-information rather than simplifying.
+Japan already had thirteen revisions. They are Japan's regulatory history, not a
+projection of the company's.
 
-### The question to put to a labelling lead
+**And the local artifact changes without the global one.** A translation
+correction, a typo, an artwork problem, a distributor address — the CCDS is
+untouched and Japan issues Revision 15. Meanwhile CCDS v8 is adopted by France
+immediately, by Brazil six months later, by Australia with extra wording, and by
+Japan next quarter. Every market holds a different current revision, approval
+date and effective date.
 
-Not a modelling question. A workflow one:
+**The operational question, restated better than we first asked it.** We had
+planned to ask *"do you replace the PDF?"* — a software question. The regulatory
+one is:
 
-> *"Japan has adopted global label v7. Six weeks later you find a typo in the
-> Japanese PDF. Do you replace the document attached to v7, or do you issue a
-> corrected local revision?"*
+> *"When a local approved label changes for any reason, do you issue a new
+> controlled revision, or overwrite the existing approved label?"*
 
-| Answer | Model |
+Overwriting an approved labelling document is a governance failure. Approved
+labelling is a controlled document and historical versions are retained. The
+commercial RIM systems separate Company Core Data Sheet, Country Label and
+Country Label Revision for exactly this reason.
+
+**Artwork is the strongest case, not the weakest.** Manufacturer changes,
+printer changes, barcodes, serialisation, QR codes, local legal statements,
+distributor information — none touches a CCDS, and every one produces newly
+approved local labelling.
+
+### What this does not license
+
+**Not symmetry.** Both tiers are versioned, and the reasons are unrelated:
+
+| | Versioned because |
 |---|---|
-| *"We replace the document."* | scalar fields on `LocalLabel`. Versioning it would invent history that cannot happen |
-| *"Every issued label is immutable; we issue a revision."* | `LocalLabelVersion`, justified by observed behaviour rather than by symmetry with `GlobalLabel` |
+| `GlobalLabel` | the company's scientific position evolves |
+| `LocalLabel` | each authority approves, delays, amends and republishes that position independently |
 
-### The invariant either answer confirms
+They intersect only through a derived-from link. Nothing inherits, and the two
+status vocabularies are not assumed to match until a rule says they do.
 
-> **A local label version exists if — and only if — a market can issue several
-> distinct regulatory artifacts while remaining derived from the same global
-> label revision.**
+**Not the approval workflow.** Submission, review, questions and approval are
+the process; EPIC-018 records the *dated facts* it produces, and the process
+itself stays EPIC-008's (see Out of scope).
 
-### Two things already settled, whichever way it goes
+### Two things settled on the way
 
 **Independent document evolution creates the history; audit merely obliges us to
-retain it.** Not the other way round. An earlier draft of this analysis had
-*"a regulator may ask what the Japanese label said on 3 March 2025"* as the
-reason to version, which would have let a compliance requirement justify an
-aggregate. It is the business behaviour that creates history; the regulator only
-makes discarding it unacceptable.
+retain it.** Not the other way round. An earlier draft of this analysis had *"a
+regulator may ask what the Japanese label said on 3 March 2025"* as the reason to
+version, which would have let a compliance requirement justify an aggregate.
 
-**`LocalLabel` is not a projection over `GlobalLabel`.** Adoption lag settles
-this on its own: a market may adopt v7 months after it is issued, may skip v6
-entirely, and carries its own effective date, approval date and adoption state.
-None of that is derivable from the global label, so it is stored — regardless of
-whether it is versioned.
+**`LocalLabel` is not a projection over `GlobalLabel`** — adoption lag alone
+settles that, whatever else it holds.
 
 ---
 
