@@ -327,4 +327,35 @@ public sealed class IndicationTests
 
         indication.OtherTherapies.Should().BeEmpty();
     }
+
+    // --- what "approved in this market" means ------------------------------
+
+    /// <summary>
+    /// <b>The rule the capstone read depends on</b> (EPIC-018 S006). Widening an
+    /// authorisation and narrowing one are both still authorisations; only a
+    /// withdrawal ends it. Asserted here rather than left inside a query, so a
+    /// fifth status cannot quietly decide it is an approval.
+    /// </summary>
+    [Theory]
+    [InlineData(IndicationStatus.Approved, true)]
+    [InlineData(IndicationStatus.Expanded, true)]
+    [InlineData(IndicationStatus.Restricted, true)]
+    [InlineData(IndicationStatus.Withdrawn, false)]
+    public void ThreeOfTheFourStatusesAreAuthorisations(
+        IndicationStatus status,
+        bool expected)
+    {
+        Indication.IsAnAuthorisation(status).Should().Be(expected);
+    }
+
+    /// <summary>
+    /// Fails when a status is added, which is the point: the new one has to be
+    /// classified deliberately rather than inherit whatever the predicate
+    /// happens to return.
+    /// </summary>
+    [Fact]
+    public void EveryStatusIsClassified()
+    {
+        Enum.GetValues<IndicationStatus>().Should().HaveCount(4);
+    }
 }

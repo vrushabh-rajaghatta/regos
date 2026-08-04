@@ -307,6 +307,7 @@ var indications = app.MapGroup("").WithTags("Indications");
 // /api/indications/{id} that happens to be spelled "vocabulary".
 indications.MapGetClinicalVocabulary();
 indications.MapListIndications();
+indications.MapListMarketsForCondition();
 indications.MapRecordIndication();
 indications.MapRestateIndicationText();
 indications.MapRecordIndicationDecision();

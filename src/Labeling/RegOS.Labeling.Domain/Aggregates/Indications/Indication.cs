@@ -84,6 +84,20 @@ public sealed class Indication : AggregateRoot<IndicationId>
     public IReadOnlyCollection<OtherTherapy> OtherTherapies
         => _otherTherapies.AsReadOnly();
 
+    /// <summary>
+    /// Whether a status still means "authorised in this market".
+    /// </summary>
+    /// <remarks>
+    /// <b>Three of the four are.</b> <c>Expanded</c> widened the authorisation
+    /// and <c>Restricted</c> narrowed it; both are still authorisations. Only
+    /// <c>Withdrawn</c> is not. Stated here rather than inside a read, because
+    /// "is this product approved for that?" is a domain question and a fifth
+    /// status must not be able to answer it by accident — a static predicate, so
+    /// it stays out of the persistence model entirely.
+    /// </remarks>
+    public static bool IsAnAuthorisation(IndicationStatus status)
+        => status != IndicationStatus.Withdrawn;
+
     public static Indication Record(
         TenantId tenantId,
         MedicinalProductId medicinalProductId,

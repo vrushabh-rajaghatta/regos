@@ -34,6 +34,7 @@ using RegOS.Labeling.Application.Commands.RemoveDrugInteractionPopulation;
 using RegOS.Labeling.Application.Queries.ListContraindications;
 using RegOS.Labeling.Application.Queries.ListDrugInteractions;
 using RegOS.Labeling.Application.Queries.ListIndications;
+using RegOS.Labeling.Application.Queries.ListMarketsForCondition;
 using RegOS.Labeling.Application.Queries.ListUndesirableEffects;
 using RegOS.Labeling.Application.Queries.ListLocalLabelRevisions;
 using RegOS.Labeling.Application.Queries.ListLocalLabels;
@@ -98,6 +99,8 @@ public static class DependencyInjection
         services.AddScoped<RemoveIndicationTherapyHandler>();
 
         services.AddScoped<ListIndicationsHandler>();
+
+        services.AddScoped<ListMarketsForConditionHandler>();
 
         services.AddScoped<RecordContraindicationHandler>();
 
