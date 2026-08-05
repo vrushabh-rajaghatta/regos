@@ -45,9 +45,29 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-**Nothing taken.** EPIC-023 is complete and in
-[Shipped epics](#shipped-epics); **EPIC-024** is next by the ordering below, and
-is unstarted.
+🟡 **[EPIC-024 — the invariants nothing checks](epics/EPIC-024-invariants-nothing-checks.md).**
+Taken 2026-08-05, straight after EPIC-023 and by the same ordering. **EPIC-023
+made the environment trustworthy; this makes the architecture trustworthy.**
+
+**Planning changed two of its three items before a line was written:**
+
+- **The dependency graph is cleaner than the entry assumed.** 26 Domain edges,
+  **zero** exceptions in the Application layer, and the two in Infrastructure
+  turned out to be **removable** — both contexts' own `*.Domain` already carried
+  the edge, so the explicit references were redundant and the solution builds
+  without them. The graph gets simpler forever rather than gaining two
+  intentional exceptions
+- **The third item, as raised here one day earlier, was vacuous.** *"Any test
+  project **referencing** `RegOS.Persistence`"* — **none does.** All seven reach
+  it transitively. The correct rule is transitive reach, and it separates
+  perfectly: 7 reach it, the same 7 reference `RegOS.TestSupport`, 0 mismatches.
+  **A rule stated from memory is a hypothesis**, and this one was false on first
+  contact with the `.csproj` graph
+- **The ordering rule is about determinism, not ids.** 89 orderings and not one
+  ends in a unique key — but totality is **not syntactically decidable**, because
+  it usually rests on an invariant the ordering keys do not reveal. The rule is
+  therefore a property with two ways to satisfy it, so it outlives today's
+  preferred technique
 
 > **The order was set by the founder, and the three are not a queue but a
 > sequence with a reason:** strengthen the development foundation (EPIC-023 ✅),
@@ -142,8 +162,8 @@ whoever can go and fetch one.*
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
 | — | ~~**EPIC-023**~~ | **The test suite runs against its own schema** | 🟢 **Shipped 2026-08-05** | — |
-| 1 | **EPIC-024** | **The invariants nothing checks** — make the architecture rules the ADRs state executable. **Three now**: the two EPIC-010c found, and one EPIC-023 left behind | ⚪ Not Started | nothing. Sibling of EPIC-023 by kind and separate by subject — see [below](#epic-024--the-invariants-nothing-checks) |
-| 2 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) · **and one thing no epic supplies** — see below |
+| — | ~~**EPIC-024**~~ | **The invariants nothing checks** | 🟡 **Taken 2026-08-05** — in [Now](#now) | — |
+| 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) · **and one thing no epic supplies** — see below |
 | — | ~~**EPIC-010c**~~ | **Manufacturing** | 🟢 **Shipped 2026-08-05** (PR #23), closing EPIC-010 | — |
 
 > **The 2026-08-05 ordering, and the reason it is not simply "hardening first".**
