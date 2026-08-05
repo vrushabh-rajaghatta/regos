@@ -13,7 +13,8 @@ namespace RegOS.Persistence.Initialization.ReferenceData.Geography;
 /// hand-verified rows and a licensed register are different evidence levels,
 /// and only one of them can be widened without going and fetching something
 /// (<see href="../../../../../docs/evidence/EPIC-022/iso-3166-1.md">E36</see>,
-/// <see href="../../../../../docs/evidence/EPIC-022/regional-membership.md">E37</see>).
+/// <see href="../../../../../docs/evidence/EPIC-022/regional-membership.md">E37</see>,
+/// <see href="../../../../../docs/evidence/EPIC-022/label-languages.md">E38</see>).
 /// <para>
 /// <b>Every value below was read off a published source, not inferred.</b> The
 /// alpha-3 code and the ISO name are not derivable from the alpha-2 code or the
@@ -26,6 +27,9 @@ internal static class Countries
 {
     private static CodedConcept Region(string code)
         => GeographyVocabulary.RegionOf(code)!;
+
+    private static LanguageCode Lang(string code)
+        => LanguageCode.Parse(code);
 
     /// <summary>
     /// <b>Germany and France are tagged ICH by inheritance, and that is a
@@ -47,7 +51,8 @@ internal static class Countries
             "USA",
             "United States",
             "United States of America",
-            [Region("ICH"), Region("PIC_S")]),
+            [Region("ICH"), Region("PIC_S")],
+            [Lang("en")]),
 
         // Health Canada — ICH Standing Regulatory Member; PIC/S since 1999.
         Country.Create(
@@ -56,7 +61,11 @@ internal static class Countries
             "CAN",
             "Canada",
             "Canada",
-            [Region("ICH"), Region("PIC_S")]),
+            [Region("ICH"), Region("PIC_S")],
+            // **The row this story turns on.** Bilingual mock-ups of the
+            // labels, the package insert and the Product Monograph are required
+            // at submission (C.01.014.1(2)(m.1), C.08.002(2)(j.1)) — E38.
+            [Lang("en"), Lang("fr")]),
 
         // MHRA — an ICH Regulatory Member in its own right, and PIC/S since
         // 1999. **Not EU**, which is the row that shows why membership is a
@@ -67,7 +76,8 @@ internal static class Countries
             "GBR",
             "United Kingdom",
             "United Kingdom of Great Britain and Northern Ireland",
-            [Region("ICH"), Region("PIC_S")]),
+            [Region("ICH"), Region("PIC_S")],
+            [Lang("en")]),
 
         Country.Create(
             new CountryId(GeographyAndRegulatoryIds.Germany),
@@ -75,7 +85,8 @@ internal static class Countries
             "DEU",
             "Germany",
             "Germany",
-            EuMemberState),
+            EuMemberState,
+            [Lang("de")]),
 
         Country.Create(
             new CountryId(GeographyAndRegulatoryIds.France),
@@ -83,7 +94,8 @@ internal static class Countries
             "FRA",
             "France",
             "France",
-            EuMemberState),
+            EuMemberState,
+            [Lang("fr")]),
 
         // MHLW/PMDA — ICH Founding Regulatory Member; PIC/S since 2014.
         Country.Create(
@@ -92,7 +104,8 @@ internal static class Countries
             "JPN",
             "Japan",
             "Japan",
-            [Region("ICH"), Region("PIC_S")]),
+            [Region("ICH"), Region("PIC_S")],
+            [Lang("ja")]),
 
         // TGA — PIC/S since 1995, and an ICH **Standing Observer**, so no ICH.
         // The correction a guess would not have made.
@@ -102,7 +115,8 @@ internal static class Countries
             "AUS",
             "Australia",
             "Australia",
-            [Region("PIC_S")]),
+            [Region("PIC_S")],
+            [Lang("en")]),
 
         // CDSCO is an ICH **observer**, and India is **not** a PIC/S
         // participant — so India belongs to none of the five. An empty
@@ -113,6 +127,7 @@ internal static class Countries
             "IND",
             "India",
             "India",
-            [])
+            [],
+            [Lang("en")])
     ];
 }

@@ -247,7 +247,7 @@ adding either would repeat exactly the defect this epic exists to remove.
 |---|---|---|
 | **S001** ✅ | **ISO identity** — `IsoAlpha3Code` + `IsoName` on all eight, surfaced wherever a country is shown; evidence entry | domain → persistence → API → UI → test |
 | **S002** ✅ | **Regions** — collection in, `RegionCode` out; *"which of our markets are in the EU?"* | full slice |
-| **S003** | **Languages** — collection + `LanguageCode` moved to ReferenceData (decision 2); **the market view shows required vs recorded label languages**, advisory | full slice |
+| **S003** ✅ | **Languages** — collection + `LanguageCode` moved to ReferenceData (decision 2); **the market view shows required vs recorded label languages**, advisory | full slice |
 | **S004** | **Climatic zones** — collection, **`ShelfLifeStorage.Region`**, and the match, reported not blocked. **Widened**: it absorbs the field the [carve-out](#the-carve-out--closed-before-phase-2-began) did not place in 010b, which makes this the single story where climate becomes actionable *(needs ICH Q1A(R2) in hand)* | full slice |
 | **S005** | **Capstone** — browser proof of the two questions, evidence entries complete, seed statement in place, retro | UI → test → docs |
 

@@ -2,6 +2,7 @@ using RegOS.ReferenceData.Domain.Geography.Country;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
+using RegOS.ReferenceData.Domain.Terminology;
 
 namespace RegOS.Product.Domain.Product;
 
@@ -345,7 +346,7 @@ public sealed class MedicinalProduct : AggregateRoot<MedicinalProductId>
     public TradeName AddTradeName(LanguageCode language, string? name)
     {
         if (language is null)
-            throw new DomainException(MedicinalProductErrors.LanguageRequired);
+            throw new DomainException(LanguageCodeErrors.Required);
 
         if (_tradeNames.Any(x => x.Language == language))
             throw new BusinessRuleViolationException(

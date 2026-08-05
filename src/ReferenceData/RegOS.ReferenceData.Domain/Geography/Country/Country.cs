@@ -34,6 +34,7 @@ public sealed class Country
     public const int IsoNameMaxLength = 200;
 
     private readonly List<CodedConcept> _regions = [];
+    private readonly List<LanguageCode> _languages = [];
 
     private Country()
     {
@@ -94,13 +95,38 @@ public sealed class Country
     /// </remarks>
     public IReadOnlyCollection<CodedConcept> Regions => _regions.AsReadOnly();
 
+    /// <summary>
+    /// The languages this market's labelling is expected in — Canada English
+    /// and French, Germany German.
+    /// </summary>
+    /// <remarks>
+    /// <b>The debt EPIC-018 could not close itself.</b> <c>LocalLabel.Language</c>
+    /// has existed since that epic, and nothing could say which languages a
+    /// market <em>requires</em> — so nobody could be told their Canadian label
+    /// set was incomplete. That is this type's omission, not Labeling's, and
+    /// closing it is why <see cref="LanguageCode"/> moved here
+    /// (<see href="../../../../docs/adr/ADR-062-a-language-is-a-world-fact.md">ADR-062</see>).
+    /// <para>
+    /// <b>Expected, not required — and the word is chosen.</b> Canada's
+    /// bilingual obligation falls on the product monograph and on most labels,
+    /// but <em>not</em> on prescription-only, hospital-only or professional-use
+    /// labels, which may be in one language. Which rule applies depends on the
+    /// product and the document, and a country knows neither. So this states
+    /// what a market's labelling is normally in, and the screen advises against
+    /// it; <b>nothing here refuses anything</b> (EPIC-022 D4). Blocking belongs
+    /// to a rule a blueprint states.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyCollection<LanguageCode> Languages => _languages.AsReadOnly();
+
     public static Country Create(
         CountryId id,
         string code,
         string isoAlpha3Code,
         string name,
         string isoName,
-        IEnumerable<CodedConcept>? regions = null)
+        IEnumerable<CodedConcept>? regions = null,
+        IEnumerable<LanguageCode>? languages = null)
     {
         if (string.IsNullOrWhiteSpace(code))
             throw new DomainException(CountryErrors.CodeRequired);
@@ -152,6 +178,18 @@ public sealed class Country
             country._regions.Add(region);
         }
 
+        foreach (var language in languages ?? [])
+        {
+            if (language is null)
+                continue;
+
+            if (country._languages.Contains(language))
+                throw new BusinessRuleViolationException(
+                    CountryErrors.LanguageAlreadyStated);
+
+            country._languages.Add(language);
+        }
+
         return country;
     }
 
@@ -160,6 +198,8 @@ public sealed class Country
         string isoAlpha3Code,
         string name,
         string isoName,
-        IEnumerable<CodedConcept>? regions = null)
-        => Create(CountryId.New(), code, isoAlpha3Code, name, isoName, regions);
+        IEnumerable<CodedConcept>? regions = null,
+        IEnumerable<LanguageCode>? languages = null)
+        => Create(
+            CountryId.New(), code, isoAlpha3Code, name, isoName, regions, languages);
 }

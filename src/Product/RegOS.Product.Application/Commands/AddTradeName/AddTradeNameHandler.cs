@@ -1,6 +1,7 @@
 using RegOS.Product.Application.Services;
 using RegOS.Product.Domain.Product;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.ReferenceData.Domain.Terminology;
 
 namespace RegOS.Product.Application.Commands.AddTradeName;
 

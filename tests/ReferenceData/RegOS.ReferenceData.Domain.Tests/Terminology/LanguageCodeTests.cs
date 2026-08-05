@@ -1,9 +1,9 @@
 using FluentAssertions;
 
-using RegOS.Product.Domain.Product;
+using RegOS.ReferenceData.Domain.Terminology;
 using RegOS.SharedKernel.Exceptions;
 
-namespace RegOS.Product.Domain.Tests.Product;
+namespace RegOS.ReferenceData.Domain.Tests.Terminology;
 
 /// <summary>
 /// The value object exists so no caller ever handles a raw language string —
@@ -49,7 +49,7 @@ public sealed class LanguageCodeTests
         var parse = () => LanguageCode.Parse(input);
 
         parse.Should().Throw<DomainException>()
-            .WithMessage(MedicinalProductErrors.LanguageRequired);
+            .WithMessage(LanguageCodeErrors.Required);
     }
 
     [Theory]
@@ -62,7 +62,7 @@ public sealed class LanguageCodeTests
         var parse = () => LanguageCode.Parse(input);
 
         parse.Should().Throw<DomainException>()
-            .WithMessage(MedicinalProductErrors.LanguageNotRecognised);
+            .WithMessage(LanguageCodeErrors.NotRecognised);
     }
 
     /// <summary>

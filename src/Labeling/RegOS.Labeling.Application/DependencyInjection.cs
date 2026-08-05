@@ -38,6 +38,7 @@ using RegOS.Labeling.Application.Queries.ListIndications;
 using RegOS.Labeling.Application.Queries.ListMarketsForCondition;
 using RegOS.Labeling.Application.Queries.ListUndesirableEffects;
 using RegOS.Labeling.Application.Queries.ListLocalLabelRevisions;
+using RegOS.Labeling.Application.Queries.GetLabelLanguageCoverage;
 using RegOS.Labeling.Application.Queries.ListLocalLabels;
 using RegOS.Labeling.Application.Commands.CreateGlobalLabel;
 using RegOS.Labeling.Application.Commands.DiscardGlobalLabelDraft;
@@ -79,6 +80,8 @@ public static class DependencyInjection
         services.AddScoped<DiscardLocalLabelDraftHandler>();
 
         services.AddScoped<ListLocalLabelsHandler>();
+
+        services.AddScoped<GetLabelLanguageCoverageHandler>();
 
         services.AddScoped<ListLocalLabelRevisionsHandler>();
 

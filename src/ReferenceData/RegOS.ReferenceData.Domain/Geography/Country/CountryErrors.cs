@@ -27,4 +27,7 @@ public static class CountryErrors
 
     public const string RegionAlreadyStated =
         "That grouping is already recorded for this country.";
+
+    public const string LanguageAlreadyStated =
+        "That language is already recorded for this country.";
 }

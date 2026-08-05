@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { useDiscardLocalLabelDraft } from "../hooks/useDiscardLocalLabelDraft";
+import { useLabelLanguageCoverage } from "../hooks/useLabelLanguageCoverage";
 import { useLocalLabels } from "../hooks/useLocalLabels";
 import { usePrintLocalLabelForPack } from "../hooks/usePrintLocalLabelForPack";
 import { useStartLocalLabelRevision } from "../hooks/useStartLocalLabelRevision";
@@ -32,6 +33,11 @@ export function MarketLabels({
   const [adding, setAdding] = useState(false);
 
   const { data, isLoading, error } = useLocalLabels(medicinalProductId);
+
+  // What this market's labelling is expected in, against what it has. The debt
+  // EPIC-018 shipped and could not close: LocalLabel.Language existed, and
+  // nothing knew which languages a market needed (ADR-062).
+  const languages = useLabelLanguageCoverage(medicinalProductId);
   const startRevision = useStartLocalLabelRevision();
   const discardDraft = useDiscardLocalLabelDraft();
   const printForPack = usePrintLocalLabelForPack();
@@ -61,6 +67,38 @@ export function MarketLabels({
           Add local label
         </Button>
       </div>
+
+      {/*
+        **Advisory, never blocking** (EPIC-022 D4). Canada's bilingual
+        obligation falls on the product monograph and on most labels, but not on
+        prescription-only, hospital-only or professional-use ones — which
+        depends on the product and the document, neither of which a country
+        knows. So this says what is missing and nothing anywhere refuses.
+
+        Rendered as muted text rather than as a destructive warning for the same
+        reason: it is an observation, and a red banner would read as a rule.
+      */}
+      {languages.data && languages.data.expected.length > 0 && (
+        <p
+          className="rounded-md border border-dashed px-3 py-2 text-sm text-muted-foreground"
+          data-testid="label-language-coverage"
+        >
+          {languages.data.missing.length === 0 ? (
+            <span data-testid="languages-covered">
+              Labelling here is expected in{" "}
+              {languages.data.expected.join(", ")} — all recorded.
+            </span>
+          ) : (
+            <span data-testid="languages-missing">
+              Labelling here is expected in{" "}
+              {languages.data.expected.join(", ")}. Nothing is recorded in{" "}
+              <strong>{languages.data.missing.join(", ")}</strong> yet — worth
+              checking, though a prescription-only or hospital-only label may
+              legitimately be in one language.
+            </span>
+          )}
+        </p>
+      )}
 
       {isLoading && (
         <p className="text-sm text-muted-foreground">Loading labels...</p>

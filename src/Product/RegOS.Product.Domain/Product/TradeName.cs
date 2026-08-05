@@ -1,6 +1,7 @@
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
+using RegOS.ReferenceData.Domain.Terminology;
 
 namespace RegOS.Product.Domain.Product;
 

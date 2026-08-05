@@ -1,4 +1,5 @@
 using RegOS.Product.Domain.Product;
+using RegOS.ReferenceData.Domain.Terminology;
 
 namespace RegOS.Product.Application.Commands.AddTradeName;
 

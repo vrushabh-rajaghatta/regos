@@ -81,5 +81,32 @@ public sealed class CountryConfiguration
         builder.Metadata
             .FindNavigation(nameof(Country.Regions))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // The languages a market's labelling is expected in — Canada English
+        // and French. An owned collection, not reference data: ISO 639 has one
+        // authority RegOS will not swap, so a governed Languages table would be
+        // a second place the same register is defined (ADR-062 §3).
+        builder.OwnsMany(x => x.Languages, language =>
+        {
+            language.ToTable("CountryLanguages");
+
+            language.WithOwner().HasForeignKey("CountryId");
+
+            // Converted rather than stored raw, matching TradeName and
+            // LocalLabel: a row edited by hand still cannot become an invalid
+            // LanguageCode on the way back in.
+            language.Property(x => x.Value)
+                .HasColumnName("Language")
+                .HasMaxLength(LanguageCode.Length)
+                .IsRequired();
+
+            // The property, not the column: LanguageCode holds `Value`,
+            // which is mapped to a column called Language.
+            language.HasIndex("CountryId", nameof(LanguageCode.Value)).IsUnique();
+        });
+
+        builder.Metadata
+            .FindNavigation(nameof(Country.Languages))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

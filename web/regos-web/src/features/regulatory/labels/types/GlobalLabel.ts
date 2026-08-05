@@ -119,3 +119,18 @@ export interface CoreVersionOption {
   status: string;
   effectiveFrom: string | null;
 }
+
+/**
+ * What a market's labelling is expected in, against what it actually has.
+ *
+ * **Advisory.** `missing` is an observation, never a refusal — Canada's
+ * bilingual obligation falls on the product monograph and most labels but not
+ * on prescription-only, hospital-only or professional-use ones, and neither the
+ * country nor this panel knows which is which.
+ */
+export interface LabelLanguageCoverage {
+  expected: string[];
+  /** May include languages that are not expected — an extra translation is nobody's error. */
+  recorded: string[];
+  missing: string[];
+}

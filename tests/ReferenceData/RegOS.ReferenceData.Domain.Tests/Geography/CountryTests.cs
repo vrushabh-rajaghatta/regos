@@ -23,8 +23,10 @@ public sealed class CountryTests
         string alpha3 = "GBR",
         string name = "United Kingdom",
         string isoName = "United Kingdom of Great Britain and Northern Ireland",
-        IEnumerable<CodedConcept>? regions = null)
-        => Country.Create(CountryId.New(), code, alpha3, name, isoName, regions);
+        IEnumerable<CodedConcept>? regions = null,
+        IEnumerable<LanguageCode>? languages = null)
+        => Country.Create(
+            CountryId.New(), code, alpha3, name, isoName, regions, languages);
 
     [Fact]
     public void ACountryCarriesBothCodesAndBothNames()
@@ -170,5 +172,53 @@ public sealed class CountryTests
 
         uk.Regions.Select(x => x.Code).Should().NotContain("EU");
     }
+    // --- the languages its labelling is expected in --------------------------
+
+    /// <summary>
+    /// <b>The debt EPIC-018 could not close itself.</b> `LocalLabel.Language`
+    /// existed and nothing could say which languages a market needed, so nobody
+    /// could be told a Canadian label set was incomplete.
+    /// </summary>
+    [Fact]
+    public void AMarketMayExpectItsLabellingInTwoLanguages()
+    {
+        var canada = A(code: "CA", alpha3: "CAN", name: "Canada", isoName: "Canada",
+            languages: [LanguageCode.Parse("en"), LanguageCode.Parse("fr")]);
+
+        canada.Languages.Select(x => x.Value).Should().BeEquivalentTo(["en", "fr"]);
+    }
+
+    [Fact]
+    public void TheSameLanguageTwiceIsRefused()
+    {
+        var create = () => A(
+            languages: [LanguageCode.Parse("en"), LanguageCode.Parse("EN")]);
+
+        create.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(CountryErrors.LanguageAlreadyStated);
+    }
+
+    /// <summary>
+    /// <b>Nothing here refuses anything about labelling</b> (EPIC-022 D4). The
+    /// country states what its labelling is normally in; whether a given label
+    /// must be in all of them depends on the product and the document, and a
+    /// country knows neither. Asserted structurally: no behaviour to enforce
+    /// with.
+    /// </summary>
+    [Fact]
+    public void ACountryStatesItsLanguagesAndEnforcesNothing()
+    {
+        var canada = A(languages: [LanguageCode.Parse("en"), LanguageCode.Parse("fr")]);
+
+        canada.Languages.Should().HaveCount(2);
+
+        typeof(Country).GetMethods()
+            .Where(x => x.IsPublic
+                && !x.IsStatic
+                && !x.IsSpecialName
+                && x.DeclaringType == typeof(Country))
+            .Should().BeEmpty();
+    }
+
 
 }
