@@ -1,6 +1,6 @@
 # EPIC-023 — The test suite runs against its own schema
 
-**Status:** 🔵 In progress · **Branch:** `epic/EPIC-023-test-schema` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 Complete · **Branch:** `epic/EPIC-023-test-schema` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The first epic in RegOS that ships **no user-facing capability and no RIM
 object**. It exists because the suite does not test the assumption every one of
@@ -431,13 +431,140 @@ two files instead of acquiring a list.
 > a test, and that buys less than it costs while the guard covers the only
 > failure anyone has seen.
 
-### S004 — capstone
+### S004 — capstone ✅
 
-Demonstrates that a stale schema can no longer produce a green run, and states
-plainly **what is still not proved** — every backfill, and every upgrade of a
-populated database — with the trigger that would change it.
+[`SchemaCurrencyTests`](../../../tests/ProductDocument/RegOS.ProductDocument.Persistence.Tests/SchemaCurrencyTests.cs)
+asserts the three things the epic set out to make true, in the assembly S001
+converted first:
 
-Also writes the isolated-stack recipe into testing.md (D7).
+| | |
+|---|---|
+| `GetPendingMigrationsAsync()` is empty, and every migration in source control is recorded as applied | **the assertion that would have caught it** — against the developer's database on 2026-08-04 it fails naming five missing migrations, and on 2026-08-05 naming one, *on a day the whole suite was green* |
+| the database name starts with `regos_test_` and is not `regos` | the assertion above would also pass against a hand-maintained database somebody had just migrated. That is the state the project was in for a year, and the one that kept quietly reverting |
+| countries, document types **and sites** are all present | the seed ran to completion, not as far as its first failure — sites are seeded last and only reachable if `IdentifierSchemeDataInitializer` ran before them |
+
+**And the guarantee is structural, not local to one assembly.**
+`RegOSTestDatabase` refuses to hand back a database whose schema did not come
+from the chain, so all seven carry it. The capstone tests are a *readable*
+statement of what the fixture enforces.
+
+#### Proved by making the mistake
+
+The near neighbour of `MigrateAsync()` is **`EnsureCreatedAsync()`**, which
+builds the schema from the *model* rather than the migrations, leaves
+`__EFMigrationsHistory` empty, and is **faster** — so somebody will propose it.
+Swapping one for the other turns the suite red immediately, and says why:
+
+```
+System.InvalidOperationException : regos_test_productdocument_persistence_4d7d596b
+has no migration history. The schema did not come from the migration chain —
+EnsureCreated() builds it from the model instead, and a suite running on that
+proves nothing about the migrations (ADR-064).
+```
+
+> **The demonstration also answered a question nobody had asked**: a fixture
+> that throws during `InitializeAsync` still gets disposed, so the failed run
+> left no database behind. Checked rather than assumed, because the alternative
+> is a developer collecting orphaned databases every time a migration is broken.
+
+Standards [8 and 9](../../engineering/testing.md) were added in the same story —
+the second being the isolated browser-stack recipe (D7), which had lived only in
+conversation.
+
+---
+
+## Retrospective
+
+### Measured outcomes
+
+| Measure | Before | After |
+|---|---|---|
+| **Schema source** | a shared, long-lived database | **fresh migrations, every test assembly** |
+| **Writes to the developer's database** | yes — 17,400 sessions and 810 refresh tokens of residue | **none.** 17,716 before a full run, 17,716 after |
+| **Test schema drift** | possible, and silent | **eliminated** — there is no window in which a schema can be behind |
+| **Idempotent migration script** | **broken**, and never executed by anyone | applied clean, **and verified idempotent** on a second run |
+| **Architecture guards** | none on either defect class | raw SQL in migrations · one connection string under `tests/` |
+| **Files naming a database** | 27 | **1**, and it names a server |
+| **Full suite duration** | 28 s | **39.5 s** *(+41%)* |
+
+The last row is what the others cost. It is stated in the same table
+deliberately: **+11.5 s is the price**, and everything above it is what was
+bought.
+
+### The lessons worth carrying past this epic
+
+#### 1. Measure the layer the cost is actually paid at
+
+Three measurements, **two of them wrong, and each looked authoritative**: 14 s
+was `dotnet ef`'s build; 0.165 s was Postgres alone; **2.7 s** is what a test
+assembly actually pays. The house habit was already *measure first* — it was
+followed, and it still produced two wrong numbers in a row before the right one.
+
+#### 2. An optimisation can cost more than the time it saves
+
+ADR-064 first refused the template database because provisioning looked cheap.
+It is not cheap. The refusal survived anyway, on a **stronger** argument: a
+template is a cache, a cache needs an invalidation key, and **no key derived
+from migration identity survives an edit to an existing migration** — which
+[S003](#s003--the-migration-chain-is-proved-not-assumed) then made, twice,
+adding none. The optimisation would have reintroduced the drift the epic exists
+to remove.
+
+*"It wasn't worth it"* is a temporary argument. *"It requires solving a problem
+we have a concrete counter-example to"* is a durable one.
+
+#### 3. Ban the shape, not the value
+
+D8 asked for a guard that no test file contains `Database=regos`. That rule is
+satisfied by typing `Database=regos_scratch`. Phrased instead as **exactly one
+file may carry a connection string**, it immediately found two files a `grep`
+never would have — and because `UseNpgsql()` needs no connection string for
+model-only work, both were *simplified* rather than exempted. **A guard that
+describes the intended architecture drives simplification; a guard that bans a
+value collects exemptions.**
+
+#### 4. Separate what is proved from what is guarded
+
+The idempotent script was proved **by hand**, twice, with its numbers recorded.
+What runs on every build is narrower: the guard catches the *defect class*
+found, not "the script works". Both facts are written down, because a reader who
+assumes the stronger one will stop looking.
+
+#### 5. Three things that look like one
+
+The database's **lifecycle**, its **sharing**, and the runner's **scheduling**
+are separable, and this epic changed only the first. Submission's classes lost
+their parallelism to xUnit 2's collection-fixture model, not to sharing a
+database — they already shared one. **The optimisation target is runner
+parallelism** (`IAssemblyFixture`, built into xUnit v3), **not cached
+databases.** Recorded so that future effort goes to the right place.
+
+### What is still not proved
+
+Stated as plainly as the outcomes, because *"the test suite runs the
+migrations"* invites a conclusion this epic does not support:
+
+| | Why not, and what would change it |
+|---|---|
+| **That any migration's backfill does what it says** | A backfill only fires on a database that already holds rows. On an empty one, EPIC-022's country backfill matches nothing and the *seeder* supplies the data instead — the migration runs, updates zero rows, reports success. **No arrangement of freshly-provisioned databases can exercise that path** |
+| **That a populated database survives an upgrade** | Proving migrations *both ways* stays manual, as EPIC-010c established. **The trigger is the first customer database.** Until one exists, every populated database is a dev seed or a throwaway and an upgrade costs minutes to hand-prove; after one exists, it cannot be hand-proved at all |
+| **That the idempotent script works, on every build** | Only the defect class is guarded. Automating it means invoking `dotnet ef` from a test — worth doing when a second failure appears that the guard does not catch, and not before |
+
+### Definition of Done
+
+| | | |
+|---|---|---|
+| 1 | No file under `tests/` names the developer's database, and an architecture test says so | ✅ 27 → 1, and the one names a server |
+| 2 | All seven database-touching assemblies provision their own | ✅ |
+| 3 | The idempotent script applies cleanly, and a guard prevents the defect class returning | ✅ applied twice — second run a no-op |
+| 4 | `dotnet test RegOS.slnx` green across **19 reporting suites**, with no manual migration step | ✅ 19, and `IsTestProject=false` keeps `RegOS.TestSupport` from becoming a twentieth |
+| 5 | The epic states plainly what is still not proved | ✅ above |
+
+### It closed no RIM object, as forecast
+
+The first epic in RegOS to ship no user-facing capability. What it shipped
+instead is that **every guarantee the other 22 epics' tests make is now made
+against a schema the project can name the origin of.**
 
 ---
 
@@ -447,3 +574,7 @@ Also writes the isolated-stack recipe into testing.md (D7).
 |---|---|
 | 2026-08-05 | Raised in BACKLOG.md at EPIC-010c's close, after a third independent observation |
 | 2026-08-05 | Phase 1 + Phase 2 signed off. Approach changed by measurement; two backlog claims corrected |
+| 2026-08-05 | S001. ADR-064 **amended in place** — provisioning is not cheap, and the template database is refused on correctness instead |
+| 2026-08-05 | S002. All seven assemblies; the serialisation cost measured rather than predicted, and no per-assembly exception added |
+| 2026-08-05 | S003. Two unterminated statements fixed; the idempotent artifact executed for the first time |
+| 2026-08-05 | S004. Capstone, retrospective, testing.md Standards 8 and 9 |

@@ -89,13 +89,58 @@ public abstract class RegOSTestDatabase : IAsyncLifetime
 
         await using var scope = _services.CreateAsyncScope();
 
-        await scope.ServiceProvider
-            .GetRequiredService<RegOSDbContext>()
-            .Database.MigrateAsync();
+        var context = scope.ServiceProvider.GetRequiredService<RegOSDbContext>();
+
+        await context.Database.MigrateAsync();
+
+        AppliedMigrations = (await context.Database.GetAppliedMigrationsAsync()).ToList();
+
+        await GuardTheSchemaCameFromTheChainAsync(context);
 
         foreach (var initializer in scope.ServiceProvider.GetServices<IDataInitializer>())
         {
             await initializer.InitializeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Every migration in source control, recorded as applied — the claim the
+    /// whole epic rests on, checked rather than assumed.
+    /// </summary>
+    public IReadOnlyList<string> AppliedMigrations { get; private set; } = [];
+
+    /// <summary>
+    /// <b>A post-condition, not a belt on braces.</b> <c>MigrateAsync()</c>
+    /// applies the chain by definition, so this can only fail if somebody
+    /// changed how the schema is created — and there is one specific way that
+    /// happens.
+    /// </summary>
+    /// <remarks>
+    /// <c>EnsureCreatedAsync()</c> is the near neighbour, and it is the wrong
+    /// one: it builds the schema from the <em>model</em>, not from the
+    /// migrations, and leaves <c>__EFMigrationsHistory</c> empty. A suite on an
+    /// <c>EnsureCreated</c> database is green while proving nothing about the
+    /// chain — which is a subtler version of exactly the defect this epic
+    /// closed. It is also faster, so somebody will propose it.
+    /// </remarks>
+    private async Task GuardTheSchemaCameFromTheChainAsync(RegOSDbContext context)
+    {
+        if (AppliedMigrations.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"{Name} has no migration history. The schema did not come from "
+                + "the migration chain — EnsureCreated() builds it from the "
+                + "model instead, and a suite running on that proves nothing "
+                + "about the migrations (ADR-064).");
+        }
+
+        var pending = (await context.Database.GetPendingMigrationsAsync()).ToList();
+
+        if (pending.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"{Name} is {pending.Count} migration(s) behind after migrating: "
+                + string.Join(", ", pending));
         }
     }
 
