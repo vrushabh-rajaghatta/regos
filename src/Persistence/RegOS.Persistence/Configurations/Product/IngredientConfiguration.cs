@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
+using RegOS.Organization.Domain.Aggregates.OrganizationSite;
 using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.Substances;
 using RegOS.ReferenceData.Domain.Terminology;
@@ -50,6 +51,23 @@ public sealed class IngredientConfiguration : IEntityTypeConfiguration<Ingredien
         builder.Property(x => x.SubstanceId)
             .HasConversion(id => id.Value, value => new SubstanceId(value))
             .IsRequired();
+
+        // Where this substance comes from (ADR-063 §2). Nullable, and it will
+        // stay mostly null: RegOS holds no provenance for any ingredient
+        // recorded before EPIC-010c S003, and absent means "nobody has said"
+        // rather than "unsourced".
+        //
+        // No foreign key, and that is the decision. Ingredient is a child of
+        // PharmaceuticalProductDetail with no TenantId of its own, reachable
+        // only through a filtered root — while OrganizationSite is a root in
+        // another context with its own filter. A cascade or restrict between
+        // them would tie a composition's lifetime to a registry row's, and a
+        // restrict in particular would refuse to deactivate a site because a
+        // formulation once named it. The id is held by value, the same way
+        // TenantId is (ADR-031).
+        builder.Property(x => x.ManufacturingSourceSiteId)
+            .HasConversion(
+                id => id!.Value, value => new OrganizationSiteId(value));
 
         // A rule branches on this, so it is stored as its name rather than an
         // ordinal — a reader of the table can see which rows are actives, and

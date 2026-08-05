@@ -37,6 +37,11 @@ public static class DependencyInjection
         services.AddScoped<IDataInitializer, DocumentTypeDataInitializer>();
         services.AddScoped<IDataInitializer, IdentifierSchemeDataInitializer>();
         services.AddScoped<IDataInitializer, ContactRoleDataInitializer>();
+
+        // After IdentifierSchemeDataInitializer above, and that ordering is
+        // load-bearing: a demo site carries an FEI and a DUNS, and the scheme
+        // rows those name must exist first.
+        services.AddScoped<IDataInitializer, SiteInitializer>();
         // Global, authority-independent — order relative to the others is free.
         services.AddScoped<IDataInitializer, CorrespondenceTypeDataInitializer>();
         // After GeographyAndRegulatoryInitializer: divisions reference authorities.

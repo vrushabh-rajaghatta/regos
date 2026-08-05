@@ -1,3 +1,4 @@
+using RegOS.Organization.Domain.Aggregates.OrganizationSite;
 using RegOS.Product.Domain.Product;
 
 namespace RegOS.Product.Application.Commands.RestateIngredient;
@@ -7,6 +8,11 @@ namespace RegOS.Product.Application.Commands.RestateIngredient;
 /// one is add-then-remove. Offering it here would leave no way to tell a
 /// correction from a replacement.
 /// </remarks>
+/// <param name="ManufacturingSourceSiteId">
+/// <b>Where this substance comes from</b> — a different stage of the supply
+/// chain from the site that makes the finished product (ADR-063 §2). Sent on every restate, because the aggregate
+/// takes no default here: a defaulted null would silently erase provenance.
+/// </param>
 public sealed record RestateIngredientCommand(
     PharmaceuticalProductDetailId PresentationId,
     IngredientId IngredientId,
@@ -14,4 +20,5 @@ public sealed record RestateIngredientCommand(
     decimal? NumeratorValue,
     string? NumeratorUnitCode,
     decimal? DenominatorValue,
-    string? DenominatorUnitCode);
+    string? DenominatorUnitCode,
+    OrganizationSiteId? ManufacturingSourceSiteId);

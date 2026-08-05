@@ -30,7 +30,8 @@ public sealed class RestateIngredientHandler
                 command.NumeratorValue,
                 command.NumeratorUnitCode,
                 command.DenominatorValue,
-                command.DenominatorUnitCode));
+                command.DenominatorUnitCode),
+            command.ManufacturingSourceSiteId);
 
         await _presentations.UpdateAsync(presentation, cancellationToken);
     }

@@ -36,6 +36,8 @@ using RegistrationAggregate =
     RegOS.Registration.Domain.Aggregates.Registration.Registration;
 using PackAuthorisationAggregate =
     RegOS.Registration.Domain.Aggregates.PackAuthorisations.PackAuthorisation;
+using SiteApprovalAggregate =
+    RegOS.Registration.Domain.Aggregates.SiteApprovals.SiteApproval;
 using HaCorrespondenceAggregate =
     RegOS.Interaction.Domain.Correspondence.HaCorrespondence;
 using CorrespondenceTypeAggregate =
@@ -320,6 +322,31 @@ public sealed class RegOSDbContext : DbContext
         Set<PackAuthorisationAggregate>();
 
     /// <summary>
+    /// Which sites perform which operations for a market's product, and when
+    /// (ADR-063). Tenant-owned and fail-closed.
+    /// </summary>
+    /// <remarks>
+    /// <b>The only set that says where work happens.</b> There is deliberately
+    /// no manufacturer column on <c>PackagedProducts</c> or
+    /// <c>PackageItems</c>, where RIM puts one — the operation's own type
+    /// carries that distinction (ADR-063 §3).
+    /// </remarks>
+    public DbSet<ManufacturingOperation> ManufacturingOperations =>
+        Set<ManufacturingOperation>();
+
+    /// <summary>
+    /// Which manufacturing sites a licence approves, and from when (ADR-063
+    /// §4). Tenant-owned and fail-closed.
+    /// </summary>
+    /// <remarks>
+    /// The second <em>licence + thing + date</em> root after
+    /// <c>PackAuthorisations</c>, and deliberately a second one rather than a
+    /// generalisation of it (ADR-018).
+    /// </remarks>
+    public DbSet<SiteApprovalAggregate> SiteApprovals =>
+        Set<SiteApprovalAggregate>();
+
+    /// <summary>
     /// Studies in human subjects. Tenant-owned and fail-closed.
     /// </summary>
     /// <remarks>
@@ -540,6 +567,12 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<PackAuthorisationAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<ManufacturingOperation>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<SiteApprovalAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // A tenant's registry of business relationships — even the *names*

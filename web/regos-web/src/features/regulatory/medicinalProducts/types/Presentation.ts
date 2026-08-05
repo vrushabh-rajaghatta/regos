@@ -48,6 +48,17 @@ export interface Ingredient {
   role: IngredientRole;
   /** Null when nothing was declared — routine for an excipient. */
   strength: StrengthValue | null;
+  /**
+   * Where this substance comes from, or null when nobody has said.
+   *
+   * **A different stage of the supply chain** from the sites that perform
+   * operations for the finished product (ADR-063 §2): an operation set cannot
+   * say which active came from where, and a source cannot say who packed the
+   * carton. Absent never means *unsourced*.
+   */
+  manufacturingSourceSiteId: string | null;
+  /** Joined from the site — no manufacturer name is stored anywhere. */
+  manufacturingSourceSiteName: string | null;
 }
 
 export interface Presentation {
@@ -137,6 +148,11 @@ export interface IngredientBody {
   numeratorUnitCode: string | null;
   denominatorValue: number | null;
   denominatorUnitCode: string | null;
+  /**
+   * Sent on every add *and* every restate. The aggregate takes no default on
+   * restate, because a defaulted null would silently erase provenance.
+   */
+  manufacturingSourceSiteId: string | null;
 }
 
 export { REGOS_INTERNAL } from "@/shared/types/CodedConcept";

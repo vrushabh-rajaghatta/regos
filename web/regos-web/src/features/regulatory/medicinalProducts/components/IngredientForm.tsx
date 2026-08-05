@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { useSiteDirectory } from "../../organizations/hooks/useSiteDirectory";
 import { useSubstances } from "../../substances/hooks/useSubstances";
 import { useAddIngredient } from "../hooks/useAddIngredient";
 import { useMeasurementUnits } from "../hooks/useMeasurementUnits";
@@ -64,6 +65,7 @@ export function IngredientForm({
   // organisation's own. It becomes a search when licensed terminology arrives
   // and the list stops fitting on a screen.
   const { data: substances, isLoading: loadingSubstances } = useSubstances();
+  const { data: sites } = useSiteDirectory();
   const { data: units, isLoading: loadingUnits } = useMeasurementUnits();
 
   const {
@@ -85,6 +87,7 @@ export function IngredientForm({
         : "",
       denominatorUnitCode:
         ingredient?.strength?.denominatorUnit?.code ?? NO_UNIT,
+      manufacturingSourceSiteId: ingredient?.manufacturingSourceSiteId ?? "",
     },
   });
 
@@ -99,6 +102,14 @@ export function IngredientForm({
       numeratorUnitCode: unit(values.numeratorUnitCode),
       denominatorValue: number(values.denominatorValue),
       denominatorUnitCode: unit(values.denominatorUnitCode),
+
+      // Sent on restate as well as add, and that is the point: the aggregate
+      // takes no default here, so an omitted value would erase provenance
+      // rather than leave it alone.
+      manufacturingSourceSiteId:
+        values.manufacturingSourceSiteId === ""
+          ? null
+          : (values.manufacturingSourceSiteId ?? null),
     };
 
     try {
@@ -300,6 +311,46 @@ export function IngredientForm({
           already says what it comes in. Fill it in for a concentration, like 10
           mg per 1 mL.
         </p>
+
+        <Controller
+          control={control}
+          name="manufacturingSourceSiteId"
+          render={({ field }) => (
+            <Field>
+              <FieldLabel htmlFor="ingredient-source">
+                Sourced from (optional)
+              </FieldLabel>
+
+              {/* A native select rather than the Radix one the units use: the
+                  empty option is a real choice here — "nobody has said" — and
+                  Radix refuses an empty item value, which is the whole reason
+                  NO_UNIT exists one field up. */}
+              <select
+                id="ingredient-source"
+                className="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+              >
+                <option value="">Not stated</option>
+
+                {(sites ?? []).map((site) => (
+                  <option key={site.siteId} value={site.siteId}>
+                    {site.name} — {site.countryName}
+                  </option>
+                ))}
+              </select>
+
+              {/* Why this is not the same question the market page asks. */}
+              <p className="text-xs text-muted-foreground">
+                Where this substance comes from — not where the finished product
+                is made. A product made at one site routinely takes its actives
+                from several others.
+              </p>
+            </Field>
+          )}
+        />
       </FieldGroup>
 
       {mutation.isError && (

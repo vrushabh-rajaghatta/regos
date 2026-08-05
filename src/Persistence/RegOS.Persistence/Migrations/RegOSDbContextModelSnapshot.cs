@@ -1191,6 +1191,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ManufacturingSourceSiteId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("PharmaceuticalProductDetailId")
                         .HasColumnType("uuid");
 
@@ -1210,6 +1213,42 @@ namespace RegOS.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Ingredients", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Product.Domain.Product.ManufacturingOperation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("CeasedOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("MedicinalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationSiteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("RecordedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicinalProductId");
+
+                    b.HasIndex("OrganizationSiteId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("MedicinalProductId", "OrganizationSiteId");
+
+                    b.ToTable("ManufacturingOperations", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.Product.Domain.Product.MarketStatusEntry", b =>
@@ -2283,6 +2322,38 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("RegistrationId", "OccurredOn");
 
                     b.ToTable("RegistrationStatusHistory", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.SiteApprovals.SiteApproval", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("ApprovedOn")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("OrganizationSiteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("RecordedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RegistrationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationSiteId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("RegistrationId", "OrganizationSiteId")
+                        .IsUnique();
+
+                    b.ToTable("SiteApprovals", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.ApplicationStudyCitation", b =>
@@ -4177,6 +4248,55 @@ namespace RegOS.Persistence.Migrations
                     b.Navigation("Strength");
                 });
 
+            modelBuilder.Entity("RegOS.Product.Domain.Product.ManufacturingOperation", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("MedicinalProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationSiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsOne("RegOS.ReferenceData.Domain.Terminology.CodedConcept", "Operation", b1 =>
+                        {
+                            b1.Property<Guid>("ManufacturingOperationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Code")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("OperationCode");
+
+                            b1.Property<string>("Display")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("OperationDisplay");
+
+                            b1.Property<string>("System")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("OperationSystem");
+
+                            b1.HasKey("ManufacturingOperationId");
+
+                            b1.ToTable("ManufacturingOperations");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ManufacturingOperationId");
+                        });
+
+                    b.Navigation("Operation")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RegOS.Product.Domain.Product.MarketStatusEntry", b =>
                 {
                     b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
@@ -5238,6 +5358,21 @@ namespace RegOS.Persistence.Migrations
                 {
                     b.HasOne("RegOS.Registration.Domain.Aggregates.Registration.Registration", null)
                         .WithMany("History")
+                        .HasForeignKey("RegistrationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.SiteApprovals.SiteApproval", b =>
+                {
+                    b.HasOne("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationSiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Registration.Domain.Aggregates.Registration.Registration", null)
+                        .WithMany()
                         .HasForeignKey("RegistrationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

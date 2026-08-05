@@ -37,64 +37,24 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | **EPIC-010a** | **Substance & composition** — the IDMP root: shared substances, presentations, composition, the component tree, and the query the epic existed for — *"which products contain substance X?"* | 🟢 Complete | 5 stories + [ADR-058](../adr/ADR-058-substances-are-shared-facts-ingredients-are-roles.md); merged to `main` (PR #18) · **EPIC-017's change-case prediction corrected there, not only here** · **does not imply IDMP/xEVMPD readiness (D1)** → [`epics/EPIC-010a-substance-and-composition.md`](epics/EPIC-010a-substance-and-composition.md) |
 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations, and the question it existed for — *"which markets is this product approved for this condition in?"* | 🟢 Complete | 6 stories, DoD audited line by line; [ADR-059](../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) · **artwork shipped as a label type rather than a child aggregate — capability met, shape changed** · **nothing links a label version to the statements it publishes, and that is a decision (ADR-059 §3)** → [`epics/EPIC-018-labeling-and-product-information.md`](epics/EPIC-018-labeling-and-product-information.md) |
 | **EPIC-010b** | **Packs & supply** — the pack, its contents, how it is supplied, how long it keeps, what it looks like, and the question it existed for — *"which packs are authorised in this market, and how are they supplied?"* | 🟢 Complete | 5 stories, DoD line by line; [ADR-061](../adr/ADR-061-a-pack-is-how-a-medicine-is-supplied.md) — **amended at S001, not superseded**, when the dependency graph refused the signed-off design · **closes 5 of cluster B+C's 7; `OtherCharacteristics` and `Devices` refused, not deferred** · merged to `main` (PR #20) → [`epics/EPIC-010b-packs-and-supply.md`](epics/EPIC-010b-packs-and-supply.md) |
+| **EPIC-022** | **Country depth** — a country stops being a label on a dropdown: ISO identity, regulatory groupings, expected label languages, accepted stability conditions | 🟢 Complete | 5 stories, DoD line by line; [ADR-062](../adr/ADR-062-a-language-is-a-world-fact.md) · E36–E39 · **D6 amended in place before it was built** — WHO publishes the stability *condition* a market accepts and no climatic zone, and India's 30 °C/70% RH is neither IVA nor IVB (E39) · **closes no RIM object, as forecast** — one object 33% → ~92% · merged to `main` (PR #22) → [`epics/EPIC-022-country-depth.md`](epics/EPIC-022-country-depth.md) |
+| **EPIC-010c** | **Manufacturing** — where a product is made, which sites its licences approve, where each ingredient comes from, and the question the epic existed for: *"is the site we manufacture at on the licence?"* | 🟢 Complete | 4 stories, DoD line by line; [ADR-063](../adr/ADR-063-where-a-product-is-made-is-a-product-fact.md) — **the first `Product.Domain` → `Organization.Domain` edge**, and D2 decided D7 before anybody looked · **builds 1 of cluster D's 4 RIM objects and refuses 3** — the dossier already owns manufacturing narrative at 3.2.S.2 · **three recorded predictions fired**, none of them a count · a misdiagnosed "flake" turned out to be a missing `ORDER BY` tie-breaker → [`epics/EPIC-010c-manufacturing.md`](epics/EPIC-010c-manufacturing.md) |
 
 ---
 
 ## Now
 
-**EPIC-022 — Country depth. 🟢 Complete.**
-Pulled into Now 2026-08-05, after EPIC-010b merged to `main` (PR #20). Phase 1
-was written before 010b closed and is settled; **Phase 2 was signed off on
-pull-in** and is recorded in
-[`epics/EPIC-022-country-depth.md`](epics/EPIC-022-country-depth.md). The branch
-is `epic/EPIC-022-country-depth`.
+**Nothing taken.** EPIC-010c is complete and awaiting merge; it is in
+[Shipped epics](#shipped-epics). **EPIC-010 is finished** — 10a, 10b and 10c are
+all shipped, which closes the Product depth work.
 
-> **All five stories and the [retro](epics/EPIC-022-country-depth.md#retrospective)
-> are done; the branch is awaiting merge.** Two things deliberately **not** done
-> here, because they are planning evolution and land on `main` between epics:
-> moving this row into [Shipped epics](#shipped-epics) with what comes next, and
-> raising the **migration-drift** item — *the automated test environment should
-> always execute against a schema produced from the current migration chain* —
-> as its own backlog entry rather than a bullet inside EPIC-015.
-
-> **`Country` is the only reference entity whose every attribute is for
-> display.** `Code` and `Name` are what you show in a dropdown; climatic zone,
-> languages and regions are what other capabilities **decide** by.
-
-| | |
-|---|---|
-| **ADR-062** | 🟢 before S003 — language stops being a display fact, which its own docstring predicted would be the trigger |
-| **S001** | 🟢 ISO identity — `IsoAlpha3Code` + `IsoName` on all eight, surfaced wherever a country is shown |
-| **S002** | 🟢 Regions — collection in, `RegionCode` out; *"which of our markets are in the EU?"* |
-| **S003** | 🟢 Languages — the collection, the `LanguageCode` move, and required-vs-recorded label languages, advisory |
-| **S004** | 🟢 Stability conditions — **including `ShelfLifeStorage.TestedAt`**, and the match, reported not blocked. **Conditions, not zones**: the source was fetched and killed the planned abstraction (E39, D6 amended in place) |
-| **S005** | 🟢 Capstone — one product, two markets, identical inputs; every difference traced to the country row. Evidence complete, seed verified, retro |
-
-**Flagged in the plan, not hidden:**
-
-- **It closes no RIM object.** One object goes from 33% to ~92% and
-  [the runway](#the-runway) figure does not move. Coverage measures breadth;
-  this is depth, and the case is the two debts rather than the number.
-- **S004 was where to stop if it ran long** — the only story with an external
-  prerequisite *and* the only one touching a shipped aggregate. It was not
-  stopped: the prerequisite was fetched, and reading it changed the design
-  before any code existed.
-- **The prerequisite fired, and the answer was not a value — it was the
-  model.** The plan said India being **IVB rather than IVA** was the one thing
-  nobody could reconstruct from memory. **India is 30 °C/70% RH, which is
-  neither.** WHO publishes the condition each country accepts and no zone letter
-  per country; ICH withdrew Q1F. So RegOS stores conditions and no zone at all
-  (**E39**, [D6 amended in place](epics/EPIC-022-country-depth.md#d6--amended-in-place-before-a-line-of-s004-was-written)).
-  *When an authoritative source disagrees with the abstraction, the abstraction
-  changes — not the source.*
-
-> **The carve-out closed before Phase 2 began.** The plan asked EPIC-010b S003
-> to add `ShelfLifeStorage.Region` while that type was still being authored.
-> **It did not** — S003 shipped the night before this plan was written, scoped
-> to exactly the two concepts it was signed off for. The feared cost has not
-> materialised: there is **no production data to backfill**, so the migration is
-> one nullable coded field. S004 owns the field and the match together, which
-> makes it the single place climate becomes actionable.
+> Two things deliberately **not** done on the epic branch, because planning
+> evolution lands on `main` between epics: choosing what comes next, and
+> raising the **architecture-hardening** items this epic and EPIC-022 both
+> found — an executable check on the bounded-context dependency graph, and one
+> on whether a query handler's `orderby` is total. Both belong with
+> [EPIC-023](#epic-023--the-test-suite-runs-against-its-own-schema): invariants
+> the project states and does not check.
 
 ### External prerequisites
 
@@ -166,7 +126,8 @@ whoever can go and fetch one.*
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
 | 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
-| 2 | **EPIC-010c** | **Manufacturing** — the most self-contained cluster; can slip without blocking anything. **Still a sketch**, re-cut on pull-in | ⚪ Not Started | EPIC-010a ✅ · EPIC-016 ✅ |
+| — | ~~**EPIC-010c**~~ | **Manufacturing** | 🟡 **In [Now](#now) since 2026-08-05** | — |
+| ? | **EPIC-023** | **The test suite runs against its own schema** — *the automated test environment should always execute against a schema produced from the current migration chain* | ⚪ Not Started | nothing — it blocks on no epic and no epic blocks on it. **Added 2026-08-05, deliberately unnumbered: placement in this table is the founder's.** Three observations, and [why the third is the one that settles it](#epic-023--the-test-suite-runs-against-its-own-schema) |
 
 ### Why EPIC-022 enters at the top — and the part of it that should not wait
 
@@ -190,10 +151,12 @@ It pays two debts nothing else will:
 > **EPIC-010b left this table on 2026-08-04** and shipped on 2026-08-05, taken on
 > the recommendation below.
 
-> **EPIC-022 left this table on 2026-08-05** and is in [Now](#now). It entered at
-> the top on the argument below, one clause of which — the carve-out — was
-> overtaken by events before it was acted on. Kept rather than deleted: a
-> corrected prediction is worth more than a tidy document.
+> **EPIC-022 left this table on 2026-08-05** and shipped the same day (PR #22).
+> It entered at the top on the argument below, **two** clauses of which were
+> overtaken before they were acted on: the carve-out, and the external
+> prerequisite — which named ICH Q1A(R2) for climatic-zone boundaries that
+> document does not contain. Both kept rather than deleted: a corrected
+> prediction is worth more than a tidy document.
 
 > **EPIC-018 left this table on 2026-08-04** and shipped the same day. It sat at
 > the top of it from the day the runway was written, and nothing ever displaced
@@ -299,30 +262,47 @@ and value calls are the founder's.
 | **EPIC-012** | **Reference data — the browser, then the governance.** Two surfaces: **Reference** (read-only lookup, inside the work) and **Administration** (steward CRUD, change control, tenant-authored/cloned templates & document types) | ⚪ Not Started | deferred write-side from EPIC-001; grows with every vocabulary EPIC-006/010/018 add · **now also owns the read half** — nine vocabularies and ~18 governed lists exist and **no route in the SPA reaches any of them** · **founder's mockup recorded 2026-08-05** → [`epics/EPIC-012-reference-data-authoring-and-governance.md`](epics/EPIC-012-reference-data-authoring-and-governance.md) |
 | **EPIC-013** | **Audit & activity history** — cross-cutting audit trail (`LastModifiedOn` was deferred to here) | ⚪ Not Started | see the status-history rule below — most of this should never reach here |
 | **EPIC-014** | **Notifications** — email & in-app | ⚪ Not Started | EPIC-005 (expiry), 006 (due dates), 020 (slipping steps) all defer their "tell someone" half to here |
-| **EPIC-015** | **Production readiness & security** — rate limiting (SEC-001), email delivery, token-table cleanup jobs, **a CI job proving a clean clone builds**, **a per-run database for the application tests** | ⚪ Not Started | Two pieces of carried debt, and they are the **same class**: a thing nobody runs, so nothing says it is broken. **(1)** The clean-clone check, from EPIC-006 S002 — an unanchored `storage/` in `.gitignore` kept `IFileStorage.cs` and `LocalFileStorage.cs` out of the repository entirely; local builds passed, a fresh clone did not, and nothing said so. **(2)** The test database, from EPIC-022 S002 — see below. |
+| **EPIC-015** | **Production readiness & security** — rate limiting (SEC-001), email delivery, token-table cleanup jobs, **a CI job proving a clean clone builds** | ⚪ Not Started | Carried debt of one class: a thing nobody runs, so nothing says it is broken. **(1)** The clean-clone check, from EPIC-006 S002 — an unanchored `storage/` in `.gitignore` kept `IFileStorage.cs` and `LocalFileStorage.cs` out of the repository entirely; local builds passed, a fresh clone did not, and nothing said so. ~~**(2)** The test database~~ → **moved to [EPIC-023](#next) on 2026-08-05**, after a third independent observation made it evidenced enough to schedule on its own rather than wait for a production-readiness epic. |
 
 ---
 
-### The application tests share the developer's database
+### EPIC-023 — the test suite runs against its own schema
 
-*Found by EPIC-022 S002, 2026-08-05. Recorded here rather than in that epic
-because it is nobody's story and everybody's problem.*
+*Raised as its own item on 2026-08-05, after a **third** independent observation
+inside one epic. It began as a bullet inside EPIC-015 and was moved out because
+it is now evidenced rather than suspected — and because it is nobody's story and
+everybody's problem.*
+
+> **The requirement, stated once:** *the automated test environment should
+> always execute against a schema produced from the current migration chain.*
+>
+> Per-run databases are the likely implementation. **The requirement is what
+> matters**, and it is what a future reader should hold this against.
 
 **27 test files hard-code `Database=regos`** — the developer's own working
 database. Nothing migrates it, so the suite silently assumes somebody already
 did.
 
-It had drifted **five migrations** behind before anything noticed, and the
-reason it went unnoticed is the interesting part: **a stale schema only turns a
-test red when a migration touches a read path some test already exercises.**
-EPIC-010b added three tables and stayed green throughout, because its new tests
-were domain tests and its new tables were read by nothing older. The first
-change to an existing read path — `ListRegistrationMarkets` reaching
+**Three observations, and the third is the one that settles it:**
+
+| | What it showed |
+|---|---|
+| **EPIC-022 S001** | the seeder is insert-if-empty, so a migration must carry its own backfill — and today those backfills are only ever proved by hand |
+| **EPIC-022 S002** | the database had drifted **five migrations** behind and **18 of 19 suites went red** |
+| **EPIC-022 S004** | the database was **one migration behind and the suite stayed green** |
+
+The first two look like an operational lapse. The third is the actual defect:
+**a stale schema only turns a test red when a migration happens to touch a read
+path some test already exercises.** EPIC-010b added three tables and stayed
+green throughout, because its new tests were domain tests and its new tables
+were read by nothing older; S004 added two more and did the same. The first
+change to an *existing* read path — `ListRegistrationMarkets` reaching
 `CountryRegions` — went red immediately.
 
-> **The suite does not test the assumption it depends on:** that the schema in
-> the database matches the migrations in source control. It assumes somebody
-> has already made that true.
+> **Green means "nothing collided", not "the schema is current".** The suite
+> does not test the assumption it depends on: that the schema in the database
+> matches the migrations in source control. It assumes somebody has already made
+> that true — and when they have not, it usually cannot tell.
 
 **The direction is a per-run database**, not auto-migration on startup. Both
 make today's symptom go away; only one fixes the cause:
@@ -367,7 +347,7 @@ Three divergences are **not** gaps and should be defended, not closed:
 | 5 | **EPIC-018** Labeling & product information | 10 | → ~55% | 🟢 |
 | — | *taken out of order 2026-08-03* — EPIC-019 shipped before 018, because Module 4 was blocked and labeling was not | | | |
 | 6 | **EPIC-019** Study registry | 2 | → ~59% | 🟢 |
-| 7 | **EPIC-010** IDMP depth (10a 🟢 / 10b / 10c) | 16 | → ~87% | 🟡 |
+| 7 | **EPIC-010** IDMP depth (10a 🟢 / 10b 🟢 / 10c 🟢) | **11 built · 5 refused** | *see below* | 🟢 |
 | 8 | **EPIC-020** Process & planning | 6 | → ~98% | ⚪ |
 
 > **EPIC-018's ten, counted honestly.** Nine aggregates cover the ten RIM
@@ -384,6 +364,25 @@ Three divergences are **not** gaps and should be defended, not closed:
 > regulatory-evidence hypotheses EPIC-004 carried are exactly the part this
 > table cannot see. Taking 007a first trades a coverage step for the first
 > external check on work already done.
+
+> **EPIC-010's figure is a count, not a percentage, and that is the point.**
+> *Restated 2026-08-05 at 010c's planning.* Two of its three splits refused
+> objects **on the record, each with a reason and a named falsifier**:
+> `OtherCharacteristics` and `Devices` (10b), and `Manufacturing Process`,
+> `Manufacturing Process Step` and `Mfg Process Step Materials` (10c, because
+> the blueprint already carries that narrative as document sections).
+>
+> **RIM object count is a map of the domain, not an implementation target.**
+> *"87% complete"* invites a reader to go looking for the missing 13%; **"11
+> built, 5 refused"** says what happened.
+>
+> **The convention, stated once so it is not read as special pleading for one
+> epic:** *where architectural review deliberately refuses parts of the reference
+> model, runway reporting distinguishes **implemented** objects from
+> **intentionally refused** objects, rather than reporting a completion
+> percentage.* A refusal carrying a reason and a written trigger is a stronger
+> artifact than a number, and a percentage silently converts one into the
+> other.
 
 Remaining after all eight: `Product Family` (deliberately deferred — inserting a tier *above* a root is cheap) and a handful of RIM relational artifacts we model differently.
 

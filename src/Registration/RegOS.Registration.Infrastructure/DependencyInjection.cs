@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Registration.Application.Services;
 using RegOS.Registration.Domain.Aggregates.PackAuthorisations;
+using RegOS.Registration.Domain.Aggregates.SiteApprovals;
 using RegOS.Registration.Domain.Aggregates.Registration;
 using RegOS.Registration.Infrastructure.Repositories;
 using RegOS.Registration.Infrastructure.Services;
@@ -17,6 +18,9 @@ public static class DependencyInjection
 
         services.AddScoped<
             IPackAuthorisationRepository, PackAuthorisationRepository>();
+
+        services.AddScoped<
+            ISiteApprovalRepository, SiteApprovalRepository>();
 
         services.AddScoped<IRegistrationCreationPolicy, RegistrationCreationPolicy>();
 

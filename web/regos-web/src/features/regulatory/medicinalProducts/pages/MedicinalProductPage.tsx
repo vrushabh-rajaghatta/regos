@@ -14,6 +14,9 @@ import { MarketClinicalStatements } from "@/features/regulatory/indications/comp
 import { MarketInteractions } from "@/features/regulatory/indications/components/MarketInteractions";
 import { MarketIndications } from "@/features/regulatory/indications/components/MarketIndications";
 import { MarketLabels } from "@/features/regulatory/labels/components/MarketLabels";
+import { MarketApprovedSites } from "@/features/regulatory/manufacturing/components/MarketApprovedSites";
+import { MarketManufacturing } from "@/features/regulatory/manufacturing/components/MarketManufacturing";
+import { MarketSiteAlignment } from "@/features/regulatory/manufacturing/components/MarketSiteAlignment";
 import { MarketPacks } from "@/features/regulatory/packs/components/MarketPacks";
 
 import { AddTradeNameDialog } from "../components/AddTradeNameDialog";
@@ -142,6 +145,29 @@ export function MedicinalProductPage() {
           registrationNumber: row.registrationNumber,
         }))}
       />
+
+      {/* Where the work happens (ADR-063). After the packs, because it answers
+          a question about the same things: those are what the market sells,
+          this is who makes them — and the two are compared against the licence
+          rather than against each other. */}
+      <MarketManufacturing medicinalProductId={market.medicinalProductId} />
+
+      {/* Immediately after it, and deliberately not merged into it: what we do
+          and what the licence permits are separate statements from separate
+          sources. Comparing them is S004's job, and merging them here would
+          make the divergence impossible to see. */}
+      <MarketApprovedSites
+        medicinalProductId={market.medicinalProductId}
+        registrations={held.map((row) => ({
+          id: row.registrationId,
+          registrationNumber: row.registrationNumber,
+        }))}
+      />
+
+      {/* The capstone read: what happens, beside what the licences permit.
+          After both panels it compares, because it is the question they were
+          modelled to answer rather than a third way to edit them. */}
+      <MarketSiteAlignment medicinalProductId={market.medicinalProductId} />
 
       {/* What this authority approved, on its own clock. Deliberately on the
           market page and not the product's: the core label is the company's

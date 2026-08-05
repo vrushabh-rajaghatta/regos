@@ -33,6 +33,10 @@ public static class ProductInfrastructureServiceCollectionExtensions
 
         services.AddScoped<IPackageItemRepository, PackageItemRepository>();
 
+        services.AddScoped<
+            IManufacturingOperationRepository,
+            ManufacturingOperationRepository>();
+
         return services;
     }
 }

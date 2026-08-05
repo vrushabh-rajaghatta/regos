@@ -9,6 +9,7 @@ using RegOS.Api.Endpoints.OrganizationDivisions;
 using RegOS.Api.Endpoints.Platform;
 using RegOS.Api.Endpoints.PlatformAdministration;
 using RegOS.Api.Endpoints.MedicinalProducts;
+using RegOS.Api.Endpoints.Manufacturing;
 using RegOS.Api.Endpoints.Packs;
 using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.Products;
@@ -276,6 +277,16 @@ packs.MapStatePackSupply();
 packs.MapChangePackMarketingStatus();
 packs.MapPackageItems();
 
+// Where the work happens (ADR-063). Nested under the market, because a licence
+// approves sites for one market at a time.
+var manufacturing = app.MapGroup("").WithTags("Manufacturing");
+// Before the rest: /api/manufacturing-operations/vocabulary must not be read as
+// a /api/manufacturing-operations/{id} that happens to be spelled "vocabulary".
+manufacturing.MapGetManufacturingVocabulary();
+manufacturing.MapListManufacturingOperations();
+manufacturing.MapRecordManufacturingOperation();
+manufacturing.MapCeaseManufacturingOperation();
+
 var presentations = app.MapGroup("").WithTags("Presentations");
 // Before the rest: /api/presentations/vocabulary must not be read as a
 // /api/presentations/{id} that happens to be spelled "vocabulary".
@@ -381,6 +392,10 @@ registrations.MapListExpiringRegistrations();
 registrations.MapAuthorisePack();
 registrations.MapWithdrawPackAuthorisation();
 registrations.MapListAuthorisedPacks();
+registrations.MapApproveSite();
+registrations.MapWithdrawSiteApproval();
+registrations.MapListApprovedSites();
+registrations.MapListSiteAlignment();
 
 var correspondence = app.MapGroup("").WithTags("Correspondence");
 correspondence.MapRecordCorrespondence();

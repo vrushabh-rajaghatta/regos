@@ -1,6 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using RegOS.Registration.Application.Commands.ApproveSite;
 using RegOS.Registration.Application.Commands.AuthorisePack;
+using RegOS.Registration.Application.Commands.WithdrawSiteApproval;
+using RegOS.Registration.Application.Queries.ListApprovedSites;
+using RegOS.Registration.Application.Queries.ListSiteAlignment;
 using RegOS.Registration.Application.Commands.ChangeRegistrationStatus;
 using RegOS.Registration.Application.Commands.CreateRegistration;
 using RegOS.Registration.Application.Commands.RecordRegistrationApproval;
@@ -36,6 +40,10 @@ public static class DependencyInjection
         services.AddScoped<ListExpiringRegistrationsHandler>();
 
         services.AddScoped<AuthorisePackHandler>();
+        services.AddScoped<ApproveSiteHandler>();
+        services.AddScoped<WithdrawSiteApprovalHandler>();
+        services.AddScoped<ListApprovedSitesHandler>();
+        services.AddScoped<ListSiteAlignmentHandler>();
 
         services.AddScoped<WithdrawPackAuthorisationHandler>();
 

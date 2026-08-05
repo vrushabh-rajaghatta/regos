@@ -8,6 +8,9 @@ using RegOS.Product.Application.Commands.DeactivateMedicinalProduct;
 using RegOS.Product.Application.Commands.AddComponent;
 using RegOS.Product.Application.Commands.AddIngredient;
 using RegOS.Product.Application.Commands.AddPack;
+using RegOS.Product.Application.Commands.CeaseManufacturingOperation;
+using RegOS.Product.Application.Commands.RecordManufacturingOperation;
+using RegOS.Product.Application.Queries.ListManufacturingOperations;
 using RegOS.Product.Application.Commands.AddPackageItem;
 using RegOS.Product.Application.Commands.MovePackageItem;
 using RegOS.Product.Application.Commands.RemovePackageItem;
@@ -74,6 +77,10 @@ public static class ProductApplicationServiceCollectionExtensions
         services.AddScoped<MoveComponentHandler>();
         services.AddScoped<RemoveComponentHandler>();
         services.AddScoped<ListComponentsHandler>();
+
+        services.AddScoped<RecordManufacturingOperationHandler>();
+        services.AddScoped<CeaseManufacturingOperationHandler>();
+        services.AddScoped<ListManufacturingOperationsHandler>();
 
         services.AddScoped<AddPackHandler>();
         services.AddScoped<RestatePackHandler>();

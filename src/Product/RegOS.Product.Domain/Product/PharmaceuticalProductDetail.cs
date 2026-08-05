@@ -1,3 +1,4 @@
+using RegOS.Organization.Domain.Aggregates.OrganizationSite;
 using RegOS.ReferenceData.Domain.Substances;
 using RegOS.ReferenceData.Domain.Terminology;
 using RegOS.SharedKernel.Abstractions;
@@ -254,7 +255,10 @@ public sealed class PharmaceuticalProductDetail
     /// stated twice, and it would double every quantity a reader adds up.
     /// </remarks>
     public Ingredient AddIngredient(
-        SubstanceId substanceId, IngredientRole role, Strength? strength)
+        SubstanceId substanceId,
+        IngredientRole role,
+        Strength? strength,
+        OrganizationSiteId? manufacturingSourceSiteId = null)
     {
         if (substanceId is null)
             throw new DomainException(IngredientErrors.SubstanceRequired);
@@ -264,7 +268,8 @@ public sealed class PharmaceuticalProductDetail
                 IngredientErrors.SubstanceAlreadyInComposition);
 
         var ingredient = new Ingredient(
-            IngredientId.New(), substanceId, role, strength);
+            IngredientId.New(), substanceId, role, strength,
+            manufacturingSourceSiteId);
 
         _ingredients.Add(ingredient);
 
@@ -275,6 +280,14 @@ public sealed class PharmaceuticalProductDetail
     /// Corrects an ingredient's role or its strength.
     /// </summary>
     /// <remarks>
+    /// <b>The source has no default here, deliberately.</b> Every other optional
+    /// parameter in this file defaults; this one does not, because a restate
+    /// rebuilds the ingredient and a defaulted null would <b>silently erase
+    /// provenance</b> for any caller that had not thought about it. Making it
+    /// explicit costs one argument and turns a quiet data loss into a compiler
+    /// error. Passing null is still allowed — it means <em>we no longer say</em>,
+    /// which under dual sourcing is a real thing to say.
+    /// <para>
     /// <b>The substance is not changeable, and that is what makes remove
     /// usable.</b> A different substance is a different ingredient, so swapping
     /// one is add-then-remove — and because the new active is added first, the
@@ -282,7 +295,10 @@ public sealed class PharmaceuticalProductDetail
     /// substance would leave no way to tell a correction from a replacement.
     /// </remarks>
     public void RestateIngredient(
-        IngredientId ingredientId, IngredientRole role, Strength? strength)
+        IngredientId ingredientId,
+        IngredientRole role,
+        Strength? strength,
+        OrganizationSiteId? manufacturingSourceSiteId)
     {
         var existing = _ingredients.FirstOrDefault(x => x.Id == ingredientId)
             ?? throw new NotFoundException(IngredientErrors.NotFound);
@@ -294,7 +310,8 @@ public sealed class PharmaceuticalProductDetail
         // strength" rule is checked by the one constructor that owns it rather
         // than restated here.
         var corrected = new Ingredient(
-            existing.Id, existing.SubstanceId, role, strength);
+            existing.Id, existing.SubstanceId, role, strength,
+            manufacturingSourceSiteId);
 
         _ingredients[_ingredients.IndexOf(existing)] = corrected;
     }

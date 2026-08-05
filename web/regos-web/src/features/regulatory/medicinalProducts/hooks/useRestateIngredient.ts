@@ -17,6 +17,11 @@ export function useRestateIngredient(
         numeratorUnitCode: input.numeratorUnitCode,
         denominatorValue: input.denominatorValue,
         denominatorUnitCode: input.denominatorUnitCode,
+
+        // Forwarded explicitly, like every other field: the server takes no
+        // default for it, so dropping it here would erase provenance on every
+        // correction.
+        manufacturingSourceSiteId: input.manufacturingSourceSiteId,
       }),
 
     onSuccess: () => {

@@ -6,6 +6,12 @@
          Organization.Domain and RegulatoryApplication.Domain already have:
          reference data is world facts every context reads. -->
     <ProjectReference Include="..\..\ReferenceData\RegOS.ReferenceData.Domain\RegOS.ReferenceData.Domain.csproj" />
+    <!--
+      ADR-063. Product may name an OrganizationSite; Organization must never
+      name a Product. That reverse edge is permanently closed, and it is the
+      thing to check if anyone proposes hosting a product fact on a site.
+    -->
+    <ProjectReference Include="..\..\Organization\RegOS.Organization.Domain\RegOS.Organization.Domain.csproj" />
   </ItemGroup>
 
 </Project>
