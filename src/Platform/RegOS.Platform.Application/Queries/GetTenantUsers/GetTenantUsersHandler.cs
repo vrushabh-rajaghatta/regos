@@ -32,6 +32,7 @@ public sealed class GetTenantUsersHandler
             .AsNoTracking()
             .Where(x => x.TenantId == tenantId.Value)
             .OrderByDescending(x => x.CreatedOn)
+            .ThenBy(x => x.Id)
             .Select(x => new TenantUserListItem(
                 x.Id,
                 x.FirstName,

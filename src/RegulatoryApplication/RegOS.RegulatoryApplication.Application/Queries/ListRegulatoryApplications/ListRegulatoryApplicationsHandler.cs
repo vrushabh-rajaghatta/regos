@@ -30,7 +30,7 @@ public sealed class ListRegulatoryApplicationsHandler
                 on application.AuthorityId equals authority.Id
             join organization in _dbContext.Organizations
                 on application.ApplicantOrganizationId equals organization.Id
-            orderby application.Name
+            orderby application.Name, application.Id
             select new
             {
                 application.Id,

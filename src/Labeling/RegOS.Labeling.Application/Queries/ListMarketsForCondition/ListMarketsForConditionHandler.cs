@@ -59,7 +59,7 @@ public sealed class ListMarketsForConditionHandler
             where market.GlobalProductId == query.GlobalProductId
             join country in _dbContext.Countries.AsNoTracking()
                 on market.CountryId equals country.Id
-            orderby country.Name
+            orderby country.Name, indication.Id
             select new
             {
                 MarketId = market.Id,

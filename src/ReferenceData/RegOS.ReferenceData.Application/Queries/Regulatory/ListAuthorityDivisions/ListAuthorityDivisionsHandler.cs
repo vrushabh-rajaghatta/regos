@@ -22,6 +22,7 @@ public sealed class ListAuthorityDivisionsHandler
             .AsNoTracking()
             .Where(x => x.AuthorityId == query.AuthorityId && x.IsActive)
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Select(x => new AuthorityDivisionDto(
                 x.Id.Value,
                 x.AuthorityId.Value,

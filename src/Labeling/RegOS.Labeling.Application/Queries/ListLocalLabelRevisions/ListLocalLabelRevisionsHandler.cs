@@ -35,6 +35,7 @@ public sealed class ListLocalLabelRevisionsHandler
             .Where(x => x.Id == query.LocalLabelId)
             .SelectMany(x => x.Revisions)
             .OrderByDescending(x => x.RevisionNumber)
+            .ThenBy(x => x.Id)
             .Select(revision => new LocalLabelRevisionSummary(
                 revision.Id.Value,
                 revision.RevisionNumber,

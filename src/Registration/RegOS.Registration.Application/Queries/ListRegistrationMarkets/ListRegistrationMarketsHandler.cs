@@ -64,6 +64,9 @@ public sealed class ListRegistrationMarketsHandler
             .Select(country => new
             {
                 country.Id,
+                // Deterministic: a region is a CodedConcept and Code is its
+                // identity — an owned collection cannot hold the same code
+                // twice for one country, so this ordering is already total.
                 Codes = country.Regions
                     .OrderBy(region => region.Code)
                     .Select(region => region.Code)
@@ -75,6 +78,7 @@ public sealed class ListRegistrationMarketsHandler
 
         return rows
             .OrderBy(row => row.Name)
+            .ThenBy(row => row.CountryId)
             .Select(row => new RegistrationMarket(
                 row.CountryId.Value,
                 row.Name,

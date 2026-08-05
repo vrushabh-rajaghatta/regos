@@ -144,6 +144,7 @@ public sealed class ListDueWorkHandler
             .OrderBy(x => x.DueOn is null)
             .ThenBy(x => x.DueOn)
             .ThenBy(x => x.Kind)
+            .ThenBy(x => x.Id)
             .ToList();
     }
 }

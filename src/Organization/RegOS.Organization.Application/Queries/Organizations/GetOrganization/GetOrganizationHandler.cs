@@ -70,6 +70,8 @@ public sealed class GetOrganizationHandler
                         scheme?.Name ?? string.Empty,
                         identifier.Value);
                 })
+                // Deterministic: an organization carries one identifier per
+                // scheme — the unique index on (OrganizationId, SchemeId).
                 .OrderBy(identifier => identifier.SchemeCode)]);
     }
 }

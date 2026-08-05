@@ -30,6 +30,7 @@ public sealed class ListUndesirableEffectsHandler
             .AsNoTracking()
             .Where(x => x.MedicinalProductId == query.MedicinalProductId)
             .OrderBy(x => x.CreatedOnUtc)
+            .ThenBy(x => x.Id)
             .Select(statement => new UndesirableEffectSummary(
                 statement.Id.Value,
                 statement.Effect.Code,

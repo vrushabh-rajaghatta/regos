@@ -44,6 +44,7 @@ public sealed class ApplicationNumberPolicy : IApplicationNumberPolicy
             .Where(x => x.ApplicationId == application.Id
                 && x.SequenceNumber != null)
             .OrderBy(x => x.SequenceNumber)
+            .ThenBy(x => x.Id)
             .Select(x => x.SequenceNumber)
             .FirstOrDefaultAsync(cancellationToken);
 

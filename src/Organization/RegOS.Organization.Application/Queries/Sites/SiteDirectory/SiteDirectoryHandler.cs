@@ -52,7 +52,7 @@ public sealed class SiteDirectoryHandler
                 on site.OrganizationId equals organization.Id
             join countryRow in _dbContext.Countries
                 on site.Address.CountryId equals countryRow.Id
-            orderby countryRow.Name, organization.LegalName, site.Name
+            orderby countryRow.Name, organization.LegalName, site.Name, site.Id
             select new
             {
                 site,
@@ -77,6 +77,8 @@ public sealed class SiteDirectoryHandler
                 row.site.Status.ToString(),
                 row.site.StatusDate,
                 [.. row.site.Identifiers
+                    // Deterministic: one identifier per scheme — the unique
+                    // index on (OrganizationSiteId, SchemeId).
                     .OrderBy(identifier => schemes.GetValueOrDefault(
                         identifier.SchemeId, string.Empty))
                     .Select(identifier => new SiteIdentifierDto(

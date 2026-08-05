@@ -37,7 +37,7 @@ public sealed class ListContinuableSubmissionsHandler
                 && submission.OriginatingSubmissionId == null
             join submissionType in _dbContext.SubmissionTypes
                 on submission.SubmissionTypeId equals submissionType.Id
-            orderby submission.SequenceNumber
+            orderby submission.SequenceNumber, submission.Id
             select new ContinuableSubmission(
                 submission.Id.Value,
                 submission.SequenceNumber!.Value,

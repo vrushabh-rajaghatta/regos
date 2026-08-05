@@ -76,6 +76,8 @@ public static class ContactProjection
                             ?? string.Empty,
                         roles.GetValueOrDefault(assignment.RoleId)?.Name
                             ?? string.Empty))
+                    // Deterministic: a contact holds each role once — the
+                    // unique index on (ContactId, RoleId).
                     .OrderBy(x => x.Name)],
                 [.. contact.Emails.Select(x => x.Address)],
                 [.. contact.Phones.Select(x =>

@@ -22,6 +22,7 @@ public sealed class ListDocumentTypesHandler
             .AsNoTracking()
             .Where(x => x.IsActive)
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Select(x => new DocumentTypeDto(
                 x.Id,
                 x.Code,

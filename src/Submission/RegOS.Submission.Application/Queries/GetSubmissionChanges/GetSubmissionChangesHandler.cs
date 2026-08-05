@@ -71,6 +71,8 @@ public sealed class GetSubmissionChangesHandler
                 names.SectionLabel(x.TemplateSectionId),
                 null,
                 names.ReplacedVersionNumber(x.DeletesSubmissionDocumentId))))
+            // Deterministic: ends on the document name, and a submission
+            // holds one placement per (section, document) pair.
             .OrderBy(x => x.SectionLabel, StringComparer.Ordinal)
             .ThenBy(x => x.DocumentName, StringComparer.Ordinal)
             .ToList();

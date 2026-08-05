@@ -32,6 +32,7 @@ public sealed class ContactDirectoryHandler
             .Include(x => x.Phones)
             .OrderBy(x => x.LastName)
             .ThenBy(x => x.FirstName)
+            .ThenBy(x => x.Id)
             .ToListAsync(cancellationToken);
 
         return await ContactProjection.ProjectAsync(

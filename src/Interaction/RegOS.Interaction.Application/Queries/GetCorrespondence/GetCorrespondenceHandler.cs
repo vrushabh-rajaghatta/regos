@@ -72,6 +72,7 @@ public sealed class GetCorrespondenceHandler
                         : null,
                     x.Correspondence.Attachments
                         .OrderBy(a => a.UploadedOnUtc)
+                        .ThenBy(a => a.Id)
                         .Select(a => new CorrespondenceAttachmentSummary(
                             a.Id.Value,
                             a.OriginalFileName,
@@ -80,6 +81,8 @@ public sealed class GetCorrespondenceHandler
                             a.UploadedOnUtc))
                         .ToList(),
                     x.Correspondence.Questions
+                        // Deterministic: a question number is unique within
+                        // one piece of correspondence.
                         .OrderBy(q => q.Number)
                         .Select(q => new CorrespondenceQuestionSummary(
                             q.Id.Value,
@@ -97,6 +100,7 @@ public sealed class GetCorrespondenceHandler
                             q.History
                                 .OrderBy(h => h.OccurredOn)
                                 .ThenBy(h => h.RecordedOnUtc)
+                                .ThenBy(h => h.Id)
                                 .Select(h => new QuestionHistoryEntry(
                                     h.Status.ToString(),
                                     h.OccurredOn,

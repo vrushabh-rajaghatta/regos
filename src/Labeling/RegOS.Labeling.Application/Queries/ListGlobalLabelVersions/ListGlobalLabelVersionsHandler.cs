@@ -26,6 +26,7 @@ public sealed class ListGlobalLabelVersionsHandler
             .Where(x => x.Id == query.GlobalLabelId)
             .SelectMany(x => x.Versions)
             .OrderByDescending(x => x.VersionNumber)
+            .ThenBy(x => x.Id)
             .Select(version => new GlobalLabelVersionSummary(
                 version.Id.Value,
                 version.VersionNumber,

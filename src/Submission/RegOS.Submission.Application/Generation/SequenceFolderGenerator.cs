@@ -350,6 +350,8 @@ public sealed class SequenceFolderGenerator
         // that.
         foreach (var assignment in submission.Roles
             .Where(x => roleCodes.ContainsKey(x.RoleId))
+            // Deterministic: ends on ContactId below, and a contact is named
+            // once per role — the unique index on (ContactId, RoleId).
             .OrderBy(x => roleCodes[x.RoleId], StringComparer.Ordinal)
             .ThenBy(x => x.ContactId.Value))
         {
@@ -375,6 +377,8 @@ public sealed class SequenceFolderGenerator
 
             var telephones = new List<RegionalTelephone>();
 
+            // Deterministic: a person's phone numbers are distinct, and an
+            // in-memory sort is stable in any case.
             foreach (var phone in person.Phones.OrderBy(
                 x => x.Number, StringComparer.Ordinal))
             {
@@ -395,6 +399,8 @@ public sealed class SequenceFolderGenerator
                 telephones,
                 [.. person.Emails
                     .Select(x => x.Address)
+                    // Deterministic: sorting distinct address strings by their own
+                    // value — there is nothing left for a tie to be about.
                     .OrderBy(x => x, StringComparer.Ordinal)]));
         }
 
@@ -658,6 +664,9 @@ public sealed class SequenceFolderGenerator
                         priorSequences,
                         placements[deletion.TemplateSectionId].IsRegional)),
             })
+            // Deterministic: ends on the leaf id below, unique within a
+            // sequence by construction. ADR-049 requires two runs to emit the
+            // same bytes, so this file cannot afford an arbitrary tie anywhere.
             .OrderBy(x => string.Join('/', x.Leaf.ElementPath), StringComparer.Ordinal)
             .ThenBy(x => x.Leaf.Id, StringComparer.Ordinal)
             .ToList();
@@ -755,6 +764,8 @@ public sealed class SequenceFolderGenerator
         // contains rather than by what the database returned: two runs must
         // produce the same bytes in the same order (ADR-049).
         foreach (var document in placed
+            // Deterministic: folder, then document name, then the placement id
+            // below — the last is unique per placed document.
             .OrderBy(d => placements[d.TemplateSectionId!.Value].Folder,
                 StringComparer.Ordinal)
             .ThenBy(d => documentNames[d.ProductDocumentId], StringComparer.Ordinal)
@@ -849,6 +860,8 @@ public sealed class SequenceFolderGenerator
 
         foreach (var group in tagged
             .GroupBy(l => (StudyId: l.StudyId!.Value, Element: l.ElementPath[^1]))
+            // Deterministic: both keys together are the grouping key, so no two
+            // groups can share them.
             .OrderBy(g => g.Key.Element, StringComparer.Ordinal)
             .ThenBy(g => g.Key.StudyId))
         {
@@ -872,6 +885,9 @@ public sealed class SequenceFolderGenerator
             // The group's folders are ordered, so two runs agree.
             var folder = group
                 .Select(l => l.Folder)
+                // Deterministic: sorting strings by their own value and taking the
+                // smallest. Equal strings are indistinguishable, so which one
+                // First() returns cannot be observed.
                 .OrderBy(f => f, StringComparer.Ordinal)
                 .First();
 
@@ -901,6 +917,8 @@ public sealed class SequenceFolderGenerator
                         + $"#{StudyTaggingLeafId(group.Key.StudyId, group.Key.Element)}"
                     : null,
                 group
+                    // Deterministic: a relative path is unique within a sequence — two
+                    // documents cannot occupy one path.
                     .OrderBy(l => l.RelativePath, StringComparer.Ordinal)
                     .Select(l => new TaggedDocument(l.LeafId, l.FileTag))
                     .ToList()));
@@ -936,6 +954,8 @@ public sealed class SequenceFolderGenerator
 
         var chain = new Dictionary<(Guid, string), int>();
 
+        // Deterministic: a sequence number is unique within an application
+        // — the unique index on (ApplicationId, SequenceNumber).
         foreach (var sequence in earlier.OrderBy(s => s.SequenceNumber))
         {
             foreach (var document in sequence.Documents)

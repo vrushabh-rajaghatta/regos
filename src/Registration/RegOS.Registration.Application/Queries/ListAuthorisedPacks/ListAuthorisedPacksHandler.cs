@@ -53,6 +53,7 @@ public sealed class ListAuthorisedPacksHandler
             .AsNoTracking()
             .Where(pack => pack.MedicinalProductId == query.MedicinalProductId)
             .OrderBy(pack => pack.CreatedOnUtc)
+            .ThenBy(pack => pack.Id)
             .Select(pack => new
             {
                 pack.Id,
@@ -70,6 +71,7 @@ public sealed class ListAuthorisedPacksHandler
 
                 // Ordered by code rather than left to Postgres, the same call
                 // every other owned collection in this codebase makes.
+                // Deterministic: unique index on (PackagedProductId, Code).
                 StorageConditions = pack.ShelfLife.StorageConditions
                     .OrderBy(condition => condition.Code)
                     .Select(condition => condition.Display)
@@ -78,6 +80,7 @@ public sealed class ListAuthorisedPacksHandler
                 // All three parts, not only the display: these are compared
                 // against the market's conditions below, and CodedConcept's
                 // equality is (System, Code).
+                // Deterministic: unique index on (PackagedProductId, Code).
                 TestedAt = pack.ShelfLife.TestedAt
                     .OrderBy(condition => condition.Code)
                     .Select(condition => new
@@ -100,7 +103,7 @@ public sealed class ListAuthorisedPacksHandler
                      where authorisation.PackagedProductId == pack.Id
                      join registration in _dbContext.Registrations
                          on authorisation.RegistrationId equals registration.Id
-                     orderby authorisation.AuthorisedOn
+                     orderby authorisation.AuthorisedOn, authorisation.Id
                      select new
                      {
                          AuthorisationId = authorisation.Id,
@@ -153,6 +156,8 @@ public sealed class ListAuthorisedPacksHandler
 
         return new MarketAuthorisedPacks(
             [.. (country?.StabilityConditions ?? [])
+                // Deterministic: an owned collection cannot hold one code
+                // twice for a country.
                 .OrderBy(x => x.Code, StringComparer.Ordinal)
                 .Select(x => x.Display)],
             packs);

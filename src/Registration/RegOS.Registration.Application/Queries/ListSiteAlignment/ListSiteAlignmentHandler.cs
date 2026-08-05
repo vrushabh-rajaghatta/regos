@@ -87,16 +87,22 @@ public sealed class ListSiteAlignmentHandler
 
         return sites
             .OrderBy(site => site.Name, StringComparer.Ordinal)
+            .ThenBy(site => site.Id)
             .Select(site =>
             {
                 var performed = operations
                     .Where(x => x.OrganizationSiteId == site.Id)
                     .Select(x => x.Display)
+                    // Deterministic: sorting strings by their own value —
+                    // equal ones are indistinguishable in the output.
                     .OrderBy(x => x, StringComparer.Ordinal)
                     .ToList();
 
                 var named = approvals
                     .Where(x => x.OrganizationSiteId == site.Id)
+                    // Deterministic: an approval is unique per
+                    // (RegistrationId, OrganizationSiteId), and this list is
+                    // already narrowed to one site.
                     .OrderBy(x => x.ApprovedOn)
                     .Select(x => new SiteAlignmentApproval(
                         x.RegistrationNumber, x.ApprovedOn))

@@ -20,6 +20,7 @@ public sealed class ListCorrespondenceTypesHandler
             .AsNoTracking()
             .Where(x => x.IsActive)
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Select(x => new CorrespondenceTypeDto(
                 x.Id.Value,
                 x.Code,

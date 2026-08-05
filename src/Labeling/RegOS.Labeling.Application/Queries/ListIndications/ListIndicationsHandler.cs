@@ -25,6 +25,7 @@ public sealed class ListIndicationsHandler
             .AsNoTracking()
             .Where(x => x.MedicinalProductId == query.MedicinalProductId)
             .OrderBy(x => x.CreatedOnUtc)
+            .ThenBy(x => x.Id)
             .Select(indication => new IndicationSummary(
                 indication.Id.Value,
                 indication.Condition.Code,
@@ -70,6 +71,7 @@ public sealed class ListIndicationsHandler
 
                 indication.StatusHistory
                     .OrderByDescending(entry => entry.OccurredOn)
+                    .ThenBy(entry => entry.Id)
                     .Select(entry => new IndicationDecisionSummary(
                         entry.Id.Value,
                         entry.Status.ToString(),

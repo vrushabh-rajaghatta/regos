@@ -45,7 +45,7 @@ public sealed class ListSubmissionDocumentsHandler
                 on document.DocumentTypeId equals documentType.Id
             join version in _dbContext.Set<DocumentVersion>()
                 on attachment.DocumentVersionId equals version.Id
-            orderby attachment.DisplayOrder
+            orderby attachment.DisplayOrder, attachment.Id
             select new
             {
                 attachment.Id,

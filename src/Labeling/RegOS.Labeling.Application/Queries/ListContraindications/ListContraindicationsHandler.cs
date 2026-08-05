@@ -30,6 +30,7 @@ public sealed class ListContraindicationsHandler
             .AsNoTracking()
             .Where(x => x.MedicinalProductId == query.MedicinalProductId)
             .OrderBy(x => x.CreatedOnUtc)
+            .ThenBy(x => x.Id)
             .Select(statement => new ContraindicationSummary(
                 statement.Id.Value,
                 statement.Condition.Code,

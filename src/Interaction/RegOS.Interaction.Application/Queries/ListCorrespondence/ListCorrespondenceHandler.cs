@@ -47,6 +47,7 @@ public sealed class ListCorrespondenceHandler
         return await correspondence
             .OrderByDescending(x => x.OccurredOn)
             .ThenByDescending(x => x.RecordedOnUtc)
+            .ThenBy(x => x.Id)
             .Join(
                 _dbContext.Authorities.AsNoTracking(),
                 x => x.AuthorityId,

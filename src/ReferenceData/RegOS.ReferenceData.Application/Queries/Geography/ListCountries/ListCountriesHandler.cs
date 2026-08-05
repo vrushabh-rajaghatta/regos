@@ -20,6 +20,7 @@ public sealed class ListCountriesHandler
         return await _dbContext.Countries
             .AsNoTracking()
             .OrderBy(c => c.Name)
+            .ThenBy(c => c.Id)
             .Select(c => new CountryDto(
                 c.Id,
                 c.Code,
@@ -28,6 +29,8 @@ public sealed class ListCountriesHandler
                 c.IsoName,
                 // Ordered by code rather than left to Postgres, the call every
                 // owned collection in this codebase makes.
+                // Deterministic: an owned collection cannot hold one code
+                // twice for a country.
                 c.Regions.OrderBy(r => r.Code).Select(r => r.Code).ToList()))
             .ToListAsync(cancellationToken);
     }

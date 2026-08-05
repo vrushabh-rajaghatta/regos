@@ -48,6 +48,7 @@ public sealed class GetMedicinalProductHandler
                 market.AtcCode,
                 TradeNames = market.TradeNames
                     .OrderBy(name => name.Name)
+                    .ThenBy(name => name.Id)
                     .Select(name => new
                     {
                         name.Id,
@@ -77,6 +78,7 @@ public sealed class GetMedicinalProductHandler
         var history = row.History
             .OrderBy(entry => entry.OccurredOn)
             .ThenBy(entry => entry.RecordedOnUtc)
+            .ThenBy(entry => entry.Id)
             .ToList();
 
         return new MedicinalProductDetailDto(

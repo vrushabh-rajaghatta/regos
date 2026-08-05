@@ -25,6 +25,7 @@ public sealed class GetTenantsHandler
         return await _dbContext.Tenants
             .AsNoTracking()
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Select(x => new TenantListItem(
                 x.Id.Value,
                 x.Name,

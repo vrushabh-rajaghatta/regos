@@ -29,6 +29,7 @@ public sealed class ListDrugInteractionsHandler
             .AsNoTracking()
             .Where(x => x.MedicinalProductId == query.MedicinalProductId)
             .OrderBy(x => x.CreatedOnUtc)
+            .ThenBy(x => x.Id)
             .Select(interaction => new DrugInteractionSummary(
                 interaction.Id.Value,
                 interaction.InteractionType.Code,

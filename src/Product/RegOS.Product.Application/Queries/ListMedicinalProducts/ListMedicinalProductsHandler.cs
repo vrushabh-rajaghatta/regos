@@ -36,7 +36,7 @@ public sealed class ListMedicinalProductsHandler
             where market.GlobalProductId == query.GlobalProductId
             join country in _dbContext.Countries
                 on market.CountryId equals country.Id
-            orderby country.Name
+            orderby country.Name, market.Id
             select new
             {
                 market.Id,
@@ -61,6 +61,7 @@ public sealed class ListMedicinalProductsHandler
                 // the query handler would have no business loading (ADR-016).
                 TradeNames = market.TradeNames
                     .OrderBy(name => name.Name)
+                    .ThenBy(name => name.Id)
                     .Select(name => new
                     {
                         name.Id,
@@ -83,6 +84,8 @@ public sealed class ListMedicinalProductsHandler
                 // first as the tie-break, exactly as the registration detail
                 // orders its history. Null while a market has never launched.
                 row.Launches
+                    // Deterministic: takes the earliest OccurredOn value, and
+                    // two entries sharing it are indistinguishable here.
                     .OrderBy(launch => launch.OccurredOn)
                     .ThenBy(launch => launch.RecordedOnUtc)
                     .Select(launch => (DateOnly?)launch.OccurredOn)

@@ -195,12 +195,20 @@ public sealed class CreateSubmissionHandler
             // choice of *template* is made first — picking the newest version
             // across all candidates would let a shared template outrank the
             // tenant's own.
+            // Tenant-owned first — and then by id, because two tenant
+            // templates matching one (authority, application type) would
+            // otherwise let the database choose which one a filing binds to.
+            // Seed data holds one, so the tie is unreachable today; this
+            // ordering does not depend on that staying true.
             .OrderByDescending(t => t.TenantId != null)
+            .ThenBy(t => t.Id)
             .Select(t => t.Versions
                 // Within a template: published, effective today, newest wins.
                 .Where(v => v.Status == TemplateVersionStatus.Published
                     && (v.EffectiveFrom is null || v.EffectiveFrom <= today)
                     && (v.EffectiveTo is null || v.EffectiveTo >= today))
+                // Deterministic: a version number is unique within a
+                // template — the unique index on (TemplateId, VersionNumber).
                 .OrderByDescending(v => v.VersionNumber)
                 .FirstOrDefault())
             .FirstOrDefault(v => v is not null);
