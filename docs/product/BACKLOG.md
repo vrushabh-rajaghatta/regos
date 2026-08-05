@@ -286,7 +286,43 @@ and value calls are the founder's.
 | **EPIC-012** | **Reference-data authoring & governance** — data-steward CRUD, change control, tenant-authored/cloned templates & document types | ⚪ Not Started | deferred write-side from EPIC-001; grows with every vocabulary EPIC-006/010/018 add |
 | **EPIC-013** | **Audit & activity history** — cross-cutting audit trail (`LastModifiedOn` was deferred to here) | ⚪ Not Started | see the status-history rule below — most of this should never reach here |
 | **EPIC-014** | **Notifications** — email & in-app | ⚪ Not Started | EPIC-005 (expiry), 006 (due dates), 020 (slipping steps) all defer their "tell someone" half to here |
-| **EPIC-015** | **Production readiness & security** — rate limiting (SEC-001), email delivery, token-table cleanup jobs, **a CI job proving a clean clone builds** | ⚪ Not Started | The clean-clone check is carried debt from EPIC-006 S002: an unanchored `storage/` in `.gitignore` kept `IFileStorage.cs` and `LocalFileStorage.cs` out of the repository entirely. Local builds passed; a fresh clone did not build, and nothing said so. The rule is fixed — the **class** of defect is not. |
+| **EPIC-015** | **Production readiness & security** — rate limiting (SEC-001), email delivery, token-table cleanup jobs, **a CI job proving a clean clone builds**, **a per-run database for the application tests** | ⚪ Not Started | Two pieces of carried debt, and they are the **same class**: a thing nobody runs, so nothing says it is broken. **(1)** The clean-clone check, from EPIC-006 S002 — an unanchored `storage/` in `.gitignore` kept `IFileStorage.cs` and `LocalFileStorage.cs` out of the repository entirely; local builds passed, a fresh clone did not, and nothing said so. **(2)** The test database, from EPIC-022 S002 — see below. |
+
+---
+
+### The application tests share the developer's database
+
+*Found by EPIC-022 S002, 2026-08-05. Recorded here rather than in that epic
+because it is nobody's story and everybody's problem.*
+
+**27 test files hard-code `Database=regos`** — the developer's own working
+database. Nothing migrates it, so the suite silently assumes somebody already
+did.
+
+It had drifted **five migrations** behind before anything noticed, and the
+reason it went unnoticed is the interesting part: **a stale schema only turns a
+test red when a migration touches a read path some test already exercises.**
+EPIC-010b added three tables and stayed green throughout, because its new tests
+were domain tests and its new tables were read by nothing older. The first
+change to an existing read path — `ListRegistrationMarkets` reaching
+`CountryRegions` — went red immediately.
+
+> **The suite does not test the assumption it depends on:** that the schema in
+> the database matches the migrations in source control. It assumes somebody
+> has already made that true.
+
+**The direction is a per-run database**, not auto-migration on startup. Both
+make today's symptom go away; only one fixes the cause:
+
+| | |
+|---|---|
+| **A database per test run** ✅ | Every run **executes the migrations**, so drift is impossible and the migrations themselves are exercised — including their backfills, which today are only ever proved by hand. Tests stop sharing state. It is also what CI must do anyway |
+| Auto-migrate in Development | Moves the question from *"did you migrate?"* to *"did you restart?"*. Convenient, and it leaves the schema still unverified by anything |
+
+**What it costs:** the application tier's tests currently lean on seeded
+reference data being present, so a per-run database has to seed too — which is
+the same initializer the API runs, and therefore a second thing worth proving
+rather than assuming.
 
 ---
 
