@@ -45,6 +45,7 @@ public sealed class ProductDocumentRepository : IProductDocumentRepository
             .Include(x => x.Versions)
             .Where(x => x.GlobalProductId == globalProductId)
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .ToListAsync(cancellationToken);
     }
 

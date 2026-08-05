@@ -32,6 +32,7 @@ public sealed class SubmissionPublicationBaseline : ISubmissionPublicationBaseli
             .Where(x => x.ApplicationId == applicationId
                         && x.SequenceNumber != null)
             .OrderByDescending(x => x.SequenceNumber)
+            .ThenBy(x => x.Id)
             .Select(x => new
             {
                 SequenceNumber = x.SequenceNumber!.Value,

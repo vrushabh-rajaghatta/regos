@@ -20,6 +20,7 @@ public sealed class ListAuthoritiesHandler
         return await _dbContext.Authorities
             .AsNoTracking()
             .OrderBy(a => a.Name)
+            .ThenBy(a => a.Id)
             .Select(a => new AuthorityDto(
                 a.Id,
                 a.Code,

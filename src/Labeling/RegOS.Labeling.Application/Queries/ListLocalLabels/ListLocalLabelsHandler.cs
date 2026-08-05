@@ -27,6 +27,7 @@ public sealed class ListLocalLabelsHandler
             .AsNoTracking()
             .Where(x => x.MedicinalProductId == query.MedicinalProductId)
             .OrderBy(x => x.CreatedOnUtc)
+            .ThenBy(x => x.Id)
             .Select(label => new LocalLabelSummary(
                 label.Id.Value,
                 label.LabelType.Code,

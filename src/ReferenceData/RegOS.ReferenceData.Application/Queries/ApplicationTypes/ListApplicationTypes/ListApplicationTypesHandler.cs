@@ -35,6 +35,7 @@ public sealed class ListApplicationTypesHandler
 
         return await types
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Select(x => new ApplicationTypeDto(
                 x.Id,
                 x.Code,

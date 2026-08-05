@@ -37,6 +37,7 @@ public sealed class ListInspectionsHandler
         var rows = await inspections
             .OrderBy(x => x.ScheduledFor == null)
             .ThenBy(x => x.ScheduledFor)
+            .ThenBy(x => x.Id)
             .Join(
                 _dbContext.Authorities.AsNoTracking(),
                 x => x.AuthorityId,
@@ -62,6 +63,7 @@ public sealed class ListInspectionsHandler
                 x.Inspection.History
                     .OrderBy(h => h.OccurredOn)
                     .ThenBy(h => h.RecordedOnUtc)
+                    .ThenBy(h => h.Id)
                     .Select(h => new InspectionHistoryEntry(
                         h.Status.ToString(),
                         h.OccurredOn,

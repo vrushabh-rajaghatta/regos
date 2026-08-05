@@ -25,6 +25,7 @@ public sealed class ListPresentationsHandler
             .AsNoTracking()
             .Where(x => x.MedicinalProductId == query.MedicinalProductId)
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Select(x => new
             {
                 x.Id,
@@ -44,6 +45,8 @@ public sealed class ListPresentationsHandler
                 // list that reshuffles between page loads reads as data
                 // changing when nothing has.
                 Routes = x.RoutesOfAdministration
+                    // Deterministic: a route is unique per presentation by
+                    // code, and a vocabulary's display maps one-to-one to it.
                     .OrderBy(r => r.Display)
                     .Select(r => new CodedValueDto(r.System, r.Code, r.Display))
                     .ToList(),
@@ -56,6 +59,7 @@ public sealed class ListPresentationsHandler
                 // reason routes are: a list that reshuffles between page loads
                 // reads as data changing when nothing has.
                 Colours = x.Appearance.Colours
+                    // Deterministic: unique index on (DetailId, Code).
                     .OrderBy(c => c.Code)
                     .Select(c => new CodedValueDto(c.System, c.Code, c.Display))
                     .ToList(),
@@ -71,7 +75,7 @@ public sealed class ListPresentationsHandler
                     (from ingredient in x.Ingredients
                      join substance in _dbContext.Substances
                          on ingredient.SubstanceId equals substance.Id
-                     orderby ingredient.Role, substance.Name
+                     orderby ingredient.Role, substance.Name, ingredient.Id
                      // Left-joined, because provenance is optional and an
                      // ingredient nobody has sourced must still appear. An
                      // inner join here would hide most of the composition.

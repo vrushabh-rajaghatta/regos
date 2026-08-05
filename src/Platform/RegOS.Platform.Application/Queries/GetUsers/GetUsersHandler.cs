@@ -64,7 +64,10 @@ public sealed class GetUsersHandler
         var totalCount = await users.CountAsync(cancellationToken);
 
         var items = await users
+            // Paged: a tie here would move a user between pages, so the id
+            // is not decoration.
             .OrderByDescending(x => x.CreatedOn) // newest invitations first
+            .ThenBy(x => x.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(x => new UserListItem(

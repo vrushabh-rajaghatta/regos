@@ -73,6 +73,8 @@ public sealed class GetOrganizationSiteHandler
                 site.Address.StateProvince,
                 site.Address.PostalCode),
             [.. site.Identifiers
+                // Deterministic: a site carries one identifier per scheme —
+                // the unique index on (OrganizationSiteId, SchemeId).
                 .OrderBy(x => schemes.GetValueOrDefault(x.SchemeId, string.Empty))
                 .Select(x => new SiteIdentifierDto(
                     x.Id.Value,

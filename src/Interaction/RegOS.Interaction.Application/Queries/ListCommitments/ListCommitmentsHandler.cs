@@ -29,6 +29,7 @@ public sealed class ListCommitmentsHandler
 
         return await commitments
             .OrderBy(x => x.DueOn)
+            .ThenBy(x => x.Id)
             .Join(
                 _dbContext.Authorities.AsNoTracking(),
                 x => x.AuthorityId,
@@ -42,6 +43,8 @@ public sealed class ListCommitmentsHandler
                     // GivenOn and FulfilledOn are derived from the history and
                     // ignored by EF, so they are projected here rather than
                     // read from a column that does not exist.
+                    // Deterministic: takes the earliest OccurredOn value, and
+                    // two entries sharing it are indistinguishable here.
                     x.History.OrderBy(h => h.OccurredOn).First().OccurredOn,
                     x.DueOn,
                     x.History
@@ -56,6 +59,7 @@ public sealed class ListCommitmentsHandler
                     x.History
                         .OrderBy(h => h.OccurredOn)
                         .ThenBy(h => h.RecordedOnUtc)
+                        .ThenBy(h => h.Id)
                         .Select(h => new CommitmentHistoryEntry(
                             h.Status.ToString(),
                             h.OccurredOn,

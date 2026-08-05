@@ -27,6 +27,7 @@ public sealed class ListIdentifierSchemesHandler
         => await _dbContext.IdentifierSchemes
             .AsNoTracking()
             .OrderBy(x => x.Code)
+            .ThenBy(x => x.Id)
             .Select(x => new IdentifierSchemeDto(
                 x.Id.Value,
                 x.Code,

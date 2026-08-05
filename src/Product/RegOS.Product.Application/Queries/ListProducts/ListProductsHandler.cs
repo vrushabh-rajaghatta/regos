@@ -78,7 +78,9 @@ public sealed class ListProductsHandler
         var totalCount = await products.CountAsync(cancellationToken);
 
         var items = await products
+            // Paged: a tie here would move a product between pages.
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(x => new ProductListItem(

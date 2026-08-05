@@ -34,6 +34,7 @@ public sealed class GetRegulatoryTemplateHandler
             return null;
 
         var versions = template.Versions
+            // Deterministic: unique index on (TemplateId, VersionNumber).
             .OrderBy(v => v.VersionNumber)
             .Select(v => new RegulatoryTemplateVersionDto(
                 v.Id,
@@ -44,6 +45,7 @@ public sealed class GetRegulatoryTemplateHandler
                 v.PublishedOnUtc,
                 v.Sections
                     .OrderBy(s => s.Order)
+                    .ThenBy(s => s.Code)
                     .Select(s => new TemplateSectionDto(
                         s.Id,
                         s.Code,
@@ -53,6 +55,7 @@ public sealed class GetRegulatoryTemplateHandler
                     .ToList(),
                 v.RequiredDocuments
                     .OrderBy(d => d.Order)
+                    .ThenBy(d => d.DocumentTypeId)
                     .Select(d => new RequiredDocumentDto(
                         d.Id,
                         d.SectionId,
@@ -61,7 +64,10 @@ public sealed class GetRegulatoryTemplateHandler
                         d.Order))
                     .ToList(),
                 v.ValidationRules
+                    // Deterministic: Order is not unique on a validation
+                    // rule; (VersionId, Code) is.
                     .OrderBy(r => r.Order)
+                    .ThenBy(r => r.Code)
                     .Select(r => new ValidationRuleDto(
                         r.Id,
                         r.Code,

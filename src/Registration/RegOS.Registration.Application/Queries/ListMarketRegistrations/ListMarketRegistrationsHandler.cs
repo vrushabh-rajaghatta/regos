@@ -71,6 +71,7 @@ public sealed class ListMarketRegistrationsHandler
                 // compose (ADR-039 principle 7).
                 TradeNames = market.TradeNames
                     .OrderBy(name => name.Name)
+                    .ThenBy(name => name.Id)
                     .Select(name => name.Name)
                     .ToList(),
                 market.CurrentMarketStatus,
@@ -98,6 +99,7 @@ public sealed class ListMarketRegistrationsHandler
         return rows
             .OrderBy(row => Prominence(row.CurrentStatus))
             .ThenBy(row => row.ProductName.Value)
+            .ThenBy(row => row.Id)
             .Select(row =>
             {
                 var expiry = ExpiryVisibility.For(
@@ -114,6 +116,8 @@ public sealed class ListMarketRegistrationsHandler
                     // Derived here exactly as it is on the market's own page:
                     // the first launch in business time, never stored.
                     row.Launches
+                        // Deterministic: takes the earliest OccurredOn value,
+                        // and entries sharing it are indistinguishable here.
                         .OrderBy(launch => launch.OccurredOn)
                         .ThenBy(launch => launch.RecordedOnUtc)
                         .Select(launch => (DateOnly?)launch.OccurredOn)

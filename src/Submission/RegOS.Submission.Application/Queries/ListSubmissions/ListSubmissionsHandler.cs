@@ -30,7 +30,7 @@ public sealed class ListSubmissionsHandler
                 on submission.ApplicationId equals application.Id
             join applicationType in _dbContext.ApplicationTypes
                 on application.ApplicationTypeId equals applicationType.Id
-            orderby submission.CreatedOn descending
+            orderby submission.CreatedOn descending, submission.Id
             select new
             {
                 submission.Id,

@@ -110,6 +110,8 @@ public sealed class ListStudyFilingsHandler
 
         return applications
             .Concat(sequences)
+            // Deterministic: a sequence number is unique within an
+            // application, and an application appears once per name here.
             .OrderBy(f => f.ApplicationName, StringComparer.Ordinal)
             .ThenBy(f => f.SequenceNumber, StringComparer.Ordinal)
             .ToList();

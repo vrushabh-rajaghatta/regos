@@ -55,7 +55,7 @@ public sealed class ListProductRegistrationsHandler
                 on registration.AuthorityId equals authority.Id
             join holder in _dbContext.Organizations
                 on registration.HolderOrganizationId equals holder.Id
-            orderby country.Name, registration.CreatedOn
+            orderby country.Name, registration.CreatedOn, registration.Id
             select new
             {
                 registration.Id,

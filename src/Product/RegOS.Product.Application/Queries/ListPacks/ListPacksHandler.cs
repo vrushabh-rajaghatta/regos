@@ -25,6 +25,7 @@ public sealed class ListPacksHandler
             .AsNoTracking()
             .Where(x => x.MedicinalProductId == query.MedicinalProductId)
             .OrderBy(x => x.CreatedOnUtc)
+            .ThenBy(x => x.Id)
             .Select(pack => new
             {
                 pack.Id,
@@ -67,6 +68,7 @@ public sealed class ListPacksHandler
 
                 History = pack.MarketingStatusHistory
                     .OrderByDescending(entry => entry.OccurredOn)
+                    .ThenBy(entry => entry.Id)
                     .Select(entry => new
                     {
                         entry.Id,

@@ -77,6 +77,7 @@ public sealed class ListProductsContainingSubstanceHandler
             .OrderBy(x => x.ProductName.Value, StringComparer.OrdinalIgnoreCase)
             .ThenBy(x => x.CountryName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(x => x.PresentationName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.PresentationId)
             .Select(x => new SubstanceUsageDto(
                 x.GlobalProductId.Value,
                 x.ProductName.Value,

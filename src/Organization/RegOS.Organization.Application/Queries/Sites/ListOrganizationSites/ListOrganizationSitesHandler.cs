@@ -50,7 +50,7 @@ public sealed class ListOrganizationSitesHandler
             where site.OrganizationId == organizationId
             join country in _dbContext.Countries
                 on site.Address.CountryId equals country.Id
-            orderby site.Name
+            orderby site.Name, site.Id
             select new { site, CountryName = country.Name })
             .ToListAsync(cancellationToken);
 
@@ -69,6 +69,8 @@ public sealed class ListOrganizationSitesHandler
                 row.site.Status.ToString(),
                 row.site.StatusDate,
                 [.. row.site.Identifiers
+                    // Deterministic: one identifier per scheme — the unique
+                    // index on (OrganizationSiteId, SchemeId).
                     .OrderBy(x => schemes.GetValueOrDefault(x.SchemeId, string.Empty))
                     .Select(x => new SiteIdentifierDto(
                         x.Id.Value,

@@ -125,6 +125,9 @@ public sealed class ListProductDocumentUsageHandler
         // Filing order within an application, drafts last: a draft has no
         // number because it has not happened yet.
         return events
+            // Deterministic: a sequence number is unique within an
+            // application, and the draft/filed split below separates the
+            // rows that have no number.
             .OrderBy(x => x.ApplicationName, StringComparer.Ordinal)
             .ThenBy(x => x.SequenceNumber is null)
             .ThenBy(x => x.SequenceNumber)

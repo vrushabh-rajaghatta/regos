@@ -35,6 +35,7 @@ public sealed class ListCoreVersionsForProductHandler
                 (label, version) => new { label, version })
             .Where(x => x.version.Status != GlobalLabelVersionStatus.Draft)
             .OrderByDescending(x => x.version.VersionNumber)
+            .ThenBy(x => x.version.Id)
             .Select(x => new CoreVersionOption(
                 x.version.Id.Value,
                 x.label.Id.Value,

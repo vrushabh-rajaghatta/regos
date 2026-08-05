@@ -54,6 +54,7 @@ public sealed class RegulatoryApplicationRepository
         return await _dbContext.RegulatoryApplications
             .Where(x => x.GlobalProductId == globalProductId)
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .ToListAsync(cancellationToken);
     }
 }

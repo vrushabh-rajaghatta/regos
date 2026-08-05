@@ -1,6 +1,6 @@
 # EPIC-024 — The invariants nothing checks
 
-**Status:** 🔵 In progress · **Branch:** `epic/EPIC-024-invariants` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 Complete · **Branch:** `epic/EPIC-024-invariants` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 The second of the two hardening epics raised at EPIC-010's close, and the sibling
 of [EPIC-023](EPIC-023-test-schema.md) by kind rather than by subject:
@@ -49,9 +49,15 @@ stricter than the layers below:
 | `*.Application` | **own Domain + `Persistence`** (+ `Storage`) | **zero** |
 | `*.Infrastructure` | own Domain + own Application + `Persistence` | **two, and both turned out to be removable** — see [S001](#s001--the-dependency-graph) |
 
-#### 89 orderings, and not one ends in a unique key
+#### ~~89~~ orderings, and not one ends in a unique key
 
 17 in query syntax, 72 in method syntax, **zero** terminating on an id.
+
+> **The count was wrong and the conclusion was not.** These regexes were too
+> narrow; [S002](#s002--deterministic-ordering) found **124** on read paths, of
+> which exactly **one** already terminated uniquely. Kept rather than corrected
+> in place, because the shape of the error is instructive: **a sample that
+> agrees with your conclusion is the one you stop checking.**
 
 And the property is **not syntactically decidable**. `orderby site.Name` is total
 *if site names are unique*. `ListManufacturingOperations` — the handler EPIC-010c
@@ -143,39 +149,184 @@ whatever uniqueness mechanism the project prefers in five years.
 
 ## Phase 3 — Stories
 
-### S001 — the dependency graph
+### S001 — the dependency graph ✅
 
-**Review the two `*.Infrastructure` → `Product.Domain` edges first**, because
-their fate changes what gets written down: if they stay, they become
-intentional; if they go, the graph is simpler forever.
+**The two `*.Infrastructure` → `Product.Domain` edges were reviewed first**,
+because their fate decided what got written down. **Both were redundant.**
+`Registration.Infrastructure` and `RegulatoryApplication.Infrastructure` each
+used them for a product **id type** their own `*.Domain` already carried, so the
+references came out and the solution built unchanged.
 
-Then declare the graph and the two layer rules, with the ADRs that constrain
-individual edges cited where they apply.
+> **The graph got simpler forever rather than gaining two documented
+> exceptions** — the better of the two outcomes the story could have had, and it
+> only appeared because the review came before the declaration.
 
-### S002 — deterministic ordering
+Six rules now hold it. The 26 Domain edges are declared per context, so
+**ADR-063's permanent closure is enforced by `Product`'s absence from
+`Organization`'s list** rather than by anyone remembering. Above them: an
+Application references only its own Domain and Persistence (**zero exceptions
+across eleven contexts**), an Infrastructure adds its own Application, and the
+host reaches neither's internals.
 
-D3's rule, then the call sites. **The largest story by a wide margin** — 89
-orderings, of which an unknown fraction are already total and need a sentence
-rather than a key. Mechanical, and behaviour-preserving in every case: adding a
-tie-breaker changes only the order of rows that were previously arbitrary.
+One rule the plan did not ask for, added because the declaration would otherwise
+rot: **the graph declares no edge that no project takes.** A permission nobody
+asked for would let the next real one through unnoticed — *"the architecture
+already allowed it."*
 
-### S003 — the test-database guard
+### S002 — deterministic ordering ✅
 
-Transitive `.csproj` reach: any test project that can see `RegOS.Persistence`
-must also reference `RegOS.TestSupport`. Passes today, so it is a guard rather
-than a fix.
+**The audit was the finding.**
 
-### S004 — capstone
+| Measure | Result |
+|---|---|
+| Read-path orderings audited | **124** |
+| Already terminated in a unique key | **1** |
+| Mechanical — given a unique final key | **81** |
+| **Existing invariants documented** | **42** |
+| **Real correctness defects** | **3 classes** |
 
-**Every guard demonstrated failing on a deliberate violation**, as EPIC-023's
-was. A guard nobody has seen fail is a guard nobody should trust, and that epic
-found two of its own assertions weaker than they looked by making exactly this
-check.
+**The number that matters is the second row.** This was never a partially
+enforced convention that had drifted. **There was no convention** — including in
+the one handler EPIC-010c had already fixed by hand.
 
-### Out of scope ⏸️
+#### The three defects
 
-**Anything that requires a new architectural decision.** If a rule turns out to
-be *wrong* rather than *unenforced*, the story stops and the answer is an ADR.
+**1. `TemplateSection.Order` is not unique — the unique index is
+`(VersionId, Code)`.** Three read paths ordered by `Order` alone: the submission
+content plan, the blueprint validation runner, and the template detail. **The
+system still "worked".** But a template with two sections at one `Order`
+reshuffled between reloads, and **validation reported its rules in a different
+order each run with no data change** — a property users expect and cannot easily
+name.
+
+**2. `ListProducts` and `GetUsers` order, then `Skip`/`Take`.** A tie in a paged
+query does not merely reorder a page: **it can move a row between pages, or drop
+it.** That is correctness, not presentation.
+
+**3. `CreateSubmission` picked a template by tenant-ownership alone.** The defect
+was not *there are two templates* — it was that **correctness depended on there
+never being two.** Seed data holds one, so the tie is unreachable today; the code
+now says what it depends on instead of relying on that staying true.
+
+#### The 42 are the durable half
+
+Before this story, an ordering like `.OrderBy(condition => condition.Code)` was
+only understandable to someone holding the query, the EF model **and** the unique
+index in their head at once. Now the query carries the reason.
+
+> `SequenceFolderGenerator` is the clearest case. **ADR-049 already required
+> byte-identical packages**, and the implementation was already careful — nine
+> orderings, every one of them deliberate. **Not one said why it was safe.**
+
+#### The rule had a bug, and it was in the safe direction
+
+It did not follow multi-line query syntax, so it flagged
+`ListManufacturingOperations` — already ending in `operation.Id` — as unproven.
+**The rule was fixed, not the code**, and the only reason it was caught is that
+the result did not look right. A guard's own failure mode is worth knowing:
+**this one errs towards false alarm, which is the direction that gets
+investigated.**
+
+### S003 — the test-database guard ✅
+
+Deliberately small. Any test project that can **reach** `RegOS.Persistence` must
+reference `RegOS.TestSupport` — reach, not reference, because
+**no test project references it directly**; all seven arrive transitively through
+`*.Infrastructure`, so the rule as first written down matched nothing at all.
+
+Both directions, on S001's lesson: a project that cannot reach persistence must
+**not** carry the reference either.
+
+### S004 — capstone ✅
+
+**Every guard, broken on purpose, with what it says.** A guard nobody has seen
+fail is a guard nobody should trust.
+
+| The violation | What the suite says |
+|---|---|
+| Open the edge **ADR-063 closed permanently** | `RegOS.Organization.Domain -> RegOS.Product.Domain` |
+| Declare an edge no project takes | `Organization -> Submission` |
+| **Reintroduce EPIC-010c's exact defect** — drop the tie-breaker from `ListManufacturingOperations` | `…ListManufacturingOperationsHandler.cs:50  orderby operation.CeasedOn == null descending,` |
+| A database test that does not take a test database | `RegOS.Registration.Application.Tests` |
+
+The third is the one worth keeping: **the defect that cost most of a session and
+read as environmental is now caught by a test that runs in 0.3 seconds and names
+the file and line.**
+
+---
+
+## Retrospective
+
+### Measured outcomes
+
+| Measure | Before | After |
+|---|---|---|
+| Bounded-context graph | 26 edges + 2 exceptions, held by `.csproj` lines | **26 edges, no exceptions**, declared and enforced |
+| ADR-063's closed reverse edge | held by nothing | **enforced by an absence in the declaration** |
+| Read-path orderings terminating uniquely | **1 of 124** | **124 of 124 proven** |
+| Query invariants documented at the call site | 0 | **42** |
+| Correctness defects from partial ordering | 3 classes live | **0** |
+| Test projects that could skip the test database | possible, unchecked | **guarded, both directions** |
+| Architecture suite | 25 tests | **36** |
+
+### The lessons worth carrying past this epic
+
+#### 1. Writing the architecture down deletes structure
+
+S001's expected output was a document. Its actual output was **two fewer
+dependencies**. The redundancy had been invisible for as long as the graph lived
+only in `.csproj` files; it was obvious within minutes of the graph being stated
+in one place.
+
+#### 2. A rule stated from memory is a hypothesis
+
+S003's rule was written into the backlog **one day earlier**, by someone who had
+just spent an epic in those files, and it was **false** — no test project
+references `RegOS.Persistence` directly. It cost nothing because it was checked
+before it was built. **The cheap moment to falsify a rule is while writing the
+test for it.**
+
+#### 3. Ask what the green tick asserts
+
+EPIC-023's connection-string guard passed, and the question *"what does this
+actually prove?"* produced S003. **"No file names a database" is not "every
+database test uses the fixture"**, and nothing but asking would have separated
+them.
+
+#### 4. Prefer the property to the technique
+
+D3 was reframed from *"end orderings with an id"* to *"prove determinism"*. That
+change is why **42 sites got a sentence instead of a redundant key** — and the
+sentences turned out to be the epic's most durable output. A rule about ids would
+have produced 124 mechanical edits and no knowledge.
+
+#### 5. The defect is rarely the shape of the last defect
+
+EPIC-010c's ordering bug involved a date. Narrowing the rule to dates was
+explicitly refused, and the sweep then found the same defect in `Order`, in
+`Name`, and in paging. **Narrowing a rule to the shape of the last bug is how you
+get the next one.**
+
+### What this epic did not do
+
+- **It decided nothing.** Every rule was already stated — in an ADR, in
+  `CLAUDE.md`, or in an EF configuration. That was [D2](#d2--no-new-adr), and it
+  held: **no ADR was needed, and none was written.**
+- **It does not prove the orderings are *right*** — only that they are stable. A
+  list can be deterministically in an unhelpful order.
+- **Nothing runs any of this but a person.** The same sentence closed EPIC-023,
+  and it is still true: these guards make `dotnet test` worth more and do not
+  make it run. That remains [EPIC-015](../BACKLOG.md#later)'s.
+
+### Definition of Done
+
+| | | |
+|---|---|---|
+| 1 | The dependency graph is declared and enforced | ✅ 6 rules, 26 edges, 0 exceptions |
+| 2 | Every read-path ordering proves its determinism | ✅ 124 of 124 |
+| 3 | A test project that can reach the database takes a test database | ✅ both directions |
+| 4 | Every guard demonstrated failing on a deliberate violation | ✅ four, with their messages recorded |
+| 5 | `dotnet test RegOS.slnx` green across **19 reporting suites** | ✅ |
 
 ---
 
@@ -185,3 +336,7 @@ be *wrong* rather than *unenforced*, the story stops and the answer is an ADR.
 |---|---|
 | 2026-08-05 | Raised in BACKLOG.md at EPIC-010c's close with two items; a third added at EPIC-023's close |
 | 2026-08-05 | Phase 1 + Phase 2 signed off. D3 reframed from *"use ids"* to *"prove determinism"*, so the rule outlives today's preferred technique |
+| 2026-08-05 | S001. Both Infrastructure exceptions turned out redundant; the graph got simpler instead of documented |
+| 2026-08-05 | S002. 1 of 124 orderings was proven; 42 invariants documented and 3 correctness defects removed |
+| 2026-08-05 | S003. Reach, not reference — the rule as raised matched nothing |
+| 2026-08-05 | S004. Four guards broken on purpose. Closed |

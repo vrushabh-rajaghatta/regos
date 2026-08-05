@@ -101,6 +101,8 @@ public sealed class ListApplicationStudiesHandler
                     study.Title,
                     c.CitedOn);
             })
+            // Deterministic: a sponsor study identifier is unique per tenant
+            // — the unique index on (TenantId, SponsorStudyIdentifier).
             .OrderByDescending(c => c.CitedOn)
             .ThenBy(c => c.SponsorStudyIdentifier, StringComparer.Ordinal)
             .ToList();

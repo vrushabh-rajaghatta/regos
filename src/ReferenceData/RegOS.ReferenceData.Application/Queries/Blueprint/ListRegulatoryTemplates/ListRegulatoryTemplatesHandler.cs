@@ -22,6 +22,7 @@ public sealed class ListRegulatoryTemplatesHandler
         var templates = await _dbContext.RegulatoryTemplates
             .AsNoTracking()
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .ToListAsync(cancellationToken);
 
         return templates

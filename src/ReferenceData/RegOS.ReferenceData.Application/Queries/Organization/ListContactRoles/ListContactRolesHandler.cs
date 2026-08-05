@@ -28,6 +28,7 @@ public sealed class ListContactRolesHandler
         => await _dbContext.ContactRoles
             .AsNoTracking()
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Select(x => new ContactRoleDto(
                 x.Id.Value,
                 x.Code,

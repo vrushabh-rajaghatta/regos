@@ -57,7 +57,7 @@ public sealed class ListAttachableProductDocumentsHandler
                 && !attachedDocumentIds.Contains(document.Id)
             join documentType in _dbContext.DocumentTypes
                 on document.DocumentTypeId equals documentType.Id
-            orderby document.Name
+            orderby document.Name, document.Id
             select new
             {
                 document.Id,

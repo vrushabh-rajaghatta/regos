@@ -106,7 +106,12 @@ public sealed class BlueprintValidationEvaluator
     {
         var unevaluated = new List<ValidationRule>();
 
-        foreach (var rule in context.Version.ValidationRules.OrderBy(r => r.Order))
+        // Deterministic: Order is not unique on a validation rule, but
+        // (VersionId, Code) is —
+        // and rules that fire in a different order report in a different
+        // order.
+        foreach (var rule in context.Version.ValidationRules
+            .OrderBy(r => r.Order).ThenBy(r => r.Code))
         {
             var evaluator = _ruleEvaluators.FirstOrDefault(e => e.CanEvaluate(rule));
 
@@ -131,6 +136,8 @@ public sealed class BlueprintValidationEvaluator
         var ruleTypes = unevaluated
             .Select(r => r.RuleType.ToString())
             .Distinct()
+            // Deterministic: Distinct() above leaves no two equal names, so
+            // sorting them by their own value cannot tie.
             .OrderBy(name => name)
             .ToList();
 

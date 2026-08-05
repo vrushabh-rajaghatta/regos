@@ -107,7 +107,11 @@ public sealed class GetSubmissionContentPlanHandler
 
         var roots = version.Sections
             .Where(s => s.ParentSectionId is null)
+            // Deterministic: Order is not unique — the index that is unique
+            // section is (VersionId, Code), so Order alone can tie and the
+            // content plan would reshuffle between reloads.
             .OrderBy(s => s.Order)
+            .ThenBy(s => s.Code)
             .Select(section => BuildSection(
                 section,
                 childrenByParent,
@@ -148,7 +152,9 @@ public sealed class GetSubmissionContentPlanHandler
             : [];
 
         var expected = placeholders.TryGetValue(section.Id, out var required)
-            ? required.OrderBy(r => r.Order).ToList()
+            // Deterministic: a required document is unique per
+            // (SectionId, DocumentTypeId), which the ThenBy reaches.
+            ? required.OrderBy(r => r.Order).ThenBy(r => r.DocumentTypeId).ToList()
             : [];
 
         // A placeholder is satisfied by a document of its type placed in *this*
@@ -188,7 +194,10 @@ public sealed class GetSubmissionContentPlanHandler
             Ordered(here.Where(d => !expectedTypes.Contains(d.DocumentTypeId))),
             children.TryGetValue(section.Id, out var descendants)
                 ? descendants
+                    // Deterministic: Order is not unique on a template
+                    // section; Code is.
                     .OrderBy(child => child.Order)
+                    .ThenBy(child => child.Code)
                     .Select(child => BuildSection(
                         child, children, placeholders, placed, documentTypeNames))
                     .ToList()
@@ -199,6 +208,7 @@ public sealed class GetSubmissionContentPlanHandler
         IEnumerable<PlacedDocument> documents) =>
         documents
             .OrderBy(d => d.DisplayOrder)
+            .ThenBy(d => d.SubmissionDocumentId)
             .Select(d => new ContentPlanDocument(
                 d.SubmissionDocumentId,
                 d.ProductDocumentId,

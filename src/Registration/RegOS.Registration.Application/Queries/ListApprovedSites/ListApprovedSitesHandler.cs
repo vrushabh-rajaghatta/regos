@@ -38,7 +38,7 @@ public sealed class ListApprovedSitesHandler
                 on approval.OrganizationSiteId equals site.Id
             join country in _dbContext.Countries
                 on site.Address.CountryId equals country.Id
-            orderby site.Name, approval.ApprovedOn
+            orderby site.Name, approval.ApprovedOn, approval.Id
             select new
             {
                 ApprovalId = approval.Id,

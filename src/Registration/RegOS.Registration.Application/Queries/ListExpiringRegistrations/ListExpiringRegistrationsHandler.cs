@@ -71,6 +71,7 @@ public sealed class ListExpiringRegistrationsHandler
             .Where(x => x.Expiry.DaysUntilExpiry is not null)
             .OrderBy(x => x.Expiry.DaysUntilExpiry)
             .ThenBy(x => x.Row.ProductName.Value)
+            .ThenBy(x => x.Row.Id)
             .Select(x => new ExpiringRegistration(
                 x.Row.Id.Value,
                 x.Row.GlobalProductId.Value,

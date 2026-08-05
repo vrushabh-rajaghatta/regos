@@ -45,7 +45,7 @@ public sealed class ListSubmissionRolesHandler
                 on contact.OrganizationId equals organization.Id
             join contactRole in _dbContext.ContactRoles
                 on role.RoleId equals contactRole.Id
-            orderby contactRole.Name, contact.LastName, contact.FirstName
+            orderby contactRole.Name, contact.LastName, contact.FirstName, role.Id
             select new
             {
                 role.Id,

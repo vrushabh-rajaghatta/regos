@@ -34,6 +34,7 @@ public sealed class ListSubmissionSubTypesHandler
 
         return await types
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Select(x => new SubmissionSubTypeDto(
                 x.Id,
                 x.Code,

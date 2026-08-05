@@ -41,6 +41,7 @@ public sealed class SessionRepository : ISessionRepository
                 && x.RevokedOn == null
                 && x.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(x => x.LastUsedOn)
+            .ThenBy(x => x.Id)
             .ToListAsync(cancellationToken);
 
     public async Task UpdateAsync(

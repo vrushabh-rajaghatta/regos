@@ -27,7 +27,7 @@ public sealed class ListProductDocumentsHandler
             where document.GlobalProductId == globalProductId
             join documentType in _dbContext.DocumentTypes
                 on document.DocumentTypeId equals documentType.Id
-            orderby document.CreatedOnUtc descending
+            orderby document.CreatedOnUtc descending, document.Id
             select new
             {
                 document.Id,

@@ -36,6 +36,7 @@ public sealed class ListOrganizationDivisionsHandler
             .AsNoTracking()
             .Where(x => x.OrganizationId == query.OrganizationId)
             .OrderBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .ToListAsync(cancellationToken);
 
         return rows

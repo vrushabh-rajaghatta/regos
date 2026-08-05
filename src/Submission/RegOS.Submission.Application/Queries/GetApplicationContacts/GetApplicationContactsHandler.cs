@@ -47,6 +47,7 @@ public sealed class GetApplicationContactsHandler
             .Where(x => x.ApplicationId == query.ApplicationId
                 && x.SequenceNumber != null)
             .OrderByDescending(x => x.SequenceNumber)
+            .ThenBy(x => x.Id)
             .Select(x => new { x.Id, x.SequenceNumber })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -64,7 +65,7 @@ public sealed class GetApplicationContactsHandler
                 on contact.OrganizationId equals organization.Id
             join contactRole in _dbContext.ContactRoles
                 on role.RoleId equals contactRole.Id
-            orderby contactRole.Name, contact.LastName, contact.FirstName
+            orderby contactRole.Name, contact.LastName, contact.FirstName, role.Id
             select new
             {
                 ContactId = contact.Id,

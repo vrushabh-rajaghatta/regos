@@ -99,6 +99,8 @@ public sealed class GetRegistrationHandler
                 // tie-break a reader expects.
                 .OrderBy(entry => entry.OccurredOn)
                 .ThenBy(entry => entry.RecordedOnUtc)
+                .ThenBy(entry => entry.Id)
+                .ThenBy(entry => entry.Id)
                 .Select(entry => new RegistrationStatusEntryDto(
                     entry.Id.Value,
                     entry.Status.ToString(),
@@ -108,6 +110,10 @@ public sealed class GetRegistrationHandler
             // Asked of the domain, never restated here: one table decides what
             // is legal, and the read model reports its answer.
             [.. RegistrationLifecycle.From(registration.CurrentStatus)
+                // Deterministic: a lifecycle returns distinct enum values, so
+                // sorting them by their own value cannot tie.
+                // Deterministic: a lifecycle returns distinct enum values, so
+                // sorting them by their own value cannot tie.
                 .OrderBy(status => status)
                 .Select(status => status.ToString())],
             expiry.HasRunningValidity,

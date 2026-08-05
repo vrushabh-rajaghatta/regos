@@ -50,7 +50,7 @@ public sealed class ListManufacturingOperationsHandler
             orderby operation.CeasedOn == null descending,
                 operation.EffectiveFrom descending,
                 site.Name,
-                operation.Operation.Code
+                operation.Operation.Code, operation.Id
             select new
             {
                 OperationId = operation.Id,
@@ -60,6 +60,7 @@ public sealed class ListManufacturingOperationsHandler
                 site.Type,
                 Identifiers = site.Identifiers
                     .OrderBy(identifier => identifier.Value)
+                    .ThenBy(identifier => identifier.Id)
                     .Select(identifier => identifier.Value)
                     .ToList(),
                 operation.Operation.Code,

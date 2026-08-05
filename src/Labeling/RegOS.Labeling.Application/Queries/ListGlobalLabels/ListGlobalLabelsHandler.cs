@@ -29,6 +29,7 @@ public sealed class ListGlobalLabelsHandler
             .AsNoTracking()
             .Where(x => x.GlobalProductId == query.GlobalProductId)
             .OrderBy(x => x.CreatedOnUtc)
+            .ThenBy(x => x.Id)
             .Select(label => new GlobalLabelSummary(
                 label.Id.Value,
                 label.Name,

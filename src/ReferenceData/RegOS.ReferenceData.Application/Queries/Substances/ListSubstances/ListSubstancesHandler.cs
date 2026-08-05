@@ -44,6 +44,7 @@ public sealed class ListSubstancesHandler
             // reach for before adding a second row for the same molecule.
             .OrderBy(x => x.TenantId != null)
             .ThenBy(x => x.Name)
+            .ThenBy(x => x.Id)
             .Select(x => new SubstanceDto(
                 x.Id.Value,
                 x.Name,

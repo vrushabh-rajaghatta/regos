@@ -46,6 +46,7 @@ public sealed class GetSubmissionHandler
                 History = submission.History
                     .OrderBy(h => h.OccurredOn)
                     .ThenBy(h => h.RecordedOnUtc)
+                    .ThenBy(h => h.Id)
                     .Select(h => new SubmissionStatusStep(
                         h.Status.ToString(), h.OccurredOn, h.RecordedOnUtc, h.Note))
                     .ToList(),

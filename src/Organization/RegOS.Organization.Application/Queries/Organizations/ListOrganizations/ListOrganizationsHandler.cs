@@ -25,6 +25,7 @@ public sealed class ListOrganizationsHandler
         return await _dbContext.Organizations
             .AsNoTracking()
             .OrderBy(x => x.LegalName)
+            .ThenBy(x => x.Id)
             .Select(x => new OrganizationDto(
                 x.Id,
                 x.LegalName,
