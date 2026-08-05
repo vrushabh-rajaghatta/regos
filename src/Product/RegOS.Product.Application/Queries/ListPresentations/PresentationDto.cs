@@ -24,7 +24,25 @@ public sealed record PresentationDto(
     CodedValueDto? UnitOfPresentation,
     IReadOnlyList<CodedValueDto> RoutesOfAdministration,
     IReadOnlyList<IngredientDto> Ingredients,
-    bool HasAnActiveIngredient);
+    bool HasAnActiveIngredient,
+    AppearanceDto Appearance);
+
+/// <summary>
+/// What the medicine looks like. Screen word: <b>Appearance</b>.
+/// </summary>
+/// <remarks>
+/// <b>Never null</b>, because the presentation always carries a statement —
+/// <paramref name="IsStated"/> says whether anybody has filled it in. A
+/// presentation nobody has described and one described as having no stated
+/// appearance are the same thing here, unlike storage conditions, where
+/// "checked, none needed" is its own claim.
+/// </remarks>
+public sealed record AppearanceDto(
+    IReadOnlyList<CodedValueDto> Colours,
+    CodedValueDto? Shape,
+    string? Imprint,
+    string? Description,
+    bool IsStated);
 
 /// <param name="SubstanceName">
 /// Joined from the substance catalogue, never copied onto the ingredient. The

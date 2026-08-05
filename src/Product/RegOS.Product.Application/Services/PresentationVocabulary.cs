@@ -34,6 +34,24 @@ internal static class PresentationVocabulary
                 ?? throw new DomainException(
                     PharmaceuticalVocabularyErrors.UnknownUnitOfPresentation(code));
 
+    public static CodedConcept? Shape(string? code)
+        => string.IsNullOrWhiteSpace(code)
+            ? null
+            : PharmaceuticalVocabulary.ShapeOf(code)
+                ?? throw new DomainException(
+                    PharmaceuticalVocabularyErrors.UnknownShape(code));
+
+    /// <remarks>
+    /// Every code is resolved before any is applied, so a list with one bad
+    /// entry is refused whole rather than half-applied.
+    /// </remarks>
+    public static IReadOnlyList<CodedConcept> Colours(IReadOnlyList<string>? codes)
+        => [.. (codes ?? [])
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Select(code => PharmaceuticalVocabulary.ColourOf(code)
+                ?? throw new DomainException(
+                    PharmaceuticalVocabularyErrors.UnknownColour(code)))];
+
     public static IReadOnlyList<CodedConcept> Routes(IReadOnlyList<string>? codes)
         => (codes ?? [])
             .Where(code => !string.IsNullOrWhiteSpace(code))

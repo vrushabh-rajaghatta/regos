@@ -294,6 +294,28 @@ The second check is not redundant. `migrations add` rewrites the model snapshot
 as a side effect; if the snapshot comes back byte-identical, the model is
 identical for reasons independent of how the differ chose to describe it.
 
+### `--no-build` falsifies this proof
+
+> **Never pass `--no-build` to `dotnet ef` after touching a mapped type, an EF
+> configuration, or anything they compile against.**
+
+`dotnet ef` reads the **startup project's** build output. Building
+`RegOS.Persistence` alone does not refresh the copy of it sitting in
+`src/Host/RegOS.Api/bin`, so `--no-build` runs the differ against the *previous*
+model — and an empty `Up`/`Down` then means "nothing changed since the code you
+are no longer running", which is indistinguishable from the pass this standard
+is asking for. **The one output that proves neutrality is the same output a
+stale assembly produces.**
+
+The failure compounds. `dotnet ef migrations remove --no-build` reads the same
+stale snapshot, concludes the last migration is the one *before* the one just
+scaffolded, and deletes **that** instead — quietly reverting the model snapshot
+with it. Observed twice now: once as a stale CORS binary (EPIC-018 S006), once
+here, where it removed a committed migration from the previous story.
+
+Both times the files were recoverable from git. Neither time was the command's
+output distinguishable from success.
+
 ### What it does not prove
 
 **Query behaviour is outside the model diff.** `AutoInclude()`, query filters,

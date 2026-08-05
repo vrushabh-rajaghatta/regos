@@ -59,7 +59,20 @@ public sealed class ListLocalLabelsHandler
                     .Select(r => (int?)r.RevisionNumber)
                     .FirstOrDefault(),
 
-                label.Revisions.Count))
+                label.Revisions.Count,
+
+                label.PackagedProductId == null
+                    ? null
+                    : (Guid?)label.PackagedProductId.Value,
+
+                // Joined, never copied onto the label. The row holds an id
+                // precisely so a pack whose description is corrected is
+                // corrected everywhere it is shown at once — the same call
+                // the ingredient/substance join makes.
+                _dbContext.PackagedProducts
+                    .Where(pack => pack.Id == label.PackagedProductId)
+                    .Select(pack => pack.Description)
+                    .FirstOrDefault()))
             .ToListAsync(cancellationToken);
     }
 }

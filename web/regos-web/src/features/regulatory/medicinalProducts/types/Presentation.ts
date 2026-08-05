@@ -66,6 +66,37 @@ export interface Presentation {
    * composition, and the screen says it is unfinished.
    */
   hasAnActiveIngredient: boolean;
+  /**
+   * What it looks like. **Never null** — a presentation nobody has described
+   * carries the empty statement, and `isStated` says which.
+   */
+  appearance: Appearance;
+}
+
+/**
+ * What the medicine looks like. Screen word **Appearance**; the domain type is
+ * `PhysicalCharacteristics`.
+ *
+ * On the presentation and not the pack, which is ADR-061 §1's discriminator
+ * pointing the other way for once: a tablet looks identical in a carton of 30
+ * and a carton of 100.
+ */
+export interface Appearance {
+  /** Several is ordinary — a white body with a blue cap is two colours. */
+  colours: CodedValue[];
+  shape: CodedValue | null;
+  /** What is stamped on it, and how a loose tablet gets identified. */
+  imprint: string | null;
+  description: string | null;
+  isStated: boolean;
+}
+
+/** What the appearance form sends. */
+export interface AppearanceBody {
+  colourCodes: string[];
+  shapeCode: string | null;
+  imprint: string | null;
+  description: string | null;
 }
 
 /**
@@ -75,6 +106,8 @@ export interface Presentation {
  */
 export interface PharmaceuticalVocabulary {
   doseForms: CodedValue[];
+  colours: CodedValue[];
+  shapes: CodedValue[];
   routesOfAdministration: CodedValue[];
   unitsOfPresentation: CodedValue[];
   /** What a physical article can be — a vial, a kit. Overlaps

@@ -81,9 +81,31 @@ public sealed class LocalLabelConfiguration
             .HasForeignKey(x => x.MedicinalProductId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // The pack this document is printed for, when it is printed for one
+        // (EPIC-010b D6 — the debt EPIC-018 named this epic as the milestone
+        // for). Nullable on every label and not only on artwork: no rule may
+        // read `if (Type == Artwork)`, and a container label is genuinely
+        // printed per pack size.
+        //
+        // SetNull rather than Cascade: deleting a pack must not take an
+        // authority-approved document with it. The artwork outlives the pack
+        // record and simply stops naming one.
+        builder.Property(x => x.PackagedProductId)
+            .HasConversion(
+                id => id!.Value, value => new PackagedProductId(value));
+
+        builder.HasOne<PackagedProduct>()
+            .WithMany()
+            .HasForeignKey(x => x.PackagedProductId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // "What labelling do we hold for this market?" — the only question that
         // reaches this table today.
         builder.HasIndex(x => x.MedicinalProductId);
+
+        // "Which artwork is printed for this pack?" — the capstone's question,
+        // asked from the pack's side.
+        builder.HasIndex(x => x.PackagedProductId);
 
         builder.HasIndex(x => x.TenantId);
 

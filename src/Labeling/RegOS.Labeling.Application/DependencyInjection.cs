@@ -4,6 +4,7 @@ using RegOS.Labeling.Application.Commands.AttachGlobalLabelContent;
 using RegOS.Labeling.Application.Commands.CreateLocalLabel;
 using RegOS.Labeling.Application.Commands.DiscardLocalLabelDraft;
 using RegOS.Labeling.Application.Commands.PrepareLocalLabelRevision;
+using RegOS.Labeling.Application.Commands.PrintLocalLabelForPack;
 using RegOS.Labeling.Application.Commands.PublishLocalLabelRevision;
 using RegOS.Labeling.Application.Commands.StartLocalLabelRevision;
 using RegOS.Labeling.Application.Commands.RecordIndication;
@@ -69,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<CreateLocalLabelHandler>();
 
         services.AddScoped<StartLocalLabelRevisionHandler>();
+        services.AddScoped<PrintLocalLabelForPackHandler>();
 
         services.AddScoped<PrepareLocalLabelRevisionHandler>();
 

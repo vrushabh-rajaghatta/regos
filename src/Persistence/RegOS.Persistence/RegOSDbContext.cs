@@ -34,6 +34,8 @@ using ProductDocumentAggregate =
     RegOS.ProductDocument.Domain.Aggregates.ProductDocument;
 using RegistrationAggregate =
     RegOS.Registration.Domain.Aggregates.Registration.Registration;
+using PackAuthorisationAggregate =
+    RegOS.Registration.Domain.Aggregates.PackAuthorisations.PackAuthorisation;
 using HaCorrespondenceAggregate =
     RegOS.Interaction.Domain.Correspondence.HaCorrespondence;
 using CorrespondenceTypeAggregate =
@@ -141,6 +143,14 @@ public sealed class RegOSDbContext : DbContext
     /// </remarks>
     public DbSet<PackagedProduct> PackagedProducts =>
         Set<PackagedProduct>();
+
+    /// <summary>
+    /// The layers of a pack — the carton, the blisters inside it. Recursive
+    /// through a nullable parent; the acyclicity is a domain rule, not a
+    /// constraint here (ADR-061 §2).
+    /// </summary>
+    public DbSet<PackageItem> PackageItems =>
+        Set<PackageItem>();
 
     /// <summary>
     /// A label held above any market — the core data sheet and its siblings
@@ -299,6 +309,17 @@ public sealed class RegOSDbContext : DbContext
         Set<RegistrationAggregate>();
 
     /// <summary>
+    /// Which packs a licence authorises, and from when (ADR-061 §3).
+    /// </summary>
+    /// <remarks>
+    /// Its own root, and its own set, because the question asked of it starts
+    /// at the market — <em>"which packs are authorised here?"</em> — and
+    /// reaches licences, not the other way round. Tenant-owned and fail-closed.
+    /// </remarks>
+    public DbSet<PackAuthorisationAggregate> PackAuthorisations =>
+        Set<PackAuthorisationAggregate>();
+
+    /// <summary>
     /// Studies in human subjects. Tenant-owned and fail-closed.
     /// </summary>
     /// <remarks>
@@ -440,6 +461,12 @@ public sealed class RegOSDbContext : DbContext
         modelBuilder.Entity<PackagedProduct>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
+        // A layer is a root in its own right, like a component: every rule
+        // about the tree loads all of them, and a filter reaching through the
+        // pack would not apply to that load.
+        modelBuilder.Entity<PackageItem>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
         // A label is tenant-owned, so it takes the first of ADR-038's three
         // filter shapes. Its versions carry no TenantId and are reachable only
         // through it (ADR-059).
@@ -510,6 +537,9 @@ public sealed class RegOSDbContext : DbContext
                 && (x.TenantId == null || x.TenantId == CurrentTenant));
 
         modelBuilder.Entity<RegistrationAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<PackAuthorisationAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // A tenant's registry of business relationships — even the *names*

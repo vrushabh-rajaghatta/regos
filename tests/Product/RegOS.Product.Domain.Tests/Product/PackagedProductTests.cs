@@ -294,4 +294,114 @@ public sealed class PackagedProductTests
         entry.OccurredOn.Should().Be(new DateOnly(2024, 9, 30));
         entry.RecordedOnUtc.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
     }
+
+    // --- how it is supplied, and how long it lasts ---------------------------
+
+    /// <summary>
+    /// <b>The discriminator, used a third time</b> (ADR-061 §1). Two packs of
+    /// one product may be classified differently, which is why legal status is
+    /// here and not on the product or the presentation: a 16-tablet pack of
+    /// paracetamol is general sale where a 100-tablet pack is pharmacy-only.
+    /// </summary>
+    [Fact]
+    public void TwoPacksOfOneProductMayBeSuppliedDifferently()
+    {
+        var small = New();
+        var large = New();
+
+        small.Classify(SupplyVocabulary.LegalStatusOf("GENERAL_SALE"));
+        large.Classify(SupplyVocabulary.LegalStatusOf("PHARMACY_ONLY"));
+
+        small.LegalStatusOfSupply!.Display.Should().Be("General sale");
+        large.LegalStatusOfSupply!.Display.Should().Be("Pharmacy only");
+    }
+
+    [Fact]
+    public void APackIsUnclassifiedUntilItIsClassified()
+    {
+        New().LegalStatusOfSupply.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Null is a real act, not a mistake: a classification recorded in error is
+    /// withdrawn rather than replaced with a wrong one.
+    /// </summary>
+    [Fact]
+    public void AClassificationCanBeWithdrawn()
+    {
+        var pack = New();
+
+        pack.Classify(SupplyVocabulary.LegalStatusOf("PRESCRIPTION_ONLY"));
+        pack.Classify(null);
+
+        pack.LegalStatusOfSupply.Should().BeNull();
+    }
+
+    /// <summary>
+    /// <b>Never null.</b> A pack nobody has spoken about carries the empty
+    /// statement, so no caller has to guard the navigation — and
+    /// <c>IsStated</c> answers the question a null would only imply.
+    /// </summary>
+    [Fact]
+    public void ANewPackCarriesAnEmptyShelfLifeRatherThanNone()
+    {
+        var pack = New();
+
+        pack.ShelfLife.Should().NotBeNull();
+        pack.ShelfLife.IsStated.Should().BeFalse();
+    }
+
+    [Fact]
+    public void AShelfLifeIsStatedWhole()
+    {
+        var pack = New();
+
+        pack.StateShelfLife(ShelfLifeStorage.Create(
+            36,
+            SupplyVocabulary.ShelfLifePeriodOf("MONTH"),
+            "36 months.",
+            [SupplyVocabulary.StorageConditionOf("BELOW_25")!]));
+
+        pack.ShelfLife.Value.Should().Be(36);
+        pack.ShelfLife.StorageConditions.Should().ContainSingle();
+    }
+
+    /// <summary>
+    /// <c>NotStated</c> is how a statement is withdrawn; null is a caller
+    /// mistake, because a pack always has one.
+    /// </summary>
+    [Fact]
+    public void AShelfLifeCanBeWithdrawnButNotNulled()
+    {
+        var pack = New();
+
+        pack.StateShelfLife(ShelfLifeStorage.Create(
+            36, SupplyVocabulary.ShelfLifePeriodOf("MONTH"), null, []));
+
+        pack.StateShelfLife(ShelfLifeStorage.NotStated);
+        pack.ShelfLife.IsStated.Should().BeFalse();
+
+        var nulled = () => pack.StateShelfLife(null!);
+
+        nulled.Should().Throw<DomainException>()
+            .WithMessage(PackagedProductErrors.ShelfLifeRequired);
+    }
+
+    /// <summary>
+    /// The two facts move on different clocks — a reclassification is a
+    /// regulatory decision, a shelf-life extension arrives by variation — so
+    /// stating one leaves the other exactly as it was.
+    /// </summary>
+    [Fact]
+    public void ClassifyingAPackDoesNotDisturbItsShelfLife()
+    {
+        var pack = New();
+
+        pack.StateShelfLife(ShelfLifeStorage.Create(
+            36, SupplyVocabulary.ShelfLifePeriodOf("MONTH"), null, []));
+
+        pack.Classify(SupplyVocabulary.LegalStatusOf("HOSPITAL_ONLY"));
+
+        pack.ShelfLife.Value.Should().Be(36);
+    }
 }

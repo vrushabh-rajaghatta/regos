@@ -100,7 +100,7 @@ something to be measured against rather than a third invention.
 **The depth limit is a domain constant, not a schema limit** — the same call
 `ComponentTree` made. Changing it is a decision, not a migration.
 
-### 3. Why `Registration` does not point at `PackagedProduct`
+### 3. Authorisation is a dated relationship, owned by the Registration context
 
 RIM says `License → Packaged Product`, **Parent, Single**. That is wrong, and
 RegOS departs from it deliberately:
@@ -108,30 +108,64 @@ RegOS departs from it deliberately:
 - One EU marketing authorisation covers **several pack sizes**.
 - One US NDA covers **several package configurations**, each with its own NDC.
 
-So the relationship is one-to-many. The remaining question is which side holds
-it, and RegOS puts it on the **pack**:
+So the relationship is one-to-many. The decision:
+
+> **The authorisation relationship is owned by the Registration context. Packs
+> remain independently modelled within Product, and authorisation is expressed as
+> a dated relationship between `Registration` and `PackagedProduct`.**
 
 ```
-MedicinalProduct
-    └── PackagedProduct
-            └── RegistrationId?        ← nullable
+Registration
+    └── PackAuthorisation
+            • RegistrationId
+            • PackagedProductId
+            • AuthorisedOn
 ```
 
-**Because a pack exists before its licence does.** That is not a convenience; it
-is the same reasoning [ADR-039](ADR-039-the-market-local-product-tier.md) used
-for markets — *a product is present in a market from the moment the company
-intends to sell there, which is years before an authority agrees.* A pack is
-designed, coded and costed long before it is authorised, and a model that cannot
-hold an unlicensed pack forces either a fabricated registration or a pack that
-appears only after approval. Both lose information the business has.
+**A pack exists before its licence does.** That is not a convenience; it is the
+same reasoning [ADR-039](ADR-039-the-market-local-product-tier.md) used for
+markets — *a product is present in a market from the moment the company intends
+to sell there, which is years before an authority agrees.* A pack is designed,
+coded and costed long before it is authorised, and a model that cannot hold an
+unlicensed pack forces either a fabricated registration or a pack that appears
+only after approval. Both lose information the business has.
 
-Three consequences, all wanted:
+**The relationship is a regulatory fact, not a pointer.** *"This pack became
+authorised under this registration, on this date"* is different from *"this pack
+belongs to this licence"*, and the difference is load-bearing: packs frequently
+arrive **years after** the original authorisation, by variation. A date belongs
+on the relationship, and a foreign key cannot carry one.
+
+Four consequences, all wanted:
 
 | | |
 |---|---|
-| *"Which packs does this licence authorise?"* | a filter on the pack |
-| *"Which packs are not authorised yet?"* | `RegistrationId is null` — no *planned registration* had to be invented |
-| **`Registration` is not modified** | EPIC-005's aggregate, its history and its tests are untouched. The umbrella sketch expected this decision to change it; it need not |
+| *"Which packs does this licence authorise?"* | the authorisations of one registration |
+| *"Which packs are not authorised yet?"* | packs with no authorisation — still no *planned registration* to invent |
+| **`Registration` is not modified** | `PackAuthorisation` is a sibling in that context. EPIC-005's aggregate, its history and its tests are untouched |
+| **`Product` stays independent** | Products exist; registrations consume them. That has been true since ADR-039 and stays true |
+
+> **Corrected during EPIC-010b S001, before this ADR merged.** §3 originally put
+> a nullable `RegistrationId` on the pack. **It is not implementable**:
+> `Registration.Domain` already references `Product.Domain`, so the reverse edge
+> would close a cycle — the discovery was the compiler's, made while writing the
+> aggregate.
+>
+> An accepted ADR is normally superseded rather than edited. This one was four
+> commits old, unmerged and relied upon by nothing, and **an ADR should record
+> what was built rather than what was intended** — so it was corrected in place
+> and the correction recorded here rather than hidden.
+>
+> **A `Guid? RegistrationId` was considered and rejected.** It compiles and
+> breaks no cycle, and it would be the first untyped cross-aggregate reference in
+> the codebase — an escape hatch whose only justification is the cycle it dodges.
+> A later reader would ask why this one is different and find no good answer.
+>
+> **The constraint improved the model.** The nullable FK solved today's
+> cardinality; the dated relationship represents the domain, and it is somewhere
+> for *"which variation authorised this pack?"*, *"which submission introduced
+> it?"* and *"which sequence first approved it?"* to grow — all properties of the
+> authorisation event, none of them properties of the pack.
 
 ### 4. Two identifiers for one barcode, and they may disagree
 
@@ -193,9 +227,9 @@ implies otherwise.
 
 ## Revisit when
 
-- **A pack is authorised under two licences.** Today's `RegistrationId?` is
-  single. The second demonstration turns it into a child collection — additive,
-  and only then.
+- **An authorisation needs to name what carried it** — a variation, a submission,
+  a sequence. `PackAuthorisation` is where those go, and none is built until one
+  is asked for.
 - **A device needs a fact a `MedicinalProductComponent` cannot hold** — a UDI, a
   notified-body number, a device-specific lifecycle. That is the demonstration
   §1's refusal asks for.

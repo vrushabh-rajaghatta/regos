@@ -68,6 +68,37 @@ public sealed class LocalLabel : AggregateRoot<LocalLabelId>
     /// </summary>
     public LanguageCode Language { get; private set; } = default!;
 
+    /// <summary>
+    /// The pack this document is printed for, when it is printed for one.
+    /// </summary>
+    /// <remarks>
+    /// <b>The debt EPIC-018 deliberately carried, and it named this epic as the
+    /// milestone.</b> A carton is printed for a specific pack: the 30 and the
+    /// 100 are separately approved artworks even when the words on them are
+    /// identical.
+    /// <para>
+    /// <b>Nullable on every label, and no rule reads <c>if (Type ==
+    /// Artwork)</c>.</b> EPIC-018 D2 bought a real simplification by making
+    /// artwork a <see cref="LabelType"/> rather than an aggregate, and recorded
+    /// the price: the moment a rule branches on the type, that trade has stopped
+    /// paying. <c>LocalLabelTypeBranchTests</c> watches for it.
+    /// </para>
+    /// <para>
+    /// It is also simply true that the branch would be wrong. A container label
+    /// is printed per pack size, and a leaflet can be pack-specific — so
+    /// <em>"which pack is this for?"</em> is a sensible question of any label
+    /// and an unanswered one for most.
+    /// </para>
+    /// <para>
+    /// <b>The two barcodes stay apart</b> (EPIC-010b D6). The pack's
+    /// <c>PackCode</c> is what the company registers with the market;
+    /// <c>LocalLabelRevision.DataCarrierCode</c> is what the approved artwork
+    /// actually prints. They are <em>meant</em> to be able to disagree, and a
+    /// single field would hide the day they do.
+    /// </para>
+    /// </remarks>
+    public PackagedProductId? PackagedProductId { get; private set; }
+
     public DateTime CreatedOnUtc { get; private set; }
 
     /// <summary>Every revision, oldest first once ordered.</summary>
@@ -112,6 +143,26 @@ public sealed class LocalLabel : AggregateRoot<LocalLabelId>
         label.StartRevision();
 
         return label;
+    }
+
+    /// <summary>
+    /// Names the pack this document is printed for, or clears it.
+    /// </summary>
+    /// <remarks>
+    /// <b>A property of the label, not of a revision.</b> Which pack a carton is
+    /// printed for is what the document <em>is</em> — revising the words on it
+    /// does not make it a different pack's carton. A correction here is a
+    /// correction, not a new revision.
+    /// <para>
+    /// Nothing checks that the pack belongs to the same market. The pack is
+    /// another aggregate in another context, and reaching across to validate it
+    /// would be the cross-aggregate read ADR-016 keeps out of the domain — the
+    /// command resolves the pack before it gets here.
+    /// </para>
+    /// </remarks>
+    public void PrintedFor(PackagedProductId? packagedProductId)
+    {
+        PackagedProductId = packagedProductId;
     }
 
     /// <summary>

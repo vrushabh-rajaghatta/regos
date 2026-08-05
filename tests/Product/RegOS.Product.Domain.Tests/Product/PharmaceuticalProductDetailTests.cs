@@ -218,4 +218,84 @@ public class PharmaceuticalProductDetailTests
                 [])
             .Description.Should().BeNull();
     }
+    // --- what it looks like --------------------------------------------------
+
+    /// <summary>
+    /// <b>Never null.</b> A presentation nobody has described carries the empty
+    /// statement, so no caller has to guard the navigation.
+    /// </summary>
+    [Fact]
+    public void ANewPresentationCarriesAnEmptyAppearanceRatherThanNone()
+    {
+        var presentation = APresentation();
+
+        presentation.Appearance.Should().NotBeNull();
+        presentation.Appearance.IsStated.Should().BeFalse();
+    }
+
+    [Fact]
+    public void AnAppearanceIsDescribedWhole()
+    {
+        var presentation = APresentation();
+
+        presentation.DescribeAppearance(PhysicalCharacteristics.Create(
+            [PharmaceuticalVocabulary.ColourOf("WHITE")!],
+            PharmaceuticalVocabulary.ShapeOf("ROUND"),
+            "AZ 10",
+            "White, round tablet debossed AZ 10."));
+
+        presentation.Appearance.Imprint.Should().Be("AZ 10");
+        presentation.Appearance.Colours.Should().ContainSingle();
+    }
+
+    /// <summary>
+    /// <c>NotStated</c> withdraws a description; null is a caller mistake,
+    /// because a presentation always has one.
+    /// </summary>
+    [Fact]
+    public void AnAppearanceCanBeWithdrawnButNotNulled()
+    {
+        var presentation = APresentation();
+
+        presentation.DescribeAppearance(
+            PhysicalCharacteristics.Create([], null, "AZ 10", null));
+
+        presentation.DescribeAppearance(PhysicalCharacteristics.NotStated);
+        presentation.Appearance.IsStated.Should().BeFalse();
+
+        var nulled = () => presentation.DescribeAppearance(null!);
+
+        nulled.Should().Throw<DomainException>()
+            .WithMessage(PhysicalCharacteristicsErrors.AppearanceRequired);
+    }
+
+    /// <summary>
+    /// A presentation is recorded when its dose form is known and described
+    /// when somebody has seen it — routinely later, and by somebody else. So
+    /// correcting the trade-name-era facts leaves the appearance alone.
+    /// </summary>
+    [Fact]
+    public void RestatingAPresentationDoesNotDisturbItsAppearance()
+    {
+        var presentation = APresentation();
+
+        presentation.DescribeAppearance(
+            PhysicalCharacteristics.Create([], null, "AZ 10", null));
+
+        presentation.Restate(
+            "Film-coated tablet, 20 mg", null, Tablet(), null, []);
+
+        presentation.Appearance.Imprint.Should().Be("AZ 10");
+    }
+
+    private static PharmaceuticalProductDetail APresentation()
+        => PharmaceuticalProductDetail.Create(
+            TenantId.From(Guid.NewGuid()),
+            MedicinalProductId.New(),
+            "Film-coated tablet, 10 mg",
+            null,
+            Tablet(),
+            null,
+            []);
+
 }

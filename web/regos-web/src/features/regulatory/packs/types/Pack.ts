@@ -33,5 +33,37 @@ export interface Pack {
   packCode: string | null;
   currentMarketingStatus: PackageMarketingStatus;
   currentMarketingStatusOccurredOn: string;
+
+  /**
+   * Who may hand this pack over. Per pack, not per product — a 16-tablet pack
+   * of paracetamol may be general sale where a 100-tablet pack is
+   * pharmacy-only (ADR-061 §1). Null until it is classified.
+   */
+  legalStatusOfSupplyCode: string | null;
+  legalStatusOfSupplyDisplay: string | null;
+
+  /**
+   * How long it keeps. Literal — *3 years* arrives as three years, never
+   * normalised to thirty-six months.
+   */
+  shelfLifeValue: number | null;
+  shelfLifeUnitCode: string | null;
+  shelfLifeUnitDisplay: string | null;
+
+  /** What the label says, in the words it was approved in. */
+  shelfLifeText: string | null;
+
+  /**
+   * Empty means nobody has stated any. A lone `NO_SPECIAL_PRECAUTIONS` means
+   * somebody checked and none are needed — a different statement, kept
+   * distinguishable.
+   */
+  storageConditions: PackStorageCondition[];
+
   history: PackMarketingStatusEntry[];
+}
+
+export interface PackStorageCondition {
+  code: string;
+  display: string;
 }

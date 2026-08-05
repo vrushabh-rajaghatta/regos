@@ -14,6 +14,8 @@ using RegOS.ReferenceData.Application.Queries.Organization.ListContactRoles;
 using RegOS.ReferenceData.Application.Queries.Organization.ListIdentifierSchemes;
 using RegOS.ReferenceData.Application.Queries.Substances.ListSubstances;
 using RegOS.ReferenceData.Application.Queries.Substances.GetSubstanceVocabulary;
+using RegOS.ReferenceData.Application.Queries.Packaging.GetPackagingVocabulary;
+using RegOS.ReferenceData.Application.Queries.Supply.GetSupplyVocabulary;
 using RegOS.ReferenceData.Application.Queries.Presentations.GetPharmaceuticalVocabulary;
 using RegOS.ReferenceData.Application.Queries.Measurement.ListMeasurementUnits;
 using RegOS.ReferenceData.Application.Queries.Labels.GetLabelVocabulary;
@@ -45,6 +47,9 @@ public static class DependencyInjection
         services.AddScoped<ListSubstancesHandler>();
         services.AddScoped<GetSubstanceVocabularyHandler>();
         services.AddScoped<GetPharmaceuticalVocabularyHandler>();
+
+        services.AddScoped<GetPackagingVocabularyHandler>();
+        services.AddScoped<GetSupplyVocabularyHandler>();
         services.AddScoped<GetLabelVocabularyHandler>();
         services.AddScoped<GetClinicalVocabularyHandler>();
         services.AddScoped<ListMeasurementUnitsHandler>();

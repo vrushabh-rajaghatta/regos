@@ -34,6 +34,22 @@ public sealed class ListPacksHandler
                 pack.PackCode,
                 pack.CurrentMarketingStatus,
 
+                LegalStatus = pack.LegalStatusOfSupply,
+
+                // ShelfLife is a required owned reference, so it is never null
+                // here — a pack nobody has spoken about carries the empty
+                // statement rather than a missing one.
+                ShelfLifeValue = pack.ShelfLife.Value,
+                ShelfLifeUnit = pack.ShelfLife.Unit,
+                ShelfLifeText = pack.ShelfLife.Text,
+                StorageConditions = pack.ShelfLife.StorageConditions
+                    .Select(condition => new
+                    {
+                        condition.Code,
+                        condition.Display,
+                    })
+                    .ToList(),
+
                 // The date the status in force took effect. Max, not last —
                 // nothing orders what the database hands back.
                 Since = pack.MarketingStatusHistory.Max(x => x.OccurredOn),
@@ -65,6 +81,15 @@ public sealed class ListPacksHandler
                 row.PackCode,
                 row.CurrentMarketingStatus.ToString(),
                 row.Since,
+                row.LegalStatus?.Code,
+                row.LegalStatus?.Display,
+                row.ShelfLifeValue,
+                row.ShelfLifeUnit?.Code,
+                row.ShelfLifeUnit?.Display,
+                row.ShelfLifeText,
+                [.. row.StorageConditions.Select(condition =>
+                    new PackStorageConditionSummary(
+                        condition.Code, condition.Display))],
                 [.. row.History.Select(entry => new PackMarketingStatusSummary(
                     entry.Id.Value,
                     entry.Status.ToString(),

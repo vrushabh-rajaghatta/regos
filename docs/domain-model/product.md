@@ -60,6 +60,12 @@ They differ here on purpose, and both are binding.
 | `GlobalProduct` | **Product** |
 | `PharmaceuticalProductDetail` | **Presentation** |
 | `Registration` | **Registration** / *market authorisation* in prose |
+| `PackagedProduct` | **Pack** |
+| `PackageItem` | **What's inside** |
+| `LegalStatusOfSupply` | **Legal status** |
+| `ShelfLifeStorage` | **Shelf life & storage** |
+| `PhysicalCharacteristics` | **Appearance** |
+| `PackAuthorisation` | **Authorised under** |
 
 RIM's `Medicinal Product` keeps the model precise and is what a future
 contributor will search for. **"Market"** is what a regulatory user says out
@@ -70,6 +76,14 @@ lists its **Markets**, and an authorisation is recorded against one.
 the product physically *is*, as against what it is called or whether it is on
 sale. Nobody says it out loud. **"Presentation"** is the word a regulatory user
 uses for the same thing, and it is what the market page shows.
+
+`PackagedProduct` is what a market sells — a carton of thirty. **"Pack"** is
+what anyone says, and the route keeps the domain noun
+(`/api/packaged-products`) while the screen keeps the spoken one. `PackageItem`
+is IDMP's noun for a layer of that pack, deliberately chosen over RIM's
+`Packaging` and over `PackagingComponent`, which would reuse the exact word that
+means the *other* recursive tree
+([ADR-061](../adr/ADR-061-a-pack-is-how-a-medicine-is-supplied.md) §5).
 
 The screen's word must never reach a type, and the type's word must never reach
 a label without a reason to prefer it.

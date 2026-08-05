@@ -155,6 +155,9 @@ export function SubmissionContentPlanPage() {
 
       {editable && (
         <ReportStudyDialog
+          // Keyed on the placement so opening a different one remounts, which
+          // is how its fields start from that placement rather than the last.
+          key={reporting?.submissionDocumentId ?? "none"}
           submissionId={submissionId!}
           placement={reporting}
           onOpenChange={(open) => !open && setReporting(null)}

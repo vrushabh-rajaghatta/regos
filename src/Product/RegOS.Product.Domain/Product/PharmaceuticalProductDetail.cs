@@ -106,6 +106,22 @@ public sealed class PharmaceuticalProductDetail
     public IReadOnlyCollection<Ingredient> Ingredients => _ingredients.AsReadOnly();
 
     /// <summary>
+    /// What it looks like. Screen word: <b>Appearance</b>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Here rather than on a pack, and that is the decision</b> (ADR-061 §1's
+    /// discriminator): a tablet looks identical in a carton of 30 and a carton
+    /// of 100, so how it looks is part of what the medicine <em>is</em>.
+    /// <para>
+    /// <b>Never null</b> — a presentation nobody has described carries
+    /// <see cref="PhysicalCharacteristics.NotStated"/>, and
+    /// <see cref="PhysicalCharacteristics.IsStated"/> says which.
+    /// </para>
+    /// </remarks>
+    public PhysicalCharacteristics Appearance { get; private set; }
+        = PhysicalCharacteristics.NotStated;
+
+    /// <summary>
     /// True when the composition says what the product works by.
     /// </summary>
     /// <remarks>
@@ -204,6 +220,30 @@ public sealed class PharmaceuticalProductDetail
 
             _routesOfAdministration.Add(route);
         }
+    }
+
+    /// <summary>
+    /// Describes what this presentation looks like.
+    /// </summary>
+    /// <remarks>
+    /// <b>Its own method, not part of <see cref="Restate"/>.</b> A presentation
+    /// is recorded when its dose form is known and described when somebody has
+    /// seen it, which is routinely later and by somebody else. Folding it in
+    /// would make every trade-name-era correction resubmit an appearance nobody
+    /// had looked at.
+    /// <para>
+    /// Takes the whole value object, never its parts — the same rule
+    /// <see cref="PackagedProduct.StateShelfLife"/> follows, so a colour cannot
+    /// be changed without the sentence that describes it.
+    /// </para>
+    /// </remarks>
+    public void DescribeAppearance(PhysicalCharacteristics appearance)
+    {
+        if (appearance is null)
+            throw new DomainException(
+                PhysicalCharacteristicsErrors.AppearanceRequired);
+
+        Appearance = appearance;
     }
 
     /// <summary>

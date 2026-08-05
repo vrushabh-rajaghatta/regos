@@ -265,10 +265,16 @@ medicinalProducts.MapRecordAtcCode();
 // What the market actually sells. Screen word "Pack"; the route says
 // packaged-products, because routes take the domain noun (ADR-061).
 var packs = app.MapGroup("").WithTags("Packs");
+// Before the rest: /api/packaged-products/vocabulary must not be read as a
+// /api/packaged-products/{id} that happens to be spelled "vocabulary".
+packs.MapGetPackagingVocabulary();
+packs.MapGetSupplyVocabulary();
 packs.MapListPacks();
 packs.MapAddPack();
 packs.MapRestatePack();
+packs.MapStatePackSupply();
 packs.MapChangePackMarketingStatus();
+packs.MapPackageItems();
 
 var presentations = app.MapGroup("").WithTags("Presentations");
 // Before the rest: /api/presentations/vocabulary must not be read as a
@@ -277,6 +283,7 @@ presentations.MapGetPharmaceuticalVocabulary();
 presentations.MapListPresentations();
 presentations.MapAddPresentation();
 presentations.MapRestatePresentation();
+presentations.MapDescribeAppearance();
 presentations.MapAddIngredient();
 presentations.MapRestateIngredient();
 presentations.MapRemoveIngredient();
@@ -309,6 +316,7 @@ localLabels.MapListLocalLabelRevisions();
 localLabels.MapStartLocalLabelRevision();
 localLabels.MapPrepareLocalLabelRevision();
 localLabels.MapPublishLocalLabelRevision();
+localLabels.MapPrintLocalLabelForPack();
 localLabels.MapDiscardLocalLabelDraft();
 
 var indications = app.MapGroup("").WithTags("Indications");
@@ -369,6 +377,9 @@ registrations.MapListProductRegistrations();
 registrations.MapListMarketRegistrations();
 registrations.MapListRegistrationMarkets();
 registrations.MapListExpiringRegistrations();
+registrations.MapAuthorisePack();
+registrations.MapWithdrawPackAuthorisation();
+registrations.MapListAuthorisedPacks();
 
 var correspondence = app.MapGroup("").WithTags("Correspondence");
 correspondence.MapRecordCorrespondence();
