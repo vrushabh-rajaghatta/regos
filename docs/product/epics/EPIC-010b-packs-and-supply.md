@@ -1,6 +1,6 @@
 # EPIC-010b — Packs & supply
 
-**Status:** 🟡 In Progress · **Branch:** `epic/EPIC-010b-packs-and-supply` (cut 2026-08-04) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** ✅ Complete · **Branch:** `epic/EPIC-010b-packs-and-supply` (cut 2026-08-04) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 What a market actually sells: the **pack**, what is inside it, how it may be
 supplied, how long it lasts — and which licence authorises it.
@@ -244,7 +244,7 @@ arrive with:
 | **S002** | **`PackageItem` + `PackagingTree`** — the recursion, depth- and cycle-guarded; material is what makes it not a component | full slice | ✅ |
 | **S003** | **`LegalStatusOfSupply` + `ShelfLifeStorage`** — how it is supplied, how long it lasts | full slice | ✅ |
 | **S004** | **`Appearance` on the presentation, and artwork's pack link** — the two describing facts, and EPIC-018's debt paid | full slice | ✅ |
-| **S005** | **Capstone** — a registration authorises packs; *"which packs are authorised here, and how are they supplied?"*; browser proof; retro | query → UI → test → docs | ⚪ |
+| **S005** | **Capstone** — a registration authorises packs; *"which packs are authorised here, and how are they supplied?"*; browser proof; retro | query → UI → test → docs | ✅ |
 
 > **S004 was where to stop if the epic ran long**, decided in advance rather
 > than under pressure. **It was not cut.** The architecture held across
@@ -336,3 +336,119 @@ isolated stack.
 > stays omitted indefinitely**, and a permanently-red one is omitted while
 > looking present, so the three errors were fixed in the same change that added
 > it.
+
+---
+
+## Retrospective
+
+### Did the capstone demonstrate what the epic promised?
+
+> *"Which packs of this product are authorised in this market, how are they
+> supplied, and how long do they last?"*
+
+Yes, and the shape of the answer is the evidence. One row of the capstone read
+carries facts from **four aggregates across two contexts**, and **not one of them
+is duplicated**:
+
+| Fact | Story | Owned by |
+|---|---|---|
+| the pack, its size, its code, its dated marketing status | S001 | `PackagedProduct` |
+| how many layers it holds | S002 | `PackageItem` |
+| legal status, shelf life, storage conditions | S003 | `ShelfLifeStorage` |
+| which licence, and **from when** | S005 | `PackAuthorisation` |
+
+The browser proof asserts the negative as well: after authorising a pack, the
+pack's own payload still contains no key mentioning a registration. **`Product`
+never learned who authorised anything**, which is ADR-061 §3's entire claim.
+
+### Definition of Done
+
+| | |
+|---|---|
+| Packs with size, code, dated marketing status | ✅ S001 |
+| Depth- and cycle-guarded contents with materials, tested | ✅ S002 — four layers, and a fifth refused |
+| Legal status per pack, two packs able to differ | ✅ S003 |
+| Shelf life and storage as the conclusion, with the label's wording | ✅ S003 |
+| Appearance on the presentation | ✅ S004 |
+| **A registration authorises packs, and a pack can exist without one** | ✅ S005 — every pack is listed, and *"Not yet authorised"* is a stated answer |
+| The question answerable through the API | ✅ `GET /api/medicinal-products/{id}/authorised-packs` |
+| Artwork can name the pack it is printed for | ✅ S004 |
+| Browser proof; ADR-061 before S001 | ✅ 119 specs; ADR-061 at `6946429`, before S001 at `0926334` |
+
+**5 of 7 RIM objects, as forecast.** `OtherCharacteristics` and `Devices` were
+refused in Phase 1 and stayed refused — no story reached for either.
+
+### The two lessons worth carrying past this epic
+
+Both span several epics now, which is what separates them from story notes.
+
+#### 1. Copy a pattern before abstracting it
+
+| Occurrence | What was copied | What diverged |
+|---|---|---|
+| Versioning (EPIC-018 D4) | `RegulatoryTemplate`'s version/publish shape | approval dates, effective ranges |
+| Recursive trees (010b D1) | `ComponentTree`'s guards and reading order | **depth 4 vs 3; quantity-descending vs alphabetical** |
+| Structured fact + wording (010b S004) | — | **evaluated on the third occurrence and refused** |
+
+The trees are the strongest case, because the divergence is now asserted:
+`PackagingTreeTests` states that the two depth limits **differ**. A generic
+`RecursiveTree<T>` written at the second occurrence would already be carrying a
+conditional.
+
+And the third row matters as much as the first two — *structured fact beside
+approved wording* appears in `Strength`, `ShelfLifeStorage` and
+`PhysicalCharacteristics`, which is exactly the count ADR-018 says to evaluate
+at. It was evaluated **and refused**, because the three differ entirely in what
+the structured half is. **ADR-018's rule of three is a trigger to think, not a
+trigger to abstract**, and this epic is the first time the evaluation went the
+other way and was written down.
+
+#### 2. Persistence may not dictate the domain model
+
+Three times, an infrastructure constraint pushed back on the design, and each
+time the model was decided first and the mapping made to fit:
+
+| Constraint | What it wanted | What was built |
+|---|---|---|
+| `Registration.Domain → Product.Domain` already exists | a raw `Guid?` on the pack | **`PackAuthorisation`** — a dated relationship in Registration, which is a better model *and* the one that compiles |
+| EF nulls an optional owned reference when its columns are all null | splitting the conditions off the value object | **`ShelfLifeStorage.NotStated`** — required navigation, named empty value |
+| The same, one story later | the same split, for colours | **`PhysicalCharacteristics.NotStated`** — the second use of the same shape |
+
+The first is the clearest. The compiler refused the signed-off design at S001;
+the response was to report it rather than reach for a workaround, and the
+replacement gained a date a foreign key could never have carried. **The
+constraint improved the model.**
+
+The second and third are subtler and worth stating plainly: `NotStated` looks
+like an EF workaround and is not. It removed a genuine ambiguity — *no statement
+entered* versus *statement deliberately empty* — that a nullable navigation had
+been hiding. The persistence problem is what made anyone look.
+
+### What went wrong, and what it cost
+
+| | |
+|---|---|
+| **The signed-off D2 was not implementable** | Found by the compiler at S001. ADR-061 §3 amended rather than superseded — unmerged, four commits old, relied upon by nothing. Cost: half a story. Worth it: the correction is a better design |
+| **`--no-build` on `dotnet ef`, twice over two epics** | Generated an empty migration that looked like a pass, then `migrations remove` deleted **S002's committed migration**. Recovered from git. Now recorded against **ES-021**, whose primary proof — an empty `Up`/`Down` — is exactly what a stale assembly produces |
+| **`npm run lint` was never in the loop** | Red on arrival with three standing errors. Fixed in `2db20f5` and added, because a permanently-red gate is omitted while looking present. Second gate this project has discovered by omission, after `npm run build` in EPIC-018 S006 |
+| **The capstone read went stale after adding a pack** | A real cache bug, not a test artefact. Fixed by keying the capstone query **under the `["packs"]` prefix** rather than adding a sixth invalidation to five hooks — the one that forgets is the one that shows a stale screen |
+| **Four browser-spec defects, all mine** | `Italy` is not seeded; Playwright's `hasText` is case-insensitive; `getByLabel("White")` also matches *Off-white*; the market list returns `medicinalProductId`, not `id`. Every one was a locator or payload assumption, never a domain error |
+
+### Something the epic found and did not fix
+
+**`POST /registrations/{id}/approval` has no `/api` prefix** — an SC-001
+violation, already in `RouteConventionTests.Grandfathered`. S005's spec had to
+call it without the prefix. Left alone deliberately: that list is shrink-only,
+and shrinking it is its own change with its own frontend impact, not something
+to smuggle into a capstone.
+
+### Carry-forward
+
+| Item | Where it goes |
+|---|---|
+| **`PackAuthorisation` has room for what carried an authorisation** — a variation, a submission, a sequence | Built when one is asked for. None was |
+| **In-use shelf life** — *"after first opening, 28 days"* | `ShelfLifeText` holds it; a second structured value waits for a reader |
+| **Legal-status history** | Undated today. If asked for, it is `PackageMarketingStatusEntry`'s shape — the **fourth** identical status history, and therefore ADR-018's demonstration |
+| **Steward CRUD for `SupplyVocabulary` and `PackagingVocabulary`** | → EPIC-012 |
+| **Cross-market pack comparison** | → EPIC-011, on EPIC-018 S006's terms: showing is not comparing |
+| **The artwork watchpoint stays armed** | Tested once here and held. `LocalLabelTypeBranchTests` still quiet |

@@ -1,8 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 
+using RegOS.Registration.Application.Commands.AuthorisePack;
 using RegOS.Registration.Application.Commands.ChangeRegistrationStatus;
 using RegOS.Registration.Application.Commands.CreateRegistration;
 using RegOS.Registration.Application.Commands.RecordRegistrationApproval;
+using RegOS.Registration.Application.Commands.WithdrawPackAuthorisation;
+using RegOS.Registration.Application.Queries.ListAuthorisedPacks;
 using RegOS.Registration.Application.Queries.GetRegistration;
 using RegOS.Registration.Application.Queries.ListExpiringRegistrations;
 using RegOS.Registration.Application.Queries.ListMarketRegistrations;
@@ -31,6 +34,12 @@ public static class DependencyInjection
         services.AddScoped<ListRegistrationMarketsHandler>();
 
         services.AddScoped<ListExpiringRegistrationsHandler>();
+
+        services.AddScoped<AuthorisePackHandler>();
+
+        services.AddScoped<WithdrawPackAuthorisationHandler>();
+
+        services.AddScoped<ListAuthorisedPacksHandler>();
 
         return services;
     }

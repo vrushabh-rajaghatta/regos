@@ -9,6 +9,7 @@ import { CreateRegistrationDialog } from "../../registrations/components/CreateR
 import { RegistrationExpiry } from "../../registrations/components/RegistrationExpiry";
 import { RegistrationStatusBadge } from "../../registrations/components/RegistrationStatusBadge";
 import { useProductRegistrations } from "../../registrations/hooks/useProductRegistrations";
+import { MarketAuthorisedPacks } from "../../registrations/components/MarketAuthorisedPacks";
 import { MarketClinicalStatements } from "@/features/regulatory/indications/components/MarketClinicalStatements";
 import { MarketInteractions } from "@/features/regulatory/indications/components/MarketInteractions";
 import { MarketIndications } from "@/features/regulatory/indications/components/MarketIndications";
@@ -129,6 +130,18 @@ export function MedicinalProductPage() {
       {/* What the market sells, beneath what the product is. A pack is how a
           medicine is supplied, not what it is (ADR-061). */}
       <MarketPacks medicinalProductId={market.medicinalProductId} />
+
+      {/* The capstone read: every pack, how it is supplied, and which licence
+          authorises it. After the packs themselves, because it is the question
+          they were modelled to answer rather than another way to edit them
+          (EPIC-010b S005). */}
+      <MarketAuthorisedPacks
+        medicinalProductId={market.medicinalProductId}
+        registrations={held.map((row) => ({
+          id: row.registrationId,
+          registrationNumber: row.registrationNumber,
+        }))}
+      />
 
       {/* What this authority approved, on its own clock. Deliberately on the
           market page and not the product's: the core label is the company's

@@ -65,6 +65,7 @@ They differ here on purpose, and both are binding.
 | `LegalStatusOfSupply` | **Legal status** |
 | `ShelfLifeStorage` | **Shelf life & storage** |
 | `PhysicalCharacteristics` | **Appearance** |
+| `PackAuthorisation` | **Authorised under** |
 
 RIM's `Medicinal Product` keeps the model precise and is what a future
 contributor will search for. **"Market"** is what a regulatory user says out

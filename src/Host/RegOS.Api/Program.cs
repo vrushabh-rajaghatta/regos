@@ -377,6 +377,9 @@ registrations.MapListProductRegistrations();
 registrations.MapListMarketRegistrations();
 registrations.MapListRegistrationMarkets();
 registrations.MapListExpiringRegistrations();
+registrations.MapAuthorisePack();
+registrations.MapWithdrawPackAuthorisation();
+registrations.MapListAuthorisedPacks();
 
 var correspondence = app.MapGroup("").WithTags("Correspondence");
 correspondence.MapRecordCorrespondence();

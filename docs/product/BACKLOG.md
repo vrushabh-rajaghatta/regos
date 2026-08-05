@@ -41,12 +41,15 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-**EPIC-010b — Packs & supply. 🟡 In Progress.**
+**EPIC-010b — Packs & supply. ✅ Complete, awaiting merge.**
 Pulled into Now 2026-08-04, after EPIC-018 merged to `main` (PR #19). Cut from
 the [EPIC-010 umbrella](epics/EPIC-010-idmp-product-data-depth.md) (clusters B
 and C), **renamed on pull-in** — presentation shipped in 10a S002 — and planned
 to [`epics/EPIC-010b-packs-and-supply.md`](epics/EPIC-010b-packs-and-supply.md).
-Phase 2 signed off; the branch is `epic/EPIC-010b-packs-and-supply`.
+All five stories delivered on `epic/EPIC-010b-packs-and-supply`; the
+[retrospective](epics/EPIC-010b-packs-and-supply.md#retrospective) is written.
+**5 of 7 RIM objects, as forecast** — `OtherCharacteristics` and `Devices` were
+refused in Phase 1 and stayed refused.
 
 > **A pack is how a medicine is supplied, not what it is.** That sentence
 > decides why packaging is a second tree rather than a reuse of `ComponentTree`,

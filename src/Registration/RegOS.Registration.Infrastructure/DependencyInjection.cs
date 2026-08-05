@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Registration.Application.Services;
+using RegOS.Registration.Domain.Aggregates.PackAuthorisations;
 using RegOS.Registration.Domain.Aggregates.Registration;
 using RegOS.Registration.Infrastructure.Repositories;
 using RegOS.Registration.Infrastructure.Services;
@@ -13,6 +14,9 @@ public static class DependencyInjection
         this IServiceCollection services)
     {
         services.AddScoped<IRegistrationRepository, RegistrationRepository>();
+
+        services.AddScoped<
+            IPackAuthorisationRepository, PackAuthorisationRepository>();
 
         services.AddScoped<IRegistrationCreationPolicy, RegistrationCreationPolicy>();
 
