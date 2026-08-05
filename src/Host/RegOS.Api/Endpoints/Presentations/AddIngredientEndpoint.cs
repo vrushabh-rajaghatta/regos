@@ -1,3 +1,4 @@
+using RegOS.Organization.Domain.Aggregates.OrganizationSite;
 using RegOS.Product.Application.Commands.AddIngredient;
 using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.Substances;
@@ -32,7 +33,10 @@ public static class AddIngredientEndpoint
                 request.NumeratorValue,
                 request.NumeratorUnitCode,
                 request.DenominatorValue,
-                request.DenominatorUnitCode),
+                request.DenominatorUnitCode,
+                request.ManufacturingSourceSiteId is { } site
+                    ? OrganizationSiteId.From(site)
+                    : null),
             cancellationToken);
 
         return Results.Created(

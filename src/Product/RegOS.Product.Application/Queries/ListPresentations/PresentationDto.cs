@@ -53,13 +53,26 @@ public sealed record AppearanceDto(
 /// Null when nothing was declared — routine for an excipient, and refused by
 /// the domain for an active.
 /// </param>
+/// <param name="ManufacturingSourceSiteId">
+/// Where this substance comes from, or null when nobody has said.
+/// <b>A different stage of the supply chain</b> from the sites that perform
+/// operations for the finished product (ADR-063 §2) — an operation set cannot
+/// say which active came from where, and a source cannot say who packed the
+/// carton.
+/// </param>
+/// <param name="ManufacturingSourceSiteName">
+/// Joined from the site, never copied onto the ingredient — there is no
+/// manufacturer name stored anywhere in RegOS (ADR-063 §3).
+/// </param>
 public sealed record IngredientDto(
     Guid IngredientId,
     Guid SubstanceId,
     string SubstanceName,
     string? SubstanceInn,
     string Role,
-    StrengthDto? Strength);
+    StrengthDto? Strength,
+    Guid? ManufacturingSourceSiteId,
+    string? ManufacturingSourceSiteName);
 
 /// <param name="DenominatorValue">
 /// Null for a point strength — <em>500 mg</em>. Set for a concentration —

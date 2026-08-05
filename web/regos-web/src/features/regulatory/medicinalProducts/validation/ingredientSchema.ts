@@ -38,6 +38,11 @@ export const ingredientSchema = z
     numeratorUnitCode: z.string().optional(),
     denominatorValue: z.string().trim().optional(),
     denominatorUnitCode: z.string().optional(),
+
+    // No rule of its own, and none is missing. Provenance is optional for
+    // every role — an excipient has a supplier like anything else — and the
+    // empty string means "nobody has said" rather than "unsourced".
+    manufacturingSourceSiteId: z.string().optional(),
   })
   .superRefine((values, context) => {
     const hasNumerator = (values.numeratorValue ?? "") !== "";

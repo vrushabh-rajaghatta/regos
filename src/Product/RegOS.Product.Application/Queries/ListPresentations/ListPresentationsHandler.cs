@@ -72,6 +72,13 @@ public sealed class ListPresentationsHandler
                      join substance in _dbContext.Substances
                          on ingredient.SubstanceId equals substance.Id
                      orderby ingredient.Role, substance.Name
+                     // Left-joined, because provenance is optional and an
+                     // ingredient nobody has sourced must still appear. An
+                     // inner join here would hide most of the composition.
+                     join site in _dbContext.OrganizationSites
+                         on ingredient.ManufacturingSourceSiteId equals site.Id
+                         into sourced
+                     from source in sourced.DefaultIfEmpty()
                      select new
                      {
                          ingredient.Id,
@@ -79,7 +86,9 @@ public sealed class ListPresentationsHandler
                          SubstanceName = substance.Name,
                          SubstanceInn = substance.Inn,
                          ingredient.Role,
-                         ingredient.Strength
+                         ingredient.Strength,
+                         ingredient.ManufacturingSourceSiteId,
+                         SourceName = source != null ? source.Name : null,
                      }).ToList()
             })
             .ToListAsync(cancellationToken);
@@ -99,7 +108,9 @@ public sealed class ListPresentationsHandler
                     ingredient.SubstanceName,
                     ingredient.SubstanceInn,
                     ingredient.Role.ToString(),
-                    Strength(ingredient.Strength)))],
+                    Strength(ingredient.Strength),
+                    ingredient.ManufacturingSourceSiteId?.Value,
+                    ingredient.SourceName))],
                 x.Ingredients.Any(
                     ingredient => ingredient.Role == IngredientRole.Active),
                 new AppearanceDto(

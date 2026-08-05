@@ -309,6 +309,33 @@ Coverage percentages should never become the primary engineering objective.
 
 ---
 
+## Standard 7
+
+**Browser specs default to `{ exact: true }` on `getByLabel()`**, unless
+substring matching is the explicit intent.
+
+*Adopted 2026-08-05, at the second occurrence of the same defect.*
+
+Playwright's `getByLabel()` matches **substrings**, and matches them
+**case-insensitively**. That is a reasonable default for a library and a trap in
+a domain whose labels legitimately share words:
+
+| Spec | Meant | Also matched |
+|---|---|---|
+| EPIC-010b, appearance | `"White"` | *"Off-white"* |
+| EPIC-010c S002, approvals | `"Licence"` | *"Added to the **l**icence on"* |
+
+**Both failures look like a product bug and are not one.** The first selected a
+colour nobody chose; the second resolved to two elements and failed strict mode.
+Neither says anything about the application, and both cost a debugging round.
+
+The rule is deliberately about the **default**, not a prohibition. Substring
+matching is right when a label is genuinely a prefix of what is rendered — say
+so at the call site when you rely on it, so a reader can tell the difference
+between an intention and an oversight.
+
+---
+
 # Test Pyramid
 
 The traditional testing pyramid focuses on implementation.

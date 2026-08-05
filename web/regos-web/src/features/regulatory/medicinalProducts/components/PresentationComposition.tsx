@@ -120,6 +120,23 @@ export function PresentationComposition({
                     INN {ingredient.substanceInn}
                   </span>
                 )}
+
+              {/* Shown only when stated, and deliberately silent otherwise.
+                  RegOS holds no provenance for anything recorded before
+                  EPIC-010c, and a row reading "source: not stated" on every
+                  ingredient would turn an honest absence into a nag.
+
+                  This is where the substance comes from — not where the
+                  finished product is made, which the market page answers
+                  separately (ADR-063 §2). */}
+              {ingredient.manufacturingSourceSiteName && (
+                <span
+                  className="text-xs text-muted-foreground"
+                  data-testid="ingredient-source"
+                >
+                  from {ingredient.manufacturingSourceSiteName}
+                </span>
+              )}
             </div>
 
             <div className="flex shrink-0 gap-1">

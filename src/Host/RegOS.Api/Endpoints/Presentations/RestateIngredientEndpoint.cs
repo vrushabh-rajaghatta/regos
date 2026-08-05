@@ -1,3 +1,4 @@
+using RegOS.Organization.Domain.Aggregates.OrganizationSite;
 using RegOS.Product.Application.Commands.RestateIngredient;
 using RegOS.Product.Domain.Product;
 
@@ -30,7 +31,10 @@ public static class RestateIngredientEndpoint
                 request.NumeratorValue,
                 request.NumeratorUnitCode,
                 request.DenominatorValue,
-                request.DenominatorUnitCode),
+                request.DenominatorUnitCode,
+                request.ManufacturingSourceSiteId is { } site
+                    ? OrganizationSiteId.From(site)
+                    : null),
             cancellationToken);
 
         return Results.NoContent();

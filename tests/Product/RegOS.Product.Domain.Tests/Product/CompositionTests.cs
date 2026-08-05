@@ -189,7 +189,7 @@ public class CompositionTests
             SubstanceId.New(), IngredientRole.Excipient, null);
 
         var act = () => presentation.RestateIngredient(
-            active.Id, IngredientRole.Excipient, null);
+            active.Id, IngredientRole.Excipient, null, null);
 
         act.Should().Throw<BusinessRuleViolationException>()
             .WithMessage(IngredientErrors.CompositionNeedsAnActive);
@@ -205,7 +205,7 @@ public class CompositionTests
             substanceId, IngredientRole.Active, Mg(500));
 
         presentation.RestateIngredient(
-            ingredient.Id, IngredientRole.Active, Mg(250));
+            ingredient.Id, IngredientRole.Active, Mg(250), null);
 
         var corrected = presentation.Ingredients.Single();
 
@@ -227,7 +227,7 @@ public class CompositionTests
             SubstanceId.New(), IngredientRole.Active, Mg(500));
 
         var act = () => presentation.RestateIngredient(
-            ingredient.Id, IngredientRole.Active, null);
+            ingredient.Id, IngredientRole.Active, null, null);
 
         act.Should().Throw<DomainException>()
             .WithMessage(IngredientErrors.ActiveNeedsAStrength);
