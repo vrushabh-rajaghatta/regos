@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import { Badge } from "@/components/ui/badge";
 import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
@@ -16,6 +18,20 @@ import { useRegistrationMarkets } from "../hooks/useRegistrationMarkets";
 export function RegistrationMarketsPage() {
   const { data, isLoading, error } = useRegistrationMarkets();
 
+  // "Which of our markets are in the EU?" — the question EPIC-022 S002 exists
+  // to make answerable. Filtered here rather than served as its own endpoint:
+  // the portfolio is small enough that the list already travels, and the
+  // groupings overlap, so a market can match more than one.
+  const [region, setRegion] = useState("");
+
+  const markets = (data ?? []).filter(
+    (market) => region === "" || market.regions.includes(region),
+  );
+
+  const regionsInUse = [
+    ...new Set((data ?? []).flatMap((market) => market.regions)),
+  ].sort();
+
   return (
     <Page>
       <PageHeader
@@ -29,6 +45,30 @@ export function RegistrationMarketsPage() {
         with a deadline.
       */}
       <ExpiringRegistrations />
+
+      {regionsInUse.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="region-filter" className="text-sm">
+            Grouping
+          </label>
+
+          <select
+            id="region-filter"
+            className="h-8 rounded-md border bg-transparent px-2 text-sm"
+            value={region}
+            onChange={(event) => setRegion(event.target.value)}
+            data-testid="region-filter"
+          >
+            <option value="">All markets</option>
+
+            {regionsInUse.map((code) => (
+              <option key={code} value={code}>
+                {code === "PIC_S" ? "PIC/S" : code}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {isLoading && <p className="text-muted-foreground">Loading markets...</p>}
 
@@ -50,16 +90,38 @@ export function RegistrationMarketsPage() {
         </div>
       )}
 
+      {/*
+        A filter that matches nothing is not the same as a portfolio that holds
+        nothing, and the empty state below says the second — so this says the
+        first out loud rather than letting them look identical.
+      */}
+      {!isLoading && !error && data && data.length > 0 && markets.length === 0 && (
+        <p
+          className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
+          data-testid="no-markets-in-region"
+        >
+          No markets in this grouping. India, for one, belongs to none of them.
+        </p>
+      )}
+
       {!isLoading && !error && data && data.length > 0 && (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="registration-markets">
-          {data.map((market) => (
+          {markets.map((market) => (
             <li key={market.countryId}>
               <Link
                 to={`/regulatory/registrations/markets/${market.countryId}`}
                 className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted"
                 data-testid="registration-market"
               >
-                <span className="font-medium">{market.countryName}</span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{market.countryName}</span>
+
+                  {market.regions.map((code) => (
+                    <Badge key={code} variant="secondary" className="text-xs">
+                      {code === "PIC_S" ? "PIC/S" : code}
+                    </Badge>
+                  ))}
+                </span>
 
                 <span className="text-sm text-muted-foreground">
                   {market.registrationCount}

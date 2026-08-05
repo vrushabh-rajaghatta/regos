@@ -1,6 +1,7 @@
 using FluentAssertions;
 
 using RegOS.ReferenceData.Domain.Geography.Country;
+using RegOS.ReferenceData.Domain.Terminology;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ReferenceData.Domain.Tests.Geography;
@@ -21,8 +22,9 @@ public sealed class CountryTests
         string code = "GB",
         string alpha3 = "GBR",
         string name = "United Kingdom",
-        string isoName = "United Kingdom of Great Britain and Northern Ireland")
-        => Country.Create(CountryId.New(), code, alpha3, name, isoName);
+        string isoName = "United Kingdom of Great Britain and Northern Ireland",
+        IEnumerable<CodedConcept>? regions = null)
+        => Country.Create(CountryId.New(), code, alpha3, name, isoName, regions);
 
     [Fact]
     public void ACountryCarriesBothCodesAndBothNames()
@@ -116,4 +118,57 @@ public sealed class CountryTests
                 && x.DeclaringType == typeof(Country))
             .Should().BeEmpty();
     }
+    // --- the groupings a country belongs to ----------------------------------
+
+    private static CodedConcept Region(string code)
+        => GeographyVocabulary.RegionOf(code)!;
+
+    /// <summary>
+    /// <b>They overlap, and that is why this is a collection.</b> Germany is EU
+    /// and ICH and PIC/S — which the single nullable `RegionCode` this replaces
+    /// could not have said even if anything had ever written to it.
+    /// </summary>
+    [Fact]
+    public void ACountryMayBelongToSeveralGroupingsAtOnce()
+    {
+        var germany = A(code: "DE", alpha3: "DEU", name: "Germany", isoName: "Germany",
+            regions: [Region("EU"), Region("ICH"), Region("PIC_S")]);
+
+        germany.Regions.Should().HaveCount(3);
+    }
+
+    /// <summary>
+    /// <b>Empty is a recorded answer, not an unfilled field.</b> India belongs
+    /// to none of the five: CDSCO is an ICH <em>observer</em> rather than a
+    /// member, and India is not a PIC/S participant.
+    /// </summary>
+    [Fact]
+    public void ACountryMayBelongToNoGroupingAtAll()
+    {
+        A(code: "IN", alpha3: "IND", name: "India", isoName: "India", regions: [])
+            .Regions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void TheSameGroupingTwiceIsRefused()
+    {
+        var create = () => A(regions: [Region("ICH"), Region("ICH")]);
+
+        create.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(CountryErrors.RegionAlreadyStated);
+    }
+
+    /// <summary>
+    /// <b>Membership is a dated fact dressed as geography.</b> The United
+    /// Kingdom was EU and is not, which is why nothing here derives a grouping
+    /// from a country's location.
+    /// </summary>
+    [Fact]
+    public void MembershipIsRecordedRatherThanDerivedFromGeography()
+    {
+        var uk = A(regions: [Region("ICH"), Region("PIC_S")]);
+
+        uk.Regions.Select(x => x.Code).Should().NotContain("EU");
+    }
+
 }

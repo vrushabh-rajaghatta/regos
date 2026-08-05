@@ -12,9 +12,14 @@ namespace RegOS.ReferenceData.Application.Queries.Geography.ListCountries;
 /// Northern Ireland"</em>. Sent so a caller that must quote it does not have to
 /// guess; a screen keeps showing <paramref name="Name"/>.
 /// </param>
+/// <param name="Regions">
+/// The regulatory groupings this country belongs to — EU, ICH, PIC/S. They
+/// overlap, and <b>empty is a recorded answer</b> rather than an unfilled field.
+/// </param>
 public sealed record CountryDto(
     Guid Id,
     string Code,
     string IsoAlpha3Code,
     string Name,
-    string IsoName);
+    string IsoName,
+    IReadOnlyList<string> Regions);

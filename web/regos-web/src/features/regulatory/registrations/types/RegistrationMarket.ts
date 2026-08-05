@@ -7,4 +7,10 @@ export interface RegistrationMarket {
   countryName: string;
   countryCode: string;
   registrationCount: number;
+  /**
+   * The regulatory groupings this market belongs to — EU, ICH, PIC/S. They
+   * overlap, and **empty is a recorded answer**: India belongs to none of the
+   * five RegOS records.
+   */
+  regions: string[];
 }

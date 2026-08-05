@@ -36,6 +36,21 @@ internal static class Authorities
             new AuthorityId(GeographyAndRegulatoryIds.CDSCO),
             "CDSCO",
             "Central Drugs Standard Control Organisation",
-            new CountryId(GeographyAndRegulatoryIds.India))
+            new CountryId(GeographyAndRegulatoryIds.India)),
+        // The two EU member states had no authority at all, so no EU market
+        // could hold a registration — found by EPIC-022 S002's browser proof,
+        // which could not demonstrate the epic's own headline question without
+        // them. The national agencies, not EMA: an Authority hangs off a
+        // CountryId, and EMA is the Union's rather than any member state's.
+        Authority.Create(
+            new AuthorityId(GeographyAndRegulatoryIds.BfArM),
+            "BfArM",
+            "Bundesinstitut für Arzneimittel und Medizinprodukte",
+            new CountryId(GeographyAndRegulatoryIds.Germany)),
+        Authority.Create(
+            new AuthorityId(GeographyAndRegulatoryIds.ANSM),
+            "ANSM",
+            "Agence nationale de sécurité du médicament et des produits de santé",
+            new CountryId(GeographyAndRegulatoryIds.France))
     ];
 }

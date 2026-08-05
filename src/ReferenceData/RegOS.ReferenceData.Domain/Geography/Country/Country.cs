@@ -1,3 +1,4 @@
+using RegOS.ReferenceData.Domain.Terminology;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.ReferenceData.Domain.Geography.Country;
@@ -31,6 +32,8 @@ public sealed class Country
 {
     public const int IsoAlpha3CodeLength = 3;
     public const int IsoNameMaxLength = 200;
+
+    private readonly List<CodedConcept> _regions = [];
 
     private Country()
     {
@@ -69,7 +72,27 @@ public sealed class Country
     /// </remarks>
     public string IsoName { get; private set; } = default!;
 
-    public string? RegionCode { get; private set; }
+    /// <summary>
+    /// The regulatory groupings this country belongs to — EU, ICH, PIC/S.
+    /// </summary>
+    /// <remarks>
+    /// <b>Several, because they overlap.</b> Germany is EU <em>and</em> ICH
+    /// <em>and</em> PIC/S, and each changes something different about a filing:
+    /// which procedure applies, which guidelines are adopted, whose inspection
+    /// findings are recognised.
+    /// <para>
+    /// <b>Empty is ordinary.</b> India belongs to none of the five RegOS
+    /// records — CDSCO is an ICH <em>observer</em> rather than a member, and
+    /// India is not a PIC/S participant — so an empty collection is a recorded
+    /// answer rather than an unfilled field.
+    /// </para>
+    /// <para>
+    /// <b>Not effective-dated, and that is a decision.</b> The United Kingdom
+    /// <em>was</em> EU. RegOS records today's membership only; the trigger to
+    /// add dating is somebody asking what was true in 2019, and nobody has.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyCollection<CodedConcept> Regions => _regions.AsReadOnly();
 
     public static Country Create(
         CountryId id,
@@ -77,7 +100,7 @@ public sealed class Country
         string isoAlpha3Code,
         string name,
         string isoName,
-        string? regionCode = null)
+        IEnumerable<CodedConcept>? regions = null)
     {
         if (string.IsNullOrWhiteSpace(code))
             throw new DomainException(CountryErrors.CodeRequired);
@@ -105,15 +128,31 @@ public sealed class Country
         if (isoName.Trim().Length > IsoNameMaxLength)
             throw new DomainException(CountryErrors.IsoNameTooLong);
 
-        return new Country
+        var country = new Country
         {
             Id = id,
             Code = code.Trim().ToUpperInvariant(),
             IsoAlpha3Code = alpha3,
             Name = name.Trim(),
-            IsoName = isoName.Trim(),
-            RegionCode = regionCode
+            IsoName = isoName.Trim()
         };
+
+        foreach (var region in regions ?? [])
+        {
+            if (region is null)
+                continue;
+
+            // Compared by value: two CodedConcepts quoting the same code from
+            // the same system are the same grouping even though they are two
+            // objects — the call every owned collection here makes.
+            if (country._regions.Contains(region))
+                throw new BusinessRuleViolationException(
+                    CountryErrors.RegionAlreadyStated);
+
+            country._regions.Add(region);
+        }
+
+        return country;
     }
 
     public static Country Create(
@@ -121,6 +160,6 @@ public sealed class Country
         string isoAlpha3Code,
         string name,
         string isoName,
-        string? regionCode = null)
-        => Create(CountryId.New(), code, isoAlpha3Code, name, isoName, regionCode);
+        IEnumerable<CodedConcept>? regions = null)
+        => Create(CountryId.New(), code, isoAlpha3Code, name, isoName, regions);
 }

@@ -14,4 +14,9 @@ export interface CountryDto {
    * quote the official form.
    */
   isoName: string;
+  /**
+   * The regulatory groupings this country belongs to. They overlap — Germany is
+   * EU and ICH and PIC/S — and empty is a recorded answer, not a blank.
+   */
+  regions: string[];
 }

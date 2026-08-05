@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.ReferenceData.Domain.Geography.Country;
+using RegOS.ReferenceData.Domain.Terminology;
 
 namespace RegOS.Persistence.Configurations.ReferenceData.Geography;
 
@@ -47,7 +48,38 @@ public sealed class CountryConfiguration
             .HasMaxLength(Country.IsoNameMaxLength)
             .IsRequired();
 
-        builder.Property(x => x.RegionCode)
-            .HasMaxLength(20);
+        // A table rather than a column, because the groupings overlap: Germany
+        // is EU and ICH and PIC/S. It replaces `RegionCode`, which was single
+        // and could not have said that even if anything had written to it.
+        //
+        // An owned collection, not reference data: a row has no identity of its
+        // own, exists only as part of its country, and is replaced wholesale.
+        // The same shape PharmaceuticalProductRoutes uses.
+        builder.OwnsMany(x => x.Regions, region =>
+        {
+            region.ToTable("CountryRegions");
+
+            region.WithOwner().HasForeignKey("CountryId");
+
+            region.Property(x => x.System)
+                .HasMaxLength(CodedConcept.SystemMaxLength)
+                .IsRequired();
+
+            region.Property(x => x.Code)
+                .HasMaxLength(CodedConcept.CodeMaxLength)
+                .IsRequired();
+
+            region.Property(x => x.Display)
+                .HasMaxLength(CodedConcept.DisplayMaxLength)
+                .IsRequired();
+
+            // One statement of each grouping per country, enforced where a race
+            // cannot slip past the aggregate's own check.
+            region.HasIndex("CountryId", "Code").IsUnique();
+        });
+
+        builder.Metadata
+            .FindNavigation(nameof(Country.Regions))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

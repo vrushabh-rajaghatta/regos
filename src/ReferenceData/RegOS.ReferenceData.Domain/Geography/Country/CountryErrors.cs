@@ -24,4 +24,7 @@ public static class CountryErrors
 
     public const string IsoNameTooLong =
         "The official ISO country name is too long.";
+
+    public const string RegionAlreadyStated =
+        "That grouping is already recorded for this country.";
 }

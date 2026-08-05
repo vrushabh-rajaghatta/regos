@@ -53,13 +53,36 @@ public sealed class ListRegistrationMarketsHandler
                 Count = market.Count(),
             }).ToListAsync(cancellationToken);
 
+        // Fetched in one pass rather than per row. The grouped query above
+        // cannot carry an owned collection through a GROUP BY, and eight
+        // countries is not a set worth a join per market.
+        var countryIds = rows.Select(row => row.CountryId).ToList();
+
+        var regions = await _dbContext.Countries
+            .AsNoTracking()
+            .Where(country => countryIds.Contains(country.Id))
+            .Select(country => new
+            {
+                country.Id,
+                Codes = country.Regions
+                    .OrderBy(region => region.Code)
+                    .Select(region => region.Code)
+                    .ToList(),
+            })
+            .ToListAsync(cancellationToken);
+
+        var byCountry = regions.ToDictionary(x => x.Id, x => x.Codes);
+
         return rows
             .OrderBy(row => row.Name)
             .Select(row => new RegistrationMarket(
                 row.CountryId.Value,
                 row.Name,
                 row.Code,
-                row.Count))
+                row.Count,
+                byCountry.TryGetValue(row.CountryId, out var codes)
+                    ? codes
+                    : []))
             .ToList();
     }
 }
