@@ -38,100 +38,23 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | **EPIC-018** | **Labeling & product information** — global/local labels, artwork, indications, contraindications, undesirable effects, interactions, populations, and the question it existed for — *"which markets is this product approved for this condition in?"* | 🟢 Complete | 6 stories, DoD audited line by line; [ADR-059](../adr/ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) · **artwork shipped as a label type rather than a child aggregate — capability met, shape changed** · **nothing links a label version to the statements it publishes, and that is a decision (ADR-059 §3)** → [`epics/EPIC-018-labeling-and-product-information.md`](epics/EPIC-018-labeling-and-product-information.md) |
 | **EPIC-010b** | **Packs & supply** — the pack, its contents, how it is supplied, how long it keeps, what it looks like, and the question it existed for — *"which packs are authorised in this market, and how are they supplied?"* | 🟢 Complete | 5 stories, DoD line by line; [ADR-061](../adr/ADR-061-a-pack-is-how-a-medicine-is-supplied.md) — **amended at S001, not superseded**, when the dependency graph refused the signed-off design · **closes 5 of cluster B+C's 7; `OtherCharacteristics` and `Devices` refused, not deferred** · merged to `main` (PR #20) → [`epics/EPIC-010b-packs-and-supply.md`](epics/EPIC-010b-packs-and-supply.md) |
 | **EPIC-022** | **Country depth** — a country stops being a label on a dropdown: ISO identity, regulatory groupings, expected label languages, accepted stability conditions | 🟢 Complete | 5 stories, DoD line by line; [ADR-062](../adr/ADR-062-a-language-is-a-world-fact.md) · E36–E39 · **D6 amended in place before it was built** — WHO publishes the stability *condition* a market accepts and no climatic zone, and India's 30 °C/70% RH is neither IVA nor IVB (E39) · **closes no RIM object, as forecast** — one object 33% → ~92% · merged to `main` (PR #22) → [`epics/EPIC-022-country-depth.md`](epics/EPIC-022-country-depth.md) |
+| **EPIC-010c** | **Manufacturing** — where a product is made, which sites its licences approve, where each ingredient comes from, and the question the epic existed for: *"is the site we manufacture at on the licence?"* | 🟢 Complete | 4 stories, DoD line by line; [ADR-063](../adr/ADR-063-where-a-product-is-made-is-a-product-fact.md) — **the first `Product.Domain` → `Organization.Domain` edge**, and D2 decided D7 before anybody looked · **builds 1 of cluster D's 4 RIM objects and refuses 3** — the dossier already owns manufacturing narrative at 3.2.S.2 · **three recorded predictions fired**, none of them a count · a misdiagnosed "flake" turned out to be a missing `ORDER BY` tie-breaker → [`epics/EPIC-010c-manufacturing.md`](epics/EPIC-010c-manufacturing.md) |
 
 ---
 
 ## Now
 
-**EPIC-010c — Manufacturing. 🟡 Planned.**
-Taken 2026-08-05, straight after EPIC-022 merged (PR #22), on the founder's call
-to finish the Product depth work. **Phase 1 and Phase 2 were signed off together**
-and are recorded in
-[`epics/EPIC-010c-manufacturing.md`](epics/EPIC-010c-manufacturing.md).
+**Nothing taken.** EPIC-010c is complete and awaiting merge; it is in
+[Shipped epics](#shipped-epics). **EPIC-010 is finished** — 10a, 10b and 10c are
+all shipped, which closes the Product depth work.
 
-> **"Where is this product made, and is that site on the licence?"** — the third
-> divergence question, after *which markets is this approved for this condition
-> in* (018) and *does this market accept our stability data* (022). RegOS can
-> currently answer **neither half**.
-
-| | |
-|---|---|
-| **ADR-063** | ⚪ **before S001** — a new `Product.Domain` → `Organization.Domain` edge. **Not predicted by the plan**: Product and Organization are siblings, and both D1 and D2 need a site id on the Product side |
-| **S001** | ⚪ `ManufacturingOperation` + the tenth vocabulary — *"which sites make this product?"* |
-| **S002** | ⚪ The licence's approved sites, dated — the second *licence + thing + `ApprovedOn`* after `PackAuthorisation` |
-| **S003** | ⚪ `Ingredient` names its source site — a different supply-chain stage, not the operation restated |
-| **S004** | ⚪ Capstone — the divergence, browser proof, retro |
-
-**Flagged in the plan, not hidden:**
-
-- **It builds one of cluster D's four RIM objects and refuses three.**
-  `Manufacturing Process`, `Manufacturing Process Step` and `Mfg Process Step
-  Materials` are **CMC document content** — the blueprint already carries
-  3.2.S.2 *Manufacture* and 3.2.P.3.3 as document sections, and structured rows
-  would be a second, competing representation of narrative. **Refused with a
-  falsifier** (a variation-impact capability that must reason over individual
-  process changes), not deferred.
-- **EPIC-010's coverage claim is restated, not recalculated** — see
-  [the runway](#the-runway). *"11 built, 5 refused"* rather than a percentage.
-- **Two recorded predictions fire here**: `OrganizationSite`'s own docstring
-  named *"a licence naming approved manufacturers, an ingredient naming its
-  manufacturing source"*, and EPIC-016 deferred both to this epic by name.
-- **No external prerequisite** — the first epic since EPIC-019 for which that is
-  true.
-
-> **[EPIC-023](#epic-023--the-test-suite-runs-against-its-own-schema) is in
-> [Next](#next) and deliberately unplaced.** It blocks nothing and nothing blocks
-> it; placement is the founder's.
-
-<details>
-<summary>EPIC-022, as it read while it was here</summary>
-
-**EPIC-022 — Country depth.**
-Pulled into Now 2026-08-05, after EPIC-010b merged to `main` (PR #20). Phase 1
-was written before 010b closed and is settled; **Phase 2 was signed off on
-pull-in** and is recorded in
-[`epics/EPIC-022-country-depth.md`](epics/EPIC-022-country-depth.md).
-
-> **`Country` is the only reference entity whose every attribute is for
-> display.** `Code` and `Name` are what you show in a dropdown; climatic zone,
-> languages and regions are what other capabilities **decide** by.
-
-| | |
-|---|---|
-| **ADR-062** | 🟢 before S003 — language stops being a display fact, which its own docstring predicted would be the trigger |
-| **S001** | 🟢 ISO identity — `IsoAlpha3Code` + `IsoName` on all eight, surfaced wherever a country is shown |
-| **S002** | 🟢 Regions — collection in, `RegionCode` out; *"which of our markets are in the EU?"* |
-| **S003** | 🟢 Languages — the collection, the `LanguageCode` move, and required-vs-recorded label languages, advisory |
-| **S004** | 🟢 Stability conditions — **including `ShelfLifeStorage.TestedAt`**, and the match, reported not blocked. **Conditions, not zones**: the source was fetched and killed the planned abstraction (E39, D6 amended in place) |
-| **S005** | 🟢 Capstone — one product, two markets, identical inputs; every difference traced to the country row. Evidence complete, seed verified, retro |
-
-**Flagged in the plan, not hidden:**
-
-- **It closes no RIM object.** One object goes from 33% to ~92% and
-  [the runway](#the-runway) figure does not move. Coverage measures breadth;
-  this is depth, and the case is the two debts rather than the number.
-- **S004 was where to stop if it ran long** — the only story with an external
-  prerequisite *and* the only one touching a shipped aggregate. It was not
-  stopped: the prerequisite was fetched, and reading it changed the design
-  before any code existed.
-- **The prerequisite fired, and the answer was not a value — it was the
-  model.** The plan said India being **IVB rather than IVA** was the one thing
-  nobody could reconstruct from memory. **India is 30 °C/70% RH, which is
-  neither.** WHO publishes the condition each country accepts and no zone letter
-  per country; ICH withdrew Q1F. So RegOS stores conditions and no zone at all
-  (**E39**, [D6 amended in place](epics/EPIC-022-country-depth.md#d6--amended-in-place-before-a-line-of-s004-was-written)).
-  *When an authoritative source disagrees with the abstraction, the abstraction
-  changes — not the source.*
-
-> **The carve-out closed before Phase 2 began.** The plan asked EPIC-010b S003
-> to add `ShelfLifeStorage.Region` while that type was still being authored.
-> **It did not** — S003 shipped the night before this plan was written, scoped
-> to exactly the two concepts it was signed off for. The feared cost has not
-> materialised: there is **no production data to backfill**, so the migration is
-> one nullable coded field. S004 owns the field and the match together, which
-> makes it the single place climate becomes actionable.
-
-</details>
+> Two things deliberately **not** done on the epic branch, because planning
+> evolution lands on `main` between epics: choosing what comes next, and
+> raising the **architecture-hardening** items this epic and EPIC-022 both
+> found — an executable check on the bounded-context dependency graph, and one
+> on whether a query handler's `orderby` is total. Both belong with
+> [EPIC-023](#epic-023--the-test-suite-runs-against-its-own-schema): invariants
+> the project states and does not check.
 
 ### External prerequisites
 
@@ -424,7 +347,7 @@ Three divergences are **not** gaps and should be defended, not closed:
 | 5 | **EPIC-018** Labeling & product information | 10 | → ~55% | 🟢 |
 | — | *taken out of order 2026-08-03* — EPIC-019 shipped before 018, because Module 4 was blocked and labeling was not | | | |
 | 6 | **EPIC-019** Study registry | 2 | → ~59% | 🟢 |
-| 7 | **EPIC-010** IDMP depth (10a 🟢 / 10b 🟢 / 10c 🟡) | **11 built · 5 refused** | *see below* | 🟡 |
+| 7 | **EPIC-010** IDMP depth (10a 🟢 / 10b 🟢 / 10c 🟢) | **11 built · 5 refused** | *see below* | 🟢 |
 | 8 | **EPIC-020** Process & planning | 6 | → ~98% | ⚪ |
 
 > **EPIC-018's ten, counted honestly.** Nine aggregates cover the ten RIM

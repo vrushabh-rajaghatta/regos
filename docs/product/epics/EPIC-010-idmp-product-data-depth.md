@@ -47,6 +47,14 @@ Do not attempt all three in one branch — it would be the largest epic in the p
 > **10c was cut and planned on 2026-08-05** → **[EPIC-010c — Manufacturing](EPIC-010c-manufacturing.md)**, carrying cluster **D** and superseding the sketches below for it. **It builds one of cluster D's four objects and refuses three:** `Manufacturing Process`, `Manufacturing Process Step` and `Mfg Process Step Materials` are **CMC document content** — the blueprint already carries 3.2.S.2 *Manufacture* and 3.2.P.3.3 as document sections — and structured rows would be a second, competing representation of narrative. Refused with a falsifier, not deferred. The sketch's `MfgBusinessOperation` survives as `ManufacturingOperation`, and 10c also pays the **`Ingredient` manufacturing source** the in-scope list below promised and 10a did not ship.
 >
 > **No sketch below stands unsuperseded.** All three splits are now planned in their own documents.
+>
+> **EPIC-010 completed on 2026-08-05**, when 10c shipped. Final position: **11 of
+> 16 RIM objects built, 5 refused**, each refusal carrying a reason and a
+> falsifier — see [Coverage](#coverage--implemented-vs-deliberately-refused).
+> The lesson the three sub-epics leave behind is recorded in
+> [010c's retro](EPIC-010c-manufacturing.md#the-lesson-epic-010-leaves-behind):
+> **a reference model is a source of candidate concepts, not a checklist of
+> entities to implement.**
 
 ### In scope ✅ *(across the three splits)*
 - **`Substance`** — substance name, class, type, CAS number, INN, chem/bio description, molecular formula, UNII code + name.

@@ -38,7 +38,13 @@ test.describe("Where this product is made", () => {
     // --- 1. a site performs an operation, since a date in the past ----------
     await recordOperation(page, "Manufacture of finished product", "2019-01-01");
 
-    const first = page.getByTestId("manufacturing-row").first();
+    // Selected by what it says rather than by position. Two operations at one
+    // site starting the same day tie on every sort key the read has, and
+    // "the first row" is then whichever the database felt like returning —
+    // which is how the missing tie-breaker in that read was found.
+    const first = page
+      .getByTestId("manufacturing-row")
+      .filter({ hasText: "Manufacture of finished product" });
 
     await expect(first.getByTestId("manufacturing-operation")).toContainText(
       "Manufacture of finished product",
@@ -169,4 +175,12 @@ async function recordOperation(page: Page, operation: string, since: string) {
   await page.getByLabel("Operation").selectOption({ label: operation });
   await page.getByLabel("Performing since").fill(since);
   await page.getByRole("button", { name: "Record operation" }).click();
+
+  // **Wait for the dialog to close before returning.** Without this, a second
+  // call re-opens it while the first is still shutting, and every locator
+  // below resolves against a dialog that is on its way out — which is the
+  // 1-in-30 flake this helper produced before the wait was added.
+  await expect(
+    page.getByRole("button", { name: "Record operation" }),
+  ).toHaveCount(0);
 }

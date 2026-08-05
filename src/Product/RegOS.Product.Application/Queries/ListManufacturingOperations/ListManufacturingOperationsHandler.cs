@@ -40,8 +40,17 @@ public sealed class ListManufacturingOperationsHandler
                 on operation.OrganizationSiteId equals site.Id
             join country in _dbContext.Countries
                 on site.Address.CountryId equals country.Id
+            // **Tie-broken, and the tie is ordinary rather than exotic.** Two
+            // operations at one site starting the same day — a plant that
+            // manufactures and releases — collide on both keys above, and
+            // Postgres is free to return them either way round. Left there,
+            // the list reorders itself between reloads for no reason a user
+            // can see. Found by a browser spec taking "the first row" and
+            // getting a different one on one run in thirty.
             orderby operation.CeasedOn == null descending,
-                operation.EffectiveFrom descending
+                operation.EffectiveFrom descending,
+                site.Name,
+                operation.Operation.Code
             select new
             {
                 OperationId = operation.Id,

@@ -395,6 +395,7 @@ registrations.MapListAuthorisedPacks();
 registrations.MapApproveSite();
 registrations.MapWithdrawSiteApproval();
 registrations.MapListApprovedSites();
+registrations.MapListSiteAlignment();
 
 var correspondence = app.MapGroup("").WithTags("Correspondence");
 correspondence.MapRecordCorrespondence();
