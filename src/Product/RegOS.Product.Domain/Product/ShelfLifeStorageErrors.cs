@@ -22,6 +22,14 @@ public static class ShelfLifeStorageErrors
         "That storage condition is already on this pack.";
 
     /// <remarks>
+    /// Worded so it cannot be mistaken for <see cref="ConditionAlreadyStated"/>
+    /// above: one is about how the pack must be kept, the other about what its
+    /// shelf life was demonstrated under.
+    /// </remarks>
+    public const string TestedAtAlreadyStated =
+        "That stability testing condition is already on this pack.";
+
+    /// <remarks>
     /// The invariant that keeps <em>"none required"</em> a conclusion rather
     /// than a blank: a pack that needs no special precautions cannot also name
     /// one.

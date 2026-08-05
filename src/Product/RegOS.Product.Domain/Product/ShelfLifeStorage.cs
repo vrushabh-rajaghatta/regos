@@ -22,9 +22,12 @@ namespace RegOS.Product.Domain.Product;
 /// which is <c>PackageItem.Material</c> from S002 earning its place.
 /// </para>
 /// <para>
-/// <b>The conclusion, never the study.</b> This type knows <em>36 months</em>.
-/// It does not know the stability protocol, the report, or the dossier section
-/// that carries them; those are evidence, and evidence lives elsewhere.
+/// <b>The conclusion, never the study.</b> This type knows <em>36 months</em>,
+/// and — since EPIC-022 S004 — the condition that was demonstrated under. It
+/// does not know the stability protocol, the report, or the dossier section that
+/// carries them; those are evidence, and evidence lives elsewhere.
+/// <see cref="TestedAt"/> is the smallest fact about the study that changes a
+/// regulatory answer: whether the period holds in a given market.
 /// </para>
 /// <para>
 /// <b>The period is kept literal.</b> <em>"3 years"</em> is <c>3</c> and
@@ -39,6 +42,7 @@ public sealed class ShelfLifeStorage : ValueObject
     public const int TextMaxLength = 1000;
 
     private readonly List<CodedConcept> _storageConditions = [];
+    private readonly List<CodedConcept> _testedAt = [];
 
     private ShelfLifeStorage()
     {
@@ -54,7 +58,9 @@ public sealed class ShelfLifeStorage : ValueObject
     /// is also what makes the mapping safe: EF materialises a <em>required</em>
     /// owned reference unconditionally, where an optional one whose columns are
     /// all null is read back as null, silently taking
-    /// <see cref="StorageConditions"/> with it.
+    /// <see cref="StorageConditions"/> with it. <b>That decision now carries two
+    /// collections rather than one</b> — <see cref="TestedAt"/> arrived behind
+    /// it — so making this navigation optional would lose both.
     /// <para>
     /// <b>A new instance each time, not a shared one.</b> An owned instance
     /// belongs to exactly one owner in EF's change tracker, so handing the same
@@ -90,11 +96,43 @@ public sealed class ShelfLifeStorage : ValueObject
     public string? Text { get; private init; }
 
     /// <summary>
-    /// What has to be true of its storage. Several ordinarily apply at once —
-    /// <em>"Do not store above 25 °C. Protect from light."</em>
+    /// <b>How should the marketed product be stored?</b> Several ordinarily
+    /// apply at once — <em>"Do not store above 25 °C. Protect from light."</em>
     /// </summary>
+    /// <remarks>
+    /// <b>Not <see cref="TestedAt"/>, which is one field away and sounds
+    /// alike.</b> This is a label instruction addressed to whoever holds the
+    /// pack; that one is the condition a stability study was run at. A pack
+    /// labelled <em>"do not store above 25 °C"</em> is routinely tested at
+    /// 30 °C/75% RH, and neither statement can be derived from the other.
+    /// </remarks>
     public IReadOnlyCollection<CodedConcept> StorageConditions
         => _storageConditions.AsReadOnly();
+
+    /// <summary>
+    /// <b>Under what long-term condition was this shelf life established?</b>
+    /// — <em>25 °C/60% RH</em>, from <see cref="StabilityVocabulary.Conditions"/>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Still the conclusion, not the study.</b> This type knows the condition
+    /// the period was demonstrated at because that is what decides which markets
+    /// the period holds in; it does not know the protocol, the batches or the
+    /// report, and those remain evidence that lives elsewhere.
+    /// <para>
+    /// <b>Several, because a global programme runs several.</b> Long-term data
+    /// generated at both 25 °C/60% RH and 30 °C/75% RH supports temperate and
+    /// hot-humid markets from one submission — so this is a collection, and a
+    /// market accepts the pack if it accepts <em>any</em> of them
+    /// (<c>Country.AcceptsStabilityDataFrom</c>, which holds the rule).
+    /// </para>
+    /// <para>
+    /// <b>Empty is ordinary and is not a failure.</b> A pack whose stability
+    /// data has not been recorded is not a pack whose data is rejected, and the
+    /// market view says so in those words rather than warning about it
+    /// (EPIC-022 D6).
+    /// </para>
+    /// </remarks>
+    public IReadOnlyCollection<CodedConcept> TestedAt => _testedAt.AsReadOnly();
 
     /// <summary>
     /// True once anything at all has been said. False for
@@ -103,7 +141,8 @@ public sealed class ShelfLifeStorage : ValueObject
     public bool IsStated
         => Value is not null
            || Text is not null
-           || _storageConditions.Count > 0;
+           || _storageConditions.Count > 0
+           || _testedAt.Count > 0;
 
     /// <summary>
     /// True when the statement is <em>"no special storage precautions"</em> —
@@ -117,7 +156,8 @@ public sealed class ShelfLifeStorage : ValueObject
         decimal? value,
         CodedConcept? unit,
         string? text,
-        IEnumerable<CodedConcept>? storageConditions)
+        IEnumerable<CodedConcept>? storageConditions,
+        IEnumerable<CodedConcept>? testedAt = null)
     {
         // Half a period is refused for the reason half a pack size is: 36 with
         // no unit could be days, months or years, and a unit with no number
@@ -168,13 +208,32 @@ public sealed class ShelfLifeStorage : ValueObject
                 ShelfLifeStorageErrors.NoSpecialPrecautionsStandsAlone);
         }
 
+        // Deliberately no rule tying these to the period or to the conditions
+        // above. A pack may state where its data came from before anyone has
+        // decided how long it keeps — a stability programme reports the
+        // condition first — and the two lists constrain each other in neither
+        // direction: a 30 °C/75% RH study is what supports a "below 25 °C"
+        // label in a hot market.
+        foreach (var condition in testedAt ?? [])
+        {
+            if (condition is null)
+                continue;
+
+            if (statement._testedAt.Contains(condition))
+                throw new BusinessRuleViolationException(
+                    ShelfLifeStorageErrors.TestedAtAlreadyStated);
+
+            statement._testedAt.Add(condition);
+        }
+
         return statement;
     }
 
     /// <remarks>
-    /// <b>The conditions are ordered by code first</b>, so that two statements
-    /// naming the same precautions are equal however they were entered. Order is
-    /// a fact about the form, not about the storage.
+    /// <b>Both collections are ordered by code first</b>, so that two statements
+    /// naming the same precautions and the same testing conditions are equal
+    /// however they were entered. Order is a fact about the form, not about the
+    /// storage.
     /// </remarks>
     protected override IEnumerable<object?> GetEqualityComponents()
     {
@@ -183,6 +242,17 @@ public sealed class ShelfLifeStorage : ValueObject
         yield return Text;
 
         foreach (var condition in _storageConditions
+            .OrderBy(x => x.Code, StringComparer.Ordinal))
+        {
+            yield return condition;
+        }
+
+        // Separated from the precautions above, so that a pack storing "below
+        // 25 °C" and a pack tested at 25 °C/60% RH cannot collide into one
+        // undifferentiated sequence and compare equal.
+        yield return nameof(TestedAt);
+
+        foreach (var condition in _testedAt
             .OrderBy(x => x.Code, StringComparer.Ordinal))
         {
             yield return condition;

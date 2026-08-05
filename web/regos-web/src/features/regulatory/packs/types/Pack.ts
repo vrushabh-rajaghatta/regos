@@ -60,10 +60,27 @@ export interface Pack {
    */
   storageConditions: PackStorageCondition[];
 
+  /**
+   * The long-term conditions the shelf life was demonstrated at.
+   *
+   * **Not `storageConditions`, which is one field up and sounds alike.** Those
+   * are label instructions — *"do not store above 25 °C"*. These are study
+   * conditions, and only these decide whether the period holds in a given
+   * market. Empty means the stability data has not been recorded, which is not
+   * a rejection.
+   */
+  testedAt: PackTestedAt[];
+
   history: PackMarketingStatusEntry[];
 }
 
 export interface PackStorageCondition {
+  code: string;
+  display: string;
+}
+
+/** Identical in shape to `PackStorageCondition` and named apart on purpose. */
+export interface PackTestedAt {
   code: string;
   display: string;
 }

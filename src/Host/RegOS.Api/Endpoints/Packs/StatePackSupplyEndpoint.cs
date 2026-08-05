@@ -33,7 +33,8 @@ public static class StatePackSupplyEndpoint
                 request.ShelfLifeValue,
                 request.ShelfLifeUnitCode,
                 request.ShelfLifeText,
-                request.StorageConditionCodes ?? []),
+                request.StorageConditionCodes ?? [],
+                request.TestedAtCodes ?? []),
             cancellationToken);
 
         return Results.NoContent();

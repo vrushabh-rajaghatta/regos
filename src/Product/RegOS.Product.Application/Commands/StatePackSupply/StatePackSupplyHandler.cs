@@ -27,7 +27,8 @@ public sealed class StatePackSupplyHandler
             command.ShelfLifeValue,
             PackVocabulary.ShelfLifePeriod(command.ShelfLifeUnitCode),
             command.ShelfLifeText,
-            PackVocabulary.StorageConditions(command.StorageConditionCodes));
+            PackVocabulary.StorageConditions(command.StorageConditionCodes),
+            PackVocabulary.TestedAt(command.TestedAtCodes));
 
         var legalStatus = PackVocabulary.LegalStatus(
             command.LegalStatusOfSupplyCode);

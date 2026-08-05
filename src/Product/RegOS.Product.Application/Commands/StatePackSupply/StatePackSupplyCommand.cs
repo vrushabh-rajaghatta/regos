@@ -25,10 +25,19 @@ namespace RegOS.Product.Application.Commands.StatePackSupply;
 /// Empty means nobody has said. <c>NO_SPECIAL_PRECAUTIONS</c> means somebody
 /// checked and none are needed — and it may not sit beside another.
 /// </param>
+/// <param name="TestedAtCodes">
+/// The long-term conditions the shelf life was established at. <b>A different
+/// list from <paramref name="StorageConditionCodes"/> drawn from a different
+/// vocabulary</b>: those are label instructions, these are study conditions, and
+/// a market reads only the second to decide whether the period holds there.
+/// Empty means the stability data has not been recorded, which is not a
+/// rejection.
+/// </param>
 public sealed record StatePackSupplyCommand(
     PackagedProductId PackagedProductId,
     string? LegalStatusOfSupplyCode,
     decimal? ShelfLifeValue,
     string? ShelfLifeUnitCode,
     string? ShelfLifeText,
-    IReadOnlyList<string> StorageConditionCodes);
+    IReadOnlyList<string> StorageConditionCodes,
+    IReadOnlyList<string> TestedAtCodes);

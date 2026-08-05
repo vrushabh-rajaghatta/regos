@@ -21,6 +21,12 @@ export const packSupplySchema = z
     shelfLifeText: z.string().trim().max(1000).optional(),
 
     storageConditionCodes: z.array(z.string()),
+
+    // No rule of its own, and none is missing. A pack may say where its data
+    // came from before anyone has decided how long it keeps, and a market that
+    // does not accept the condition is told so on the market view rather than
+    // refused here (EPIC-022 D6 — advisory, never blocking).
+    testedAtCodes: z.array(z.string()),
   })
   // Half a shelf life is refused for the reason half a pack size is: 36 alone
   // could be days, months or years.

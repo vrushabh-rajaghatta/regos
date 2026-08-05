@@ -108,5 +108,38 @@ public sealed class CountryConfiguration
         builder.Metadata
             .FindNavigation(nameof(Country.Languages))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // Which long-term stability conditions this market accepts — 25 °C/60%
+        // RH or 30 °C/65% RH for seven of the eight, 30 °C/70% RH for India.
+        //
+        // Conditions and not a climatic-zone column, because the authoritative
+        // source publishes conditions and declines to publish a zone letter per
+        // country (EPIC-022 D6). A `ClimaticZone` column would have looked
+        // tidier and would have held RegOS's interpretation rather than WHO's
+        // data.
+        builder.OwnsMany(x => x.StabilityConditions, condition =>
+        {
+            condition.ToTable("CountryStabilityConditions");
+
+            condition.WithOwner().HasForeignKey("CountryId");
+
+            condition.Property(x => x.System)
+                .HasMaxLength(CodedConcept.SystemMaxLength)
+                .IsRequired();
+
+            condition.Property(x => x.Code)
+                .HasMaxLength(CodedConcept.CodeMaxLength)
+                .IsRequired();
+
+            condition.Property(x => x.Display)
+                .HasMaxLength(CodedConcept.DisplayMaxLength)
+                .IsRequired();
+
+            condition.HasIndex("CountryId", "Code").IsUnique();
+        });
+
+        builder.Metadata
+            .FindNavigation(nameof(Country.StabilityConditions))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

@@ -24,9 +24,33 @@ public sealed class CountryTests
         string name = "United Kingdom",
         string isoName = "United Kingdom of Great Britain and Northern Ireland",
         IEnumerable<CodedConcept>? regions = null,
-        IEnumerable<LanguageCode>? languages = null)
+        IEnumerable<LanguageCode>? languages = null,
+        IEnumerable<CodedConcept>? stabilityConditions = null)
         => Country.Create(
-            CountryId.New(), code, alpha3, name, isoName, regions, languages);
+            CountryId.New(), code, alpha3, name, isoName,
+            regions, languages, stabilityConditions);
+
+    /// <summary>
+    /// Every public instance method that returns nothing — which is what a
+    /// state transition looks like.
+    /// </summary>
+    /// <remarks>
+    /// <b>Sharpened in S004, and deliberately not weakened.</b> This asked for
+    /// <em>no public instance methods at all</em> until <c>Country</c> gained
+    /// <c>AcceptsStabilityDataFrom</c> — a pure question that reads two
+    /// collections and changes nothing. ADR-043 §2's test is
+    /// <em>identity semantics</em>: children with identity and a lifecycle. A
+    /// method that answers a question is neither, and a <c>void Deactivate()</c>
+    /// would still be caught here.
+    /// </remarks>
+    private static IEnumerable<string> StateTransitionsOn<T>()
+        => typeof(T).GetMethods()
+            .Where(x => x.IsPublic
+                && !x.IsStatic
+                && !x.IsSpecialName
+                && x.DeclaringType == typeof(T)
+                && x.ReturnType == typeof(void))
+            .Select(x => x.Name);
 
     [Fact]
     public void ACountryCarriesBothCodesAndBothNames()
@@ -111,14 +135,7 @@ public sealed class CountryTests
     [Fact]
     public void ACountryHasNoLifecycleToChange()
     {
-        // Property accessors excluded: it is behaviour this is looking for,
-        // and a getter is not behaviour.
-        typeof(Country).GetMethods()
-            .Where(x => x.IsPublic
-                && !x.IsStatic
-                && !x.IsSpecialName
-                && x.DeclaringType == typeof(Country))
-            .Should().BeEmpty();
+        StateTransitionsOn<Country>().Should().BeEmpty();
     }
     // --- the groupings a country belongs to ----------------------------------
 
@@ -212,13 +229,121 @@ public sealed class CountryTests
 
         canada.Languages.Should().HaveCount(2);
 
-        typeof(Country).GetMethods()
-            .Where(x => x.IsPublic
-                && !x.IsStatic
-                && !x.IsSpecialName
-                && x.DeclaringType == typeof(Country))
-            .Should().BeEmpty();
+        StateTransitionsOn<Country>().Should().BeEmpty();
     }
 
+    // --- the stability conditions its market accepts -------------------------
 
+    private static CodedConcept Condition(string code)
+        => StabilityVocabulary.ConditionOf(code)!;
+
+    private static Country Germany(params string[] conditions)
+        => A(code: "DE", alpha3: "DEU", name: "Germany", isoName: "Germany",
+            stabilityConditions: [.. conditions.Select(Condition)]);
+
+    /// <summary>
+    /// <b>Conditions, never a climatic zone</b> (EPIC-022 D6). WHO publishes
+    /// the long-term testing condition each member state accepts and declines
+    /// to publish a zone letter per country — and <b>India accepts 30 °C/70% RH,
+    /// which is neither Zone IVA (30/65) nor Zone IVB (30/75)</b>. A zone field
+    /// would hold RegOS's reading of WHO rather than WHO.
+    /// </summary>
+    [Fact]
+    public void AMarketStatesTheConditionsItAcceptsAndNotAZone()
+    {
+        var india = A(code: "IN", alpha3: "IND", name: "India", isoName: "India",
+            stabilityConditions: [Condition("30C_70RH")]);
+
+        india.StabilityConditions.Select(x => x.Code).Should()
+            .BeEquivalentTo(["30C_70RH"]);
+    }
+
+    /// <summary>
+    /// <b>Several, because WHO's table says "or".</b> Seven of the eight seeded
+    /// markets accept 25 °C/60% RH <em>or</em> 30 °C/65% RH, which is why the
+    /// match below is an overlap rather than an equality.
+    /// </summary>
+    [Fact]
+    public void AMarketMayAcceptEitherOfTwoConditions()
+    {
+        Germany("25C_60RH", "30C_65RH").StabilityConditions.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void TheSameStabilityConditionTwiceIsRefused()
+    {
+        var create = () => Germany("25C_60RH", "25C_60RH");
+
+        create.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(CountryErrors.StabilityConditionAlreadyStated);
+    }
+
+    /// <summary>
+    /// <b>The rule, and the only place it lives:</b> a pack is suitable for a
+    /// market if at least one of the conditions its shelf life was demonstrated
+    /// at is accepted there.
+    /// </summary>
+    [Fact]
+    public void OneAcceptedConditionIsEnough()
+    {
+        Germany("25C_60RH", "30C_65RH")
+            .AcceptsStabilityDataFrom([Condition("30C_75RH"), Condition("25C_60RH")])
+            .Should().BeTrue();
+    }
+
+    /// <summary>
+    /// <b>The row the story turns on.</b> A pack whose data was generated at
+    /// 25 °C/60% RH is supported in Germany and not in India — same pack, same
+    /// number, different market — and India's condition belongs to no climatic
+    /// zone anybody publishes.
+    /// </summary>
+    [Fact]
+    public void GermanyAcceptsWhatIndiaDoesNot()
+    {
+        var temperate = new[] { Condition("25C_60RH") };
+
+        Germany("25C_60RH", "30C_65RH")
+            .AcceptsStabilityDataFrom(temperate).Should().BeTrue();
+
+        A(code: "IN", alpha3: "IND", name: "India", isoName: "India",
+                stabilityConditions: [Condition("30C_70RH")])
+            .AcceptsStabilityDataFrom(temperate).Should().BeFalse();
+    }
+
+    /// <summary>
+    /// <b>Silence is not a refusal, and that is why the answer is
+    /// three-valued.</b> A pack whose stability data has not been recorded is
+    /// not a pack whose data is rejected; a market RegOS holds no conditions
+    /// for cannot reject anything. Either collapsed to <c>false</c> would put
+    /// a warning on screen that means <em>"we do not know"</em>.
+    /// </summary>
+    [Fact]
+    public void NothingStatedOnEitherSideIsNotARejection()
+    {
+        Germany("25C_60RH")
+            .AcceptsStabilityDataFrom([]).Should().BeNull();
+
+        Germany("25C_60RH")
+            .AcceptsStabilityDataFrom(null).Should().BeNull();
+
+        Germany()
+            .AcceptsStabilityDataFrom([Condition("25C_60RH")]).Should().BeNull();
+    }
+
+    /// <summary>
+    /// <b>Reported, never enforced</b> (EPIC-005's expiry precedent). Asking
+    /// the question cannot change the country, and there is no method here that
+    /// refuses anything — the verdict is a value a screen renders.
+    /// </summary>
+    [Fact]
+    public void AskingTheQuestionChangesNothingAndRefusesNothing()
+    {
+        var germany = Germany("25C_60RH", "30C_65RH");
+
+        germany.AcceptsStabilityDataFrom([Condition("30C_70RH")])
+            .Should().BeFalse();
+
+        germany.StabilityConditions.Should().HaveCount(2);
+        StateTransitionsOn<Country>().Should().BeEmpty();
+    }
 }

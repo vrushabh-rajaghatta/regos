@@ -60,6 +60,7 @@ export function PackSupplyForm({
       shelfLifeUnitCode: pack.shelfLifeUnitCode ?? "",
       shelfLifeText: pack.shelfLifeText ?? "",
       storageConditionCodes: pack.storageConditions.map((x) => x.code),
+      testedAtCodes: pack.testedAt.map((x) => x.code),
     },
   });
 
@@ -79,6 +80,7 @@ export function PackSupplyForm({
           shelfLifeText:
             values.shelfLifeText === "" ? null : (values.shelfLifeText ?? null),
           storageConditionCodes: values.storageConditionCodes,
+          testedAtCodes: values.testedAtCodes,
         },
       });
     } catch {
@@ -234,6 +236,60 @@ export function PackSupplyForm({
                   (x) => x.code === NO_SPECIAL_PRECAUTIONS,
                 )?.display ?? "No special storage precautions"}
                 " means somebody checked.
+              </p>
+            </Field>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="testedAtCodes"
+          render={({ field }) => (
+            <Field>
+              {/* A title, not a label, for the reason the group above carries
+                  one: each checkbox has its own. */}
+              <FieldTitle>Shelf life demonstrated at</FieldTitle>
+
+              <div className="space-y-1" data-testid="tested-at">
+                {(vocabulary?.stabilityConditions ?? []).map((concept) => {
+                  const checked = field.value.includes(concept.code);
+
+                  return (
+                    <div key={concept.code} className="flex items-center gap-2">
+                      <input
+                        id={`tested-at-${concept.code}`}
+                        type="checkbox"
+                        className="size-4"
+                        checked={checked}
+                        onChange={(event) =>
+                          field.onChange(
+                            event.target.checked
+                              ? [...field.value, concept.code]
+                              : field.value.filter(
+                                  (code) => code !== concept.code,
+                                ),
+                          )
+                        }
+                      />
+
+                      <label
+                        htmlFor={`tested-at-${concept.code}`}
+                        className="text-sm"
+                      >
+                        {concept.display}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* The distinction the two groups exist for, said once where
+                  somebody is about to confuse them. */}
+              <p className="text-xs text-muted-foreground">
+                Not how the pack is kept — the condition its long-term stability
+                data was generated under. It decides which markets accept the
+                period above. More than one is ordinary: a global programme runs
+                several.
               </p>
             </Field>
           )}

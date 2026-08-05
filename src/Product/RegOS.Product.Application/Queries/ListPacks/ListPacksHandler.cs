@@ -50,6 +50,17 @@ public sealed class ListPacksHandler
                     })
                     .ToList(),
 
+                // The second collection behind that same required navigation —
+                // what the period was demonstrated under, not how the pack is
+                // kept.
+                TestedAt = pack.ShelfLife.TestedAt
+                    .Select(condition => new
+                    {
+                        condition.Code,
+                        condition.Display,
+                    })
+                    .ToList(),
+
                 // The date the status in force took effect. Max, not last —
                 // nothing orders what the database hands back.
                 Since = pack.MarketingStatusHistory.Max(x => x.OccurredOn),
@@ -89,6 +100,9 @@ public sealed class ListPacksHandler
                 row.ShelfLifeText,
                 [.. row.StorageConditions.Select(condition =>
                     new PackStorageConditionSummary(
+                        condition.Code, condition.Display))],
+                [.. row.TestedAt.Select(condition =>
+                    new PackTestedAtSummary(
                         condition.Code, condition.Display))],
                 [.. row.History.Select(entry => new PackMarketingStatusSummary(
                     entry.Id.Value,

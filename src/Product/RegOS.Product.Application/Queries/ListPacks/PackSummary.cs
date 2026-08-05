@@ -27,6 +27,12 @@ namespace RegOS.Product.Application.Queries.ListPacks;
 /// the two are different regulatory statements and the payload keeps them
 /// distinguishable.
 /// </param>
+/// <param name="TestedAt">
+/// The long-term conditions the shelf life was demonstrated at. <b>Not
+/// <paramref name="StorageConditions"/>, which is one line up and sounds
+/// alike</b> — those are label instructions, these are study conditions, and
+/// only these decide whether the period holds in a given market.
+/// </param>
 public sealed record PackSummary(
     Guid Id,
     string Description,
@@ -44,6 +50,7 @@ public sealed record PackSummary(
     string? ShelfLifeUnitDisplay,
     string? ShelfLifeText,
     IReadOnlyList<PackStorageConditionSummary> StorageConditions,
+    IReadOnlyList<PackTestedAtSummary> TestedAt,
     IReadOnlyList<PackMarketingStatusSummary> History);
 
 /// <remarks>
@@ -52,6 +59,16 @@ public sealed record PackSummary(
 /// database returns them, which is the order they were stated in.
 /// </remarks>
 public sealed record PackStorageConditionSummary(string Code, string Display);
+
+/// <remarks>
+/// <b>Its own record rather than a reuse of
+/// <see cref="PackStorageConditionSummary"/>, which has the identical shape.</b>
+/// The two lists come from different vocabularies and answer different
+/// questions, and a payload that called both of them <c>StorageCondition</c>
+/// would put the confusion the domain works to prevent straight back on the
+/// wire. Two records is the cheaper mistake (ADR-018).
+/// </remarks>
+public sealed record PackTestedAtSummary(string Code, string Display);
 
 /// <param name="RecordedOnUtc">
 /// When RegOS learned of it, as against when it took effect. Kept apart because
