@@ -7,6 +7,19 @@
 [ADR-018](ADR-018-rule-of-three.md) (seven demonstrated call sites, not symmetry),
 [EPIC-023](../product/epics/EPIC-023-test-schema.md) D1–D8
 
+> **Amended in place at S001, 2026-08-05, before it was merged and before
+> anything relied on it.** The decision did not change; **the argument for it
+> did.** As first written this ADR said provisioning was cheap and therefore not
+> worth optimising. S001 measured it end to end and it is **not** cheap — 2.7 s
+> per assembly, ≈ 19 s across seven, against a 28 s suite. The template database
+> is still refused, now **on correctness rather than on cost**: it is a cache,
+> and no invalidation key derived from migration identity survives an edit to an
+> existing migration.
+>
+> Amended rather than superseded on EPIC-022 D6's precedent — an unmerged,
+> not-yet-relied-upon decision is corrected in place; an accepted one that
+> something depends on is superseded.
+
 ## Context
 
 **27 test files across 7 of RegOS's 19 test suites hard-code
@@ -31,23 +44,33 @@ Three observations inside one epic, and the third is the one that settles it: a
 suite that cannot tell whether its own foundation is current is reporting on
 something other than the code.
 
-### What was measured before this was decided
+### What was measured, at two different layers
 
 The obvious objection to provisioning a database per test assembly is cost, and
-the obvious mitigations are template databases, shared snapshots, or migrating
-once and reusing. **None of them are needed**, and the numbers are the reason
-this ADR chooses the naive implementation rather than defending it:
+the obvious mitigation is a cached template database. **Measuring it took three
+attempts, and the first two measured the wrong layer** — which is recorded here
+because the layers differ by more than an order of magnitude and a future reader
+comparing against the wrong one will reach the wrong conclusion.
 
-| | |
-|---|---|
-| 86 migrations applied to an empty database | **0.165 s** |
-| `CREATE DATABASE … TEMPLATE` of the same schema | **0.15 s** — indistinguishable |
-| the figure that nearly changed the design | **14 s** — which turned out to be `dotnet ef`'s *build and startup*, not migration |
+| Layer | | |
+|---|---|---|
+| **Postgres execution** — the 85 migrations as raw SQL against an empty database | **165 ms** | what the server spends |
+| **End-to-end provisioning** — `CREATE` + `MigrateAsync()` + the real initializer chain + `DROP` | **≈ 2.7 s** | what a test assembly spends |
+| `dotnet ef database update`, wall clock | 14 s | mostly *build and startup*; not a provisioning cost at all |
 
-**The measurement chose the design.** Had the chain genuinely cost 14 seconds,
-this ADR would have specified a template database and inherited its
-coordination problem. It costs a sixth of a second, so there is nothing to
-optimise and nothing to coordinate.
+The gap between the first two is EF, not Postgres. `MigrateAsync()` alone is
+**1,985 ms** of the 2.7 s: it instantiates all 85 `Migration` classes and
+regenerates every operation, so **the cost scales with the number of migrations
+rather than with the SQL they produce**. Seeding is 611 ms, `CREATE` 79 ms,
+`DROP` 25 ms, and EF's model build — 851 ms — is excluded because every
+database-touching suite already pays it.
+
+**Seven assemblies × 2.7 s is ≈ 19 s, against a full suite of 28 s.**
+
+The decision is unchanged and the argument is not. It is **not** *"provisioning
+is cheap, so do not optimise"* — provisioning is not cheap. It is that **the
+optimisation costs more than the time it saves**, for the reason given under
+*Refused* below.
 
 ## Decision
 
@@ -143,7 +166,7 @@ named under *Revisit when*.
 |---|---|
 | **Testcontainers** | Adds a Docker dependency to every `dotnet test` and a package to a repository that has fifteen. The requirement is *schema currency*, not *host isolation*. **Falsifier:** a CI runner with no Postgres — and even then, GitHub Actions' `services: postgres` answers the same need without changing how a single test is written |
 | **Auto-migrate on application startup** | Moves the question from *"did you migrate?"* to *"did you restart?"*. It makes today's symptom disappear and leaves the schema verified by nothing |
-| **A template database, or a migrated snapshot reused across assemblies** | Buys 0.015 s and costs a coordination problem — which process builds the template, and what the others do while it is being built |
+| **A template database, or a migrated snapshot reused across assemblies** | **Refused on correctness, not on cost.** It would save ≈ 19 s per run, which is real. But a template is a cache, and a cache needs an invalidation key — and **no key derived from migration *identity* detects an edit to an existing migration.** Latest migration id, migration count, `__EFMigrationsHistory`: all unchanged when a migration's *body* changes. That is not hypothetical — **EPIC-023 S003 edits two existing migrations and adds none.** A template built before that edit would survive it, and hand every suite a schema produced from the old bodies while reporting as current. **That is schema drift with extra steps, and harder to notice than the drift this ADR exists to remove.** Any key strong enough — hashing every migration file, or the generated SQL — makes the cache a second artifact whose own correctness has to be proved |
 | **A database per test class** | Would make the existing cleanup genuinely redundant, which is its only argument. It multiplies provisioning by the class count for an isolation guarantee the cleanup already provides |
 | **An in-memory or SQLite provider** | [ADR-016](ADR-016-persistence-access-model.md) puts real query behaviour — global filters, owned collections, `AsNoTracking()` reads — at the centre of what these tests exist to check. A provider that does not behave like Postgres tests something else and reports it as a pass |
 
@@ -156,7 +179,12 @@ named under *Revisit when*.
   §5 says is not covered.
 - **CI runs somewhere without a reachable Postgres.** Then the decision in the
   refusal table above is re-opened, and Testcontainers is the candidate.
-- **Provisioning becomes a visible share of a suite's runtime.** At 0.165 s for
-  the whole chain there is no case to answer; if the chain grows an order of
-  magnitude, the template database refused above becomes worth its coordination
-  cost.
+- **Provisioning stops being compatible with an acceptably fast suite.** Two
+  observable thresholds rather than a timing figure, because a figure needs a
+  baseline nobody will have: **the suite exceeding roughly two minutes**, or
+  **the migration chain roughly doubling** — the cost is linear in migration
+  count, so ~170 migrations puts provisioning near 4 s per assembly.
+  <br>Had end-to-end provisioning proved incompatible with an acceptably fast
+  suite, a cached template database would have been reconsidered **despite** its
+  invalidation problem, and the invalidation key would then have been the design
+  work rather than an afterthought.

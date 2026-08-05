@@ -57,7 +57,7 @@ raised between them.
 **The plan changed before it was built**, which is recorded here because the
 backlog was the thing that was wrong:
 
-- **A measurement overturned the approach.** The 86-migration chain applies to an
+- **A measurement overturned the approach.** The 85-migration chain applies to an
   empty database in **0.165 s** — the 14 s first measured was `dotnet ef`'s build
   and startup. Template databases and snapshots buy nothing, so the epic builds
   the naive per-assembly implementation
@@ -373,7 +373,7 @@ rather than assuming.
 > Left visible so nobody later reads *"the test suite runs the migrations"* and
 > concludes the upgrade path is covered.
 
-> **The measurement that changed the design.** The whole 86-migration chain
+> **The measurement that changed the design.** The whole 85-migration chain
 > applies to an empty database in **0.165 s**; the 14 s first measured was
 > `dotnet ef`'s build and startup, not migration. Template databases clone in
 > the same 0.15 s, so they buy nothing — and the epic builds the naive

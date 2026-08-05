@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <!-- It lives under tests/ and references xunit, so `dotnet test` on the
+         solution tries to run it and the testhost dies with a bare "Error:".
+         This is support code, not a suite — and the run must keep reporting
+         exactly 19. -->
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The whole point: tests migrate and seed through the same code the API
+         boots with (ADR-064 §3, §4). -->
+    <ProjectReference Include="..\..\..\src\Persistence\RegOS.Persistence\RegOS.Persistence.csproj" />
+  </ItemGroup>
+
+</Project>

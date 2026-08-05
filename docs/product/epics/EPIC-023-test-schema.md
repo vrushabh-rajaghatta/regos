@@ -53,21 +53,34 @@ change to an *existing* read path — `ListRegistrationMarkets` reaching
 | | |
 |---|---|
 | **27 files** hard-code the dev database | across **7 of 19 suites** — Api, Organization·Application, Platform·Application, Product·Application, ProductDocument·Persistence, Registration·Application, Submission·Application. The other twelve are domain and architecture suites and never open a connection |
-| **86 migrations apply to an empty database in 0.165 s** | raw SQL, measured against the local Postgres |
+| **85 migrations apply to an empty database in 0.165 s** | raw SQL, measured against the local Postgres |
 | `CREATE DATABASE … TEMPLATE` | **0.15 s** — indistinguishable |
 | the dev database holds **17,400 `Sessions`** and **810 `RefreshTokens`** | test residue, accumulating in a working database since EPIC-006 |
 
-**The 0.165 s is what chose the design.** The first measurement said 14 seconds,
-which would have made a per-assembly database a real cost and a template
-database a real answer — but 14 seconds is what `dotnet ef` spends on *build and
-startup*, and almost none of it is migration. Once the chain itself is a sixth of
-a second, template databases buy nothing, snapshots buy nothing, and the naive
-implementation is affordable. **The epic builds the naive implementation because
-the measurement says it can, not because it is simpler.**
+**This measured the wrong layer, and S001 caught it.** 0.165 s is what *Postgres*
+spends; end-to-end provisioning costs **2.7 s per assembly**, because EF's
+migration machinery is twelve times the SQL it emits. The planning argument
+below — *"the naive implementation is affordable"* — survived, but not for the
+reason given here. See [S001](#s001--one-assembly-proves-the-shape) for the
+numbers and [ADR-064](../../adr/ADR-064-the-test-suite-provisions-its-own-schema.md)
+for the amended argument. **Kept rather than rewritten: the measurement that was
+wrong is more instructive than the one that replaced it, because both looked
+authoritative.**
 
+> ~~The 0.165 s is what chose the design.~~ The first measurement said 14
+> seconds, which would have made a per-assembly database a real cost and a
+> template database a real answer — but 14 seconds is what `dotnet ef` spends on
+> *build and startup*, and almost none of it is migration. Once the chain itself
+> is a sixth of a second, template databases buy nothing, snapshots buy nothing,
+> and the naive implementation is affordable.
+>
 > This is the second time in three epics that measuring first overturned a plan
-> already written down — EPIC-022 D6 was the first. Both were caught before code,
-> and in both cases the wrong version had been argued convincingly.
+> already written down — EPIC-022 D6 was the first.
+
+**Three measurements, two of them wrong, and each looked like the answer.**
+14 s was `dotnet ef`'s build; 0.165 s was Postgres alone; 2.7 s is what a test
+run actually pays. The lesson worth carrying is not *measure first* — that was
+done — it is **measure the layer the cost is actually paid at**.
 
 ### Two corrections to what the backlog claimed
 
@@ -257,22 +270,49 @@ version as firmly as it forbids the speculative deletion.
 
 ## Phase 3 — Stories
 
-### S001 — one assembly proves the shape
+### S001 — one assembly proves the shape ✅
 
 `RegOS.TestSupport`, plus **one** converted assembly:
 `RegOS.ProductDocument.Persistence.Tests`, chosen because it is a single file.
 
-The point is to **measure the real per-assembly cost before six more assemblies
-depend on the shape**, and to meet the sharp edges once rather than seven times:
+Its purpose was to **measure the real per-assembly cost before six more
+assemblies depend on the shape**, and to meet the sharp edges once rather than
+seven times.
 
-- connection pools must be cleared before `DROP`, or the drop blocks on EF's own
-  idle connections
-- Postgres identifiers are capped at 63 characters, and
-  `regos_test_regos_productdocument_persistence_tests_<guid>` is not
-- the server connection must come from one place, so CI can point elsewhere
-  without touching seven files
+#### What it cost
 
-**Sign-off gate:** the measured cost, before S002 begins.
+Median of three runs, decomposed:
+
+| | | |
+|---|---|---|
+| `CREATE DATABASE` | 79 ms | |
+| EF model build | 851 ms | *excluded — every database-touching suite already pays it* |
+| **`MigrateAsync()`** | **1,985 ms** | the surprise |
+| seed, via the real initializer chain | 611 ms | |
+| `DROP … (FORCE)` | 25 ms | |
+| **marginal cost per assembly** | **≈ 2.7 s** | ≈ **19 s** across seven, against a **28 s** suite |
+
+**EF's migration machinery costs twelve times the SQL it emits** — 1,985 ms to
+produce 165 ms of statements — because it instantiates all 85 `Migration`
+classes and regenerates every operation. **The cost is linear in migration
+count, not in schema size**, which is why *Revisit when* names a doubling of the
+chain rather than a growth in tables.
+
+The cost was accepted and ADR-064 amended in place. The template database that
+would have removed it is refused **on correctness**: it is a cache, and
+[S003](#s003--the-migration-chain-is-proved-not-assumed) is about to edit two
+existing migrations without adding any — which no invalidation key derived from
+migration identity can see.
+
+#### The sharp edges it found
+
+| | |
+|---|---|
+| **`RegOS.TestSupport` ran as a test suite** | It lives under `tests/` and references xunit, so `dotnet test` on the solution launched a testhost for it that died with a bare `Error:`. `<IsTestProject>false</IsTestProject>`. **The run must report 19, not 20** |
+| **`AddPersistence` needed a connection-string overload** | The fixture knows its connection string before any `IConfiguration` exists. The alternative was a second initializer registration list in test code — which would silently stop running whichever initializer someone added next. Two lines of production change; the list stays in one place |
+| Connection pools must be cleared before `DROP` | Npgsql keeps them open after the last context is disposed, and `DROP` blocks on them |
+| Postgres identifiers are capped at 63 characters | and truncated **silently** past it, so two assemblies sharing a long prefix would collide on a name neither chose |
+| The server connection comes from one place | `TestPostgres`, overridable by `REGOS_TEST_POSTGRES`, so CI points elsewhere without touching a test file |
 
 ### S002 — the remaining six
 

@@ -17,10 +17,27 @@ public static class DependencyInjection
     public static IServiceCollection AddPersistence(
         this IServiceCollection services,
         IConfiguration configuration)
+        => services.AddPersistence(configuration.GetConnectionString("RegOS"));
+
+    /// <summary>
+    /// The same registration, for a caller that already holds the connection
+    /// string rather than a configuration to read it from.
+    /// </summary>
+    /// <remarks>
+    /// Exists for <c>RegOS.TestSupport</c>, which provisions a database per test
+    /// assembly (<see href="../../../docs/adr/ADR-064-the-test-suite-provisions-its-own-schema.md">ADR-064</see>)
+    /// and therefore knows its connection string before any configuration
+    /// exists. <b>An overload rather than a second registration list</b>: the
+    /// initializer order below is load-bearing, and a test path that assembled
+    /// its own copy would silently stop running whichever initializer was added
+    /// next.
+    /// </remarks>
+    public static IServiceCollection AddPersistence(
+        this IServiceCollection services,
+        string? connectionString)
     {
         services.AddDbContext<RegOSDbContext>(options =>
-            options.UseNpgsql(
-                configuration.GetConnectionString("RegOS")));
+            options.UseNpgsql(connectionString));
 
         services.AddScoped<IDataInitializer, GeographyAndRegulatoryInitializer>();
         services.AddScoped<IDataInitializer, OrganizationInitializer>();

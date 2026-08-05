@@ -16,12 +16,20 @@ using ProductDocumentAggregate =
 
 namespace RegOS.ProductDocument.Persistence.Tests;
 
-// Integration test — exercises the real EF mapping against the dev Postgres.
-// Requires the database to be running (docker postgres-local).
+// Integration test — exercises the real EF mapping against Postgres.
+//
+// The database is this assembly's own: created from the current migration
+// chain and seeded by the real initializers before the first test runs
+// (ADR-064). Nothing here assumes a developer migrated anything by hand.
+[Collection(ProductDocumentDatabase.Collection)]
 public class ProductDocumentPersistenceTests
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly ProductDocumentDatabase _database;
+
+    public ProductDocumentPersistenceTests(ProductDocumentDatabase database)
+    {
+        _database = database;
+    }
 
     // Seeded system document type (CER) from Milestone 18.2.
     private static readonly DocumentTypeId SeededCer =
@@ -40,13 +48,8 @@ public class ProductDocumentPersistenceTests
         public TenantId? TenantIdOrNull => TestTenant;
     }
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
-
-    private static RegOSDbContext NewContext() =>
-        new(Options(), new FixedTenantContext());
+    private RegOSDbContext NewContext() =>
+        _database.NewContext(new FixedTenantContext());
 
     [Fact]
     public async Task Saves_reloads_and_cascade_deletes_a_document_with_its_version()
