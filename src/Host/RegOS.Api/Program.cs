@@ -392,6 +392,9 @@ registrations.MapListExpiringRegistrations();
 registrations.MapAuthorisePack();
 registrations.MapWithdrawPackAuthorisation();
 registrations.MapListAuthorisedPacks();
+registrations.MapApproveSite();
+registrations.MapWithdrawSiteApproval();
+registrations.MapListApprovedSites();
 
 var correspondence = app.MapGroup("").WithTags("Correspondence");
 correspondence.MapRecordCorrespondence();

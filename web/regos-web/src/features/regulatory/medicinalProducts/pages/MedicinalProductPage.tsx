@@ -14,6 +14,7 @@ import { MarketClinicalStatements } from "@/features/regulatory/indications/comp
 import { MarketInteractions } from "@/features/regulatory/indications/components/MarketInteractions";
 import { MarketIndications } from "@/features/regulatory/indications/components/MarketIndications";
 import { MarketLabels } from "@/features/regulatory/labels/components/MarketLabels";
+import { MarketApprovedSites } from "@/features/regulatory/manufacturing/components/MarketApprovedSites";
 import { MarketManufacturing } from "@/features/regulatory/manufacturing/components/MarketManufacturing";
 import { MarketPacks } from "@/features/regulatory/packs/components/MarketPacks";
 
@@ -149,6 +150,18 @@ export function MedicinalProductPage() {
           this is who makes them — and the two are compared against the licence
           rather than against each other. */}
       <MarketManufacturing medicinalProductId={market.medicinalProductId} />
+
+      {/* Immediately after it, and deliberately not merged into it: what we do
+          and what the licence permits are separate statements from separate
+          sources. Comparing them is S004's job, and merging them here would
+          make the divergence impossible to see. */}
+      <MarketApprovedSites
+        medicinalProductId={market.medicinalProductId}
+        registrations={held.map((row) => ({
+          id: row.registrationId,
+          registrationNumber: row.registrationNumber,
+        }))}
+      />
 
       {/* What this authority approved, on its own clock. Deliberately on the
           market page and not the product's: the core label is the company's
