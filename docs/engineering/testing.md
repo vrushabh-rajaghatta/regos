@@ -401,14 +401,14 @@ pointing it at the one you develop in — a suite that seeds and retires busines
 entities will otherwise do so in the database you are reading.
 
 ```bash
-# 1. A database of its own, migrated from the current chain.
+# 1. An empty database. Migrating it is not a separate step: in Development
+#    `Database:MigrateOnStartup` is true, so the API does it at boot.
 docker exec -i postgres-local psql -U admin -d postgres -c 'CREATE DATABASE regos_verify;'
-ConnectionStrings__RegOS="Host=localhost;Port=5432;Database=regos_verify;Username=admin;Password=password123" \
-  dotnet ef database update --project src/Persistence/RegOS.Persistence --startup-project src/Host/RegOS.Api
 
-# 2. The API on 5301, seeding itself at boot.
-ConnectionStrings__RegOS="…Database=regos_verify;…" Storage__RootPath=/tmp/regos-verify \
-  ASPNETCORE_ENVIRONMENT=Development dotnet run --project src/Host/RegOS.Api --no-launch-profile --urls http://localhost:5301
+# 2. The API on 5301 — migrates, then seeds.
+ConnectionStrings__RegOS="Host=localhost;Port=5432;Database=regos_verify;Username=admin;Password=password123" \
+  Storage__RootPath=/tmp/regos-verify ASPNETCORE_ENVIRONMENT=Development \
+  dotnet run --project src/Host/RegOS.Api --no-launch-profile --urls http://localhost:5301
 
 # 3. The web app on 5174, pointed at it.
 VITE_API_BASE_URL=http://localhost:5301 npm run dev -- --port 5174
@@ -417,13 +417,13 @@ VITE_API_BASE_URL=http://localhost:5301 npm run dev -- --port 5174
 REGOS_WEB_URL=http://localhost:5174 REGOS_API_URL=http://localhost:5301 npm test
 ```
 
-Four things that are easy to get wrong, each of which has cost a session:
+Three things that are easy to get wrong, each of which has cost a session:
 
 - **`--no-launch-profile` *and* `ASPNETCORE_ENVIRONMENT=Development`.** Without
-  the first, `launchSettings.json` overrides the URL; without the second, the
-  development credentials are never seeded and every spec fails at sign-in.
-- **The API must be told to seed into the new database**, which it does at boot —
-  but it does **not** migrate. Step 1 is not optional.
+  the first, `launchSettings.json` overrides the URL. Without the second you get
+  both halves of the problem: the development credentials are never seeded, and
+  `Database:MigrateOnStartup` falls back to `false`, so the app stops on an
+  empty database instead of filling it.
 - **Widening CORS for port 5174 is a temporary edit to `Program.cs`.** Revert it
   *surgically* and verify: `grep -rn "5174" src/ --include='*.cs'` must return
   nothing. Never revert by checking out the whole file — that discards

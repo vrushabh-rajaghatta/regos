@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using RegOS.Api.Endpoints.Applications;
 using RegOS.Api.Development;
 using RegOS.Api.Endpoints.Authentication;
@@ -147,6 +148,45 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    var database = scope.ServiceProvider
+        .GetRequiredService<RegOSDbContext>().Database;
+
+    // The seeders below are insert-if-empty and assume their tables exist, so an
+    // unmigrated database used to fail here with a raw 42P01 forty frames deep —
+    // "relation Countries does not exist" — rather than saying what to do about
+    // it. Both branches fix that; they differ on who may change the schema.
+    //
+    // Configuration rather than the environment name, because "may this process
+    // alter the schema?" is a property of the deployment and not of the word it
+    // was labelled with. It is false when absent (appsettings.json says so out
+    // loud) so that forgetting the setting is the safe outcome, and the whole of
+    // it is one key: Database:MigrateOnStartup.
+    if (builder.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+    {
+        await database.MigrateAsync();
+    }
+    else
+    {
+        // Migrating is then a deployment step and not a side effect of booting.
+        // Three reasons, none of them style: instances starting together would
+        // race one another, a long migration would hold the process before it
+        // could report healthy, and the alternative grants the application's own
+        // credentials the right to alter the schema for the entire time it runs.
+        // The supported artifact is `dotnet ef migrations script --idempotent`,
+        // which EPIC-023 S003 found broken and fixed.
+        var pending = (await database.GetPendingMigrationsAsync()).ToList();
+
+        if (pending.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"The database is {pending.Count} migration(s) behind: "
+                + string.Join(", ", pending)
+                + ". Apply them as part of the deployment, or set "
+                + "Database:MigrateOnStartup to true if this process is meant "
+                + "to own the schema.");
+        }
+    }
+
     var initializers = scope.ServiceProvider.GetServices<IDataInitializer>();
 
     foreach (var initializer in initializers)

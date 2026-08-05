@@ -165,10 +165,51 @@ named under *Revisit when*.
 | | Why not |
 |---|---|
 | **Testcontainers** | Adds a Docker dependency to every `dotnet test` and a package to a repository that has fifteen. The requirement is *schema currency*, not *host isolation*. **Falsifier:** a CI runner with no Postgres — and even then, GitHub Actions' `services: postgres` answers the same need without changing how a single test is written |
-| **Auto-migrate on application startup** | Moves the question from *"did you migrate?"* to *"did you restart?"*. It makes today's symptom disappear and leaves the schema verified by nothing |
+| **Auto-migrate on application startup, *as the answer to this problem*** | It is not one. A suite that runs against whatever the developer's app last migrated has moved the question from *"did you migrate?"* to *"did you restart?"* and still verifies the schema with nothing. **This refuses it as a substitute for provisioning, not as a thing to do** — see the note below, which does exactly that for a different reason |
 | **A template database, or a migrated snapshot reused across assemblies** | **Refused on correctness, not on cost.** It would save ≈ 19 s per run, which is real. But a template is a cache, and a cache needs an invalidation key — and **no key derived from migration *identity* detects an edit to an existing migration.** Latest migration id, migration count, `__EFMigrationsHistory`: all unchanged when a migration's *body* changes. That is not hypothetical — **EPIC-023 S003 edits two existing migrations and adds none.** A template built before that edit would survive it, and hand every suite a schema produced from the old bodies while reporting as current. **That is schema drift with extra steps, and harder to notice than the drift this ADR exists to remove.** Any key strong enough — hashing every migration file, or the generated SQL — makes the cache a second artifact whose own correctness has to be proved |
 | **A database per test class** | Would make the existing cleanup genuinely redundant, which is its only argument. It multiplies provisioning by the class count for an isolation guarantee the cleanup already provides |
 | **An in-memory or SQLite provider** | [ADR-016](ADR-016-persistence-access-model.md) puts real query behaviour — global filters, owned collections, `AsNoTracking()` reads — at the centre of what these tests exist to check. A provider that does not behave like Postgres tests something else and reports it as a pass |
+
+### Addendum, 2026-08-05 — what the host does at boot
+
+Separate from the decision above and recorded beside it, because the two are
+easily confused and the refusal table would otherwise read as a blanket ban.
+
+**One setting decides it: `Database:MigrateOnStartup`.**
+
+| | |
+|---|---|
+| **`true`** — set in `appsettings.Development.json` | the host migrates itself. Point the connection string at an empty database, run the app, and you have a working system: **91 tables, 85 migrations, seeded reference data** |
+| **`false`** — set in `appsettings.json`, and the value when the key is absent | the host refuses, naming the pending migrations and what to do about them |
+
+**Configuration rather than `IsDevelopment()`**, because *"may this process alter
+the schema?"* is a property of the deployment and not of the word it was
+labelled with. A staging box that owns its own database and a production one
+that does not are both `Production`.
+
+**False when absent, and `appsettings.json` says so out loud** rather than
+leaving it implied — forgetting the setting must be the safe outcome, and a
+reader of that file should be able to see the knob exists.
+
+Before either branch existed, an unmigrated database failed in the first
+initializer with `42P01 relation "Countries" does not exist` — forty frames deep
+and saying nothing about what to do.
+
+**Why `false` is the default.** Three reasons, none of them style:
+
+- instances starting together would race one another
+- a long migration would hold the process before it could report healthy
+- the alternative grants the application's own credentials the right to alter
+  the schema for the entire time it runs
+
+The supported artifact outside Development is
+`dotnet ef migrations script --idempotent` — which S003 found broken, fixed and
+verified.
+
+> **This changes nothing about the tests.** They provision their own database
+> and would be unaffected if the host migrated, refused, or did neither. Written
+> down here anyway, because *"the app migrates at startup"* is exactly the fact
+> a future reader would use to argue the tests no longer need to.
 
 **Revisit when**
 

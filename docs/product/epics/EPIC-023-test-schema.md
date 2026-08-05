@@ -473,6 +473,48 @@ conversation.
 
 ---
 
+## After the capstone — the host boots from nothing
+
+**Outside this epic's requirement, and recorded here rather than folded into it**,
+because it shipped on this branch and the epic's boundary should stay legible.
+The requirement is about the *automated test environment*; this is about the
+*application*. They share a subject and are not the same scope.
+
+Pointing the connection string at a database that did not exist used to fail in
+the first initializer with `42P01 relation "Countries" does not exist` — forty
+frames deep, and saying nothing about what to do. **One setting now decides it:**
+
+```jsonc
+// appsettings.json — the safe default, stated rather than implied
+"Database": { "MigrateOnStartup": false }
+
+// appsettings.Development.json
+"Database": { "MigrateOnStartup": true }
+```
+
+| | |
+|---|---|
+| **`true`** | the host creates the database if absent, migrates it, then seeds — **0 tables → 91 tables, 85 migrations, seeded reference data**, from `dotnet run` alone |
+| **`false`**, including when the key is absent | the host stops, **naming the pending migrations** and what to do about them, and never alters the schema itself |
+
+**Configuration rather than `IsDevelopment()`**, because *"may this process alter
+the schema?"* is a property of the deployment, not of the word it was labelled
+with — a staging box that owns its database and a production one that does not
+are both `Production`. False when absent, so forgetting the setting is the safe
+outcome.
+
+> **This changes nothing about the tests**, which provision their own database
+> and would be unaffected either way. Recorded in
+> [ADR-064](../../adr/ADR-064-the-test-suite-provisions-its-own-schema.md)'s
+> addendum anyway, because *"the app migrates at startup"* is exactly the fact a
+> future reader would use to argue the tests no longer need to.
+
+It also made [Standard 9](../../engineering/testing.md) — written the same day —
+wrong, and it was corrected in the same change. The isolated browser stack no
+longer needs a separate `dotnet ef database update` step.
+
+---
+
 ## Retrospective
 
 ### Measured outcomes
@@ -560,11 +602,57 @@ migrations"* invites a conclusion this epic does not support:
 | 4 | `dotnet test RegOS.slnx` green across **19 reporting suites**, with no manual migration step | ✅ 19, and `IsTestProject=false` keeps `RegOS.TestSupport` from becoming a twentieth |
 | 5 | The epic states plainly what is still not proved | ✅ above |
 
+### Did it accomplish the goal? — three hedges, asked for at close
+
+The Definition of Done is met line by line and none of its rows is generous.
+The honest summary is narrower than the ticks suggest, and these are worth more
+than the ticks:
+
+#### 1. It removed the lie, not the silence
+
+All three founding observations were *"somebody ran the suite and it told them
+the wrong thing."* That is fixed. But **nothing runs the suite except a person
+typing `dotnet test`** — no CI exists. A green run is now trustworthy; an absent
+run is still invisible.
+
+> **The epic made the suite worth running and did not make it run.** Until
+> [EPIC-015](../BACKLOG.md#later)'s CI job, the value sits latent — which makes
+> that job worth more than it looked the day before this shipped.
+
+#### 2. "The automated test environment" is broader than what was covered
+
+The browser suite still points at whatever stack is brought up by hand.
+[D7](#d7--the-browser-suite-is-out-of-scope-except-for-what-is-written-down)
+scoped that out with a reason that still holds — it runs against a stack, not
+`dotnet test` — but **Standard 9 is a recipe, not a guarantee.** The requirement
+sentence does not carve the browser suite out; this epic did.
+
+#### 3. The guard proves less than its green tick implies
+
+`TestDatabaseConventionTests` proves **no file names a database**. It does not
+prove **every database test uses the fixture**. A new assembly could build a
+context from `TestPostgres.Server` directly and pass, because that connection
+string lives in the one permitted file.
+
+> **The stronger guard is cheap and was not built:** *any test project
+> referencing `RegOS.Persistence` must also reference `RegOS.TestSupport`* — a
+> `.csproj` scan of perhaps fifteen lines. Named as an
+> [EPIC-024](../BACKLOG.md#epic-024--the-invariants-nothing-checks) candidate,
+> because it is the same shape as the two already there: **a rule the project
+> relies on that nothing executes.**
+
+#### What it would have done differently
+
+**Measured the layer the cost is paid at before writing ADR-064, not after.**
+The ADR shipped with a wrong premise and had to be amended at S001 — and it was
+amendable only because it had not merged. That was timing, not process.
+
 ### It closed no RIM object, as forecast
 
 The first epic in RegOS to ship no user-facing capability. What it shipped
 instead is that **every guarantee the other 22 epics' tests make is now made
-against a schema the project can name the origin of.**
+against a schema the project can name the origin of** — and that the project
+can say, precisely, which guarantees it still cannot make.
 
 ---
 
@@ -578,3 +666,5 @@ against a schema the project can name the origin of.**
 | 2026-08-05 | S002. All seven assemblies; the serialisation cost measured rather than predicted, and no per-assembly exception added |
 | 2026-08-05 | S003. Two unterminated statements fixed; the idempotent artifact executed for the first time |
 | 2026-08-05 | S004. Capstone, retrospective, testing.md Standards 8 and 9 |
+| 2026-08-05 | After the capstone: `Database:MigrateOnStartup`, outside the epic's requirement and recorded as such. Standard 9 corrected the same day it was written |
+| 2026-08-05 | Closed. Three hedges recorded against the Definition of Done, one of which — *no CI runs this* — is the reason the value is latent |
