@@ -42,12 +42,20 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-**EPIC-022 — Country depth. 🟡 In Progress.**
+**EPIC-022 — Country depth. 🟢 Complete.**
 Pulled into Now 2026-08-05, after EPIC-010b merged to `main` (PR #20). Phase 1
 was written before 010b closed and is settled; **Phase 2 was signed off on
 pull-in** and is recorded in
 [`epics/EPIC-022-country-depth.md`](epics/EPIC-022-country-depth.md). The branch
 is `epic/EPIC-022-country-depth`.
+
+> **All five stories and the [retro](epics/EPIC-022-country-depth.md#retrospective)
+> are done; the branch is awaiting merge.** Two things deliberately **not** done
+> here, because they are planning evolution and land on `main` between epics:
+> moving this row into [Shipped epics](#shipped-epics) with what comes next, and
+> raising the **migration-drift** item — *the automated test environment should
+> always execute against a schema produced from the current migration chain* —
+> as its own backlog entry rather than a bullet inside EPIC-015.
 
 > **`Country` is the only reference entity whose every attribute is for
 > display.** `Code` and `Name` are what you show in a dropdown; climatic zone,
@@ -55,25 +63,30 @@ is `epic/EPIC-022-country-depth`.
 
 | | |
 |---|---|
-| **ADR-062** | ⚪ before S003 — language stops being a display fact, which its own docstring predicted would be the trigger |
-| **S001** | ⚪ ISO identity — `IsoAlpha3Code` + `IsoName` on all eight, surfaced wherever a country is shown |
-| **S002** | ⚪ Regions — collection in, `RegionCode` out; *"which of our markets are in the EU?"* |
-| **S003** | ⚪ Languages — the collection, the `LanguageCode` move, and required-vs-recorded label languages, advisory |
-| **S004** | ⚪ Climatic zones — **including `ShelfLifeStorage.Region`**, and the match, reported not blocked |
-| **S005** | ⚪ Capstone — browser proof, evidence entries, seed statement, retro |
+| **ADR-062** | 🟢 before S003 — language stops being a display fact, which its own docstring predicted would be the trigger |
+| **S001** | 🟢 ISO identity — `IsoAlpha3Code` + `IsoName` on all eight, surfaced wherever a country is shown |
+| **S002** | 🟢 Regions — collection in, `RegionCode` out; *"which of our markets are in the EU?"* |
+| **S003** | 🟢 Languages — the collection, the `LanguageCode` move, and required-vs-recorded label languages, advisory |
+| **S004** | 🟢 Stability conditions — **including `ShelfLifeStorage.TestedAt`**, and the match, reported not blocked. **Conditions, not zones**: the source was fetched and killed the planned abstraction (E39, D6 amended in place) |
+| **S005** | 🟢 Capstone — one product, two markets, identical inputs; every difference traced to the country row. Evidence complete, seed verified, retro |
 
 **Flagged in the plan, not hidden:**
 
 - **It closes no RIM object.** One object goes from 33% to ~92% and
   [the runway](#the-runway) figure does not move. Coverage measures breadth;
   this is depth, and the case is the two debts rather than the number.
-- **S004 is where to stop if it runs long** — decided now rather than under
-  pressure. It is the only story with an external prerequisite *and* the only
-  one that touches a shipped aggregate.
-- **ICH Q1A(R2) is a real prerequisite for S004**, not a nice-to-have. India
-  being IVB rather than IVA is the one value here nobody can reconstruct from
-  memory, and getting it wrong tells a user their stability data supports a
-  market it does not.
+- **S004 was where to stop if it ran long** — the only story with an external
+  prerequisite *and* the only one touching a shipped aggregate. It was not
+  stopped: the prerequisite was fetched, and reading it changed the design
+  before any code existed.
+- **The prerequisite fired, and the answer was not a value — it was the
+  model.** The plan said India being **IVB rather than IVA** was the one thing
+  nobody could reconstruct from memory. **India is 30 °C/70% RH, which is
+  neither.** WHO publishes the condition each country accepts and no zone letter
+  per country; ICH withdrew Q1F. So RegOS stores conditions and no zone at all
+  (**E39**, [D6 amended in place](epics/EPIC-022-country-depth.md#d6--amended-in-place-before-a-line-of-s004-was-written)).
+  *When an authoritative source disagrees with the abstraction, the abstraction
+  changes — not the source.*
 
 > **The carve-out closed before Phase 2 began.** The plan asked EPIC-010b S003
 > to add `ShelfLifeStorage.Region` while that type was still being authored.
@@ -94,7 +107,7 @@ whoever can go and fetch one.*
 | ~~`ich-stf-v2-2.dtd`~~ **+ `valid-values.xml` + the ICH stylesheet** | ICH M2 | ~~EPIC-019 S002b and S003~~ — **✅ ARRIVED 2026-08-03** | **Three files, not one, and the entry named the wrong one as the vocabulary.** `file-tag/@name` is `CDATA`, so the DTD validates a misspelled tag (**E34**); the enumeration is in `valid-values.xml` (**E33**) and the stylesheet is what checks it. Held at [`docs/evidence/EPIC-019/spec/`](../evidence/EPIC-019/spec/) |
 | `form-type.xml` | FDA | eCTD section **1.1 forms** (`m1-1-forms`, refused today) | Same shape: a closed vocabulary named by a wire attribute (**E18**) |
 | FDA *Example Submissions for Module 1* v1.4 | FDA | **EPIC-007b S008** — the Level 3 comparison EPIC-007a did not make | A worked example is the only thing that shows convention rather than legality |
-| **ICH Q1A(R2)** *Stability Testing of New Drug Substances and Products* (+ WHO TRS 953 Annex 2) | ICH · WHO | **EPIC-022 S004** — `Country.ClimaticZones` | The zone boundaries (I, II, III, IVA, IVB) and which countries fall where are the one value in that epic **a careful person cannot reconstruct from memory**. Getting India wrong means telling someone their stability data supports a market it does not. The other four vocabularies are hand-verifiable for eight countries; this one is not |
+| ~~**ICH Q1A(R2)**~~ → **WHO,** *Stability conditions for WHO Member States by Region* | ~~ICH~~ · WHO | ~~EPIC-022 S004~~ — **✅ ARRIVED 2026-08-05** | **The entry named the wrong document, and the right one changed the design.** Q1A(R2) specifies study conditions; it never mapped countries to zones, and **Q1F — which carried zone letters — is withdrawn**. WHO's table publishes the *condition* each member state accepts, so `Country.ClimaticZones` became `Country.StabilityConditions` and no zone is persisted. **India is 30 °C/70% RH — neither IVA nor IVB** (**E39**). ⚠ The table grades its own rows: Australia's is a 2008 ICDRA collation, the other seven are regulator statements |
 
 > **We know there is a controlled vocabulary** is not **we possess the
 > controlled vocabulary**. Those are different evidence levels, and the second
@@ -168,7 +181,7 @@ It pays two debts nothing else will:
 | **EPIC-018 shipped `LocalLabel.Language` with no way to know which languages a market requires** | Canada needs EN+FR, Belgium NL+FR, Switzerland DE+FR+IT. Labeling cannot answer this; only geography can |
 | **`RegionCode` is a dead column** — defaulted to null, omitted by all eight seeds, no mutator, no update path | Exactly the defect [`Substance`](../../src/ReferenceData/RegOS.ReferenceData.Domain/Substances/Substance.cs) refuses by name — *"a persistent property with no acquisition path"*. Country predates the rule |
 
-**The carve-out closed, and cost almost nothing.** This paragraph asked EPIC-010b S003 to add `Region` to `ShelfLifeStorage` while that type was still being authored. **It did not** — S003 shipped the night before this plan was written, scoped to the two concepts it was signed off for. The feared price was *"a migration plus a backfill nobody has the data for"*, and the backfill does not exist: RegOS is pre-customer, so every pack ever recorded is in a dev seed or a throwaway test database. **S004 now owns the field and the match together**, which is arguably the better shape — climate becomes actionable in one place instead of two.
+**The carve-out closed, and cost almost nothing.** This paragraph asked EPIC-010b S003 to add `Region` to `ShelfLifeStorage` while that type was still being authored. **It did not** — S003 shipped the night before this plan was written, scoped to the two concepts it was signed off for. The feared price was *"a migration plus a backfill nobody has the data for"*, and the backfill does not exist: RegOS is pre-customer, so every pack ever recorded is in a dev seed or a throwaway test database. **S004 now owns the field and the match together**, which is arguably the better shape — stability becomes actionable in one place instead of two. **And owning both halves is what saved it:** had S003 taken the carve-out, the field would have shipped as `Region` holding a zone letter, and the source that killed zones would have been read after there was data in the column.
 
 **What reverses the ordering:** a second sequence filing the same study (which makes EPIC-021 genuinely urgent rather than correct-but-early), or a judgement that a 33%-complete lookup table is not where attention belongs while packs are half-built. Both are value calls.
 
