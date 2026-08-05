@@ -24,6 +24,7 @@
          the handler that creates one. The fixture builds its world through the
          real application surface rather than inserting rows. -->
     <ProjectReference Include="..\..\..\src\Product\RegOS.Product.Infrastructure\RegOS.Product.Infrastructure.csproj" />
-  </ItemGroup>
+    <ProjectReference Include="..\..\TestSupport\RegOS.TestSupport\RegOS.TestSupport.csproj" />
+</ItemGroup>
 
 </Project>

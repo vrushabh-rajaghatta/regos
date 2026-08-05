@@ -26,10 +26,16 @@ namespace RegOS.Submission.Application.Tests;
 // Integration tests — exercise the publish handler end-to-end against the real dev
 // Postgres (docker postgres-local). Publishing is where validation, the aggregate
 // invariant, and persistence come together.
+[Collection(SubmissionDatabase.Collection)]
 public sealed class PublishSubmissionTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly SubmissionDatabase _database;
+
+    public PublishSubmissionTests(SubmissionDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly DocumentTypeId SeededCer =
         new(Guid.Parse("50000000-0000-0000-0000-000000000001"));
@@ -39,12 +45,10 @@ public sealed class PublishSubmissionTests : IAsyncLifetime
     private readonly List<Guid> _submissionIds = [];
     private readonly List<Guid> _documentIds = [];
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
+    private DbContextOptions<RegOSDbContext> Options() =>
+        _database.Options;
 
-    private static RegOSDbContext New() =>
+    private RegOSDbContext New() =>
         new(Options(), TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;

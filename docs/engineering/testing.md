@@ -336,6 +336,103 @@ between an intention and an oversight.
 
 ---
 
+## Standard 8
+
+**A `dotnet test` suite never names a database. It takes one.**
+
+*Adopted 2026-08-05, EPIC-023 · [ADR-064](../adr/ADR-064-the-test-suite-provisions-its-own-schema.md)*
+
+Every database-touching test assembly provisions its own — created, migrated
+from the current chain, seeded by the real `IDataInitializer` chain, and dropped
+when the assembly finishes.
+
+```csharp
+// One per assembly, and the subclass is what names the database after it.
+public sealed class SubmissionDatabase : RegOSTestDatabase
+{
+    public const string Collection = "Submission database";
+}
+
+[CollectionDefinition(SubmissionDatabase.Collection)]
+public sealed class SubmissionDatabaseCollection
+    : ICollectionFixture<SubmissionDatabase>;
+
+// Then, on each class that needs it:
+[Collection(SubmissionDatabase.Collection)]
+public sealed class MyTests(SubmissionDatabase database)
+{
+    private RegOSDbContext New() => database.NewContext(TestTenant.Context);
+}
+```
+
+**Exactly one file under `tests/` may carry a connection string** —
+[`TestPostgres.cs`](../../tests/TestSupport/RegOS.TestSupport/TestPostgres.cs),
+which names a *server* and never a RegOS database. Override
+`REGOS_TEST_POSTGRES` to point somewhere else. `TestDatabaseConventionTests`
+enforces this, and the rule is phrased as *"one file"* rather than *"not that
+database"* on purpose: a ban on one value is satisfied by inventing another.
+
+Three things that look interchangeable and are not:
+
+| | |
+|---|---|
+| `MigrateAsync()` ✅ | builds the schema **from the migration chain** |
+| `EnsureCreatedAsync()` ❌ | builds it from the **model**, leaves `__EFMigrationsHistory` empty, and is faster — so somebody will propose it. A suite running on it is green while proving nothing about the migrations |
+| a hand-maintained database | what this replaced. Correct exactly as often as somebody remembers |
+
+**The existing per-test cleanup stays.** Per-assembly provisioning replaces
+*cross-run* isolation, not *intra-assembly* isolation — classes in one assembly
+still share one database, so Principle 7 and [ADR-019](../adr/ADR-019-testing-strategy.md)
+rule 1 are as load-bearing as they ever were.
+
+---
+
+## Standard 9
+
+**Browser specs run against an isolated stack, never the one you are working
+in.**
+
+*Written down 2026-08-05, EPIC-023 S004. It had lived only in conversation.*
+
+The browser suite is verification against a running stack
+([ADR-019](../adr/ADR-019-testing-strategy.md)), so unlike `dotnet test` it
+cannot provision anything for itself. Bring up a second stack rather than
+pointing it at the one you develop in — a suite that seeds and retires business
+entities will otherwise do so in the database you are reading.
+
+```bash
+# 1. An empty database. Migrating it is not a separate step: in Development
+#    `Database:MigrateOnStartup` is true, so the API does it at boot.
+docker exec -i postgres-local psql -U admin -d postgres -c 'CREATE DATABASE regos_verify;'
+
+# 2. The API on 5301 — migrates, then seeds.
+ConnectionStrings__RegOS="Host=localhost;Port=5432;Database=regos_verify;Username=admin;Password=password123" \
+  Storage__RootPath=/tmp/regos-verify ASPNETCORE_ENVIRONMENT=Development \
+  dotnet run --project src/Host/RegOS.Api --no-launch-profile --urls http://localhost:5301
+
+# 3. The web app on 5174, pointed at it.
+VITE_API_BASE_URL=http://localhost:5301 npm run dev -- --port 5174
+
+# 4. The specs, pointed at both.
+REGOS_WEB_URL=http://localhost:5174 REGOS_API_URL=http://localhost:5301 npm test
+```
+
+Three things that are easy to get wrong, each of which has cost a session:
+
+- **`--no-launch-profile` *and* `ASPNETCORE_ENVIRONMENT=Development`.** Without
+  the first, `launchSettings.json` overrides the URL. Without the second you get
+  both halves of the problem: the development credentials are never seeded, and
+  `Database:MigrateOnStartup` falls back to `false`, so the app stops on an
+  empty database instead of filling it.
+- **Widening CORS for port 5174 is a temporary edit to `Program.cs`.** Revert it
+  *surgically* and verify: `grep -rn "5174" src/ --include='*.cs'` must return
+  nothing. Never revert by checking out the whole file — that discards
+  unrelated work in it.
+- **Kill by PID** — `lsof -ti tcp:5301 | xargs kill` — never `pkill -f dotnet`,
+  which takes the stack you were protecting.
+
+---
+
 # Test Pyramid
 
 The traditional testing pyramid focuses on implementation.
@@ -380,5 +477,7 @@ Before considering a capability complete, verify:
 
 | Version | Date | Summary |
 |----------|------------|------------------------------------------|
+| 1.3 | 2026-08-05 | Standard 8 — a `dotnet test` suite takes a database rather than naming one (EPIC-023, ADR-064). Standard 9 — the isolated browser stack, written down after living only in conversation. |
+| 1.2 | 2026-08-05 | Standard 7 — `{ exact: true }` on `getByLabel()`, at the second occurrence of the same defect (EPIC-010c S002). |
 | 1.1 | 2026-08-01 | Principle 8 — both halves of a capability are reachable (EPIC-017 S005). |
 | 1.0 | 2026-07-08 | Initial approved version. |

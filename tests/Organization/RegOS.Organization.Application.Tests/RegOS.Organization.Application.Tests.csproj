@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Organization\RegOS.Organization.Application\RegOS.Organization.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Organization\RegOS.Organization.Infrastructure\RegOS.Organization.Infrastructure.csproj" />
-  </ItemGroup>
+    <ProjectReference Include="..\..\TestSupport\RegOS.TestSupport\RegOS.TestSupport.csproj" />
+</ItemGroup>
 
 </Project>

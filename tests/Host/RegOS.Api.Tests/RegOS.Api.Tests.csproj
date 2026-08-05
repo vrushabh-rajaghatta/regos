@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Host\RegOS.Api\RegOS.Api.csproj" />
-  </ItemGroup>
+    <ProjectReference Include="..\..\TestSupport\RegOS.TestSupport\RegOS.TestSupport.csproj" />
+</ItemGroup>
 
 </Project>

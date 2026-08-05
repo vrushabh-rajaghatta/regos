@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\..\src\Submission\RegOS.Submission.Application\RegOS.Submission.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Submission\RegOS.Submission.Infrastructure\RegOS.Submission.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\ProductDocument\RegOS.ProductDocument.Infrastructure\RegOS.ProductDocument.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\TestSupport\RegOS.TestSupport\RegOS.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>

@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\ProductDocument\RegOS.ProductDocument.Infrastructure\RegOS.ProductDocument.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\TestSupport\RegOS.TestSupport\RegOS.TestSupport.csproj" />
   </ItemGroup>
 
 </Project>

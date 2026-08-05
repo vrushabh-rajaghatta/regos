@@ -13,10 +13,12 @@ namespace RegOS.Platform.Application.Tests.Tenancy;
 /// </summary>
 public sealed class TenantFilterArchitectureTests
 {
-    // Model building needs a provider but no database; nothing here connects.
+    // Model building needs a provider but no database, and UseNpgsql takes no
+    // connection string for exactly this case. It used to pass a fictional one
+    // — which read as a test that talks to a database and does not.
     private static RegOSDbContext BareContext() =>
         new(new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql("Host=localhost;Database=model-only")
+            .UseNpgsql()
             .Options);
 
     /// <summary>

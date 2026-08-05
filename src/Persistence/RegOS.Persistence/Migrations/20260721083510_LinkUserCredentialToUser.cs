@@ -18,7 +18,7 @@ namespace RegOS.Persistence.Migrations
             migrationBuilder.Sql(
                 """
                 DELETE FROM "UserCredentials"
-                WHERE "UserId" NOT IN (SELECT "Id" FROM "Users")
+                WHERE "UserId" NOT IN (SELECT "Id" FROM "Users");
                 """);
 
             migrationBuilder.AddForeignKey(

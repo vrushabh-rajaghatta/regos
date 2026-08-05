@@ -22,7 +22,7 @@ namespace RegOS.Persistence.Migrations
             // entire cost is that everyone signs in once more; fabricating
             // session rows would put invented device data in front of
             // users, which is worse than asking them to sign in.
-            migrationBuilder.Sql("DELETE FROM \"RefreshTokens\"");
+            migrationBuilder.Sql("DELETE FROM \"RefreshTokens\";");
             migrationBuilder.AddColumn<Guid>(
                 name: "SessionId",
                 table: "RefreshTokens",

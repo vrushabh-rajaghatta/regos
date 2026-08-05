@@ -25,6 +25,7 @@
          Product context itself never references Registration, which is the
          dependency direction this epic exists to establish. -->
     <ProjectReference Include="..\..\..\src\Registration\RegOS.Registration.Infrastructure\RegOS.Registration.Infrastructure.csproj" />
-  </ItemGroup>
+    <ProjectReference Include="..\..\TestSupport\RegOS.TestSupport\RegOS.TestSupport.csproj" />
+</ItemGroup>
 
 </Project>

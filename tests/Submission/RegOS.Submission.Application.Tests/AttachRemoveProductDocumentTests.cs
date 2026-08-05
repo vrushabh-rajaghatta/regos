@@ -24,10 +24,16 @@ namespace RegOS.Submission.Application.Tests;
 // Integration tests — exercise the attach/remove handlers end-to-end against
 // the real dev Postgres (docker postgres-local). This is the first point at
 // which the Submission and Product Document capabilities run together.
+[Collection(SubmissionDatabase.Collection)]
 public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly SubmissionDatabase _database;
+
+    public AttachRemoveProductDocumentTests(SubmissionDatabase database)
+    {
+        _database = database;
+    }
+
 
     // Seeded reference data.
     private static readonly DocumentTypeId SeededCer =
@@ -38,12 +44,10 @@ public sealed class AttachRemoveProductDocumentTests : IAsyncLifetime
     private readonly List<Guid> _submissionIds = [];
     private readonly List<Guid> _documentIds = [];
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
+    private DbContextOptions<RegOSDbContext> Options() =>
+        _database.Options;
 
-    private static RegOSDbContext New() =>
+    private RegOSDbContext New() =>
         new(Options(), TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;

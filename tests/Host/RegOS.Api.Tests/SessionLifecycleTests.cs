@@ -34,7 +34,7 @@ public sealed class SessionLifecycleTests : IAsyncLifetime
     /// </summary>
     public async Task DisposeAsync()
     {
-        await RefreshTokenStore.DeleteAllForAsync(Session.DevEmail);
+        await _factory.RefreshTokens.DeleteAllForAsync(Session.DevEmail);
     }
 
     private static string? CookieHeaderFor(
@@ -234,7 +234,7 @@ public sealed class SessionLifecycleTests : IAsyncLifetime
     {
         var (session, _) = await Session.LoginAsync(_client);
 
-        await RefreshTokenStore.ExpireAllForAsync(Session.DevEmail);
+        await _factory.RefreshTokens.ExpireAllForAsync(Session.DevEmail);
 
         var response = await session.SendAsync(
             _client, HttpMethod.Post, "/api/auth/refresh");
@@ -249,7 +249,7 @@ public sealed class SessionLifecycleTests : IAsyncLifetime
         // over usable sessions.
         var (session, _) = await Session.LoginAsync(_client);
 
-        var stored = await RefreshTokenStore.HashesForAsync(Session.DevEmail);
+        var stored = await _factory.RefreshTokens.HashesForAsync(Session.DevEmail);
 
         stored.Should().NotBeEmpty();
         stored.Should().NotContain(session.Refresh!);

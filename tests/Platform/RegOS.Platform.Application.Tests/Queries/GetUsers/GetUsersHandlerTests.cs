@@ -16,18 +16,22 @@ namespace RegOS.Platform.Application.Tests.Queries.GetUsers;
 // exercised against the real dev Postgres (docker postgres-local) like the
 // Submission application tests. Every test is scoped to a throwaway
 // TenantId so it cannot collide with existing data.
+[Collection(PlatformDatabase.Collection)]
 public sealed class GetUsersHandlerTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly PlatformDatabase _database;
+
+    public GetUsersHandlerTests(PlatformDatabase database)
+    {
+        _database = database;
+    }
+
 
     private readonly TenantId _tenantId =
         TenantId.From(Guid.NewGuid());
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
+    private DbContextOptions<RegOSDbContext> Options() =>
+        _database.Options;
 
     // The context carries the same tenant the handler is scoped to, so the
     // global query filter (ADR-031) resolves to this test's rows.

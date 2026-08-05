@@ -41,8 +41,8 @@ public sealed class ChangePasswordLifecycleTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await RefreshTokenStore.DeleteAllForAsync(Session.DevEmail);
-        await UserStore.DeleteUsersMatchingAsync(Marker);
+        await _factory.RefreshTokens.DeleteAllForAsync(Session.DevEmail);
+        await _factory.Users.DeleteUsersMatchingAsync(Marker);
     }
 
     /// <summary>Creates an active account this test owns, and signs it in.</summary>

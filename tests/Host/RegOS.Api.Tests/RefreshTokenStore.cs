@@ -8,12 +8,17 @@ namespace RegOS.Api.Tests;
 /// token expire without waiting fourteen days, and looking at what was actually
 /// persisted.
 /// </summary>
-internal static class RefreshTokenStore
+public sealed class RefreshTokenStore
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly string _connectionString;
 
-    public static async Task ExpireAllForAsync(string email)
+    public RefreshTokenStore(string connectionString)
+    {
+        _connectionString = connectionString;
+    }
+
+
+    public async Task ExpireAllForAsync(string email)
     {
         await ExecuteAsync(
             """
@@ -23,7 +28,7 @@ internal static class RefreshTokenStore
             email);
     }
 
-    public static async Task DeleteAllForAsync(string email)
+    public async Task DeleteAllForAsync(string email)
     {
         await ExecuteAsync(
             """
@@ -33,9 +38,9 @@ internal static class RefreshTokenStore
             email);
     }
 
-    public static async Task<IReadOnlyList<string>> HashesForAsync(string email)
+    public async Task<IReadOnlyList<string>> HashesForAsync(string email)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
         await using var command = new NpgsqlCommand(
@@ -56,9 +61,9 @@ internal static class RefreshTokenStore
         return hashes;
     }
 
-    private static async Task ExecuteAsync(string sql, string email)
+    private async Task ExecuteAsync(string sql, string email)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
         await using var command = new NpgsqlCommand(sql, connection);

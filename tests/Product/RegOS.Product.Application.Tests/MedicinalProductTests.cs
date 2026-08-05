@@ -36,10 +36,16 @@ namespace RegOS.Product.Application.Tests;
 /// behaviour twice that no caller could reach, and these tests are written so
 /// that could not happen here.
 /// </remarks>
+[Collection(ProductDatabase.Collection)]
 public sealed class MedicinalProductTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly ProductDatabase _database;
+
+    public MedicinalProductTests(ProductDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly CountryId UnitedStates =
         new(Guid.Parse("10000000-0000-0000-0000-000000000001"));
@@ -59,11 +65,9 @@ public sealed class MedicinalProductTests : IAsyncLifetime
     private readonly List<Guid> _medicinalProductIds = [];
     private readonly List<Guid> _productIds = [];
 
-    private static RegOSDbContext New() =>
+    private RegOSDbContext New() =>
         new(
-            new DbContextOptionsBuilder<RegOSDbContext>()
-                .UseNpgsql(ConnectionString)
-                .Options,
+            _database.Options,
             TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -703,7 +707,7 @@ public sealed class MedicinalProductTests : IAsyncLifetime
     /// the one-name-per-language rule is exercised against persisted state
     /// rather than an aggregate that never left memory.
     /// </summary>
-    private static async Task SetActivationAsync(
+    private async Task SetActivationAsync(
         MedicinalProductId market,
         bool active,
         DateOnly on)
@@ -728,7 +732,7 @@ public sealed class MedicinalProductTests : IAsyncLifetime
     /// the chronology rule is exercised against persisted state rather than an
     /// aggregate that never left memory.
     /// </summary>
-    private static async Task ChangeAsync(
+    private async Task ChangeAsync(
         MedicinalProductId market,
         MarketStatus status,
         DateOnly occurredOn,
@@ -742,7 +746,7 @@ public sealed class MedicinalProductTests : IAsyncLifetime
                 default);
     }
 
-    private static async Task<TradeNameId> AddTradeNameAsync(
+    private async Task<TradeNameId> AddTradeNameAsync(
         MedicinalProductId market,
         string? language,
         string? name)

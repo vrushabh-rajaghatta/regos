@@ -25,10 +25,16 @@ namespace RegOS.Submission.Application.Tests;
 // Integration tests — exercise the submission validator and the validation query
 // against the real dev Postgres (docker postgres-local). Validation reads only; it
 // never mutates, so the only cleanup needed is the submissions/documents we seed.
+[Collection(SubmissionDatabase.Collection)]
 public sealed class ValidateSubmissionTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly SubmissionDatabase _database;
+
+    public ValidateSubmissionTests(SubmissionDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly DocumentTypeId SeededCer =
         new(Guid.Parse("50000000-0000-0000-0000-000000000001"));
@@ -38,12 +44,10 @@ public sealed class ValidateSubmissionTests : IAsyncLifetime
     private readonly List<Guid> _submissionIds = [];
     private readonly List<Guid> _documentIds = [];
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
+    private DbContextOptions<RegOSDbContext> Options() =>
+        _database.Options;
 
-    private static RegOSDbContext New() =>
+    private RegOSDbContext New() =>
         new(Options(), TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;

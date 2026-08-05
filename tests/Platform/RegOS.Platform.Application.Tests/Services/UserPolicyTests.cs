@@ -13,10 +13,16 @@ namespace RegOS.Platform.Application.Tests.Services;
 
 // Integration tests for the uniqueness rules — the exclude-self behaviour is
 // SQL, so fakes cannot prove it. Scoped to a throwaway TenantId.
+[Collection(PlatformDatabase.Collection)]
 public sealed class UserPolicyTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly PlatformDatabase _database;
+
+    public UserPolicyTests(PlatformDatabase database)
+    {
+        _database = database;
+    }
+
 
     private readonly TenantId _tenantId =
         TenantId.From(Guid.NewGuid());
@@ -30,10 +36,8 @@ public sealed class UserPolicyTests : IAsyncLifetime
     private UserAggregate _other = default!;
     private UserAggregate _elsewhere = default!;
 
-    private static RegOSDbContext NewContext() =>
-        new(new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options);
+    private RegOSDbContext NewContext() =>
+        new(_database.Options);
 
     public async Task InitializeAsync()
     {

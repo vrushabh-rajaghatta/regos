@@ -39,16 +39,16 @@ public sealed class TenantProvisioningTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await UserStore.DeleteUsersMatchingAsync(Marker);
+        await _factory.Users.DeleteUsersMatchingAsync(Marker);
 
         foreach (var id in _tenantIds)
         {
             // Anything the tenant's own administrator recorded first (no
             // cascade), then the tenant. Raw SQL: the API offers no tenant
             // deletion, on purpose.
-            await UserStore.ExecuteAsync(
+            await _factory.Users.ExecuteAsync(
                 """DELETE FROM "Organizations" WHERE "TenantId" = @id""", id);
-            await UserStore.ExecuteAsync(
+            await _factory.Users.ExecuteAsync(
                 """DELETE FROM "Tenants" WHERE "Id" = @id""", id);
         }
     }

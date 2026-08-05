@@ -20,10 +20,16 @@ namespace RegOS.Platform.Application.Tests.Tenancy;
 /// <c>.Where(TenantId == …)</c> — because the claim under test is exactly
 /// that forgetting the manual clause no longer leaks.
 /// </summary>
+[Collection(PlatformDatabase.Collection)]
 public sealed class TenantIsolationTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly PlatformDatabase _database;
+
+    public TenantIsolationTests(PlatformDatabase database)
+    {
+        _database = database;
+    }
+
 
     private readonly TenantId _tenantA = TenantId.From(Guid.NewGuid());
     private readonly TenantId _tenantB = TenantId.From(Guid.NewGuid());
@@ -32,15 +38,13 @@ public sealed class TenantIsolationTests : IAsyncLifetime
     private UserAggregate _userInB = default!;
     private UserAggregate _platformUser = default!;
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
+    private DbContextOptions<RegOSDbContext> Options() =>
+        _database.Options;
 
     private RegOSDbContext ContextFor(TenantId tenant) =>
         new(Options(), new FakeTenantContext(tenant));
 
-    private static RegOSDbContext ContextWithoutIdentity() =>
+    private RegOSDbContext ContextWithoutIdentity() =>
         new(Options());
 
     public async Task InitializeAsync()

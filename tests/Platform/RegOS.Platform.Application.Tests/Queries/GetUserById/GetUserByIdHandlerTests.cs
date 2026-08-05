@@ -16,10 +16,16 @@ namespace RegOS.Platform.Application.Tests.Queries.GetUserById;
 
 // Integration tests against the real dev Postgres, scoped to a throwaway
 // TenantId so they cannot collide with existing data.
+[Collection(PlatformDatabase.Collection)]
 public sealed class GetUserByIdHandlerTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly PlatformDatabase _database;
+
+    public GetUserByIdHandlerTests(PlatformDatabase database)
+    {
+        _database = database;
+    }
+
 
     private readonly TenantId _tenantId =
         TenantId.From(Guid.NewGuid());
@@ -29,10 +35,8 @@ public sealed class GetUserByIdHandlerTests : IAsyncLifetime
 
     private UserId _userId = default!;
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
+    private DbContextOptions<RegOSDbContext> Options() =>
+        _database.Options;
 
     // The context carries the same tenant the handler is scoped to, so the
     // global query filter (ADR-031) resolves to this test's rows.

@@ -42,8 +42,8 @@ public sealed class InvitationLifecycleTests : IAsyncLifetime
     /// </summary>
     public async Task DisposeAsync()
     {
-        await RefreshTokenStore.DeleteAllForAsync(Session.DevEmail);
-        await UserStore.DeleteUsersMatchingAsync(Marker);
+        await _factory.RefreshTokens.DeleteAllForAsync(Session.DevEmail);
+        await _factory.Users.DeleteUsersMatchingAsync(Marker);
     }
 
     private static string NewEmail() =>
@@ -91,7 +91,7 @@ public sealed class InvitationLifecycleTests : IAsyncLifetime
     {
         var (_, userId, token) = await InviteAsync();
 
-        var stored = await UserStore.InvitationHashesForAsync(userId);
+        var stored = await _factory.Users.InvitationHashesForAsync(userId);
 
         stored.Should().NotBeEmpty();
         stored.Should().NotContain(token);
@@ -108,8 +108,8 @@ public sealed class InvitationLifecycleTests : IAsyncLifetime
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        (await UserStore.StatusOfAsync(userId)).Should().Be(0);   // Active
-        (await UserStore.CredentialCountAsync(userId)).Should().Be(1);
+        (await _factory.Users.StatusOfAsync(userId)).Should().Be(0);   // Active
+        (await _factory.Users.CredentialCountAsync(userId)).Should().Be(1);
 
         // The invariant this slice exists to establish, checked end to end:
         // an active user has exactly one credential, and it works.
@@ -154,12 +154,12 @@ public sealed class InvitationLifecycleTests : IAsyncLifetime
     {
         var (_, userId, token) = await InviteAsync();
 
-        await UserStore.ExpireInvitationsForAsync(userId);
+        await _factory.Users.ExpireInvitationsForAsync(userId);
 
         var response = await AcceptAsync(token);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        (await UserStore.StatusOfAsync(userId)).Should().Be(2);   // still Invited
+        (await _factory.Users.StatusOfAsync(userId)).Should().Be(2);   // still Invited
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public sealed class InvitationLifecycleTests : IAsyncLifetime
         var response = await AcceptAsync(token);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        (await UserStore.CredentialCountAsync(userId)).Should().Be(0);
+        (await _factory.Users.CredentialCountAsync(userId)).Should().Be(0);
     }
 
     [Fact]
@@ -192,8 +192,8 @@ public sealed class InvitationLifecycleTests : IAsyncLifetime
         var response = await AcceptAsync(token, "short");
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        (await UserStore.StatusOfAsync(userId)).Should().Be(2);   // Invited
-        (await UserStore.CredentialCountAsync(userId)).Should().Be(0);
+        (await _factory.Users.StatusOfAsync(userId)).Should().Be(2);   // Invited
+        (await _factory.Users.CredentialCountAsync(userId)).Should().Be(0);
 
         // And the invitation still works afterwards, so a typo is recoverable.
         (await AcceptAsync(token)).StatusCode
@@ -257,8 +257,8 @@ public sealed class InvitationLifecycleTests : IAsyncLifetime
             $"/api/platform/users/{userId}/activate");
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        (await UserStore.StatusOfAsync(userId)).Should().Be(2);
-        (await UserStore.CredentialCountAsync(userId)).Should().Be(0);
+        (await _factory.Users.StatusOfAsync(userId)).Should().Be(2);
+        (await _factory.Users.CredentialCountAsync(userId)).Should().Be(0);
     }
 
     [Fact]
@@ -280,6 +280,6 @@ public sealed class InvitationLifecycleTests : IAsyncLifetime
             $"/api/platform/users/{userId}/activate");
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        (await UserStore.StatusOfAsync(userId)).Should().Be(0);
+        (await _factory.Users.StatusOfAsync(userId)).Should().Be(0);
     }
 }
