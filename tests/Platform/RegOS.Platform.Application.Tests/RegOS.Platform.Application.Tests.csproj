@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Platform\RegOS.Platform.Application\RegOS.Platform.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Platform\RegOS.Platform.Infrastructure\RegOS.Platform.Infrastructure.csproj" />
-  </ItemGroup>
+    <ProjectReference Include="..\..\TestSupport\RegOS.TestSupport\RegOS.TestSupport.csproj" />
+</ItemGroup>
 
 </Project>

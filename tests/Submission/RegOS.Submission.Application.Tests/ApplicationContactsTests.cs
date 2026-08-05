@@ -34,10 +34,16 @@ namespace RegOS.Submission.Application.Tests;
 /// space.
 /// </para>
 /// </remarks>
+[Collection(SubmissionDatabase.Collection)]
 public sealed class ApplicationContactsTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly SubmissionDatabase _database;
+
+    public ApplicationContactsTests(SubmissionDatabase database)
+    {
+        _database = database;
+    }
+
 
     private const string Fixture = "TEST-APPLICATION-CONTACTS";
 
@@ -55,9 +61,8 @@ public sealed class ApplicationContactsTests : IAsyncLifetime
     private readonly List<Guid> _submissionIds = [];
     private readonly List<Guid> _contactIds = [];
 
-    private static RegOSDbContext New() =>
-        new(new DbContextOptionsBuilder<RegOSDbContext>()
-                .UseNpgsql(ConnectionString).Options,
+    private RegOSDbContext New() =>
+        new(_database.Options,
             TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -248,7 +253,7 @@ public sealed class ApplicationContactsTests : IAsyncLifetime
 
     // --- helpers -------------------------------------------------------------
 
-    private static async Task<ApplicationContacts> QueryAsync(
+    private async Task<ApplicationContacts> QueryAsync(
         RegulatoryApplicationId applicationId)
     {
         await using var ctx = New();
@@ -257,7 +262,7 @@ public sealed class ApplicationContactsTests : IAsyncLifetime
             .HandleAsync(new GetApplicationContactsQuery(applicationId), default);
     }
 
-    private static async Task<RegulatoryApplicationId> ApplicationAsync()
+    private async Task<RegulatoryApplicationId> ApplicationAsync()
     {
         await using var ctx = New();
 
@@ -306,7 +311,7 @@ public sealed class ApplicationContactsTests : IAsyncLifetime
         return submission.Id.Value;
     }
 
-    private static async Task PublishAsync(Guid submissionId)
+    private async Task PublishAsync(Guid submissionId)
     {
         await using var ctx = New();
 

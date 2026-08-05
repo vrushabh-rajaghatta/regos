@@ -8,22 +8,27 @@ namespace RegOS.Api.Tests;
 /// without waiting a week, reading what was actually persisted, and cleaning up
 /// users the API offers no way to delete.
 /// </summary>
-internal static class UserStore
+public sealed class UserStore
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly string _connectionString;
+
+    public UserStore(string connectionString)
+    {
+        _connectionString = connectionString;
+    }
+
 
     /// <summary>
     /// Deletes every user whose email contains the marker. Invitations,
     /// credentials and refresh tokens go with them by cascade (ADR-026) -
     /// which is the whole reason this is one statement rather than four.
     /// </summary>
-    public static Task DeleteUsersMatchingAsync(string marker) =>
+    public Task DeleteUsersMatchingAsync(string marker) =>
         ExecuteAsync(
             """DELETE FROM "Users" WHERE "Email" LIKE '%' || @value || '%'""",
             marker);
 
-    public static Task ExpireInvitationsForAsync(Guid userId) =>
+    public Task ExpireInvitationsForAsync(Guid userId) =>
         ExecuteAsync(
             """
             UPDATE "Invitations" SET "ExpiresAt" = now() - interval '1 day'
@@ -31,7 +36,7 @@ internal static class UserStore
             """,
             userId);
 
-    public static Task ExpirePasswordResetsForAsync(Guid userId) =>
+    public Task ExpirePasswordResetsForAsync(Guid userId) =>
         ExecuteAsync(
             """
             UPDATE "PasswordResets" SET "ExpiresAt" = now() - interval '1 day'
@@ -39,30 +44,30 @@ internal static class UserStore
             """,
             userId);
 
-    public static async Task<IReadOnlyList<string>> PasswordResetHashesForAsync(
+    public async Task<IReadOnlyList<string>> PasswordResetHashesForAsync(
         Guid userId) =>
         await StringsAsync(
             """SELECT "TokenHash" FROM "PasswordResets" WHERE "UserId" = @id""",
             userId);
 
-    public static Task<int> StatusOfAsync(Guid userId) =>
+    public Task<int> StatusOfAsync(Guid userId) =>
         ScalarAsync<int>("""SELECT "Status" FROM "Users" WHERE "Id" = @id""", userId);
 
-    public static Task<int> CredentialCountAsync(Guid userId) =>
+    public Task<int> CredentialCountAsync(Guid userId) =>
         ScalarAsync<int>(
             """SELECT count(*)::int FROM "UserCredentials" WHERE "UserId" = @id""",
             userId);
 
-    public static Task<IReadOnlyList<string>> InvitationHashesForAsync(
+    public Task<IReadOnlyList<string>> InvitationHashesForAsync(
         Guid userId) =>
         StringsAsync(
             """SELECT "TokenHash" FROM "Invitations" WHERE "UserId" = @id""",
             userId);
 
-    private static async Task<IReadOnlyList<string>> StringsAsync(
+    private async Task<IReadOnlyList<string>> StringsAsync(
         string sql, Guid id)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
         await using var command = new NpgsqlCommand(sql, connection);
@@ -78,11 +83,11 @@ internal static class UserStore
         return values;
     }
 
-    // Internal, not private: the tenant-provisioning tests clean up Tenants,
+    // Public, not private: the tenant-provisioning tests clean up Tenants,
     // which the API deliberately cannot delete.
-    internal static async Task ExecuteAsync(string sql, object value)
+    public async Task ExecuteAsync(string sql, object value)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
         await using var command = new NpgsqlCommand(sql, connection);
@@ -93,9 +98,9 @@ internal static class UserStore
         await command.ExecuteNonQueryAsync();
     }
 
-    private static async Task<T> ScalarAsync<T>(string sql, Guid id)
+    private async Task<T> ScalarAsync<T>(string sql, Guid id)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
         await using var command = new NpgsqlCommand(sql, connection);

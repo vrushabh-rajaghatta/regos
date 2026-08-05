@@ -26,10 +26,16 @@ namespace RegOS.Organization.Application.Tests;
 /// Integration tests — sites against the real seeded reference data in the dev
 /// Postgres.
 /// </summary>
+[Collection(OrganizationDatabase.Collection)]
 public sealed class OrganizationSiteTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly OrganizationDatabase _database;
+
+    public OrganizationSiteTests(OrganizationDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly CountryId India =
         new(Guid.Parse("10000000-0000-0000-0000-000000000004"));
@@ -46,11 +52,9 @@ public sealed class OrganizationSiteTests : IAsyncLifetime
     private readonly List<Guid> _siteIds = [];
     private readonly List<Guid> _organizationIds = [];
 
-    private static RegOSDbContext New(ITenantContext? tenant = null) =>
+    private RegOSDbContext New(ITenantContext? tenant = null) =>
         new(
-            new DbContextOptionsBuilder<RegOSDbContext>()
-                .UseNpgsql(ConnectionString)
-                .Options,
+            _database.Options,
             tenant ?? TestTenants.ActingContext);
 
     public Task InitializeAsync() => Task.CompletedTask;

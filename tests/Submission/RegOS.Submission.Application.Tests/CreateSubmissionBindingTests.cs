@@ -30,10 +30,16 @@ namespace RegOS.Submission.Application.Tests;
 // Since EPIC-007a S001 the pair is two APPLICATIONS rather than two submissions
 // under one: the type classifies the application, so a submission inherits the
 // blueprint its application's type resolves to and cannot choose another.
+[Collection(SubmissionDatabase.Collection)]
 public sealed class CreateSubmissionBindingTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly SubmissionDatabase _database;
+
+    public CreateSubmissionBindingTests(SubmissionDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly AuthorityId Fda =
         new(Guid.Parse("20000000-0000-0000-0000-000000000001"));
@@ -43,12 +49,10 @@ public sealed class CreateSubmissionBindingTests : IAsyncLifetime
 
     private readonly List<Guid> _submissionIds = [];
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
+    private DbContextOptions<RegOSDbContext> Options() =>
+        _database.Options;
 
-    private static RegOSDbContext New() => new(Options(), TestTenant.Context);
+    private RegOSDbContext New() => new(Options(), TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;
 

@@ -31,10 +31,16 @@ namespace RegOS.Organization.Application.Tests;
 /// no command wrote them and no projection returned them. These tests fail if
 /// that regresses, because they go through the handlers.
 /// </remarks>
+[Collection(OrganizationDatabase.Collection)]
 public sealed class OrganizationIdentityTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly OrganizationDatabase _database;
+
+    public OrganizationIdentityTests(OrganizationDatabase database)
+    {
+        _database = database;
+    }
+
 
     /// <summary>Seeded by the reference-data initialiser.</summary>
     private static readonly IdentifierSchemeId Duns =
@@ -42,10 +48,9 @@ public sealed class OrganizationIdentityTests : IAsyncLifetime
 
     private readonly List<Guid> _organizationIds = [];
 
-    private static RegOSDbContext New(ITenantContext? tenant = null) =>
+    private RegOSDbContext New(ITenantContext? tenant = null) =>
         new(
-            new DbContextOptionsBuilder<RegOSDbContext>()
-                .UseNpgsql(ConnectionString).Options,
+            _database.Options,
             tenant ?? TestTenants.ActingContext);
 
     public Task InitializeAsync() => Task.CompletedTask;

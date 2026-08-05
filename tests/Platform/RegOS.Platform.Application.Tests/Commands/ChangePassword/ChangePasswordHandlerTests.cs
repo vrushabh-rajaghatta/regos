@@ -35,10 +35,16 @@ namespace RegOS.Platform.Application.Tests.Commands.ChangePassword;
 /// Only <c>ICurrentUser</c> is a double, because the real one reads claims off
 /// an HttpContext that belongs to the host.
 /// </summary>
+[Collection(PlatformDatabase.Collection)]
 public sealed class ChangePasswordHandlerTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly PlatformDatabase _database;
+
+    public ChangePasswordHandlerTests(PlatformDatabase database)
+    {
+        _database = database;
+    }
+
 
     private const string OriginalPassword = "the original password";
     private const string NewPassword = "a brand new password";
@@ -51,10 +57,8 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
 
     private UserAggregate _user = default!;
 
-    private static RegOSDbContext NewContext() =>
-        new(new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options);
+    private RegOSDbContext NewContext() =>
+        new(_database.Options);
 
     public async Task InitializeAsync()
     {
@@ -148,7 +152,7 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
         return reset;
     }
 
-    private static async Task<bool> IsRevokedAsync(RefreshTokenAggregate token)
+    private async Task<bool> IsRevokedAsync(RefreshTokenAggregate token)
     {
         await using var context = NewContext();
 
@@ -158,7 +162,7 @@ public sealed class ChangePasswordHandlerTests : IAsyncLifetime
             .SingleAsync();
     }
 
-    private static async Task<bool> IsRevokedAsync(PasswordResetAggregate reset)
+    private async Task<bool> IsRevokedAsync(PasswordResetAggregate reset)
     {
         await using var context = NewContext();
 

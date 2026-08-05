@@ -34,10 +34,10 @@ namespace RegOS.Submission.Application.Tests;
 /// numbering space and contending on the index for reasons unrelated to what it
 /// asserts.
 /// </remarks>
+[Collection(SubmissionDatabase.Collection)]
 public sealed class SubmissionSequenceNumberingTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly SubmissionDatabase _database;
 
     private const string Fixture = "TEST-SEQUENCE-NUMBERING";
 
@@ -50,14 +50,16 @@ public sealed class SubmissionSequenceNumberingTests : IAsyncLifetime
     private readonly List<Guid> _documentIds = [];
     private readonly ITestOutputHelper _output;
 
-    public SubmissionSequenceNumberingTests(ITestOutputHelper output)
+    public SubmissionSequenceNumberingTests(
+        SubmissionDatabase database,
+        ITestOutputHelper output)
     {
+        _database = database;
         _output = output;
     }
 
-    private static RegOSDbContext New() =>
-        new(new DbContextOptionsBuilder<RegOSDbContext>()
-                .UseNpgsql(ConnectionString).Options,
+    private RegOSDbContext New() =>
+        new(_database.Options,
             TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -278,7 +280,7 @@ public sealed class SubmissionSequenceNumberingTests : IAsyncLifetime
         result.Published.Should().BeTrue();
     }
 
-    private static async Task<int?> SequenceOfAsync(SubmissionId submissionId)
+    private async Task<int?> SequenceOfAsync(SubmissionId submissionId)
     {
         await using var ctx = New();
 

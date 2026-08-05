@@ -38,10 +38,16 @@ namespace RegOS.Submission.Application.Tests;
 /// *"the generated package is a projection, not a domain artifact"* written as
 /// something that can fail.
 /// </summary>
+[Collection(SubmissionDatabase.Collection)]
 public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly SubmissionDatabase _database;
+
+    public SequenceFolderGeneratorTests(SubmissionDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly DocumentTypeId SeededCoverLetter =
         new(Guid.Parse("50000000-0000-0000-0000-000000000002"));
@@ -52,9 +58,8 @@ public sealed class SequenceFolderGeneratorTests : IAsyncLifetime
 
     // Tenant-aware: isolation is fail-closed (ADR-031), so a context without
     // one sees no organizations and the fixture cannot build an application.
-    private static RegOSDbContext New() => new(
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString).Options,
+    private RegOSDbContext New() => new(
+        _database.Options,
         TestTenant.Context);
 
     /// <summary>

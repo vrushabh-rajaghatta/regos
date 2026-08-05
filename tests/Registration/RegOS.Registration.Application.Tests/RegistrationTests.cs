@@ -38,10 +38,16 @@ namespace RegOS.Registration.Application.Tests;
 /// Integration tests — registrations against the real seeded reference data in
 /// the dev Postgres.
 /// </summary>
+[Collection(RegistrationDatabase.Collection)]
 public sealed class RegistrationTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly RegistrationDatabase _database;
+
+    public RegistrationTests(RegistrationDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly CountryId UnitedStates =
         new(Guid.Parse("10000000-0000-0000-0000-000000000001"));
@@ -60,11 +66,9 @@ public sealed class RegistrationTests : IAsyncLifetime
     private readonly List<Guid> _applicationIds = [];
     private readonly List<Guid> _organizationIds = [];
 
-    private static RegOSDbContext New() =>
+    private RegOSDbContext New() =>
         new(
-            new DbContextOptionsBuilder<RegOSDbContext>()
-                .UseNpgsql(ConnectionString)
-                .Options,
+            _database.Options,
             TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -947,7 +951,7 @@ public sealed class RegistrationTests : IAsyncLifetime
     // through that context's own handlers — this test project owns the data it
     // mutates, whichever context wrote it.
 
-    private static async Task NameAsync(
+    private async Task NameAsync(
         MedicinalProductId market, string language, string name)
     {
         await using var ctx = New();
@@ -956,7 +960,7 @@ public sealed class RegistrationTests : IAsyncLifetime
             .HandleAsync(new AddTradeNameCommand(market, language, name), default);
     }
 
-    private static async Task OnSaleAsync(
+    private async Task OnSaleAsync(
         MedicinalProductId market, DateOnly on)
     {
         await using var ctx = New();
@@ -967,7 +971,7 @@ public sealed class RegistrationTests : IAsyncLifetime
                 default);
     }
 
-    private static async Task RetireAsync(MedicinalProductId market)
+    private async Task RetireAsync(MedicinalProductId market)
     {
         await using var ctx = New();
 
@@ -982,7 +986,7 @@ public sealed class RegistrationTests : IAsyncLifetime
     /// so the lifecycle is exercised against persisted state rather than an
     /// aggregate that never left memory.
     /// </summary>
-    private static async Task ChangeAsync(
+    private async Task ChangeAsync(
         RegistrationId id,
         RegistrationStatus status,
         DateOnly occurredOn,
@@ -996,7 +1000,7 @@ public sealed class RegistrationTests : IAsyncLifetime
                 default);
     }
 
-    private static async Task ApproveAsync(
+    private async Task ApproveAsync(
         RegistrationId id,
         string registrationNumber,
         DateOnly approvedOn,

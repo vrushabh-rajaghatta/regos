@@ -41,6 +41,7 @@ namespace RegOS.TestSupport;
 public abstract class RegOSTestDatabase : IAsyncLifetime
 {
     private ServiceProvider? _services;
+    private bool _disposed;
 
     protected RegOSTestDatabase()
     {
@@ -98,8 +99,18 @@ public abstract class RegOSTestDatabase : IAsyncLifetime
         }
     }
 
+    /// <summary>
+    /// <b>Idempotent, and that is not defensive coding.</b> A fixture reached
+    /// through more than one disposal path — xUnit's <c>IAsyncLifetime</c> and
+    /// <c>IAsyncDisposable</c> are both candidates, and
+    /// <c>WebApplicationFactory</c> brings its own — would otherwise drop the
+    /// database twice and race itself.
+    /// </summary>
     public async Task DisposeAsync()
     {
+        if (_disposed) return;
+        _disposed = true;
+
         if (_services is not null)
             await _services.DisposeAsync();
 

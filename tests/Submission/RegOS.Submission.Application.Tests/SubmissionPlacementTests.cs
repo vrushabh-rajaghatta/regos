@@ -31,10 +31,16 @@ namespace RegOS.Submission.Application.Tests;
 /// hard-coded beyond the application types and the Cover Letter document type,
 /// so the tests keep meaning what they say as the template grows.
 /// </remarks>
+[Collection(SubmissionDatabase.Collection)]
 public sealed class SubmissionPlacementTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly SubmissionDatabase _database;
+
+    public SubmissionPlacementTests(SubmissionDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly DocumentTypeId CoverLetter =
         new(Guid.Parse("50000000-0000-0000-0000-000000000009"));
@@ -42,11 +48,9 @@ public sealed class SubmissionPlacementTests : IAsyncLifetime
     private readonly List<Guid> _submissionIds = [];
     private readonly List<Guid> _documentIds = [];
 
-    private static RegOSDbContext New() =>
+    private RegOSDbContext New() =>
         new(
-            new DbContextOptionsBuilder<RegOSDbContext>()
-                .UseNpgsql(ConnectionString)
-                .Options,
+            _database.Options,
             TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;

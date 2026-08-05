@@ -47,8 +47,8 @@ public sealed class PasswordResetLifecycleTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await RefreshTokenStore.DeleteAllForAsync(Session.DevEmail);
-        await UserStore.DeleteUsersMatchingAsync(Marker);
+        await _factory.RefreshTokens.DeleteAllForAsync(Session.DevEmail);
+        await _factory.Users.DeleteUsersMatchingAsync(Marker);
     }
 
     private static string NewEmail() =>
@@ -122,7 +122,7 @@ public sealed class PasswordResetLifecycleTests : IAsyncLifetime
 
         var token = await RequestAndCaptureAsync(email);
 
-        var stored = await UserStore.PasswordResetHashesForAsync(userId);
+        var stored = await _factory.Users.PasswordResetHashesForAsync(userId);
 
         stored.Should().NotBeEmpty();
         stored.Should().NotContain(token);
@@ -311,7 +311,7 @@ public sealed class PasswordResetLifecycleTests : IAsyncLifetime
 
         var token = await RequestAndCaptureAsync(email);
 
-        await UserStore.ExpirePasswordResetsForAsync(userId);
+        await _factory.Users.ExpirePasswordResetsForAsync(userId);
 
         (await CompleteAsync(token)).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);

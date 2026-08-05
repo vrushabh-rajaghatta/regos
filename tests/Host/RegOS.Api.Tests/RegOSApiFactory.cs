@@ -17,14 +17,47 @@ namespace RegOS.Api.Tests;
 /// account with a password until invitation acceptance exists.
 /// </para>
 /// <para>
-/// It talks to the same Postgres as every other test project. That is a real
-/// trade — these tests are not hermetic and need the database up — but the
-/// alternative is an in-memory provider, and an authentication test that never
+/// It talks to real Postgres — <b>this assembly's own database</b> since
+/// ADR-064, rather than the developer's. These tests are still not hermetic and
+/// still need a server up; what changed is that the schema they run against is
+/// produced by the migration chain rather than assumed to be current. The
+/// alternative was an in-memory provider, and an authentication test that never
 /// touches the real store proves very little about the real store.
 /// </para>
 /// </remarks>
-public sealed class RegOSApiFactory : WebApplicationFactory<Program>
+public sealed class RegOSApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    /// <summary>
+    /// <b>Owned here rather than declared as a second collection fixture</b>,
+    /// because xUnit 2 does not inject one fixture into another — a fixture
+    /// constructor takes only <c>IMessageSink</c>, and asking for anything else
+    /// fails every test in the collection with *"unresolved constructor
+    /// arguments"* before a line of it runs.
+    /// </summary>
+    private readonly ApiDatabase _database = new();
+
+    Task IAsyncLifetime.InitializeAsync() => _database.InitializeAsync();
+
+    // Both, deliberately: xUnit may reach a fixture through IAsyncLifetime or
+    // through IAsyncDisposable, WebApplicationFactory supplies the latter, and
+    // the database's own disposal is idempotent so either route is safe.
+    Task IAsyncLifetime.DisposeAsync() => DisposeAsync().AsTask();
+
+    public override async ValueTask DisposeAsync()
+    {
+        await base.DisposeAsync();
+        await _database.DisposeAsync();
+    }
+
+    /// <summary>
+    /// Direct database access for what HTTP cannot express, pointed at the same
+    /// database the host is. Exposed here rather than left static, because the
+    /// connection string is now decided at run time.
+    /// </summary>
+    public UserStore Users => new(_database.ConnectionString);
+
+    public RefreshTokenStore RefreshTokens => new(_database.ConnectionString);
+
     /// <summary>
     /// Captures the invitation tokens the API would have emailed. Shared across
     /// the fixture, because the factory is shared.
@@ -40,6 +73,12 @@ public sealed class RegOSApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+
+        // The one substitution that is not a test double: the host reads its
+        // connection string from configuration, and configuration names the
+        // developer's database. Overriding it here is what puts the real
+        // Program — its initializers included — on this assembly's schema.
+        builder.UseSetting("ConnectionStrings:RegOS", _database.ConnectionString);
 
         // The only substitutions these tests make. Everything else - the real
         // authentication handler, the real middleware order, the real database

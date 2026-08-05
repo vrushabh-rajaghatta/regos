@@ -31,10 +31,16 @@ namespace RegOS.Submission.Application.Tests;
 
 // Integration tests — the blueprint judging a real submission against the real
 // seeded FDA IND (CTD) template in the dev Postgres.
+[Collection(SubmissionDatabase.Collection)]
 public sealed class BlueprintValidationTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly SubmissionDatabase _database;
+
+    public BlueprintValidationTests(SubmissionDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly DocumentTypeId CoverLetter =
         new(Guid.Parse("50000000-0000-0000-0000-000000000009"));
@@ -42,12 +48,10 @@ public sealed class BlueprintValidationTests : IAsyncLifetime
     private readonly List<Guid> _submissionIds = [];
     private readonly List<Guid> _documentIds = [];
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
+    private DbContextOptions<RegOSDbContext> Options() =>
+        _database.Options;
 
-    private static RegOSDbContext New() => new(Options(), TestTenant.Context);
+    private RegOSDbContext New() => new(Options(), TestTenant.Context);
 
     public Task InitializeAsync() => Task.CompletedTask;
 

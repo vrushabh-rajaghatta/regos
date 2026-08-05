@@ -17,10 +17,16 @@ using OrganizationAggregate = RegOS.Organization.Domain.Aggregates.Organization.
 
 namespace RegOS.Organization.Application.Tests;
 
+[Collection(OrganizationDatabase.Collection)]
 public sealed class OrganizationDivisionTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly OrganizationDatabase _database;
+
+    public OrganizationDivisionTests(OrganizationDatabase database)
+    {
+        _database = database;
+    }
+
 
     private static readonly IdentifierSchemeId Duns =
         new(Guid.Parse("80000000-0000-0000-0000-000000000001"));
@@ -30,10 +36,9 @@ public sealed class OrganizationDivisionTests : IAsyncLifetime
     private readonly List<Guid> _divisionIds = [];
     private readonly List<Guid> _organizationIds = [];
 
-    private static RegOSDbContext New(ITenantContext? tenant = null) =>
+    private RegOSDbContext New(ITenantContext? tenant = null) =>
         new(
-            new DbContextOptionsBuilder<RegOSDbContext>()
-                .UseNpgsql(ConnectionString).Options,
+            _database.Options,
             tenant ?? TestTenants.ActingContext);
 
     public Task InitializeAsync() => Task.CompletedTask;

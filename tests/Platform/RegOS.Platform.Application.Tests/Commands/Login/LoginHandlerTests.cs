@@ -24,10 +24,16 @@ namespace RegOS.Platform.Application.Tests.Commands.Login;
 /// Integration, against real Postgres and the real hasher and token issuer.
 /// Sign-in is composition, so faking any part of it would test the fake.
 /// </summary>
+[Collection(PlatformDatabase.Collection)]
 public sealed class LoginHandlerTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly PlatformDatabase _database;
+
+    public LoginHandlerTests(PlatformDatabase database)
+    {
+        _database = database;
+    }
+
 
     private const string CorrectPassword = "correct horse battery";
 
@@ -39,10 +45,8 @@ public sealed class LoginHandlerTests : IAsyncLifetime
 
     private UserAggregate _user = default!;
 
-    private static RegOSDbContext NewContext() =>
-        new(new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options);
+    private RegOSDbContext NewContext() =>
+        new(_database.Options);
 
     private static JwtAccessTokenIssuer NewIssuer() =>
         new(Options.Create(new JwtOptions

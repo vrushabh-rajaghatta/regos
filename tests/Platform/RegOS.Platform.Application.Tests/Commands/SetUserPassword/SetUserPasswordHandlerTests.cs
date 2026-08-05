@@ -21,10 +21,16 @@ namespace RegOS.Platform.Application.Tests.Commands.SetUserPassword;
 /// round trip through real Postgres and still verifies. A faked hasher or an
 /// in-memory store would prove nothing about that.
 /// </summary>
+[Collection(PlatformDatabase.Collection)]
 public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly PlatformDatabase _database;
+
+    public SetUserPasswordHandlerTests(PlatformDatabase database)
+    {
+        _database = database;
+    }
+
 
     private const string CorrectPassword = "correct horse battery";
 
@@ -33,10 +39,8 @@ public sealed class SetUserPasswordHandlerTests : IAsyncLifetime
 
     private UserAggregate _user = default!;
 
-    private static RegOSDbContext NewContext() =>
-        new(new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options);
+    private RegOSDbContext NewContext() =>
+        new(_database.Options);
 
     private static SetUserPasswordHandler NewHandler(RegOSDbContext context) =>
         new(new PasswordHasher(),

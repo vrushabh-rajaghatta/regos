@@ -27,10 +27,16 @@ namespace RegOS.Platform.Application.Tests.Tenancy;
 /// work on its own.
 /// </para>
 /// </remarks>
+[Collection(PlatformDatabase.Collection)]
 public sealed class SharedPlusExtensibleIsolationTests : IAsyncLifetime
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
+    private readonly PlatformDatabase _database;
+
+    public SharedPlusExtensibleIsolationTests(PlatformDatabase database)
+    {
+        _database = database;
+    }
+
 
     private readonly TenantId _tenantA = TenantId.From(Guid.NewGuid());
     private readonly TenantId _tenantB = TenantId.From(Guid.NewGuid());
@@ -39,15 +45,13 @@ public sealed class SharedPlusExtensibleIsolationTests : IAsyncLifetime
     private Substance _ownedByA = default!;
     private Substance _ownedByB = default!;
 
-    private static DbContextOptions<RegOSDbContext> Options() =>
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString)
-            .Options;
+    private DbContextOptions<RegOSDbContext> Options() =>
+        _database.Options;
 
     private RegOSDbContext ContextFor(TenantId tenant) =>
         new(Options(), new FakeTenantContext(tenant));
 
-    private static RegOSDbContext ContextWithoutIdentity() =>
+    private RegOSDbContext ContextWithoutIdentity() =>
         new(Options());
 
     // A fresh concept per call: it is persisted as an owned entity, and EF

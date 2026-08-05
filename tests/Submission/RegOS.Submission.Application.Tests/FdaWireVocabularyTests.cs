@@ -35,8 +35,16 @@ namespace RegOS.Submission.Application.Tests;
 /// that answer the same question about the same package.
 /// </para>
 /// </remarks>
+[Collection(SubmissionDatabase.Collection)]
 public sealed class FdaWireVocabularyTests
 {
+    private readonly SubmissionDatabase _database;
+
+    public FdaWireVocabularyTests(SubmissionDatabase database)
+    {
+        _database = database;
+    }
+
     /// <summary>
     /// A token RegOS holds that FDA does not publish is a package that is
     /// DTD-valid and rejected at the gateway — the exact failure the 2a/2b
@@ -172,13 +180,10 @@ public sealed class FdaWireVocabularyTests
             + "docs/evidence/ and cannot run outside the repository.");
     }
 
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=regos;Username=admin;Password=password123";
 
     // ApplicationTypes are global — no tenant filter — but the context still
     // needs one to be constructed at all (ADR-031 is fail-closed).
-    private static RegOSDbContext New() => new(
-        new DbContextOptionsBuilder<RegOSDbContext>()
-            .UseNpgsql(ConnectionString).Options,
+    private RegOSDbContext New() => new(
+        _database.Options,
         TestTenant.Context);
 }
