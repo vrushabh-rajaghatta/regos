@@ -239,6 +239,36 @@ hand-written backfill**. The one exception to watch is S003, which adds a
 nullable column to a shipped table (`Ingredients`) — nullable, so no backfill and
 no default that lies about data.
 
+### What S001 found
+
+*Recorded here rather than in the backlog, because planning evolution lands on
+`main` between epics. **Carried to the close.***
+
+**The bounded-context dependency graph is not enforced by anything executable.**
+S001 added the first `Product.Domain` → `Organization.Domain` reference and the
+architecture suite stayed green — because none of its 21 tests looks at which
+context may reference which. The edge is held by **ADR-063 and a `.csproj` line**
+and nothing else, which means the reverse edge ADR-063 permanently closes could
+be opened by anyone who adds a project reference and builds.
+
+Not fixed here — it is not this epic's job, and inventing an architecture rule
+mid-story is how a story stops being a vertical slice. **Carried as a candidate
+for [EPIC-023](../BACKLOG.md#next) or a future architecture-hardening epic**,
+raised on `main` at the close alongside the retro.
+
+> It belongs with EPIC-023 by kind, not by coincidence: both are invariants the
+> project *states* and does not *check*. One is "the schema matches the
+> migrations", the other is "the contexts depend the way the ADRs say". Each is
+> currently held by a person remembering.
+
+**Three defects, none of them about manufacturing.** The site registry was empty
+(nothing had ever seeded an `OrganizationSite`); the seeder ran before the
+identifier schemes it depends on; and the demo sites were first seeded to *Demo
+Manufacturer Ltd.* when the tenant that logs in is *Demo MAH Ltd.* All three were
+found by running the browser proof, not by review — and the third is the
+fail-closed tenant filter (ADR-031) working exactly as designed, refusing rows
+that were real and correct and belonged to somebody else.
+
 **Where to stop if it runs long:** after S002. S001 and S002 together answer the
 epic's question; S003 is the refinement that makes the answer right for
 multi-API and dual-sourced products, and it is the only story touching a shipped

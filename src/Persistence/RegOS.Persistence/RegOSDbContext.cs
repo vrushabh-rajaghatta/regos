@@ -320,6 +320,19 @@ public sealed class RegOSDbContext : DbContext
         Set<PackAuthorisationAggregate>();
 
     /// <summary>
+    /// Which sites perform which operations for a market's product, and when
+    /// (ADR-063). Tenant-owned and fail-closed.
+    /// </summary>
+    /// <remarks>
+    /// <b>The only set that says where work happens.</b> There is deliberately
+    /// no manufacturer column on <c>PackagedProducts</c> or
+    /// <c>PackageItems</c>, where RIM puts one — the operation's own type
+    /// carries that distinction (ADR-063 §3).
+    /// </remarks>
+    public DbSet<ManufacturingOperation> ManufacturingOperations =>
+        Set<ManufacturingOperation>();
+
+    /// <summary>
     /// Studies in human subjects. Tenant-owned and fail-closed.
     /// </summary>
     /// <remarks>
@@ -540,6 +553,9 @@ public sealed class RegOSDbContext : DbContext
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<PackAuthorisationAggregate>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<ManufacturingOperation>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         // A tenant's registry of business relationships — even the *names*

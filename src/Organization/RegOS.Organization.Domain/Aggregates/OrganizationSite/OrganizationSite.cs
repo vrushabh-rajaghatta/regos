@@ -87,6 +87,32 @@ public sealed class OrganizationSite : AggregateRoot<OrganizationSiteId>
         string? nameNativeLanguage = null,
         string? email = null,
         string? phone = null)
+        => Create(
+            OrganizationSiteId.New(), tenantId, organizationId, name, type,
+            address, statusDate, nameNativeLanguage, email, phone);
+
+    /// <summary>
+    /// The same site, with its identity supplied.
+    /// </summary>
+    /// <remarks>
+    /// <b>For seed data, and for the reason <c>Organization</c>, <c>Country</c>
+    /// and <c>Authority</c> all carry the same overload:</b> a demo row has to
+    /// keep the same id across a rebuilt database, or every migration that
+    /// references one has to look it up by name. Nothing in the application
+    /// calls this — a site a person creates gets a fresh id from the overload
+    /// above.
+    /// </remarks>
+    public static OrganizationSite Create(
+        OrganizationSiteId id,
+        TenantId tenantId,
+        OrganizationId organizationId,
+        string name,
+        OrganizationSiteType type,
+        PostalAddress address,
+        DateOnly statusDate,
+        string? nameNativeLanguage = null,
+        string? email = null,
+        string? phone = null)
     {
         if (tenantId is null)
             throw new DomainException(OrganizationSiteErrors.TenantRequired);
@@ -104,7 +130,7 @@ public sealed class OrganizationSite : AggregateRoot<OrganizationSiteId>
 
         return new OrganizationSite
         {
-            Id = OrganizationSiteId.New(),
+            Id = id,
             TenantId = tenantId,
             OrganizationId = organizationId,
             Name = NormalizeName(name),
