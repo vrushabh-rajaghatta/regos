@@ -314,11 +314,62 @@ migration identity can see.
 | Postgres identifiers are capped at 63 characters | and truncated **silently** past it, so two assemblies sharing a long prefix would collide on a name neither chose |
 | The server connection comes from one place | `TestPostgres`, overridable by `REGOS_TEST_POSTGRES`, so CI points elsewhere without touching a test file |
 
-### S002 — the remaining six
+### S002 — the remaining six ✅
 
-Mechanical once S001's shape is proved. The one with substance is
-`RegOS.Api.Tests`, where `RegOSApiFactory` hosts the real API in-process and must
-be pointed at the per-assembly database rather than at configuration's.
+Mechanical once S001's shape is proved. The one with substance was
+`RegOS.Api.Tests`, where `RegOSApiFactory` hosts the real API in-process and is
+now pointed at the per-assembly database with `UseSetting`.
+
+#### The measurement it existed to take
+
+| Suite | Before | After |
+|---|---|---|
+| Organization·Application | 1.99 s | 5.62 s |
+| Platform·Application | 3.05 s | 7.76 s |
+| Product·Application | 2.20 s | 5.50 s |
+| Registration·Application | 2.42 s | 5.16 s |
+| **Submission·Application** | **3.68 s** | **8.84 s** |
+| Api | 12.01 s | 14.04 s |
+| **Full suite** | **28 s** | **39.5 s** *(+41%)* |
+
+Submission was the assembly most likely to invalidate the design — 182 tests
+across 11 classes, now sharing one database and therefore no longer running in
+parallel with each other. Its +5.1 s is roughly **2.7 s provisioning and 2.4 s
+serialisation**.
+
+**No per-assembly exception was added, and the reason is arithmetic.** A
+database per class would provision eleven of them at 2.7 s each — **30 s spent
+to recover 2.4 s**. The exception would be worse than the rule.
+
+> **The serialisation is an artifact of the collection fixture, not of sharing a
+> database.** These classes already shared one database while running in
+> parallel. Three things are separable — the database's *lifecycle*, its
+> *sharing*, and the runner's *scheduling* — and this epic changed only the
+> first. An **assembly-level fixture** keeps classes parallel on one database;
+> that is `IAssemblyFixture`, built into xUnit **v3** and needing a package or a
+> custom test framework in v2. **Recorded as the optimisation target**, so that
+> future effort goes at runner parallelism rather than at cached databases.
+
+#### The proof that the epic was worth running
+
+```
+Sessions before a full run = 17716
+Sessions after  a full run = 17716
+```
+
+**Running the test suite no longer mutates the developer's working
+environment.** It had been accumulating residue since EPIC-006 and held 17,400
+sessions and 810 refresh tokens on the day this epic started.
+
+#### What the Api suite cost that the other five did not
+
+**xUnit 2 will not inject one collection fixture into another** — a fixture
+constructor takes `IMessageSink` and nothing else. Declaring `ApiDatabase` and
+`RegOSApiFactory` as sibling fixtures failed all 84 tests in 17 ms with
+*"unresolved constructor arguments"*, before one of them ran. The factory owns
+the database instead, and `RegOSTestDatabase.DisposeAsync` became idempotent
+because a `WebApplicationFactory` is reachable through both `IAsyncLifetime` and
+`IAsyncDisposable`.
 
 ### S003 — the migration chain is proved, not assumed
 
@@ -349,8 +400,36 @@ has. The `Up` still produces the same commands.
 > EPIC-015: EPIC-015 is about CI infrastructure, and this is about the
 > correctness of the migration chain.
 
-Delivers: both fixes, D8's two guards, and the idempotent script run end to end
-against an empty database.
+#### What it delivered ✅
+
+**Both statements terminated**, and the script verified twice over — because
+applying is not the property the artifact is named for:
+
+| | |
+|---|---|
+| First run against an empty database | applied clean · **85 migrations recorded · 91 tables** |
+| **Second run against the same database** | **no-op** · still 85 migrations, still 91 tables |
+
+**D8's two guards, and the second one is stronger than D8 asked for.** The plan
+said *"no file under `tests/` contains `Database=regos`"*. That rule is satisfied
+by writing `Database=regos_scratch`, which reintroduces the defect under a new
+name — so the guard asserts instead that **exactly one file under `tests/`
+carries a connection string at all**, and names it.
+
+It found a file `grep "Database=regos"` never would have. Two architecture tests
+inside `Platform.Application.Tests` built a `DbContext` on the fictional
+`Host=localhost;Database=model-only` to inspect the model without connecting.
+**`UseNpgsql()` takes no connection string for exactly that case**, so both lost
+the fiction rather than earning an exemption — the guard's first catch improved
+two files instead of acquiring a list.
+
+> **What is proved and what is guarded are different, and the gap is named.**
+> The two runs above are a **hand verification**, recorded here with their
+> numbers. What runs on every build is narrower: `MigrationRawSqlTests` catches
+> the *defect class* found — an unterminated hand-written statement — not "the
+> script works". Automating the full script run means invoking `dotnet ef` from
+> a test, and that buys less than it costs while the guard covers the only
+> failure anyone has seen.
 
 ### S004 — capstone
 
