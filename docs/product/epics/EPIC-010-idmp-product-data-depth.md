@@ -44,7 +44,9 @@ Do not attempt all three in one branch — it would be the largest epic in the p
 >
 > **10b was cut and planned on 2026-08-04** → **[EPIC-010b — Packs & supply](EPIC-010b-packs-and-supply.md)**, carrying clusters **B + C** and superseding the sketches below for them. **Renamed on pull-in** — the sketch says *"Presentation & packaging"*, and presentation shipped in 10a S002. **Decision 5 was answered, and not as RIM states it:** a licence authorises *many* packs, and the link lives on the pack, so `Registration` is not changed at all. The sketch's *"two self-referencing hierarchies — decide once, apply to both"* turned out to be half right: one **pattern**, applied twice, but they are two **structures**, and 10b's D1 gives the discriminator the sketch lacked.
 >
-> The sketches below stand unchanged for **10c** only.
+> **10c was cut and planned on 2026-08-05** → **[EPIC-010c — Manufacturing](EPIC-010c-manufacturing.md)**, carrying cluster **D** and superseding the sketches below for it. **It builds one of cluster D's four objects and refuses three:** `Manufacturing Process`, `Manufacturing Process Step` and `Mfg Process Step Materials` are **CMC document content** — the blueprint already carries 3.2.S.2 *Manufacture* and 3.2.P.3.3 as document sections — and structured rows would be a second, competing representation of narrative. Refused with a falsifier, not deferred. The sketch's `MfgBusinessOperation` survives as `ManufacturingOperation`, and 10c also pays the **`Ingredient` manufacturing source** the in-scope list below promised and 10a did not ship.
+>
+> **No sketch below stands unsuperseded.** All three splits are now planned in their own documents.
 
 ### In scope ✅ *(across the three splits)*
 - **`Substance`** — substance name, class, type, CAS number, INN, chem/bio description, molecular formula, UNII code + name.
@@ -65,6 +67,25 @@ Do not attempt all three in one branch — it would be the largest epic in the p
 | **Specifications and analytical methods** | Belongs in the CMC document, not as structured RIM data. RIM does not model it either. |
 | **Serialization / track-and-trace (DSCSA, FMD)** | `Lot Serialization` is a recorded attribute on the component, not a serialization system. |
 | **Stability study data** | `Shelf Life-Storage` records the *conclusion* (36 months at 25 °C); the study behind it is EPIC-019 territory. |
+
+### Coverage — implemented vs deliberately refused
+
+*Restated 2026-08-05, at 10c's planning. **The percentage was replaced rather
+than recalculated.***
+
+This epic was credited with **16 RIM objects**. Two splits have since refused
+objects on the record, each with a reason and a named falsifier:
+
+| | | |
+|---|---|---|
+| **Implemented** | **11 of 16** | |
+| **Refused** | **5 of 16** | `OtherCharacteristics`, `Devices` (10b) · `Manufacturing Process`, `Manufacturing Process Step`, `Mfg Process Step Materials` (10c) |
+
+> **"87% complete" invites a reader to look for the missing 13%.** *"11 built, 5
+> refused"* says what actually happened: **RIM object count is a map of the
+> domain, not an implementation target.** Every refusal above is an
+> architectural decision with a written trigger for revisiting it, and reporting
+> them as a shortfall would hide exactly the reasoning that is worth keeping.
 
 ### Definition of Done *(per split; the epic completes when all three do)*
 - A market-local product's composition is expressible down to the substance, with roles and strengths, and *"which products contain substance X?"* is answerable.

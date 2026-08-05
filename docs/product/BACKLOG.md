@@ -43,10 +43,45 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 
 ## Now
 
-**Nothing taken.** EPIC-022 merged to `main` on 2026-08-05 (PR #22) and is in
-[Shipped epics](#shipped-epics). The next epic is a founder call — see
-[Next](#next), where **[EPIC-023](#epic-023--the-test-suite-runs-against-its-own-schema)**
-was added on the same day and left deliberately unplaced.
+**EPIC-010c — Manufacturing. 🟡 Planned.**
+Taken 2026-08-05, straight after EPIC-022 merged (PR #22), on the founder's call
+to finish the Product depth work. **Phase 1 and Phase 2 were signed off together**
+and are recorded in
+[`epics/EPIC-010c-manufacturing.md`](epics/EPIC-010c-manufacturing.md).
+
+> **"Where is this product made, and is that site on the licence?"** — the third
+> divergence question, after *which markets is this approved for this condition
+> in* (018) and *does this market accept our stability data* (022). RegOS can
+> currently answer **neither half**.
+
+| | |
+|---|---|
+| **ADR-063** | ⚪ **before S001** — a new `Product.Domain` → `Organization.Domain` edge. **Not predicted by the plan**: Product and Organization are siblings, and both D1 and D2 need a site id on the Product side |
+| **S001** | ⚪ `ManufacturingOperation` + the tenth vocabulary — *"which sites make this product?"* |
+| **S002** | ⚪ The licence's approved sites, dated — the second *licence + thing + `ApprovedOn`* after `PackAuthorisation` |
+| **S003** | ⚪ `Ingredient` names its source site — a different supply-chain stage, not the operation restated |
+| **S004** | ⚪ Capstone — the divergence, browser proof, retro |
+
+**Flagged in the plan, not hidden:**
+
+- **It builds one of cluster D's four RIM objects and refuses three.**
+  `Manufacturing Process`, `Manufacturing Process Step` and `Mfg Process Step
+  Materials` are **CMC document content** — the blueprint already carries
+  3.2.S.2 *Manufacture* and 3.2.P.3.3 as document sections, and structured rows
+  would be a second, competing representation of narrative. **Refused with a
+  falsifier** (a variation-impact capability that must reason over individual
+  process changes), not deferred.
+- **EPIC-010's coverage claim is restated, not recalculated** — see
+  [the runway](#the-runway). *"11 built, 5 refused"* rather than a percentage.
+- **Two recorded predictions fire here**: `OrganizationSite`'s own docstring
+  named *"a licence naming approved manufacturers, an ingredient naming its
+  manufacturing source"*, and EPIC-016 deferred both to this epic by name.
+- **No external prerequisite** — the first epic since EPIC-019 for which that is
+  true.
+
+> **[EPIC-023](#epic-023--the-test-suite-runs-against-its-own-schema) is in
+> [Next](#next) and deliberately unplaced.** It blocks nothing and nothing blocks
+> it; placement is the founder's.
 
 <details>
 <summary>EPIC-022, as it read while it was here</summary>
@@ -168,7 +203,7 @@ whoever can go and fetch one.*
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
 | 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
-| 2 | **EPIC-010c** | **Manufacturing** — the most self-contained cluster; can slip without blocking anything. **Still a sketch**, re-cut on pull-in | ⚪ Not Started | EPIC-010a ✅ · EPIC-016 ✅ |
+| — | ~~**EPIC-010c**~~ | **Manufacturing** | 🟡 **In [Now](#now) since 2026-08-05** | — |
 | ? | **EPIC-023** | **The test suite runs against its own schema** — *the automated test environment should always execute against a schema produced from the current migration chain* | ⚪ Not Started | nothing — it blocks on no epic and no epic blocks on it. **Added 2026-08-05, deliberately unnumbered: placement in this table is the founder's.** Three observations, and [why the third is the one that settles it](#epic-023--the-test-suite-runs-against-its-own-schema) |
 
 ### Why EPIC-022 enters at the top — and the part of it that should not wait
@@ -389,7 +424,7 @@ Three divergences are **not** gaps and should be defended, not closed:
 | 5 | **EPIC-018** Labeling & product information | 10 | → ~55% | 🟢 |
 | — | *taken out of order 2026-08-03* — EPIC-019 shipped before 018, because Module 4 was blocked and labeling was not | | | |
 | 6 | **EPIC-019** Study registry | 2 | → ~59% | 🟢 |
-| 7 | **EPIC-010** IDMP depth (10a 🟢 / 10b / 10c) | 16 | → ~87% | 🟡 |
+| 7 | **EPIC-010** IDMP depth (10a 🟢 / 10b 🟢 / 10c 🟡) | **11 built · 5 refused** | *see below* | 🟡 |
 | 8 | **EPIC-020** Process & planning | 6 | → ~98% | ⚪ |
 
 > **EPIC-018's ten, counted honestly.** Nine aggregates cover the ten RIM
@@ -406,6 +441,25 @@ Three divergences are **not** gaps and should be defended, not closed:
 > regulatory-evidence hypotheses EPIC-004 carried are exactly the part this
 > table cannot see. Taking 007a first trades a coverage step for the first
 > external check on work already done.
+
+> **EPIC-010's figure is a count, not a percentage, and that is the point.**
+> *Restated 2026-08-05 at 010c's planning.* Two of its three splits refused
+> objects **on the record, each with a reason and a named falsifier**:
+> `OtherCharacteristics` and `Devices` (10b), and `Manufacturing Process`,
+> `Manufacturing Process Step` and `Mfg Process Step Materials` (10c, because
+> the blueprint already carries that narrative as document sections).
+>
+> **RIM object count is a map of the domain, not an implementation target.**
+> *"87% complete"* invites a reader to go looking for the missing 13%; **"11
+> built, 5 refused"** says what happened.
+>
+> **The convention, stated once so it is not read as special pleading for one
+> epic:** *where architectural review deliberately refuses parts of the reference
+> model, runway reporting distinguishes **implemented** objects from
+> **intentionally refused** objects, rather than reporting a completion
+> percentage.* A refusal carrying a reason and a written trigger is a stronger
+> artifact than a number, and a percentage silently converts one into the
+> other.
 
 Remaining after all eight: `Product Family` (deliberately deferred — inserting a tier *above* a root is cheap) and a handful of RIM relational artifacts we model differently.
 
