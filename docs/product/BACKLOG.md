@@ -105,6 +105,7 @@ whoever can go and fetch one.*
 | ~~`ich-stf-v2-2.dtd`~~ **+ `valid-values.xml` + the ICH stylesheet** | ICH M2 | ~~EPIC-019 S002b and S003~~ — **✅ ARRIVED 2026-08-03** | **Three files, not one, and the entry named the wrong one as the vocabulary.** `file-tag/@name` is `CDATA`, so the DTD validates a misspelled tag (**E34**); the enumeration is in `valid-values.xml` (**E33**) and the stylesheet is what checks it. Held at [`docs/evidence/EPIC-019/spec/`](../evidence/EPIC-019/spec/) |
 | `form-type.xml` | FDA | eCTD section **1.1 forms** (`m1-1-forms`, refused today) | Same shape: a closed vocabulary named by a wire attribute (**E18**) |
 | FDA *Example Submissions for Module 1* v1.4 | FDA | **EPIC-007b S008** — the Level 3 comparison EPIC-007a did not make | A worked example is the only thing that shows convention rather than legality |
+| **ICH Q1A(R2)** *Stability Testing of New Drug Substances and Products* (+ WHO TRS 953 Annex 2) | ICH · WHO | **EPIC-022 S004** — `Country.ClimaticZones` | The zone boundaries (I, II, III, IVA, IVB) and which countries fall where are the one value in that epic **a careful person cannot reconstruct from memory**. Getting India wrong means telling someone their stability data supports a market it does not. The other four vocabularies are hand-verifiable for eight countries; this one is not |
 
 > **We know there is a controlled vocabulary** is not **we possess the
 > controlled vocabulary**. Those are different evidence levels, and the second
@@ -162,8 +163,28 @@ whoever can go and fetch one.*
 
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
-| 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
-| 2 | **EPIC-010c** | **Manufacturing** — the most self-contained cluster; can slip without blocking anything. **Still a sketch**, re-cut on pull-in | ⚪ Not Started | EPIC-010a ✅ · EPIC-016 ✅ |
+| 1 | **EPIC-022** | **Country depth** — climatic zones, languages, regions, and the two ISO identity fields. **Closes no RIM object; deepens one from 33% to ~92%** | ⚪ Not Started | nothing · pays a debt EPIC-018 could not close itself → [`epics/EPIC-022-country-depth.md`](epics/EPIC-022-country-depth.md) |
+| 2 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
+| 3 | **EPIC-010c** | **Manufacturing** — the most self-contained cluster; can slip without blocking anything. **Still a sketch**, re-cut on pull-in | ⚪ Not Started | EPIC-010a ✅ · EPIC-016 ✅ |
+
+### Why EPIC-022 enters at the top — and the part of it that should not wait
+
+> Stated as a recommendation. **Placement in this table is the founder's**, and the argument below is deliberately narrow: it is not that country depth is more valuable than continuity, it is that one slice of it is cheapest *this week* and gets more expensive every week after.
+
+**`Country` is the only reference entity in RegOS whose every attribute is for display.** `Code` and `Name` are what you put in a dropdown. The three RIM attributes it lacks — **climatic zone, languages, regions**, all *Multiple* — are what other capabilities **decide** by. Git confirms why: `Country.cs` has had **no behavioural change since the commit that created it**; its only two later commits are a folder move and a repo-wide exception refactor. Everything else in `ReferenceData` has been deepened since.
+
+It pays two debts nothing else will:
+
+| Debt | Why it is Country's to pay |
+|---|---|
+| **EPIC-018 shipped `LocalLabel.Language` with no way to know which languages a market requires** | Canada needs EN+FR, Belgium NL+FR, Switzerland DE+FR+IT. Labeling cannot answer this; only geography can |
+| **`RegionCode` is a dead column** — defaulted to null, omitted by all eight seeds, no mutator, no update path | Exactly the defect [`Substance`](../../src/ReferenceData/RegOS.ReferenceData.Domain/Substances/Substance.cs) refuses by name — *"a persistent property with no acquisition path"*. Country predates the rule |
+
+**The carve-out: climatic zone belongs in EPIC-010b S003, not here.** `ShelfLifeStorage` is being written now and carries a period and storage conditions and **no region** — RIM's `Shelf Life Region` (Controlled Vocabulary, **Required**) is absent, which is the only thing that makes a shelf life a *regional* fact. Adding `Region` to a type still being authored costs one field; adding it after 10b merges costs a migration plus a backfill nobody has the data for. **The country half and the match stay here either way.**
+
+**What reverses the ordering:** a second sequence filing the same study (which makes EPIC-021 genuinely urgent rather than correct-but-early), or a judgement that a 33%-complete lookup table is not where attention belongs while packs are half-built. Both are value calls.
+
+**One external prerequisite, and it is small:** ICH **Q1A(R2)** for the zone boundaries — see [External prerequisites](#external-prerequisites). Nothing else in the epic needs a document RegOS does not hold.
 
 > **EPIC-010b left this table on 2026-08-04** and is in [Now](#now), taken on the
 > recommendation below.
