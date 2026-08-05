@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,15 +38,15 @@ export function ReportStudyDialog({
   placement,
   onOpenChange,
 }: Props) {
-  const [selected, setSelected] = useState("");
-  const [fileTag, setFileTag] = useState("");
-
   // Opened on a placement that already says something: start from what it says
   // rather than from blank, or "Save" silently erases the other half.
-  useEffect(() => {
-    setSelected(placement?.studyId ?? "");
-    setFileTag(placement?.fileTag ?? "");
-  }, [placement]);
+  //
+  // Initialised rather than synchronised in an effect. The parent keys this
+  // component on the placement, so a different placement is a different
+  // component and these run again — React's own answer to resetting state,
+  // and one that cannot render once with the previous placement's values.
+  const [selected, setSelected] = useState(placement?.studyId ?? "");
+  const [fileTag, setFileTag] = useState(placement?.fileTag ?? "");
 
   const studies = useStudies();
   const fileTags = useFileTags();

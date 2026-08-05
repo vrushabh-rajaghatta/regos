@@ -19,4 +19,15 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // Vendored shadcn/ui primitives. They export a `cva` variants constant
+    // beside the component by design, which react-refresh flags because it
+    // costs fast refresh in dev. RegOS did not write these files and does not
+    // hand-edit them, so the rule is scoped off here rather than the files
+    // being restructured away from upstream.
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

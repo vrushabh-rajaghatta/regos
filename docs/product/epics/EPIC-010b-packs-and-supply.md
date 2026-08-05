@@ -285,9 +285,18 @@ child table. A domain test could not have caught it.
 ### The verification loop
 
 `dotnet test RegOS.slnx` (19 reporting suites) · `dotnet test tests/Architecture`
-· **`npm run build`** · the browser suite against an isolated stack.
+· **`npm run build`** · **`npm run lint`** · the browser suite against an
+isolated stack.
 
 > **`npm run build` is new to this list.** EPIC-018 S006 found it had been broken
 > since that epic's first story, because the browser proof runs against
 > `vite dev`, which does not typecheck. A gate nobody executes is a convention
 > wearing a test's clothes.
+
+> **`npm run lint` joined after S003**, and it was red on arrival — three errors
+> in files nobody had touched for months. Each gate here catches a class the
+> others cannot: tests catch domain regressions, browser specs catch workflow
+> regressions, `build` catches types, `lint` catches the rest. **An omitted gate
+> stays omitted indefinitely**, and a permanently-red one is omitted while
+> looking present, so the three errors were fixed in the same change that added
+> it.
