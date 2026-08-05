@@ -39,6 +39,25 @@ export function MarketRegistrationsPage() {
         description="Every authorisation held in this market."
       />
 
+      {/*
+        The country as a machine-readable submission names it. Shown here and
+        not in the pickers, because a dropdown reading "United States (USA)" is
+        noise — this page is where a country is a *fact* rather than a choice.
+
+        The ISO name is deliberately beside the common one rather than replacing
+        it: "United Kingdom of Great Britain and Northern Ireland" is what the
+        register says and not what anybody calls it.
+      */}
+      {country && (
+        <p
+          className="text-sm text-muted-foreground"
+          data-testid="country-iso-identity"
+        >
+          <span className="font-mono">{country.isoAlpha3Code}</span>
+          {country.isoName !== country.name && <> · {country.isoName}</>}
+        </p>
+      )}
+
       <Link
         to="/regulatory/registrations"
         className="text-sm text-primary hover:underline"

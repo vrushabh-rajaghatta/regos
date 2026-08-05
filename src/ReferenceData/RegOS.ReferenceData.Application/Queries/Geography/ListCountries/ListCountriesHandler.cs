@@ -23,7 +23,9 @@ public sealed class ListCountriesHandler
             .Select(c => new CountryDto(
                 c.Id,
                 c.Code,
-                c.Name))
+                c.IsoAlpha3Code,
+                c.Name,
+                c.IsoName))
             .ToListAsync(cancellationToken);
     }
 }
