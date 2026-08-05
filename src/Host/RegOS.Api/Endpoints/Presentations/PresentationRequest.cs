@@ -12,3 +12,21 @@ public sealed record PresentationRequest(
     string DoseFormCode,
     string? UnitOfPresentationCode,
     IReadOnlyList<string>? RouteCodes);
+
+/// <summary>
+/// What the medicine looks like.
+/// </summary>
+/// <param name="ColourCodes">
+/// Several is ordinary — a capsule with a white body and a blue cap is two
+/// colours. Absent or empty clears them.
+/// </param>
+/// <param name="Imprint">
+/// What is stamped on it. Its own field rather than a phrase in
+/// <paramref name="Description"/>, because it is the one part of an appearance
+/// anybody looks a medicine <em>up</em> by.
+/// </param>
+public sealed record DescribeAppearanceRequest(
+    IReadOnlyList<string>? ColourCodes,
+    string? ShapeCode,
+    string? Imprint,
+    string? Description);

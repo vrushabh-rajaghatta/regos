@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 
 import { useDiscardLocalLabelDraft } from "../hooks/useDiscardLocalLabelDraft";
 import { useLocalLabels } from "../hooks/useLocalLabels";
+import { usePrintLocalLabelForPack } from "../hooks/usePrintLocalLabelForPack";
 import { useStartLocalLabelRevision } from "../hooks/useStartLocalLabelRevision";
 import { REGOS_INTERNAL } from "../types/GlobalLabel";
 
 import { AddLocalLabelDialog } from "./AddLocalLabelDialog";
 import { LocalLabelRevisions } from "./LocalLabelRevisions";
+import { usePacks } from "@/features/regulatory/packs";
 
 interface MarketLabelsProps {
   globalProductId: string;
@@ -32,6 +34,11 @@ export function MarketLabels({
   const { data, isLoading, error } = useLocalLabels(medicinalProductId);
   const startRevision = useStartLocalLabelRevision();
   const discardDraft = useDiscardLocalLabelDraft();
+  const printForPack = usePrintLocalLabelForPack();
+
+  // The packs this market sells, so a carton can name the one it is printed
+  // for (EPIC-010b D6 — the debt EPIC-018 named this epic as the milestone for).
+  const { data: packs } = usePacks(medicinalProductId);
 
   const labels = data ?? [];
 
@@ -77,6 +84,15 @@ export function MarketLabels({
           data-testid="discard-local-error"
         >
           {(discardDraft.error as Error).message}
+        </p>
+      )}
+
+      {printForPack.isError && (
+        <p
+          className="text-sm text-destructive"
+          data-testid="print-for-pack-error"
+        >
+          {(printForPack.error as Error).message}
         </p>
       )}
 
@@ -127,6 +143,49 @@ export function MarketLabels({
               {label.revisionCount}{" "}
               {label.revisionCount === 1 ? "revision" : "revisions"}
             </p>
+
+            {/*
+              Offered on every label, not only on artwork. EPIC-018 D2 made
+              artwork a label type rather than an aggregate and recorded the
+              price — the moment a rule reads `if (Type == Artwork)`, that trade
+              has stopped paying. A container label is printed per pack size
+              anyway, so the branch would be wrong as well as expensive.
+
+              The pack's own code and the artwork's DataCarrierCode stay
+              separate: one is what the company registers, the other is what the
+              approved artwork prints, and they are meant to be able to
+              disagree.
+            */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <label
+                htmlFor={`printed-for-${label.id}`}
+                className="text-sm text-muted-foreground"
+              >
+                Printed for
+              </label>
+
+              <select
+                id={`printed-for-${label.id}`}
+                className="h-8 rounded-md border bg-transparent px-2 text-sm"
+                value={label.packagedProductId ?? ""}
+                onChange={(event) =>
+                  printForPack.mutate({
+                    localLabelId: label.id,
+                    packagedProductId:
+                      event.target.value === "" ? null : event.target.value,
+                  })
+                }
+                data-testid="printed-for-pack"
+              >
+                <option value="">No particular pack</option>
+
+                {(packs ?? []).map((pack) => (
+                  <option key={pack.id} value={pack.id}>
+                    {pack.description}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {label.draftRevisionId ? (

@@ -69,6 +69,18 @@ export interface LocalLabel {
   draftRevisionId: string | null;
   draftRevisionNumber: number | null;
   revisionCount: number;
+  /**
+   * The pack this document is printed for, when it is printed for one — the
+   * carton for the 30 is not the carton for the 100, even when the words are
+   * identical.
+   *
+   * Carried on every label rather than only on artwork, because no rule may
+   * branch on the label type (EPIC-018 D2) — and a container label is printed
+   * per pack size anyway.
+   */
+  packagedProductId: string | null;
+  /** Joined, never copied: correcting a pack corrects it everywhere at once. */
+  packDescription: string | null;
 }
 
 export type LocalLabelRevisionStatus = "Draft" | "InForce" | "Superseded";

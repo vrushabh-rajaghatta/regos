@@ -283,6 +283,7 @@ presentations.MapGetPharmaceuticalVocabulary();
 presentations.MapListPresentations();
 presentations.MapAddPresentation();
 presentations.MapRestatePresentation();
+presentations.MapDescribeAppearance();
 presentations.MapAddIngredient();
 presentations.MapRestateIngredient();
 presentations.MapRemoveIngredient();
@@ -315,6 +316,7 @@ localLabels.MapListLocalLabelRevisions();
 localLabels.MapStartLocalLabelRevision();
 localLabels.MapPrepareLocalLabelRevision();
 localLabels.MapPublishLocalLabelRevision();
+localLabels.MapPrintLocalLabelForPack();
 localLabels.MapDiscardLocalLabelDraft();
 
 var indications = app.MapGroup("").WithTags("Indications");

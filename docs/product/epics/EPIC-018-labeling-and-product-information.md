@@ -434,7 +434,7 @@ obligation off somebody's memory and into something that fails loudly:
 | "An interaction should name what it interacts with" | The last interactant cannot be removed |
 | "Remember to `Include` the populations" | Owned collections load with their owner — the EPIC-004 S005 failure mode is unreachable by construction |
 | A three-item aggregate checklist | `AggregateChildArchitectureTests` — and it immediately found five nullable foreign keys nobody was looking for |
-| "Watch out for artwork branching" | `LocalLabelTypeBranchTests`, armed and quiet |
+| "Watch out for artwork branching" | `LocalLabelTypeBranchTests`, armed and quiet — first tested by EPIC-010b S004's pack link, and still quiet |
 | "Only Withdrawn isn't an approval" | `Indication.IsAnAuthorisation`, with a test that fails if a fifth status appears |
 
 **And one counter-example, which is why the theme is worth stating rather than
@@ -573,6 +573,16 @@ with type checks, that answer has changed.
 *S002 arms this as `LocalLabelTypeBranchTests` once `LocalLabelType` exists — a
 count over `src/Labeling/**/Domain`, not a judgement call made a year from now
 by whoever is reading.*
+
+> **First fired 2026-08-05 — and held.** EPIC-010b S004 added
+> `LocalLabel.PackagedProductId`, the pack link this epic deferred and named
+> EPIC-010b as the milestone for. It is **nullable on every label**, not on
+> artwork alone: this section had already ruled that a nullable column is not
+> the signal, and the branch would have been wrong on the facts as well — a
+> container label is printed per pack size and a leaflet can be pack-specific,
+> so *"which pack is this for?"* is a sensible question of any label and an
+> unanswered one for most. `LocalLabelTypeBranchTests` stayed quiet, which is
+> the outcome that keeps D2's trade paying. **The watchpoint remains armed.**
 
 ### Two things settled on the way
 

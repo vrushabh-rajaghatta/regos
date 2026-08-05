@@ -105,6 +105,72 @@ public sealed class PharmaceuticalProductDetailConfiguration
             .FindNavigation(nameof(PharmaceuticalProductDetail.RoutesOfAdministration))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
+        // What it looks like, as one owned value object.
+        //
+        // Required, for the reason PackagedProduct.ShelfLife is (EPIC-010b
+        // S003): EF reads an *optional* owned reference back as null when every
+        // column it shares is null, and a presentation whose only statement is
+        // "white" has exactly that — its colours would vanish on reload while
+        // the write succeeded. PhysicalCharacteristics.NotStated is the empty
+        // value that makes a required navigation honest.
+        builder.OwnsOne(x => x.Appearance, appearance =>
+        {
+            appearance.OwnsOne(x => x.Shape, shape =>
+            {
+                shape.Property(x => x.System)
+                    .HasColumnName("AppearanceShapeSystem")
+                    .HasMaxLength(CodedConcept.SystemMaxLength);
+
+                shape.Property(x => x.Code)
+                    .HasColumnName("AppearanceShapeCode")
+                    .HasMaxLength(CodedConcept.CodeMaxLength);
+
+                shape.Property(x => x.Display)
+                    .HasColumnName("AppearanceShapeDisplay")
+                    .HasMaxLength(CodedConcept.DisplayMaxLength);
+            });
+
+            appearance.Property(x => x.Imprint)
+                .HasColumnName("AppearanceImprint")
+                .HasMaxLength(PhysicalCharacteristics.ImprintMaxLength);
+
+            appearance.Property(x => x.Description)
+                .HasColumnName("AppearanceDescription")
+                .HasMaxLength(PhysicalCharacteristics.DescriptionMaxLength);
+
+            // A table rather than columns: a capsule with a white body and a
+            // blue cap is two colours, and that is ordinary rather than
+            // exceptional.
+            appearance.OwnsMany(x => x.Colours, colour =>
+            {
+                colour.ToTable("PharmaceuticalProductColours");
+
+                colour.WithOwner().HasForeignKey("PharmaceuticalProductDetailId");
+
+                colour.Property(x => x.System)
+                    .HasMaxLength(CodedConcept.SystemMaxLength)
+                    .IsRequired();
+
+                colour.Property(x => x.Code)
+                    .HasMaxLength(CodedConcept.CodeMaxLength)
+                    .IsRequired();
+
+                colour.Property(x => x.Display)
+                    .HasMaxLength(CodedConcept.DisplayMaxLength)
+                    .IsRequired();
+
+                colour.HasIndex("PharmaceuticalProductDetailId", "Code").IsUnique();
+            });
+        });
+
+        builder.Navigation(x => x.Appearance).IsRequired();
+
+        builder.Metadata
+            .FindNavigation(nameof(PharmaceuticalProductDetail.Appearance))!
+            .TargetEntityType
+            .FindNavigation(nameof(PhysicalCharacteristics.Colours))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
         // Ownership: presentation (1) -> ingredients (N). The relationship
         // itself is declared from the Ingredient side, so its shadow foreign
         // key and the unique index that names it stay together; only the

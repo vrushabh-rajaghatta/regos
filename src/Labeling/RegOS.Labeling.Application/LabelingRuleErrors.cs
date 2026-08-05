@@ -44,4 +44,15 @@ public static class LabelingRuleErrors
 
     public const string ContentDoesNotExist =
         "Document does not exist.";
+
+    public const string PackDoesNotExist =
+        "That pack does not exist.";
+
+    /// <remarks>
+    /// The mistake worth catching: a French carton naming a UK pack. Both rows
+    /// exist, both belong to the tenant, and nothing else would notice.
+    /// </remarks>
+    public const string PackBelongsToAnotherMarket =
+        "That pack is sold in a different market from this label.";
 }
+

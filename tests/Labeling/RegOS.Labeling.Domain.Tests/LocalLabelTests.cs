@@ -267,4 +267,77 @@ public sealed class LocalLabelTests
 
         draft.DataCarrierCode.Should().Be("0123456789012");
     }
+    // --- the pack it is printed for ------------------------------------------
+
+    /// <summary>
+    /// <b>The debt EPIC-018 carried, and it named EPIC-010b as the
+    /// milestone.</b> A carton is printed for a specific pack: the 30 and the
+    /// 100 are separately approved artworks even when the words are identical.
+    /// </summary>
+    [Fact]
+    public void AnArtworkNamesThePackItIsPrintedFor()
+    {
+        var label = ALabel("ARTWORK");
+        var pack = PackagedProductId.New();
+
+        label.PrintedFor(pack);
+
+        label.PackagedProductId.Should().Be(pack);
+    }
+
+    /// <summary>
+    /// <b>No <c>if (Type == Artwork)</c> anywhere.</b> EPIC-018 D2 bought a real
+    /// simplification by making artwork a label type rather than an aggregate
+    /// and recorded the price. The branch would also be wrong: a container label
+    /// is printed per pack size.
+    /// </summary>
+    [Fact]
+    public void AnyLabelMayNameAPackBecauseNothingBranchesOnTheType()
+    {
+        var pack = PackagedProductId.New();
+
+        foreach (var type in new[] { "ARTWORK", "PIL", "SMPC" })
+        {
+            var label = ALabel(type);
+
+            label.PrintedFor(pack);
+
+            label.PackagedProductId.Should().Be(pack);
+        }
+    }
+
+    [Fact]
+    public void APackLinkCanBeCleared()
+    {
+        var label = ALabel("ARTWORK");
+
+        label.PrintedFor(PackagedProductId.New());
+        label.PrintedFor(null);
+
+        label.PackagedProductId.Should().BeNull();
+    }
+
+    /// <summary>
+    /// A property of the label, not of a revision: revising the words on a
+    /// carton does not make it a different pack's carton.
+    /// </summary>
+    [Fact]
+    public void RevisingALabelDoesNotDisturbThePackItIsPrintedFor()
+    {
+        var label = ALabel("ARTWORK");
+        var pack = PackagedProductId.New();
+
+        label.PrintedFor(pack);
+
+        label.PrepareRevision(
+            label.Draft!.Id, ProductDocumentId.New(), null, null, null);
+
+        label.PublishRevision(
+            label.Draft!.Id, new DateOnly(2026, 5, 12), new DateOnly(2026, 6, 1));
+
+        label.StartRevision();
+
+        label.PackagedProductId.Should().Be(pack);
+    }
+
 }

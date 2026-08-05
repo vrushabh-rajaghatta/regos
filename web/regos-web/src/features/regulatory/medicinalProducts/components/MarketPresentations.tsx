@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { AppearanceDialog } from "./AppearanceDialog";
 import { PresentationComposition } from "./PresentationComposition";
 import { PresentationDialog } from "./PresentationDialog";
 import { usePresentations } from "../hooks/usePresentations";
@@ -26,6 +27,7 @@ export function MarketPresentations({
 }: MarketPresentationsProps) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Presentation | undefined>();
+  const [describing, setDescribing] = useState<Presentation | undefined>();
 
   const { data, isLoading, error } = usePresentations(medicinalProductId);
   const rows = data ?? [];
@@ -109,15 +111,54 @@ export function MarketPresentations({
                 )}
               </div>
 
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setEditing(presentation)}
-                data-testid="edit-presentation"
-              >
-                Edit
-              </Button>
+              <div className="flex shrink-0 gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setDescribing(presentation)}
+                  data-testid="edit-appearance"
+                >
+                  Appearance
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setEditing(presentation)}
+                  data-testid="edit-presentation"
+                >
+                  Edit
+                </Button>
+              </div>
             </div>
+
+            {/* What it looks like, on the presentation and not on a pack: a
+                tablet looks identical in a carton of 30 and a carton of 100
+                (ADR-061 §1). */}
+            {presentation.appearance.isStated && (
+              <p className="mt-2 text-sm" data-testid="presentation-appearance">
+                {[
+                  presentation.appearance.colours
+                    .map((colour) => colour.display)
+                    .join(", "),
+                  presentation.appearance.shape?.display,
+                  presentation.appearance.imprint
+                    ? `marked ${presentation.appearance.imprint}`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
+
+            {presentation.appearance.description && (
+              <p
+                className="mt-1 text-sm text-muted-foreground"
+                data-testid="presentation-appearance-description"
+              >
+                {presentation.appearance.description}
+              </p>
+            )}
 
             {/* Inside the presentation, not beside it: a composition is what
                 *this* administrable form is made of, and a market with three
@@ -129,6 +170,15 @@ export function MarketPresentations({
           </li>
         ))}
       </ul>
+
+      {describing && (
+        <AppearanceDialog
+          medicinalProductId={medicinalProductId}
+          presentation={describing}
+          open
+          onOpenChange={(open) => !open && setDescribing(undefined)}
+        />
+      )}
 
       <PresentationDialog
         medicinalProductId={medicinalProductId}

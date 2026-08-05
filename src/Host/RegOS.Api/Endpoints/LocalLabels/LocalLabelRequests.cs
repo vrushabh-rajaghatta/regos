@@ -29,3 +29,10 @@ public sealed record PublishLocalLabelRevisionRequest(
 public sealed record LocalLabelResponse(Guid Id, Guid DraftRevisionId);
 
 public sealed record LocalLabelRevisionResponse(Guid Id, int RevisionNumber);
+
+/// <param name="PackagedProductId">
+/// The pack this document is printed for. Null clears the link, which is a real
+/// act: an artwork reassigned in error is unlinked rather than pointed at the
+/// wrong pack.
+/// </param>
+public sealed record PrintLocalLabelForPackRequest(Guid? PackagedProductId);

@@ -118,8 +118,65 @@ public static class PharmaceuticalVocabulary
         CodedConcept.Internal("DILUENT", "Diluent")
     ];
 
+    /// <summary>What colour the product itself is.</summary>
+    /// <remarks>
+    /// <b>A presentation may have several, and that is ordinary rather than
+    /// exceptional</b> — a capsule with a white body and a blue cap is two
+    /// colours, not one colour called <em>"white and blue"</em>. Inventing that
+    /// entry, or pushing the second colour into prose, is what a single-valued
+    /// field would force.
+    /// <para>
+    /// Belongs here, in <em>what is this medicine?</em>, rather than in a fifth
+    /// vocabulary: colour is a property of the administrable form, exactly as
+    /// dose form and route are. A tablet looks the same whichever carton it is
+    /// in (EPIC-010b D5).
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<CodedConcept> Colours { get; } =
+    [
+        CodedConcept.Internal("WHITE", "White"),
+        CodedConcept.Internal("OFF_WHITE", "Off-white"),
+        CodedConcept.Internal("YELLOW", "Yellow"),
+        CodedConcept.Internal("ORANGE", "Orange"),
+        CodedConcept.Internal("RED", "Red"),
+        CodedConcept.Internal("PINK", "Pink"),
+        CodedConcept.Internal("BROWN", "Brown"),
+        CodedConcept.Internal("GREEN", "Green"),
+        CodedConcept.Internal("BLUE", "Blue"),
+        CodedConcept.Internal("PURPLE", "Purple"),
+        CodedConcept.Internal("GREY", "Grey"),
+        CodedConcept.Internal("BLACK", "Black"),
+        CodedConcept.Internal("COLOURLESS", "Colourless"),
+        CodedConcept.Internal("TRANSPARENT", "Transparent"),
+    ];
+
+    /// <summary>What shape it is.</summary>
+    /// <remarks>
+    /// Single-valued, unlike <see cref="Colours"/>: a tablet is round or it is
+    /// oval, and nothing is both.
+    /// </remarks>
+    public static IReadOnlyList<CodedConcept> Shapes { get; } =
+    [
+        CodedConcept.Internal("ROUND", "Round"),
+        CodedConcept.Internal("OVAL", "Oval"),
+        CodedConcept.Internal("OBLONG", "Oblong"),
+        CodedConcept.Internal("CAPSULE_SHAPED", "Capsule-shaped"),
+        CodedConcept.Internal("TRIANGULAR", "Triangular"),
+        CodedConcept.Internal("SQUARE", "Square"),
+        CodedConcept.Internal("DIAMOND", "Diamond"),
+        CodedConcept.Internal("PENTAGONAL", "Pentagonal"),
+        CodedConcept.Internal("HEXAGONAL", "Hexagonal"),
+        CodedConcept.Internal("BICONVEX", "Biconvex"),
+    ];
+
     public static CodedConcept? DoseFormOf(string? code)
         => CodedConceptLookup.Find(DoseForms, code);
+
+    public static CodedConcept? ColourOf(string? code)
+        => CodedConceptLookup.Find(Colours, code);
+
+    public static CodedConcept? ShapeOf(string? code)
+        => CodedConceptLookup.Find(Shapes, code);
 
     public static CodedConcept? ComponentTypeOf(string? code)
         => CodedConceptLookup.Find(ComponentTypes, code);

@@ -52,6 +52,21 @@ public sealed class ListPresentationsHandler
                 // renames it everywhere it appears at once. This is the join
                 // the whole epic exists to make possible, read in the
                 // uninteresting direction.
+                // Ordered by code rather than left to Postgres, for the same
+                // reason routes are: a list that reshuffles between page loads
+                // reads as data changing when nothing has.
+                Colours = x.Appearance.Colours
+                    .OrderBy(c => c.Code)
+                    .Select(c => new CodedValueDto(c.System, c.Code, c.Display))
+                    .ToList(),
+                Shape = x.Appearance.Shape == null
+                    ? null
+                    : new CodedValueDto(
+                        x.Appearance.Shape.System,
+                        x.Appearance.Shape.Code,
+                        x.Appearance.Shape.Display),
+                Imprint = x.Appearance.Imprint,
+                AppearanceDescription = x.Appearance.Description,
                 Ingredients =
                     (from ingredient in x.Ingredients
                      join substance in _dbContext.Substances
@@ -86,7 +101,16 @@ public sealed class ListPresentationsHandler
                     ingredient.Role.ToString(),
                     Strength(ingredient.Strength)))],
                 x.Ingredients.Any(
-                    ingredient => ingredient.Role == IngredientRole.Active)))
+                    ingredient => ingredient.Role == IngredientRole.Active),
+                new AppearanceDto(
+                    x.Colours,
+                    x.Shape,
+                    x.Imprint,
+                    x.AppearanceDescription,
+                    x.Colours.Count > 0
+                        || x.Shape is not null
+                        || x.Imprint is not null
+                        || x.AppearanceDescription is not null)))
             .ToList();
     }
 

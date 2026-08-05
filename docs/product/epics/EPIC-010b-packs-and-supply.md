@@ -243,13 +243,16 @@ arrive with:
 | **S001** | **`PackagedProduct`** — the pack: description, size, the market's pack code, dated marketing status | full slice | ✅ |
 | **S002** | **`PackageItem` + `PackagingTree`** — the recursion, depth- and cycle-guarded; material is what makes it not a component | full slice | ✅ |
 | **S003** | **`LegalStatusOfSupply` + `ShelfLifeStorage`** — how it is supplied, how long it lasts | full slice | ✅ |
-| **S004** | **`Appearance` on the presentation, and artwork's pack link** — the two describing facts, and EPIC-018's debt paid | full slice | ⚪ |
+| **S004** | **`Appearance` on the presentation, and artwork's pack link** — the two describing facts, and EPIC-018's debt paid | full slice | ✅ |
 | **S005** | **Capstone** — a registration authorises packs; *"which packs are authorised here, and how are they supplied?"*; browser proof; retro | query → UI → test → docs | ⚪ |
 
-> **S004 is where to stop if the epic runs long**, decided now rather than under
-> pressure. Appearance and the artwork link are the least load-bearing: nothing
-> depends on them, and cutting them leaves the Definition of Done short and the
-> model whole — the better of the two failures available.
+> **S004 was where to stop if the epic ran long**, decided in advance rather
+> than under pressure. **It was not cut.** The architecture held across
+> S001–S003 with no unresolved modelling questions, and S004 closes two pieces
+> of declared work rather than adding a fifth concept: appearance completes the
+> discriminator, and the artwork link retires the debt EPIC-018 deliberately
+> carried and named this epic as the milestone for. Keeping that promise was
+> the reason not to cut.
 
 ### S003 — what was decided while building
 
@@ -281,6 +284,39 @@ let the period be changed without the conditions it is only true under.
 storage conditions *and nothing else*, saves, and reloads the page — the exact
 shape that would have exposed an optional owned reference silently dropping its
 child table. A domain test could not have caught it.
+
+### S004 — what was decided while building
+
+**The discriminator now has three answers from four uses**, and appearance is
+the one that points away from the pack: a tablet looks identical in a carton of
+30 and a carton of 100, so how it looks is part of what the medicine *is*.
+
+| | Decided | Why |
+|---|---|---|
+| **Colour is a set, shape is a choice** | `Colours` is an owned collection; `Shape` is one coded value | A capsule with a white body and a blue cap is two colours. A single field would force an invented *"white and blue"* vocabulary entry or prose — and prose is what the structured half exists to avoid. A tablet, by contrast, is round or oval and nothing is both |
+| **The marking is its own field** | `Imprint`, beside `Description` | It is the one part of an appearance anybody looks a medicine **up** by. A poison centre with a loose tablet has the imprint and nothing else |
+| **No fifth vocabulary** | `Colours` and `Shapes` join `PharmaceuticalVocabulary` | That list answers *what is this medicine?*, and colour and shape are properties of the administrable form exactly as dose form and route are |
+| **Required owned reference, again** | `PhysicalCharacteristics.NotStated` | **The second use of the shape S003 introduced, for the identical reason** — an optional owned reference whose shared columns are all null is read back as null, and a presentation whose only statement is *"white"* has exactly that. ADR-018 says duplicate on the second and evaluate on the third; this is the second |
+| **No `if (Type == Artwork)`** | the pack link is nullable on **every** local label | EPIC-018 D2 bought a real simplification by making artwork a label type rather than an aggregate, and recorded the price. The branch would also be **wrong**: a container label is printed per pack size, and a leaflet can be pack-specific |
+| **The link is on the label, not a revision** | `LocalLabel.PackagedProductId` | Which pack a carton is printed for is what the document *is*. Revising the words on it does not make it a different pack's carton, so a correction here is a correction rather than a new revision |
+| **Both barcodes stay** | `PackagedProduct.PackCode` and `LocalLabelRevision.DataCarrierCode` | One is what the company registers with the market, the other is what the approved artwork prints. They are *meant* to be able to disagree, and a single field would hide the day they do |
+
+**A third occurrence noticed and deliberately not abstracted.** *Structured fact
+beside approved wording* now appears three times — `Strength` with a
+presentation's name, `ShelfLifeStorage` with its text, `PhysicalCharacteristics`
+with its description. Recorded as an observed pattern rather than a candidate:
+the three differ entirely in what the structured half is, and a shared "coded
+value plus its wording" type would name the similarity while hiding every
+difference.
+
+**`SetNull`, not `Cascade`, on the pack link.** Deleting a pack must not take an
+authority-approved document with it; the artwork outlives the pack record and
+simply stops naming one.
+
+**The cross-market refusal is the mistake worth catching.** A French carton
+naming a UK pack has two real rows, both the tenant's, and nothing else would
+notice — so the handler asks Product the question, the same read
+`AttachGlobalLabelContent` makes of ProductDocument (ADR-059 §6).
 
 ### The verification loop
 

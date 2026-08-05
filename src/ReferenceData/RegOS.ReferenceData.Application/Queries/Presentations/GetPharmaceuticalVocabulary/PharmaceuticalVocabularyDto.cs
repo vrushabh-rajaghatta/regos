@@ -12,8 +12,18 @@ namespace RegOS.ReferenceData.Application.Queries.Presentations.GetPharmaceutica
 /// different axis: nothing here could be mistaken for a way to measure a
 /// quantity, whereas "vial" beside "mL" invites exactly that.
 /// </param>
+/// <param name="Colours">
+/// <b>Several may apply to one presentation</b> — a capsule with a white body
+/// and a blue cap is two colours, not one called "white and blue".
+/// </param>
+/// <param name="Shapes">
+/// Single-valued, unlike <paramref name="Colours"/>: a tablet is round or it is
+/// oval, and nothing is both.
+/// </param>
 public sealed record PharmaceuticalVocabularyDto(
     IReadOnlyList<CodedConceptDto> DoseForms,
     IReadOnlyList<CodedConceptDto> RoutesOfAdministration,
     IReadOnlyList<CodedConceptDto> UnitsOfPresentation,
-    IReadOnlyList<CodedConceptDto> ComponentTypes);
+    IReadOnlyList<CodedConceptDto> ComponentTypes,
+    IReadOnlyList<CodedConceptDto> Colours,
+    IReadOnlyList<CodedConceptDto> Shapes);

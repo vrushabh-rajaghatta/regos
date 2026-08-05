@@ -21,6 +21,7 @@ using RegOS.Product.Application.Commands.MoveComponent;
 using RegOS.Product.Application.Commands.RemoveComponent;
 using RegOS.Product.Application.Commands.RestateComponent;
 using RegOS.Product.Application.Commands.AddPresentation;
+using RegOS.Product.Application.Commands.DescribeAppearance;
 using RegOS.Product.Application.Commands.RemoveIngredient;
 using RegOS.Product.Application.Commands.RestateIngredient;
 using RegOS.Product.Application.Commands.RecordAtcCode;
@@ -61,6 +62,7 @@ public static class ProductApplicationServiceCollectionExtensions
 
         services.AddScoped<AddPresentationHandler>();
         services.AddScoped<RestatePresentationHandler>();
+        services.AddScoped<DescribeAppearanceHandler>();
         services.AddScoped<ListPresentationsHandler>();
 
         services.AddScoped<AddIngredientHandler>();
