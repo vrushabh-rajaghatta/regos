@@ -317,6 +317,7 @@ localLabels.MapStartLocalLabelRevision();
 localLabels.MapPrepareLocalLabelRevision();
 localLabels.MapPublishLocalLabelRevision();
 localLabels.MapPrintLocalLabelForPack();
+localLabels.MapGetLabelLanguageCoverage();
 localLabels.MapDiscardLocalLabelDraft();
 
 var indications = app.MapGroup("").WithTags("Indications");

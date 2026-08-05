@@ -33,4 +33,14 @@ internal static class GeographyAndRegulatoryIds
         Guid.Parse("20000000-0000-0000-0000-000000000005");
     public static readonly Guid CDSCO =
         Guid.Parse("20000000-0000-0000-0000-000000000006");
+
+    // Added by EPIC-022 S002, which found that neither EU country had one — so
+    // no EU market could hold a registration at all, and the epic's own
+    // question ("which of our markets are in the EU?") had no demonstrable
+    // answer. Both are the national agency, not EMA: an Authority hangs off a
+    // CountryId, and EMA is the Union's rather than any member state's.
+    public static readonly Guid BfArM =
+        Guid.Parse("20000000-0000-0000-0000-000000000007");
+    public static readonly Guid ANSM =
+        Guid.Parse("20000000-0000-0000-0000-000000000008");
 }

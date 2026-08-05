@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RegOS.Persistence;
@@ -11,9 +12,11 @@ using RegOS.Persistence;
 namespace RegOS.Persistence.Migrations
 {
     [DbContext(typeof(RegOSDbContext))]
-    partial class RegOSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260805064811_AddCountryRegions")]
+    partial class AddCountryRegions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4974,36 +4977,6 @@ namespace RegOS.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("CountryId");
                         });
-
-                    b.OwnsMany("RegOS.ReferenceData.Domain.Terminology.LanguageCode", "Languages", b1 =>
-                        {
-                            b1.Property<Guid>("CountryId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<int>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("integer");
-
-                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
-
-                            b1.Property<string>("Value")
-                                .IsRequired()
-                                .HasMaxLength(2)
-                                .HasColumnType("character varying(2)")
-                                .HasColumnName("Language");
-
-                            b1.HasKey("CountryId", "Id");
-
-                            b1.HasIndex("CountryId", "Value")
-                                .IsUnique();
-
-                            b1.ToTable("CountryLanguages", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("CountryId");
-                        });
-
-                    b.Navigation("Languages");
 
                     b.Navigation("Regions");
                 });

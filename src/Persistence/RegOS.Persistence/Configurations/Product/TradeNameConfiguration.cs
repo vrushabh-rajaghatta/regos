@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.Product.Domain.Product;
+using RegOS.ReferenceData.Domain.Terminology;
 
 namespace RegOS.Persistence.Configurations.Product;
 

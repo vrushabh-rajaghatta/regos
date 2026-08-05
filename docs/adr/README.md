@@ -96,6 +96,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [059](ADR-059-clinical-statements-are-facts-labels-are-artifacts.md) | Clinical statements are regulatory facts; labels are published editorial artifacts | Accepted | Direction |
 | [060](ADR-060-a-tenant-provisions-without-an-organization.md) | A tenant provisions without an organization | Accepted | Current |
 | [061](ADR-061-a-pack-is-how-a-medicine-is-supplied.md) | A pack is how a medicine is supplied, not what it is | Accepted | Direction |
+| [062](ADR-062-a-language-is-a-world-fact.md) | A language is a world fact, not a product fact | Accepted | Structure |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly

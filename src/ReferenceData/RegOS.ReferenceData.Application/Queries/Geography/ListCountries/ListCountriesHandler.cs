@@ -23,7 +23,12 @@ public sealed class ListCountriesHandler
             .Select(c => new CountryDto(
                 c.Id,
                 c.Code,
-                c.Name))
+                c.IsoAlpha3Code,
+                c.Name,
+                c.IsoName,
+                // Ordered by code rather than left to Postgres, the call every
+                // owned collection in this codebase makes.
+                c.Regions.OrderBy(r => r.Code).Select(r => r.Code).ToList()))
             .ToListAsync(cancellationToken);
     }
 }

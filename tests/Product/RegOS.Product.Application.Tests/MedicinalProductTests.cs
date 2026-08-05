@@ -23,6 +23,7 @@ using RegOS.Registration.Domain.Aggregates.Registration;
 using RegOS.Registration.Infrastructure.Repositories;
 using RegOS.Registration.Infrastructure.Services;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.ReferenceData.Domain.Terminology;
 
 namespace RegOS.Product.Application.Tests;
 
@@ -334,7 +335,7 @@ public sealed class MedicinalProductTests : IAsyncLifetime
         var add = async () => await AddTradeNameAsync(market, "en-CA", "Cardiolex");
 
         await add.Should().ThrowAsync<DomainException>()
-            .WithMessage(MedicinalProductErrors.LanguageNotRecognised);
+            .WithMessage(LanguageCodeErrors.NotRecognised);
     }
 
     // --- Market status -------------------------------------------------------
