@@ -48,13 +48,14 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 [Shipped epics](#shipped-epics). **EPIC-010 is finished** — 10a, 10b and 10c are
 all shipped, which closes the Product depth work.
 
-> Two things deliberately **not** done on the epic branch, because planning
-> evolution lands on `main` between epics: choosing what comes next, and
-> raising the **architecture-hardening** items this epic and EPIC-022 both
-> found — an executable check on the bounded-context dependency graph, and one
-> on whether a query handler's `orderby` is total. Both belong with
-> [EPIC-023](#epic-023--the-test-suite-runs-against-its-own-schema): invariants
-> the project states and does not check.
+> **The architecture-hardening items EPIC-010c found are raised**, on `main`
+> after the merge, as **[EPIC-024](#epic-024--the-invariants-nothing-checks)** —
+> its own entry rather than a third bullet on EPIC-023, because one is about the
+> *environment* a test runs in and the other about *rules no test reads*.
+>
+> **What comes next is the founder's call.** [Next](#next) holds EPIC-021 with
+> the ordering argument that put it there, plus EPIC-023 and EPIC-024, both
+> deliberately unnumbered.
 
 ### External prerequisites
 
@@ -126,7 +127,8 @@ whoever can go and fetch one.*
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
 | 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) |
-| — | ~~**EPIC-010c**~~ | **Manufacturing** | 🟡 **In [Now](#now) since 2026-08-05** | — |
+| — | ~~**EPIC-010c**~~ | **Manufacturing** | 🟢 **Shipped 2026-08-05** (PR #23), closing EPIC-010 | — |
+| ? | **EPIC-024** | **The invariants nothing checks** — make the architecture rules the ADRs state executable, starting with the two EPIC-010c found | ⚪ Not Started | nothing. **Added 2026-08-05, deliberately unnumbered.** Sibling of EPIC-023 by kind and separate by subject — see [below](#epic-024--the-invariants-nothing-checks) |
 | ? | **EPIC-023** | **The test suite runs against its own schema** — *the automated test environment should always execute against a schema produced from the current migration chain* | ⚪ Not Started | nothing — it blocks on no epic and no epic blocks on it. **Added 2026-08-05, deliberately unnumbered: placement in this table is the founder's.** Three observations, and [why the third is the one that settles it](#epic-023--the-test-suite-runs-against-its-own-schema) |
 
 ### Why EPIC-022 enters at the top — and the part of it that should not wait
@@ -316,6 +318,58 @@ make today's symptom go away; only one fixes the cause:
 reference data being present, so a per-run database has to seed too — which is
 the same initializer the API runs, and therefore a second thing worth proving
 rather than assuming.
+
+---
+
+### EPIC-024 — the invariants nothing checks
+
+*Raised 2026-08-05, at EPIC-010c's close. **Its own entry rather than a third
+bullet on EPIC-023**, and the split is by subject: EPIC-023 is about the
+**environment** a test runs in, this is about **rules the ADRs state that no
+test reads**. Same kind, different subject — and folding them together would
+make either one harder to schedule alone.*
+
+> **The requirement, stated once:** *an architectural rule the project relies on
+> should be enforced by something that runs, not by a person remembering it.*
+
+**Two found, both by EPIC-010c, and neither by review.**
+
+#### 1. The bounded-context dependency graph is not checked
+
+S001 added the first `Product.Domain` → `Organization.Domain` reference and
+**the architecture suite stayed green** — because none of its 21 tests looks at
+which context may reference which. The edge is held by
+[ADR-063](../adr/ADR-063-where-a-product-is-made-is-a-product-fact.md) and a
+`.csproj` line.
+
+That ADR closes the **reverse** edge permanently: Organization must never
+reference Product, because it would close a cycle. **Nothing would stop someone
+opening it.** They would add a project reference, the solution would build, and
+the first sign of trouble would be a design that no longer makes sense.
+
+> Worth noting what *did* catch the equivalent one epic earlier: **the
+> compiler**, when ADR-061 §3's proposed edge closed a cycle. A cycle is
+> self-enforcing; a *direction* is not.
+
+#### 2. A query handler's ordering is not checked for totality
+
+`ListManufacturingOperations` ordered by *(current, `EffectiveFrom` desc)* and
+nothing else. Two operations at one site starting the same day tie on every key,
+and Postgres may return them either way round — so **a list reorders itself
+between reloads for no reason a user can see.**
+
+**`PersistedCollectionOrderTests` exists for exactly this class of defect and
+does not cover it:** it governs owned collections in EF configurations, not the
+`orderby` in a read handler. The defect surfaced as an intermittent browser
+failure that read convincingly as environmental, and cost most of a session
+before it was chased properly rather than re-run.
+
+#### Why this is a real epic and not a chore
+
+Both are **decisions that already exist and are already written down**. Neither
+needs a design; both need a test. That is unusually cheap for the confidence it
+buys — and the argument for doing it while the reasoning is fresh is that a
+third instance would be found the same expensive way the second one was.
 
 ---
 
