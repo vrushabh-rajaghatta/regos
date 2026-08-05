@@ -30,4 +30,7 @@ public static class CountryErrors
 
     public const string LanguageAlreadyStated =
         "That language is already recorded for this country.";
+
+    public const string StabilityConditionAlreadyStated =
+        "That stability condition is already accepted by this country.";
 }

@@ -7,6 +7,7 @@ export interface PackSupplyBody {
   shelfLifeUnitCode: string | null;
   shelfLifeText: string | null;
   storageConditionCodes: string[];
+  testedAtCodes: string[];
 }
 
 /**

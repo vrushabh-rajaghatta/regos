@@ -14,13 +14,16 @@ namespace RegOS.Persistence.Initialization.ReferenceData.Geography;
 /// and only one of them can be widened without going and fetching something
 /// (<see href="../../../../../docs/evidence/EPIC-022/iso-3166-1.md">E36</see>,
 /// <see href="../../../../../docs/evidence/EPIC-022/regional-membership.md">E37</see>,
-/// <see href="../../../../../docs/evidence/EPIC-022/label-languages.md">E38</see>).
+/// <see href="../../../../../docs/evidence/EPIC-022/label-languages.md">E38</see>,
+/// <see href="../../../../../docs/evidence/EPIC-022/stability-conditions.md">E39</see>).
 /// <para>
 /// <b>Every value below was read off a published source, not inferred.</b> The
 /// alpha-3 code and the ISO name are not derivable from the alpha-2 code or the
-/// common name; neither is membership. Two rows contradict what a careful guess
-/// would have produced — <b>Australia and India are ICH <em>observers</em>, not
-/// members</b> — which is the whole reason the lists were fetched.
+/// common name; neither is membership. Three rows contradict what a careful
+/// guess would have produced — <b>Australia and India are ICH <em>observers</em>,
+/// not members</b>, and <b>India accepts 30 °C/70% RH</b>, which belongs to no
+/// climatic zone anybody names — which is the whole reason the lists were
+/// fetched.
 /// </para>
 /// </remarks>
 internal static class Countries
@@ -30,6 +33,24 @@ internal static class Countries
 
     private static LanguageCode Lang(string code)
         => LanguageCode.Parse(code);
+
+    private static CodedConcept Stability(string code)
+        => StabilityVocabulary.ConditionOf(code)!;
+
+    /// <summary>
+    /// The condition seven of the eight accept, read verbatim off WHO's
+    /// <em>Stability conditions for WHO Member States by Region</em> (update
+    /// March 2021).
+    /// </summary>
+    /// <remarks>
+    /// <b>Either, not both</b> — the table's own wording is <em>"25 °C/60% RH
+    /// or 30 °C/65% RH"</em>, so a pack tested at one of them is supported.
+    /// India is the row that does not share it, and it is the row that makes
+    /// the feature demonstrable
+    /// (<see href="../../../../../docs/evidence/EPIC-022/stability-conditions.md">E39</see>).
+    /// </remarks>
+    private static IReadOnlyList<CodedConcept> TemperateOrIntermediate =>
+        [Stability("25C_60RH"), Stability("30C_65RH")];
 
     /// <summary>
     /// <b>Germany and France are tagged ICH by inheritance, and that is a
@@ -52,7 +73,8 @@ internal static class Countries
             "United States",
             "United States of America",
             [Region("ICH"), Region("PIC_S")],
-            [Lang("en")]),
+            [Lang("en")],
+            TemperateOrIntermediate),
 
         // Health Canada — ICH Standing Regulatory Member; PIC/S since 1999.
         Country.Create(
@@ -65,7 +87,8 @@ internal static class Countries
             // **The row this story turns on.** Bilingual mock-ups of the
             // labels, the package insert and the Product Monograph are required
             // at submission (C.01.014.1(2)(m.1), C.08.002(2)(j.1)) — E38.
-            [Lang("en"), Lang("fr")]),
+            [Lang("en"), Lang("fr")],
+            TemperateOrIntermediate),
 
         // MHRA — an ICH Regulatory Member in its own right, and PIC/S since
         // 1999. **Not EU**, which is the row that shows why membership is a
@@ -77,7 +100,8 @@ internal static class Countries
             "United Kingdom",
             "United Kingdom of Great Britain and Northern Ireland",
             [Region("ICH"), Region("PIC_S")],
-            [Lang("en")]),
+            [Lang("en")],
+            TemperateOrIntermediate),
 
         Country.Create(
             new CountryId(GeographyAndRegulatoryIds.Germany),
@@ -86,7 +110,8 @@ internal static class Countries
             "Germany",
             "Germany",
             EuMemberState,
-            [Lang("de")]),
+            [Lang("de")],
+            TemperateOrIntermediate),
 
         Country.Create(
             new CountryId(GeographyAndRegulatoryIds.France),
@@ -95,7 +120,8 @@ internal static class Countries
             "France",
             "France",
             EuMemberState,
-            [Lang("fr")]),
+            [Lang("fr")],
+            TemperateOrIntermediate),
 
         // MHLW/PMDA — ICH Founding Regulatory Member; PIC/S since 2014.
         Country.Create(
@@ -105,7 +131,8 @@ internal static class Countries
             "Japan",
             "Japan",
             [Region("ICH"), Region("PIC_S")],
-            [Lang("ja")]),
+            [Lang("ja")],
+            TemperateOrIntermediate),
 
         // TGA — PIC/S since 1995, and an ICH **Standing Observer**, so no ICH.
         // The correction a guess would not have made.
@@ -116,7 +143,11 @@ internal static class Countries
             "Australia",
             "Australia",
             [Region("PIC_S")],
-            [Lang("en")]),
+            [Lang("en")],
+            // Footnote 2 in WHO's table: collated at the 13th ICDRA in 2008,
+            // where the other seven are regulator-confirmed. Same value,
+            // weaker provenance, and the evidence entry says which is which.
+            TemperateOrIntermediate),
 
         // CDSCO is an ICH **observer**, and India is **not** a PIC/S
         // participant — so India belongs to none of the five. An empty
@@ -128,6 +159,10 @@ internal static class Countries
             "India",
             "India",
             [],
-            [Lang("en")])
+            [Lang("en")],
+            // **The row the whole feature turns on.** 30 °C/70% RH is neither
+            // Zone IVA (30/65) nor Zone IVB (30/75) — which is why RegOS
+            // stores WHO's condition and not a zone letter nobody publishes.
+            [Stability("30C_70RH")])
     ];
 }

@@ -69,4 +69,19 @@ internal static class PackVocabulary
             .Select(code => SupplyVocabulary.StorageConditionOf(code)
                 ?? throw new DomainException(
                     SupplyVocabularyErrors.UnknownStorageCondition(code)))];
+
+    /// <remarks>
+    /// <b>Not <see cref="StorageConditions"/>, and the two lists share no
+    /// entry.</b> Those say how the pack must be kept; these say what its shelf
+    /// life was demonstrated under, and a market reads the second to decide
+    /// whether the period holds there
+    /// (<see cref="StabilityVocabulary"/>, its own class because Geography reads
+    /// the same list to say what it accepts).
+    /// </remarks>
+    public static IReadOnlyList<CodedConcept> TestedAt(IEnumerable<string>? codes)
+        => [.. (codes ?? [])
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Select(code => StabilityVocabulary.ConditionOf(code)
+                ?? throw new DomainException(
+                    StabilityVocabularyErrors.UnknownCondition(code)))];
 }

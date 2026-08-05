@@ -17,7 +17,11 @@ public sealed class GetSupplyVocabularyHandler
         return Task.FromResult(new SupplyVocabularyDto(
             SupplyVocabulary.LegalStatuses.Select(Dto).ToList(),
             SupplyVocabulary.StorageConditions.Select(Dto).ToList(),
-            SupplyVocabulary.ShelfLifePeriods.Select(Dto).ToList()));
+            SupplyVocabulary.ShelfLifePeriods.Select(Dto).ToList(),
+
+            // A different class, deliberately — Geography reads this same list
+            // to say what a market accepts, so neither vocabulary owns it.
+            StabilityVocabulary.Conditions.Select(Dto).ToList()));
     }
 
     private static CodedConceptDto Dto(CodedConcept concept)

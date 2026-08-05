@@ -144,14 +144,48 @@ public sealed class PackagedProductConfiguration
                 // race cannot slip past the value object's own check.
                 condition.HasIndex("PackagedProductId", "Code").IsUnique();
             });
+
+            // What the shelf life was demonstrated under — a different fact
+            // from the precautions above, and its own table for the same
+            // reason: a global stability programme runs long-term data at more
+            // than one condition to support more than one market.
+            shelf.OwnsMany(x => x.TestedAt, condition =>
+            {
+                condition.ToTable("PackagedProductStabilityConditions");
+
+                condition.WithOwner().HasForeignKey("PackagedProductId");
+
+                condition.Property(x => x.System)
+                    .HasMaxLength(CodedConcept.SystemMaxLength)
+                    .IsRequired();
+
+                condition.Property(x => x.Code)
+                    .HasMaxLength(CodedConcept.CodeMaxLength)
+                    .IsRequired();
+
+                condition.Property(x => x.Display)
+                    .HasMaxLength(CodedConcept.DisplayMaxLength)
+                    .IsRequired();
+
+                condition.HasIndex("PackagedProductId", "Code").IsUnique();
+            });
         });
 
+        // Load-bearing for two collections now, not one: an optional owned
+        // reference reads back as null when its shared columns are all null,
+        // and would take both StorageConditions and TestedAt with it.
         builder.Navigation(x => x.ShelfLife).IsRequired();
 
-        builder.Metadata
+        var shelfLife = builder.Metadata
             .FindNavigation(nameof(PackagedProduct.ShelfLife))!
-            .TargetEntityType
+            .TargetEntityType;
+
+        shelfLife
             .FindNavigation(nameof(ShelfLifeStorage.StorageConditions))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        shelfLife
+            .FindNavigation(nameof(ShelfLifeStorage.TestedAt))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
         builder.Property(x => x.CreatedOnUtc)

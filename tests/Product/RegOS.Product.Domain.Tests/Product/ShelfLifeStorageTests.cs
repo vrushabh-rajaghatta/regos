@@ -33,6 +33,12 @@ public sealed class ShelfLifeStorageTests
         SupplyVocabulary.StorageConditionOf(
             SupplyVocabulary.NoSpecialPrecautionsCode)!;
 
+    private static readonly CodedConcept Temperate =
+        StabilityVocabulary.ConditionOf("25C_60RH")!;
+
+    private static readonly CodedConcept HotHumid =
+        StabilityVocabulary.ConditionOf("30C_75RH")!;
+
     // --- the statement -------------------------------------------------------
 
     [Fact]
@@ -229,5 +235,96 @@ public sealed class ShelfLifeStorageTests
         var other = ShelfLifeStorage.Create(36, Months, null, [ProtectFromLight]);
 
         one.Should().NotBe(other);
+    }
+
+    // --- what the shelf life was demonstrated under --------------------------
+
+    /// <summary>
+    /// <b>Two lists, one field apart, and they are not the same thing.</b>
+    /// <c>StorageConditions</c> is a label instruction addressed to whoever
+    /// holds the pack; <c>TestedAt</c> is the condition a stability study was
+    /// run at. A pack labelled <em>"do not store above 25 °C"</em> is routinely
+    /// tested at 30 °C/75% RH, and neither can be derived from the other —
+    /// which is exactly what this asserts.
+    /// </summary>
+    [Fact]
+    public void HowItIsKeptAndWhatItWasTestedAtAreDifferentStatements()
+    {
+        var statement = ShelfLifeStorage.Create(
+            36, Months, null, [Below25], [HotHumid]);
+
+        statement.StorageConditions.Select(x => x.Code).Should()
+            .BeEquivalentTo(["BELOW_25"]);
+        statement.TestedAt.Select(x => x.Code).Should()
+            .BeEquivalentTo(["30C_75RH"]);
+    }
+
+    /// <summary>
+    /// <b>Several, because a global programme runs several.</b> Long-term data
+    /// at both 25 °C/60% RH and 30 °C/75% RH supports temperate and hot-humid
+    /// markets from one submission.
+    /// </summary>
+    [Fact]
+    public void AShelfLifeMayHaveBeenDemonstratedAtSeveralConditions()
+    {
+        ShelfLifeStorage.Create(36, Months, null, [], [Temperate, HotHumid])
+            .TestedAt.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void TheSameTestingConditionTwiceIsRefused()
+    {
+        var create = () =>
+            ShelfLifeStorage.Create(36, Months, null, [], [Temperate, Temperate]);
+
+        create.Should().Throw<BusinessRuleViolationException>()
+            .WithMessage(ShelfLifeStorageErrors.TestedAtAlreadyStated);
+    }
+
+    /// <summary>
+    /// <b>No rule ties the two lists together, and none is missing.</b> A pack
+    /// may say where its data came from before anybody has decided how long it
+    /// keeps — a stability programme reports the condition first — and a
+    /// 30 °C/75% RH study is what supports a "below 25 °C" label in a hot
+    /// market.
+    /// </summary>
+    [Fact]
+    public void ATestingConditionWithNoPeriodIsAStatement()
+    {
+        var statement = ShelfLifeStorage.Create(null, null, null, [], [Temperate]);
+
+        statement.IsStated.Should().BeTrue();
+        statement.Value.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Empty is ordinary: the stability data has not been recorded, which is
+    /// not a rejection. <c>NotStated</c> carries neither collection.
+    /// </summary>
+    [Fact]
+    public void NotStatedHasBeenTestedAtNothing()
+    {
+        ShelfLifeStorage.NotStated.TestedAt.Should().BeEmpty();
+        ShelfLifeStorage.NotStated.IsStated.Should().BeFalse();
+    }
+
+    /// <summary>
+    /// <b>The two collections cannot blur into one sequence.</b> Equality walks
+    /// both, and a separator between them is what stops a statement storing one
+    /// condition from comparing equal to a statement tested at another.
+    /// </summary>
+    [Fact]
+    public void TestingConditionsChangeTheStatement()
+    {
+        var temperate = ShelfLifeStorage.Create(36, Months, null, [], [Temperate]);
+        var hotHumid = ShelfLifeStorage.Create(36, Months, null, [], [HotHumid]);
+        var both = ShelfLifeStorage.Create(36, Months, null, [], [HotHumid, Temperate]);
+
+        temperate.Should().NotBe(hotHumid);
+        temperate.Should().NotBe(both);
+
+        // Order is a fact about the form, not about the study.
+        both.Should().Be(
+            ShelfLifeStorage.Create(36, Months, null, [], [Temperate, HotHumid]));
     }
 }

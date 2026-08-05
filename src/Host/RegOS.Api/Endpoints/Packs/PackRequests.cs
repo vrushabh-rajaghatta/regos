@@ -40,12 +40,19 @@ public sealed record RestatePackRequest(
 /// <c>NO_SPECIAL_PRECAUTIONS</c> — that one is a conclusion, and it may not be
 /// sent beside another condition.
 /// </param>
+/// <param name="TestedAtCodes">
+/// The long-term stability conditions the shelf life was established at. Drawn
+/// from a different vocabulary than
+/// <paramref name="StorageConditionCodes"/> — those say how the pack must be
+/// kept, these say what the period was demonstrated under.
+/// </param>
 public sealed record StatePackSupplyRequest(
     string? LegalStatusOfSupplyCode,
     decimal? ShelfLifeValue,
     string? ShelfLifeUnitCode,
     string? ShelfLifeText,
-    IReadOnlyList<string>? StorageConditionCodes);
+    IReadOnlyList<string>? StorageConditionCodes,
+    IReadOnlyList<string>? TestedAtCodes);
 
 /// <remarks>
 /// The enum on the wire, matching <c>ChangeMarketStatusRequest</c> one tier up:

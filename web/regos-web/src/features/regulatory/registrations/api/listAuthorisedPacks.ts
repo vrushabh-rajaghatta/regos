@@ -1,7 +1,7 @@
 import { apiFetch, buildUrl } from "@/shared/api/apiClient";
 import { detailOf } from "@/shared/api/problemDetail";
 
-import type { AuthorisedPack } from "../types/AuthorisedPack";
+import type { MarketAuthorisedPacksResponse } from "../types/AuthorisedPack";
 
 /**
  * "Which packs are authorised in this market, and how are they supplied?"
@@ -12,7 +12,7 @@ import type { AuthorisedPack } from "../types/AuthorisedPack";
  */
 export async function listAuthorisedPacks(
   medicinalProductId: string,
-): Promise<AuthorisedPack[]> {
+): Promise<MarketAuthorisedPacksResponse> {
   const response = await apiFetch(
     buildUrl(`/api/medicinal-products/${medicinalProductId}/authorised-packs`),
   );

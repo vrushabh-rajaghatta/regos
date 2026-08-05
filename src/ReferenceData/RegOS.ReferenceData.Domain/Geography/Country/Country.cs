@@ -35,6 +35,7 @@ public sealed class Country
 
     private readonly List<CodedConcept> _regions = [];
     private readonly List<LanguageCode> _languages = [];
+    private readonly List<CodedConcept> _stabilityConditions = [];
 
     private Country()
     {
@@ -119,6 +120,88 @@ public sealed class Country
     /// </remarks>
     public IReadOnlyCollection<LanguageCode> Languages => _languages.AsReadOnly();
 
+    /// <summary>
+    /// <b>Which long-term stability conditions does this market accept?</b>
+    /// — the United States 25 °C/60% RH or 30 °C/65% RH, India 30 °C/70% RH.
+    /// </summary>
+    /// <remarks>
+    /// Distinct from the two on the pack, and the three questions are worth
+    /// stating together because two of them sound alike:
+    /// <c>ShelfLifeStorage.StorageConditions</c> — <em>how should the marketed
+    /// product be stored?</em> <c>ShelfLifeStorage.TestedAt</c> — <em>under what
+    /// long-term condition was the shelf life established?</em> This one —
+    /// <em>which conditions does this market accept one from?</em>
+    /// <para>
+    /// <b>Conditions, never a climatic zone.</b> The authoritative source
+    /// publishes the condition each country accepts and declines to publish a
+    /// zone letter per country; India's 30 °C/70% RH is neither Zone IVA nor
+    /// IVB, so storing a zone would be storing RegOS's reading of WHO rather
+    /// than WHO (EPIC-022 D6,
+    /// <see href="../../../../docs/evidence/EPIC-022/stability-conditions.md">E39</see>).
+    /// </para>
+    /// <para>
+    /// <b>Several, because a market may accept either.</b> Seven of the eight
+    /// seeded markets accept 25 °C/60% RH <em>or</em> 30 °C/65% RH, and a pack
+    /// tested at one of them is supported — which is why
+    /// <see cref="AcceptsStabilityDataFrom"/> asks for an overlap rather than an
+    /// equality.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyCollection<CodedConcept> StabilityConditions
+        => _stabilityConditions.AsReadOnly();
+
+    /// <summary>
+    /// <b>Is stability data generated at these conditions accepted here?</b>
+    /// </summary>
+    /// <param name="testedAt">
+    /// The conditions a shelf life was established at —
+    /// <c>ShelfLifeStorage.TestedAt</c>. A global programme routinely runs more
+    /// than one.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> when at least one of them is accepted here; <c>false</c> when
+    /// none is; <b><c>null</c> when the question cannot be answered</b> —
+    /// nothing has been said about what this market accepts, or nothing about
+    /// what the data was generated at.
+    /// </returns>
+    /// <remarks>
+    /// <b>The acceptance rule lives here and nowhere else.</b> Callers get a
+    /// verdict rather than two lists to intersect, so if the rule ever stops
+    /// being <em>"any overlap"</em> — a market recognising a stricter condition
+    /// as covering a looser one, say — there is one implementation to change
+    /// rather than a comparison repeated at every call site.
+    /// <para>
+    /// <b>Silence is not a refusal</b>, which is why the answer is three-valued.
+    /// A pack whose stability data has not been recorded is not a pack whose
+    /// data is rejected, and a market RegOS holds no conditions for cannot
+    /// reject anything. Collapsing either to <c>false</c> would put a warning on
+    /// a screen that means <em>"we do not know"</em> — the failure
+    /// <c>ExpiryFacts.HasRunningValidity</c> was shaped to avoid one epic over.
+    /// </para>
+    /// <para>
+    /// <b>Derived on every read, never stored</b> (EPIC-022 D5). A persisted
+    /// <c>supported: true</c> rots the moment either side changes, and both
+    /// sides do: a market restates what it accepts, and a variation adds
+    /// stability data at a second condition.
+    /// </para>
+    /// </remarks>
+    public bool? AcceptsStabilityDataFrom(IEnumerable<CodedConcept>? testedAt)
+    {
+        if (_stabilityConditions.Count == 0)
+            return null;
+
+        var conditions = (testedAt ?? []).Where(x => x is not null).ToList();
+
+        if (conditions.Count == 0)
+            return null;
+
+        // Compared by value, so a stored row and a vocabulary entry quoting the
+        // same code from the same system match — CodedConcept deliberately
+        // leaves Display out of equality, which is what lets the wording be
+        // corrected without every stored value ceasing to match.
+        return conditions.Any(_stabilityConditions.Contains);
+    }
+
     public static Country Create(
         CountryId id,
         string code,
@@ -126,7 +209,8 @@ public sealed class Country
         string name,
         string isoName,
         IEnumerable<CodedConcept>? regions = null,
-        IEnumerable<LanguageCode>? languages = null)
+        IEnumerable<LanguageCode>? languages = null,
+        IEnumerable<CodedConcept>? stabilityConditions = null)
     {
         if (string.IsNullOrWhiteSpace(code))
             throw new DomainException(CountryErrors.CodeRequired);
@@ -190,6 +274,18 @@ public sealed class Country
             country._languages.Add(language);
         }
 
+        foreach (var condition in stabilityConditions ?? [])
+        {
+            if (condition is null)
+                continue;
+
+            if (country._stabilityConditions.Contains(condition))
+                throw new BusinessRuleViolationException(
+                    CountryErrors.StabilityConditionAlreadyStated);
+
+            country._stabilityConditions.Add(condition);
+        }
+
         return country;
     }
 
@@ -199,7 +295,9 @@ public sealed class Country
         string name,
         string isoName,
         IEnumerable<CodedConcept>? regions = null,
-        IEnumerable<LanguageCode>? languages = null)
+        IEnumerable<LanguageCode>? languages = null,
+        IEnumerable<CodedConcept>? stabilityConditions = null)
         => Create(
-            CountryId.New(), code, isoAlpha3Code, name, isoName, regions, languages);
+            CountryId.New(), code, isoAlpha3Code, name, isoName,
+            regions, languages, stabilityConditions);
 }

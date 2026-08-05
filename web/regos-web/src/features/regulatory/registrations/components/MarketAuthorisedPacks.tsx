@@ -30,7 +30,8 @@ export function MarketAuthorisedPacks({
 
   const [authorising, setAuthorising] = useState<AuthorisedPack | undefined>();
 
-  const packs = data ?? [];
+  const packs = data?.packs ?? [];
+  const accepted = data?.acceptsStabilityDataFrom ?? [];
 
   return (
     <section className="space-y-3" data-testid="market-authorised-packs">
@@ -39,6 +40,19 @@ export function MarketAuthorisedPacks({
         <p className="text-sm text-muted-foreground">
           Every pack, how it is supplied, and which licence authorises it.
         </p>
+
+        {/* Stated once, because it is a fact about the market rather than
+            about any pack. The word on screen is the condition itself — a
+            user may well say "Zone IVB", but RegOS does not store a zone and
+            will not print one it did not read (EPIC-022 D6). */}
+        {accepted.length > 0 && (
+          <p
+            className="mt-1 text-sm text-muted-foreground"
+            data-testid="market-stability-conditions"
+          >
+            Accepts stability data generated at {accepted.join(" or ")}.
+          </p>
+        )}
       </div>
 
       {isLoading && (
@@ -126,6 +140,8 @@ export function MarketAuthorisedPacks({
                 .join(" · ") || "How it is supplied is not yet stated"}
             </p>
 
+            <StabilityAdvice pack={pack} />
+
             {pack.authorisations.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {pack.authorisations.map((authorisation) => (
@@ -203,6 +219,52 @@ export function MarketAuthorisedPacks({
         ))}
       </ul>
     </section>
+  );
+}
+
+/**
+ * Whether this market accepts the pack's stability data.
+ *
+ * **Advice, and the styling is part of the decision.** Muted prose, never a
+ * destructive banner: a red panel reads as something that stops you, and
+ * nothing here stops anything. The pack saves, authorises and publishes
+ * regardless — the same call EPIC-005 made about an expired registration and
+ * EPIC-022 S003 made about a missing label language.
+ *
+ * **Three states, because silence is not a refusal.** A pack whose stability
+ * data has not been recorded is not a pack whose data is rejected, and saying
+ * "not accepted here" about an empty field would be the system inventing a
+ * problem.
+ */
+function StabilityAdvice({ pack }: { pack: AuthorisedPack }) {
+  if (pack.testedAt.length === 0) {
+    return null;
+  }
+
+  return (
+    <p
+      className="mt-1 text-sm text-muted-foreground"
+      data-testid="pack-stability"
+    >
+      Shelf life demonstrated at {pack.testedAt.join(" and ")}
+      {pack.stabilitySupported === false && (
+        <span data-testid="pack-stability-unaccepted">
+          {" "}
+          — this market does not accept that condition. Recorded as it stands;
+          a variation would carry the supporting data.
+        </span>
+      )}
+      {pack.stabilitySupported === true && (
+        <span data-testid="pack-stability-accepted"> — accepted here.</span>
+      )}
+      {pack.stabilitySupported === null && (
+        <span data-testid="pack-stability-unknown">
+          {" "}
+          — RegOS holds no accepted conditions for this market, so it cannot
+          say whether that is enough.
+        </span>
+      )}
+    </p>
   );
 }
 
