@@ -25,6 +25,40 @@ public static class ProcessPlanErrors
     public const string HistoryOutOfOrder =
         "That date is before something already recorded on this plan.";
 
+    public const string AlreadyClosed =
+        "This plan is completed or cancelled. Create a new plan rather than "
+        + "reopening it.";
+
+    public const string NotActive =
+        "Work can only be recorded against an active plan.";
+
+    // --- steps ---------------------------------------------------------------
+
+    public const string StepNotFound =
+        "That step does not belong to this plan.";
+
+    public const string StepAlreadySettled =
+        "That step is already complete or skipped. Record a correction rather "
+        + "than reopening it.";
+
+    public const string StepAlreadyInProgress =
+        "That step is already in progress.";
+
+    public const string StepHistoryOutOfOrder =
+        "That date is before something already recorded on this step.";
+
+    /// <summary>
+    /// The one place S004 adds friction on purpose. Six months later somebody
+    /// asks why a step was not performed, and <em>"Skipped"</em> alone is not an
+    /// answer.
+    /// </summary>
+    public const string EndBeforeStart =
+        "A step cannot end before it starts.";
+
+    public const string SkipReasonRequired =
+        "Say why this step is being skipped. It becomes the record of why the "
+        + "work was not done.";
+
     /// <summary>
     /// <b>Not a user error.</b> Publication certified that the definition is a
     /// valid DAG suitable for instantiation, so a graph that cannot be scheduled

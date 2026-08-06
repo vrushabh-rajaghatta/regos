@@ -45,6 +45,10 @@ public sealed class ProcessStepConfiguration : IEntityTypeConfiguration<ProcessS
 
         builder.Property(x => x.Order).IsRequired();
 
+        builder.Property(x => x.CurrentStatus)
+            .HasConversion<int>()
+            .IsRequired();
+
         // Inclusive calendar dates in a jurisdiction, not instants.
         builder.Property(x => x.PlannedStartOn).HasColumnType("date").IsRequired();
         builder.Property(x => x.PlannedEndOn).HasColumnType("date").IsRequired();
@@ -61,6 +65,23 @@ public sealed class ProcessStepConfiguration : IEntityTypeConfiguration<ProcessS
 
         // "What is next?" — the read S004 and S005 are built on.
         builder.HasIndex("ProcessPlanId", nameof(ProcessStep.PlannedStartOn));
+
+        // "What can I work on today?" — the read S004 exists for, filtering
+        // unsettled steps across a tenant's active plans.
+        builder.HasIndex(x => new { x.CurrentStatus, x.PlannedStartOn });
+
+        // The tenth append-only history (ADR-065 I6), and the ninth user of the
+        // shared mapping. A step is a child entity rather than a root, and the
+        // mapping's root overload still applies because it has its own
+        // configuration.
+        builder.OwnsStatusHistory<
+            ProcessStep, ProcessStepStatusEntry, ProcessStepStatusEntryId>(
+            x => x.History,
+            "ProcessStepStatusHistory",
+            "ProcessStepId",
+            id => id.Value,
+            value => new ProcessStepStatusEntryId(value),
+            ProcessStepStatusEntry.NoteMaxLength);
 
         builder.Metadata
             .FindNavigation(nameof(ProcessStep.Predecessors))!

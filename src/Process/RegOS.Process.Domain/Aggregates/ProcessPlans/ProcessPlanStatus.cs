@@ -11,15 +11,25 @@ namespace RegOS.Process.Domain.Aggregates.ProcessPlans;
 /// committing to the goal is the normal case: a <c>Proposed</c> objective may
 /// carry a <c>Draft</c> plan.
 /// <para>
-/// <b><c>Completed</c> and <c>Cancelled</c> are deliberately absent until
-/// S004.</b> Both are statements about execution finishing, and only the story
-/// that models execution has enough information to define them correctly.
-/// Inventing them here would be inventing lifecycle transitions before knowing
-/// what execution means.
+/// <b><see cref="Completed"/> and <see cref="Cancelled"/> arrived with S004</b>,
+/// once execution existed to give them meaning. Inventing them at S003 would
+/// have been inventing lifecycle transitions before knowing what execution was.
+/// </para>
+/// <para>
+/// <b>Completing a plan does not require every step to be <c>Complete</c></b>
+/// (ADR-065 D11). Steps may legitimately be <c>Skipped</c>, and the real
+/// condition is <em>no further execution is expected</em> — a judgement a person
+/// makes, not a count the system takes.
 /// </para>
 /// </remarks>
 public enum ProcessPlanStatus
 {
     Draft = 1,
-    Active = 2
+    Active = 2,
+
+    /// <summary>Nothing further is expected of it. Terminal.</summary>
+    Completed = 3,
+
+    /// <summary>Abandoned before finishing. Terminal, and never deleted.</summary>
+    Cancelled = 4
 }
