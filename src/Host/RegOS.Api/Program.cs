@@ -14,6 +14,7 @@ using RegOS.Api.Endpoints.Manufacturing;
 using RegOS.Api.Endpoints.Packs;
 using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.ProcessDefinitions;
+using RegOS.Api.Endpoints.ProcessObjectives;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
 using RegOS.Api.Endpoints.RegulatoryApplications;
@@ -371,6 +372,13 @@ var processDefinitions = app.MapGroup("").WithTags("Playbooks");
 // the type's word because it is an API contract, not a label.
 processDefinitions.MapListProcessDefinitionsEndpoint();
 processDefinitions.MapGetProcessDefinitionEndpoint();
+
+var processObjectives = app.MapGroup("").WithTags("Objectives");
+processObjectives.MapListProcessObjectivesEndpoint();
+processObjectives.MapCreateProcessObjectiveEndpoint();
+processObjectives.MapGetProcessObjectiveEndpoint();
+processObjectives.MapChangeProcessObjectiveStatusEndpoint();
+processObjectives.MapConfirmObjectiveMarketRecordEndpoint();
 
 var localLabels = app.MapGroup("").WithTags("Local Labels");
 localLabels.MapListCoreVersionsForProduct();

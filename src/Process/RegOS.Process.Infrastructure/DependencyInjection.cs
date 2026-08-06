@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Process.Domain.Aggregates.ProcessDefinitions;
+using RegOS.Process.Domain.Aggregates.ProcessObjectives;
 using RegOS.Process.Infrastructure.Repositories;
 
 namespace RegOS.Process.Infrastructure;
@@ -11,6 +12,8 @@ public static class DependencyInjection
         this IServiceCollection services)
     {
         services.AddScoped<IProcessDefinitionRepository, ProcessDefinitionRepository>();
+
+        services.AddScoped<IProcessObjectiveRepository, ProcessObjectiveRepository>();
 
         return services;
     }
