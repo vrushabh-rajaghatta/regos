@@ -257,7 +257,25 @@ Four sources, one screen, and each source stays answerable on its own. **Milesto
 
 ### D8 — Objective ↔ application, and what an objective targets
 
-RIM draws `Process Objective → Application` as *Peer, Conditional*. **Lean: keep them distinct and let the objective hold a nullable `RegulatoryApplicationId`** — an objective is *"get approved in Japan"*, an application is the vehicle, and one objective may run through several over years. **Open:** does the objective target `GlobalProductId + CountryId`, or the `MedicinalProduct` (EPIC-017's market tier)? Lean **the former**, because the objective routinely exists before anyone has created the market-local product — with a nullable `MedicinalProductId` seam for when they have.
+RIM draws `Process Objective → Application` as *Peer, Conditional*. **Keep them distinct and let the objective hold a nullable `RegulatoryApplicationId`** — an objective is *"get approved in Japan"*, an application is the vehicle, and one objective may run through several over years.
+
+**Settled 2026-08-06: an objective targets `GlobalProductId + CountryId`, with a nullable `MedicinalProductId` confirmation seam.**
+
+The deciding question is *when does the business first know the objective exists?* — and the answer is almost always **before the market-local product does**. *"File in Japan in FY2028"*, *"enter Brazil after the EU launch"*: the global product exists, the market is known, the market-specific regulatory record does not. **Requiring a `MedicinalProduct` would force an organisation to create a regulatory artefact purely to satisfy a foreign key.**
+
+```
+Global Product → Objective (product + country) → market preparation
+                                                        ↓
+                     objective optionally linked ← MedicinalProduct created
+```
+
+**The nullable FK is not there because the objective is incomplete.** It is there because the market record does not exist yet — which is an honest representation of the timeline rather than a modelling concession.
+
+**And it confirms identity rather than redefining it.** Once `MedicinalProductId` is populated it **must** reference the same `(GlobalProductId, CountryId)` the objective already holds; attaching a US market record to a Japan objective is a domain error. That is what stops the duplicated pair drifting.
+
+> **Where that invariant is enforced is decided by [ADR-016](../../adr/ADR-016-persistence-access-model.md), not by this decision: in the command handler, never in the aggregate.** `ProcessObjective` cannot load a `MedicinalProduct` to check it — that is the cross-aggregate read the domain keeps out. `LocalLabel.PrintedFor` documents the identical situation for packs, and EPIC-010b resolved it the same way. **The rule is real and the aggregate is not where it lives.**
+
+**Why not target `MedicinalProduct` alone:** it changes what an objective *means*. *"We intend to enter Japan"* becomes *"we intend to work on a regulatory record that already exists"* — strategic becomes administrative. This is [D3](#d3--is-processobjective-genuinely-distinct-from-processplan) again from a different angle: the strategic concept stays independent of the execution artefacts that follow it.
 
 ### D9 — Terminology **(settled 2026-08-06 — this is a decision, and it goes in ADR-065)**
 

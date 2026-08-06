@@ -69,12 +69,16 @@ public class ContextDependencyTests
 
         // ADR-065: Regulatory Process is an OPTIONAL bounded context. It consumes
         // the regulatory domain and is never its hub, so it is listed low here
-        // rather than high. The ADR authorises three further edges — Product and
-        // RegulatoryApplication outbound, and three contexts inbound for the
-        // nullable ProcessStepId — and **none of them is declared until a project
-        // takes it**, because "the graph declares no edge that no project takes"
+        // rather than high.
+        //
+        // These three arrived one story at a time — ReferenceData with the
+        // playbook (S001), then Product and RegulatoryApplication with the
+        // objective (S002), which targets a product in a market and names the
+        // application it is pursued through. The ADR authorises three more, all
+        // INBOUND for the nullable ProcessStepId, and **none is declared until a
+        // project takes it**: "the graph declares no edge that no project takes"
         // is what stops a permission outliving its reason.
-        ["Process"] = ["ReferenceData"],
+        ["Process"] = ["Product", "ReferenceData", "RegulatoryApplication"],
 
         // ADR-063: where a product is made is a product fact. The reverse edge —
         // Organization → Product — is permanently closed, and the absence of

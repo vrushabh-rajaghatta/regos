@@ -6,6 +6,7 @@ using RegOS.Labeling.Domain.Aggregates.DrugInteractions;
 using RegOS.Labeling.Domain.Aggregates.UndesirableEffects;
 using RegOS.Labeling.Domain.Aggregates.LocalLabels;
 using RegOS.Process.Domain.Aggregates.ProcessDefinitions;
+using RegOS.Process.Domain.Aggregates.ProcessObjectives;
 using RegOS.Product.Domain.Product;
 
 using RegOS.SharedKernel.Abstractions;
@@ -192,6 +193,13 @@ public sealed class RegOSDbContext : DbContext
     /// </remarks>
     public DbSet<ProcessDefinition> ProcessDefinitions =>
         Set<ProcessDefinition>();
+
+    /// <summary>
+    /// What a tenant is trying to achieve in one market, and why (ADR-065
+    /// decision 3). An objective is the goal; plans are attempts.
+    /// </summary>
+    public DbSet<ProcessObjective> ProcessObjectives =>
+        Set<ProcessObjective>();
 
     /// <summary>
     /// What a product is approved to treat in one market — a regulatory fact,
@@ -584,6 +592,13 @@ public sealed class RegOSDbContext : DbContext
         modelBuilder.Entity<ProcessDefinition>().HasQueryFilter(
             x => CurrentTenant != null
                 && (x.TenantId == null || x.TenantId == CurrentTenant));
+
+        // Fail-closed, and the contrast with ProcessDefinition above is the
+        // point: RegOS can ship a playbook because what it takes to open an IND
+        // does not differ by customer. It can never ship an objective, because
+        // where a company intends to seek approval is that company's strategy.
+        modelBuilder.Entity<ProcessObjective>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegistrationAggregate>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
