@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { ObjectiveStatusBadge } from "../components/ObjectiveStatusBadge";
+import { InstantiatePlanDialog } from "@/features/regulatory/plans/components/InstantiatePlanDialog";
+import { useObjectivePlans } from "@/features/regulatory/plans/hooks/useObjectivePlans";
+
 import { useChangeObjectiveStatus } from "../hooks/useChangeObjectiveStatus";
 import { useObjective } from "../hooks/useObjective";
 
@@ -22,7 +26,10 @@ const NEXT: Record<string, string[]> = {
 export function ObjectiveDetailPage() {
   const { objectiveId } = useParams();
 
+  const [planning, setPlanning] = useState(false);
+
   const { data, isPending, isError, refetch } = useObjective(objectiveId);
+  const { data: plans } = useObjectivePlans(objectiveId);
   const changeStatus = useChangeObjectiveStatus(objectiveId ?? "");
 
   return (
@@ -101,6 +108,65 @@ export function ObjectiveDetailPage() {
             </section>
 
             <section className="mt-8">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-sm font-medium">Plans</h2>
+
+                <Button size="sm" onClick={() => setPlanning(true)}>
+                  Create plan
+                </Button>
+              </div>
+
+              <p className="mt-1 max-w-prose text-sm text-muted-foreground">
+                How this objective gets achieved. An objective may be attempted
+                more than once — a withdrawn filing re-attempted later is two
+                plans, one goal.
+              </p>
+
+              <div className="mt-3">
+                {!plans || plans.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                    No plan yet. Create one from a published playbook.
+                  </div>
+                ) : (
+                  <div className="space-y-3" data-testid="objective-plan-list">
+                    {plans.map((plan) => (
+                      <Link
+                        key={plan.id}
+                        to={`/regulatory/plans/${plan.id}`}
+                        data-testid="objective-plan-row"
+                        className="block rounded-lg border p-4 transition-colors hover:bg-muted"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="font-medium">{plan.name}</div>
+
+                            <div className="mt-1 text-sm text-muted-foreground">
+                              {plan.definitionName} v
+                              {plan.definitionVersionNumber}
+                              {plan.definitionVersionIsSuperseded &&
+                                " · a newer version exists"}
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 text-right text-xs text-muted-foreground">
+                            <div>{plan.status}</div>
+                            <div>{plan.stepCount} steps</div>
+
+                            {plan.plannedStartOn && plan.plannedEndOn && (
+                              <div>
+                                {plan.plannedStartOn} to {plan.plannedEndOn}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="mt-8">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-sm font-medium">Status</h2>
 
@@ -166,6 +232,14 @@ export function ObjectiveDetailPage() {
           </>
         )}
       </div>
+
+      {objectiveId && (
+        <InstantiatePlanDialog
+          objectiveId={objectiveId}
+          open={planning}
+          onOpenChange={setPlanning}
+        />
+      )}
     </>
   );
 }

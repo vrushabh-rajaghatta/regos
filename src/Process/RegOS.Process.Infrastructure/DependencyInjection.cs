@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RegOS.Process.Domain.Aggregates.ProcessDefinitions;
 using RegOS.Process.Domain.Aggregates.ProcessObjectives;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.Process.Infrastructure.Repositories;
 
 namespace RegOS.Process.Infrastructure;
@@ -14,6 +15,8 @@ public static class DependencyInjection
         services.AddScoped<IProcessDefinitionRepository, ProcessDefinitionRepository>();
 
         services.AddScoped<IProcessObjectiveRepository, ProcessObjectiveRepository>();
+
+        services.AddScoped<IProcessPlanRepository, ProcessPlanRepository>();
 
         return services;
     }

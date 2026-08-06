@@ -185,7 +185,7 @@ public class ProcessDefinitionTests
             .WithMessage(ProcessDefinitionErrors.CountryRequired);
     }
 
-    internal static ProcessDefinition ADefinition()
+    public static ProcessDefinition ADefinition()
         => ProcessDefinition.Create(
             "US-FDA-IND-INITIAL",
             "US FDA IND — initial filing",

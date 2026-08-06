@@ -3,8 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using RegOS.Process.Application.Commands.ChangeProcessObjectiveStatus;
 using RegOS.Process.Application.Commands.ConfirmObjectiveMarketRecord;
 using RegOS.Process.Application.Commands.CreateProcessObjective;
+using RegOS.Process.Application.Commands.InstantiateProcessPlan;
 using RegOS.Process.Application.Queries.GetProcessDefinition;
 using RegOS.Process.Application.Queries.GetProcessObjective;
+using RegOS.Process.Application.Queries.GetProcessPlan;
+using RegOS.Process.Application.Queries.ListObjectivePlans;
 using RegOS.Process.Application.Queries.ListProcessDefinitions;
 using RegOS.Process.Application.Queries.ListProcessObjectives;
 
@@ -28,6 +31,12 @@ public static class DependencyInjection
         services.AddScoped<ListProcessObjectivesHandler>();
 
         services.AddScoped<GetProcessObjectiveHandler>();
+
+        services.AddScoped<InstantiateProcessPlanHandler>();
+
+        services.AddScoped<GetProcessPlanHandler>();
+
+        services.AddScoped<ListObjectivePlansHandler>();
 
         return services;
     }

@@ -15,6 +15,7 @@ using RegOS.Api.Endpoints.Packs;
 using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.ProcessDefinitions;
 using RegOS.Api.Endpoints.ProcessObjectives;
+using RegOS.Api.Endpoints.ProcessPlans;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
 using RegOS.Api.Endpoints.RegulatoryApplications;
@@ -379,6 +380,11 @@ processObjectives.MapCreateProcessObjectiveEndpoint();
 processObjectives.MapGetProcessObjectiveEndpoint();
 processObjectives.MapChangeProcessObjectiveStatusEndpoint();
 processObjectives.MapConfirmObjectiveMarketRecordEndpoint();
+
+var processPlans = app.MapGroup("").WithTags("Plans");
+processPlans.MapInstantiateProcessPlanEndpoint();
+processPlans.MapGetProcessPlanEndpoint();
+processPlans.MapListObjectivePlansEndpoint();
 
 var localLabels = app.MapGroup("").WithTags("Local Labels");
 localLabels.MapListCoreVersionsForProduct();

@@ -64,6 +64,7 @@ import { PlaybookListPage } from "@/features/regulatory/playbooks/pages/Playbook
 import { PlaybookDetailPage } from "@/features/regulatory/playbooks/pages/PlaybookDetailPage";
 import { ObjectiveListPage } from "@/features/regulatory/objectives/pages/ObjectiveListPage";
 import { ObjectiveDetailPage } from "@/features/regulatory/objectives/pages/ObjectiveDetailPage";
+import { PlanDetailPage } from "@/features/regulatory/plans/pages/PlanDetailPage";
 import { ProductLabelsPage } from "@/features/regulatory/labels/pages/ProductLabelsPage";
 import { ProductRegistrationsPage } from "@/features/regulatory/registrations/pages/ProductRegistrationsPage";
 import { MedicinalProductPage } from "@/features/regulatory/medicinalProducts/pages/MedicinalProductPage";
@@ -149,6 +150,10 @@ export const router = createBrowserRouter([
             path: "regulatory",
             element: <RegulatoryLayout />,
             children: [
+              {
+                path: "plans/:planId",
+                element: <PlanDetailPage />,
+              },
               {
                 path: "objectives",
                 children: [
