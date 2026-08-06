@@ -4,12 +4,21 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { PlanScheduleTable } from "../components/PlanScheduleTable";
+import { useChangePlanStatus } from "../hooks/useChangePlanStatus";
 import { usePlan } from "../hooks/usePlan";
 
 export function PlanDetailPage() {
   const { planId } = useParams();
 
   const { data, isPending, isError, refetch } = usePlan(planId);
+  const changeStatus = useChangePlanStatus(planId ?? "");
+
+  const next: Record<string, ("Active" | "Completed" | "Cancelled")[]> = {
+    Draft: ["Active", "Cancelled"],
+    Active: ["Completed", "Cancelled"],
+    Completed: [],
+    Cancelled: [],
+  };
 
   return (
     <>
@@ -66,6 +75,33 @@ export function PlanDetailPage() {
               </div>
             )}
 
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {(next[data.status] ?? []).map((target) => (
+                <Button
+                  key={target}
+                  size="sm"
+                  variant="outline"
+                  data-testid="plan-status-action"
+                  disabled={changeStatus.isPending}
+                  onClick={() =>
+                    changeStatus.mutate({
+                      status: target,
+                      occurredOn: new Date().toISOString().slice(0, 10),
+                      note: null,
+                    })
+                  }
+                >
+                  {target === "Active" ? "Activate" : `Mark ${target.toLowerCase()}`}
+                </Button>
+              ))}
+            </div>
+
+            {changeStatus.isError && (
+              <p className="mt-2 text-sm text-destructive" role="alert">
+                {changeStatus.error.message}
+              </p>
+            )}
+
             <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <span>{data.status}</span>
               <span>· {data.steps.length} steps</span>
@@ -81,12 +117,18 @@ export function PlanDetailPage() {
               <h2 className="text-sm font-medium">Schedule</h2>
 
               <p className="mt-1 max-w-prose text-sm text-muted-foreground">
-                Worked out once, from the start date and the playbook&rsquo;s
-                step offsets. Changing one step will not move the others.
+                Planned dates were worked out once and nothing recalculates
+                them. A step is complete because someone says so — a linked
+                submission or a finished predecessor may suggest it, never
+                perform it.
               </p>
 
               <div className="mt-3">
-                <PlanScheduleTable steps={data.steps} />
+                <PlanScheduleTable
+                  planId={data.id}
+                  steps={data.steps}
+                  canRecord={data.status === "Active"}
+                />
               </div>
             </section>
           </>

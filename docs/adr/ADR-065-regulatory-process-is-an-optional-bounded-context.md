@@ -12,12 +12,19 @@
 [ADR-061 §3](ADR-061-a-pack-is-how-a-medicine-is-supplied.md) (the cycle the compiler caught),
 [EPIC-020](../product/epics/EPIC-020-regulatory-process-and-planning.md) I1–I4, D1–D9
 
-> **Amended in place at S003, 2026-08-06, before it was merged to `main` and
-> before anything relied on the clause it changed** — ADR-064's precedent, and
-> EPIC-022 D6's before that. Two changes: **I5 (instantiation is deterministic)
-> was added**, and **the ad-hoc-plan clause in the versioning model was struck**
-> — the pin is `NOT NULL`, because instantiation is the only way to create a plan.
-> Neither touches a decision any code depends on.
+> **Amendment log.** This ADR is EPIC-020's implementation contract and the epic
+> is in flight, so it is corrected in place as implementation produces better
+> evidence — ADR-064's precedent, and EPIC-022 D6's before that.
+> **It freezes when the epic branch merges to `main`; after that it is superseded,
+> never edited.** Stating the boundary because "amended twice" and "amendable
+> forever" are one careless step apart.
+>
+> | | Change |
+> |---|---|
+> | **S003** | **I5 added** (instantiation is deterministic). **The ad-hoc-plan clause struck** — the pin is `NOT NULL`, because instantiation is the only way to create a plan. |
+> | **S004** | **D10 recorded** (a plan belongs to exactly one objective — settled at S003 sign-off, written down here). **D11 added** (step completion is a human decision). **I6 added** (execution history is append-only). |
+>
+> No amendment has touched a decision code already depends on.
 >
 > **This ADR is the implementation contract for EPIC-020, not a summary of it.**
 > It deliberately says nothing about story order, screens or sequencing, so that
@@ -76,7 +83,59 @@ They are 1:1 today, and an undemonstrated 1:1 would normally be one object. The 
 
 **The cost asymmetry is why this is not left to be discovered:** collapsing two objects loses the distinction *and* the data that recorded it; splitting one later has to invent both. Deleting an object is cheaper than resurrecting one.
 
-### 4. Instantiation derives dates **once** *(D5)*
+### 3a. A plan belongs to exactly one objective *(D10)*
+
+`ProcessPlan.ProcessObjectiveId` is **required**. *Settled at S003 sign-off, recorded here at S004.*
+
+**Not for referential integrity — for meaning.** A plan answers *how are we going to achieve something?* If nothing answers *what are we trying to achieve?*, it is not a regulatory plan. **It is a schedule, and RegOS is not a project-management tool.**
+
+The deletion test both ways:
+
+| Delete | Lost | Kept |
+|---|---|---|
+| the **plan** | schedule, dated steps, dependency graph | intended outcome, market, rationale, ownership |
+| the **objective** | what the schedule is *for* | dates and steps — **and they no longer mean anything** |
+
+**A plan that still made complete sense without its objective would be evidence that D3 had collapsed.** It does not, so it has not.
+
+**Ad-hoc planning does not need objectiveless plans; it needs lightweight objectives.** *"Sketch a plan for what?"* — even *"evaluate filing in Japan"* is an objective, and it may stay `Proposed` forever.
+
+### 4. Completion is a business decision, never a consequence *(D11)*
+
+> **Step and plan completion are explicit business decisions recorded by a user. External lifecycle events may provide suggestions or readiness indicators, but never perform lifecycle transitions.**
+
+That wording is deliberately wider than *"completion is manual"*, because the erosion never arrives calling itself automation. It arrives as *"the step is obviously done, why make them click?"* — and the sentence above answers every version of that question the same way, including the ones nobody has thought of yet.
+
+**Three things it forecloses at once**, which is why it is stated as one rule rather than three:
+
+| A submission reaches `Transmitted` | may **suggest** | may not complete |
+| A meeting is recorded as held | may **suggest** | may not complete |
+| Every predecessor completes | may show **ready** | may not complete |
+
+**It also covers the plan**, not only the step — a plan does not complete because its last step did. *No further execution is expected* is a judgement, and steps may legitimately be `Skipped` rather than `Complete`.
+
+**Because the two answer different questions.** A submission reaching `Transmitted` answers *what happened to the submission?*; a step completing answers *do we consider this part of the plan done?* Those legitimately diverge — the submission went out while the team is still checking the step's other obligations; the meeting happened but its follow-ups have not; **a CMC package is complete with no RegOS entity representing it at all.**
+
+**And the architectural danger is not the read — it is the source of truth.** RegOS composes across contexts freely (ADR-039 §7). What derived completion changes is ownership:
+
+```
+   today                      derived completion
+   ─────                      ──────────────────
+   Submission                 Submission
+       │ annotation               │ owns
+       ▼                          ▼
+   ProcessStep                ProcessStep
+```
+
+That violates [I2](#i2--process-never-owns-the-lifecycle-of-an-entity-outside-process) in the direction nobody notices, and **the next request follows from it rather than from bad judgement**: *"if the submission completes the step, why doesn't completing the step publish the submission?"*
+
+**A rule that worked for submissions and not for CMC packages would not be a rule.** It would be a special case wearing one.
+
+**Permitted, and expected once S006 exists: *suggested* completion.** A step may **show** that its linked submission has been transmitted. That is a read model getting richer while the domain model stays still — the honest half of the derived idea.
+
+**Refused outright: completing a step because its predecessors completed.** That is a scheduler, and it is on this ADR's [Out of scope](#out-of-scope--refused-not-deferred) list.
+
+### 5. Instantiation derives dates **once** *(D5)*
 
 A `ProcessStepDefinition` carries its predecessors and an offset in days. Instantiating a plan walks that graph topologically from a single anchor date and writes planned dates **once**. From that moment a human owns them: **moving one step moves nothing else.**
 
@@ -167,6 +226,24 @@ The two halves reinforce each other: immutability means a version cannot be edit
 
 **It is what makes *"why is this milestone on this date?"* answerable at all** — the question I4 exists to protect. A pinned version and a stated anchor are only an explanation if the same pair always yields the same answer.
 
+### I6 — Execution history is append-only
+
+> **A step's and a plan's execution history records facts. A correction is a new dated entry, never a rewrite of an old one.** Business dates are supplied by the person recording them; the system clock records only when RegOS learned.
+
+*Added at S004, 2026-08-06 — the first story where a plan has a past.*
+
+**Because execution state is the part most likely to be treated as ordinary CRUD.** Planned dates are obviously a record; *"mark this step complete"* feels like a checkbox, and a checkbox is a thing you untick. The invariant says what actually happens: unticking is **another dated fact**, and both survive.
+
+| | Kept | Why it matters |
+|---|---|---|
+| the entry that was wrong | ✅ | *"we thought this was done on the 3rd"* is itself regulatory history |
+| the correction | ✅ | with its own business date and its own `RecordedOnUtc` |
+| **who believed what, when** | ✅ | the two clocks ADR-037 established, doing the job they exist for |
+
+**This is the eighth dated history in RegOS and the pattern is now load-bearing** — [ADR-037](ADR-037-registrations-are-regulatory-assets-with-derived-visibility.md) established the two clocks, ADR-046 §6 shared their mapping, and every context that records *what happened* has followed. **Execution is not the place to break it for convenience.**
+
+**What it does not forbid:** editing a step's *planned* dates. A schedule is a statement of intent that a human owns and may simply change (D5). The distinction is that **planned dates are a current value; execution is a sequence of events** — and only the second is history.
+
 ## Architectural consequences — the properties a change must preserve
 
 **These are not decisions.** Each falls out of the invariants above, and they are stated separately so that a reviewer can ask *"does this change preserve the consequences?"* without re-opening the decisions.
@@ -178,6 +255,8 @@ The two halves reinforce each other: immutability means a version cannot be edit
 | Published definitions are immutable | I4 · D9 |
 | **Plans are historical records, not projections** | I4 |
 | Existing "due work" semantics remain unchanged | D7 |
+| **No lifecycle transition happens as a consequence of another context** | I2 · D11 |
+| **No execution fact is ever overwritten** | I6 |
 
 ### The fourth is the one the others reduce to
 

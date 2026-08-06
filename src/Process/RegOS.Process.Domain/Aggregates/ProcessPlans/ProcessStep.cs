@@ -1,5 +1,6 @@
 using RegOS.Process.Domain.Aggregates.ProcessDefinitions;
 using RegOS.SharedKernel.Abstractions;
+using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Process.Domain.Aggregates.ProcessPlans;
 
@@ -24,6 +25,7 @@ namespace RegOS.Process.Domain.Aggregates.ProcessPlans;
 public sealed class ProcessStep : Entity<ProcessStepId>
 {
     private readonly List<ProcessStepDependency> _predecessors = [];
+    private readonly List<ProcessStepStatusEntry> _history = [];
 
     // EF materialisation.
     private ProcessStep()
@@ -50,6 +52,14 @@ public sealed class ProcessStep : Entity<ProcessStepId>
         Order = order;
         PlannedStartOn = plannedStartOn;
         PlannedEndOn = plannedEndOn;
+        CurrentStatus = ProcessStepStatus.NotStarted;
+
+        _history.Add(new ProcessStepStatusEntry(
+            ProcessStepStatusEntryId.New(),
+            ProcessStepStatus.NotStarted,
+            plannedStartOn,
+            DateTime.UtcNow,
+            null));
     }
 
     /// <summary>
@@ -87,6 +97,76 @@ public sealed class ProcessStep : Entity<ProcessStepId>
     public IReadOnlyCollection<ProcessStepDependency> Predecessors
         => _predecessors.AsReadOnly();
 
+    /// <summary>
+    /// Stored, and it earns that: the "what is next" read filters on it across
+    /// every step of every active plan, which would otherwise walk every history.
+    /// </summary>
+    public ProcessStepStatus CurrentStatus { get; private set; }
+
+    public IReadOnlyList<ProcessStepStatusEntry> History => _history.AsReadOnly();
+
+    /// <summary>
+    /// When work actually began, or null if it never was marked as begun.
+    /// </summary>
+    /// <remarks>
+    /// <b>Derived, never stored</b> — the call <c>Commitment.GivenOn</c> made and
+    /// every dated history in RegOS has followed. <b>Null after a step went
+    /// straight to complete is honest</b>, not a gap: nobody recorded a start, so
+    /// RegOS does not know one.
+    /// </remarks>
+    public DateOnly? ActualStartOn
+        => _history
+            .Where(x => x.Status == ProcessStepStatus.InProgress)
+            .Select(x => (DateOnly?)x.OccurredOn)
+            .FirstOrDefault();
+
+    /// <summary>When it finished, either way. Derived.</summary>
+    public DateOnly? ActualEndOn
+        => _history
+            .Where(x => x.Status is ProcessStepStatus.Complete
+                or ProcessStepStatus.Skipped)
+            .Select(x => (DateOnly?)x.OccurredOn)
+            .FirstOrDefault();
+
+    /// <summary>Nothing further is expected of this step, either way.</summary>
+    public bool IsSettled
+        => CurrentStatus is ProcessStepStatus.Complete
+            or ProcessStepStatus.Skipped;
+
     internal void WaitFor(ProcessStepId predecessorStepId)
         => _predecessors.Add(new ProcessStepDependency(predecessorStepId));
+
+    /// <summary>
+    /// Records a transition. <b>Called only by the plan</b>, which owns the rules
+    /// about which transitions are legal — a step is a child entity and the
+    /// aggregate root is the consistency boundary (ADR-016).
+    /// </summary>
+    internal void RecordStatus(
+        ProcessStepStatus status, DateOnly occurredOn, string? note)
+    {
+        _history.Add(new ProcessStepStatusEntry(
+            ProcessStepStatusEntryId.New(),
+            status,
+            occurredOn,
+            DateTime.UtcNow,
+            note));
+
+        CurrentStatus = status;
+    }
+
+    /// <summary>The latest business date recorded, for the chronology rule.</summary>
+    internal DateOnly LatestRecordedOn => _history.Max(entry => entry.OccurredOn);
+
+    /// <summary>
+    /// Moves the planned dates. <b>A current value, not history</b> — a schedule
+    /// is intent a human owns, and I6 governs execution rather than intent.
+    /// </summary>
+    internal void Reschedule(DateOnly plannedStartOn, DateOnly plannedEndOn)
+    {
+        if (plannedEndOn < plannedStartOn)
+            throw new DomainException(ProcessPlanErrors.EndBeforeStart);
+
+        PlannedStartOn = plannedStartOn;
+        PlannedEndOn = plannedEndOn;
+    }
 }

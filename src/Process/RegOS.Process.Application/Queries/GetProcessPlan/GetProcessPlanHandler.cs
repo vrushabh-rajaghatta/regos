@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RegOS.Persistence;
 using RegOS.Process.Domain.Aggregates.ProcessDefinitions;
 using RegOS.Process.Domain.Aggregates.ProcessPlans;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Process.Application.Queries.GetProcessPlan;
@@ -67,6 +68,17 @@ public sealed class GetProcessPlanHandler
                         step.PlannedEndOn,
                         Predecessors = step.Predecessors
                             .Select(x => x.PredecessorStepId)
+                            .ToList(),
+                        step.CurrentStatus,
+                        History = step.History
+                            .Select(h => new
+                            {
+                                h.Status,
+                                h.OccurredOn,
+                                h.RecordedOnUtc,
+                                h.Note,
+                                h.Id
+                            })
                             .ToList()
                     })
                     .ToList()
@@ -95,7 +107,32 @@ public sealed class GetProcessPlanHandler
                     .Select(x => codeOf.GetValueOrDefault(x, "?"))
                     // Deterministic: a step waits for another at most once
                     // (unique index), and one code per step.
-                    .OrderBy(code => code, StringComparer.Ordinal)]))
+                    .OrderBy(code => code, StringComparer.Ordinal)],
+                step.CurrentStatus.ToString(),
+                // Derived here exactly as the aggregate derives them — a stored
+                // copy could disagree with the entries it summarises.
+                step.History
+                    .Where(h => h.Status == ProcessStepStatus.InProgress)
+                    .Select(h => (DateOnly?)h.OccurredOn)
+                    .FirstOrDefault(),
+                step.History
+                    .Where(h => h.Status is ProcessStepStatus.Complete
+                        or ProcessStepStatus.Skipped)
+                    .Select(h => (DateOnly?)h.OccurredOn)
+                    .FirstOrDefault(),
+                step.CurrentStatus is ProcessStepStatus.Complete
+                    or ProcessStepStatus.Skipped,
+                [.. step.History
+                    // Oldest first — a history is read forwards. RecordedOnUtc
+                    // breaks a same-day tie, and the entry id makes it total.
+                    .OrderBy(h => h.OccurredOn)
+                    .ThenBy(h => h.RecordedOnUtc)
+                    .ThenBy(h => h.Id.Value)
+                    .Select(h => new StepHistoryEntry(
+                        h.Status.ToString(),
+                        h.OccurredOn,
+                        h.RecordedOnUtc,
+                        h.Note))]))
             .ToList();
 
         return new ProcessPlanDetails(

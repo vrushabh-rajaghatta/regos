@@ -385,6 +385,11 @@ var processPlans = app.MapGroup("").WithTags("Plans");
 processPlans.MapInstantiateProcessPlanEndpoint();
 processPlans.MapGetProcessPlanEndpoint();
 processPlans.MapListObjectivePlansEndpoint();
+// Before the {id:guid} routes above cannot match it, but kept adjacent so the
+// group reads as one surface.
+processPlans.MapListNextStepsEndpoint();
+processPlans.MapChangeProcessPlanStatusEndpoint();
+processPlans.MapChangeProcessStepStatusEndpoint();
 
 var localLabels = app.MapGroup("").WithTags("Local Labels");
 localLabels.MapListCoreVersionsForProduct();

@@ -132,6 +132,134 @@ public sealed class ProcessPlan : AggregateRoot<ProcessPlanId>
         if (CurrentStatus == ProcessPlanStatus.Active)
             throw new BusinessRuleViolationException(ProcessPlanErrors.AlreadyActive);
 
+        Move(ProcessPlanStatus.Active, occurredOn, note);
+    }
+
+    /// <summary>
+    /// Nothing further is expected of this plan.
+    /// </summary>
+    /// <remarks>
+    /// <b>It does not require every step to be complete</b> (ADR-065 D11). Steps
+    /// may legitimately have been <see cref="ProcessStepStatus.Skipped"/>, and
+    /// requiring otherwise would push a team to mark work done that was not, in
+    /// order to close a plan. <b>The condition is a judgement, not a count</b> —
+    /// exactly as a step's completion is.
+    /// </remarks>
+    public void Complete(DateOnly occurredOn, string? note = null)
+        => Move(ProcessPlanStatus.Completed, occurredOn, note);
+
+    /// <summary>Abandoned before finishing. The plan and its history are kept.</summary>
+    public void Cancel(DateOnly occurredOn, string? note = null)
+        => Move(ProcessPlanStatus.Cancelled, occurredOn, note);
+
+    // --- execution (S004) ----------------------------------------------------
+
+    /// <summary>Work on a step has begun.</summary>
+    public void StartStep(ProcessStepId stepId, DateOnly occurredOn)
+    {
+        var step = StepOf(stepId);
+
+        GuardStepCanMove(step, occurredOn);
+
+        if (step.CurrentStatus == ProcessStepStatus.InProgress)
+            throw new BusinessRuleViolationException(
+                ProcessPlanErrors.StepAlreadyInProgress);
+
+        step.RecordStatus(ProcessStepStatus.InProgress, occurredOn, null);
+    }
+
+    /// <summary>
+    /// A person has decided this step is done, on a date they chose.
+    /// </summary>
+    /// <remarks>
+    /// <b>Nothing else can call this on their behalf</b> (ADR-065 D11). A linked
+    /// submission reaching <c>Transmitted</c>, a meeting recorded as held, or
+    /// every predecessor completing may all <em>suggest</em> it. None of them
+    /// performs it.
+    /// <para>
+    /// <b>A step may complete without ever having started.</b> Work finished that
+    /// nobody marked as begun is ordinary, and refusing it would only teach people
+    /// to record a fictional start date.
+    /// </para>
+    /// </remarks>
+    public void CompleteStep(
+        ProcessStepId stepId, DateOnly occurredOn, string? note = null)
+    {
+        var step = StepOf(stepId);
+
+        GuardStepCanMove(step, occurredOn);
+        GuardNote(note);
+
+        step.RecordStatus(
+            ProcessStepStatus.Complete,
+            occurredOn,
+            string.IsNullOrWhiteSpace(note) ? null : note.Trim());
+    }
+
+    /// <summary>
+    /// This step will deliberately not be performed. <b>A reason is required.</b>
+    /// </summary>
+    /// <remarks>
+    /// The one place this story adds friction on purpose. A skipped step with no
+    /// reason is an unexplained gap in a regulatory record a year later, and
+    /// <em>"Skipped"</em> on its own is not an explanation. Everywhere else in
+    /// RegOS a note is optional; here it is the record of why the work was not
+    /// done.
+    /// </remarks>
+    public void SkipStep(ProcessStepId stepId, DateOnly occurredOn, string reason)
+    {
+        var step = StepOf(stepId);
+
+        GuardStepCanMove(step, occurredOn);
+
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new DomainException(ProcessPlanErrors.SkipReasonRequired);
+
+        GuardNote(reason);
+
+        step.RecordStatus(ProcessStepStatus.Skipped, occurredOn, reason.Trim());
+    }
+
+    /// <summary>
+    /// Moves a planned date. <b>Permitted, and it moves nothing else</b> — a
+    /// schedule is a statement of intent a human owns (D5), and only execution is
+    /// history (I6).
+    /// </summary>
+    public void RescheduleStep(
+        ProcessStepId stepId, DateOnly plannedStartOn, DateOnly plannedEndOn)
+        => StepOf(stepId).Reschedule(plannedStartOn, plannedEndOn);
+
+    private ProcessStep StepOf(ProcessStepId stepId)
+        => _steps.FirstOrDefault(x => x.Id == stepId)
+           ?? throw new NotFoundException(ProcessPlanErrors.StepNotFound);
+
+    private void GuardStepCanMove(ProcessStep step, DateOnly occurredOn)
+    {
+        if (CurrentStatus != ProcessPlanStatus.Active)
+            throw new BusinessRuleViolationException(ProcessPlanErrors.NotActive);
+
+        if (step.IsSettled)
+            throw new BusinessRuleViolationException(
+                ProcessPlanErrors.StepAlreadySettled);
+
+        // Max, not [^1]: an unordered Include returns the last row the database
+        // gave, not the latest event.
+        if (occurredOn < step.LatestRecordedOn)
+            throw new DomainException(ProcessPlanErrors.StepHistoryOutOfOrder);
+    }
+
+    private static void GuardNote(string? note)
+    {
+        if (note is { Length: > ProcessStepStatusEntry.NoteMaxLength })
+            throw new DomainException(ProcessPlanErrors.NoteTooLong);
+    }
+
+    private void Move(ProcessPlanStatus target, DateOnly occurredOn, string? note)
+    {
+        if (CurrentStatus is ProcessPlanStatus.Completed
+            or ProcessPlanStatus.Cancelled)
+            throw new BusinessRuleViolationException(ProcessPlanErrors.AlreadyClosed);
+
         if (occurredOn < _history.Max(entry => entry.OccurredOn))
             throw new DomainException(ProcessPlanErrors.HistoryOutOfOrder);
 
@@ -140,12 +268,12 @@ public sealed class ProcessPlan : AggregateRoot<ProcessPlanId>
 
         _history.Add(new ProcessPlanStatusEntry(
             ProcessPlanStatusEntryId.New(),
-            ProcessPlanStatus.Active,
+            target,
             occurredOn,
             DateTime.UtcNow,
             string.IsNullOrWhiteSpace(note) ? null : note.Trim()));
 
-        CurrentStatus = ProcessPlanStatus.Active;
+        CurrentStatus = target;
     }
 
     /// <summary>
