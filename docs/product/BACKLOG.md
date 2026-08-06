@@ -40,54 +40,58 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 | **EPIC-022** | **Country depth** — a country stops being a label on a dropdown: ISO identity, regulatory groupings, expected label languages, accepted stability conditions | 🟢 Complete | 5 stories, DoD line by line; [ADR-062](../adr/ADR-062-a-language-is-a-world-fact.md) · E36–E39 · **D6 amended in place before it was built** — WHO publishes the stability *condition* a market accepts and no climatic zone, and India's 30 °C/70% RH is neither IVA nor IVB (E39) · **closes no RIM object, as forecast** — one object 33% → ~92% · merged to `main` (PR #22) → [`epics/EPIC-022-country-depth.md`](epics/EPIC-022-country-depth.md) |
 | **EPIC-023** | **The test suite runs against its own schema** — every database-touching assembly provisions its own database, migrated from the current chain and seeded by the real initializers | 🟢 Complete | 4 stories, DoD line by line; [ADR-064](../adr/ADR-064-the-test-suite-provisions-its-own-schema.md) — **amended in place at S001**, when the measurement it rested on turned out to be the wrong layer · **27 files naming a database → 1**, and a full run leaves the developer's database byte-identical (17,716 sessions before, 17,716 after) · **the idempotent deployment artifact was broken and had never been run** — found while planning, fixed in S003, verified idempotent · **closes no RIM object, as forecast** · 28 s → 39.5 s, and the epic doc says what that bought → [`epics/EPIC-023-test-schema.md`](epics/EPIC-023-test-schema.md) |
 | **EPIC-010c** | **Manufacturing** — where a product is made, which sites its licences approve, where each ingredient comes from, and the question the epic existed for: *"is the site we manufacture at on the licence?"* | 🟢 Complete | 4 stories, DoD line by line; [ADR-063](../adr/ADR-063-where-a-product-is-made-is-a-product-fact.md) — **the first `Product.Domain` → `Organization.Domain` edge**, and D2 decided D7 before anybody looked · **builds 1 of cluster D's 4 RIM objects and refuses 3** — the dossier already owns manufacturing narrative at 3.2.S.2 · **three recorded predictions fired**, none of them a count · a misdiagnosed "flake" turned out to be a missing `ORDER BY` tie-breaker → [`epics/EPIC-010c-manufacturing.md`](epics/EPIC-010c-manufacturing.md) |
+| **EPIC-024** | **The invariants nothing checks** — the architecture written down and made executable: the bounded-context graph, deterministic ordering on every read path, and the test-database rule | 🟢 Complete | 4 stories, 5/5 DoD; **no ADR — D2 held, and nothing was decided that was not already decided** · **planning changed two of the three items before a line was written**, and the third was vacuous on first contact with the `.csproj` graph · **the graph got *simpler***: 26 edges + 2 exceptions → **26 edges, none** · **orderings terminating uniquely 1 of 124 → 124 of 124**, and 42 carry a written invariant instead of a redundant key · **all four guards demonstrated failing on a deliberate violation** — including EPIC-010c's exact defect, now caught by file and line in 0.3 s · architecture suite 25 → 36 · merged to `main` (PR #25) → [`epics/EPIC-024-invariants-nothing-checks.md`](epics/EPIC-024-invariants-nothing-checks.md) |
 
 ---
 
 ## Now
 
-🟡 **[EPIC-024 — the invariants nothing checks](epics/EPIC-024-invariants-nothing-checks.md).**
-Taken 2026-08-05, straight after EPIC-023 and by the same ordering. **EPIC-023
-made the environment trustworthy; this makes the architecture trustworthy.**
+🟡 **[EPIC-020 — regulatory process & planning](epics/EPIC-020-regulatory-process-and-planning.md).**
+Taken 2026-08-06. RIM's **spine** — the layer that turns a record system into one
+that tells you what to do next. **Phase 1 approved the same day; the epic is
+architecturally green and ADR-065 is the implementation contract, not another
+round of design exploration.**
 
-**Planning changed two of its three items before a line was written:**
+**Planning checked the six-week-old sketch against the code first, and two of its
+three load-bearing claims were wrong:**
 
-- **The dependency graph is cleaner than the entry assumed.** 26 Domain edges,
-  **zero** exceptions in the Application layer, and the two in Infrastructure
-  turned out to be **removable** — both contexts' own `*.Domain` already carried
-  the edge, so the explicit references were redundant and the solution builds
-  without them. The graph gets simpler forever rather than gaining two
-  intentional exceptions
-- **The third item, as raised here one day earlier, was vacuous.** *"Any test
-  project **referencing** `RegOS.Persistence`"* — **none does.** All seven reach
-  it transitively. The correct rule is transitive reach, and it separates
-  perfectly: 7 reach it, the same 7 reference `RegOS.TestSupport`, 0 mismatches.
-  **A rule stated from memory is a hypothesis**, and this one was false on first
-  contact with the `.csproj` graph
-- **The ordering rule is about determinism, not ids.** 89 orderings and not one
-  ends in a unique key — but totality is **not syntactically decidable**, because
-  it usually rests on an invariant the ordering keys do not reveal. The rule is
-  therefore a property with two ways to satisfy it, so it outlives today's
-  preferred technique
+- **There is no `ProcessStepId` seam.** The sketch said EPIC-004 and EPIC-006 were
+  *"told to leave one; this epic fills it"*. `grep -rn "ProcessStep" src/` returns
+  **zero** — and EPIC-006's retro records the absence under *what the change-case
+  analysis got right*. So the wiring is **six migrations on shipped tables**,
+  cheap only because RegOS is pre-customer. **That window does not widen**
+- **"Optional and deletable" was never available.** Inward seams make Process
+  *depended upon by five contexts*. The property actually on offer is
+  **runtime-optional** — every link nullable, RegOS fully usable with no plan in
+  it — and it is now **I1**, with a Definition-of-Done item as its test
+- **`ListDueWork` already exists.** EPIC-006 shipped it. *Due* and *late* are two
+  facts: an obligation a regulator is waiting on, and our own plan slipping. They
+  **share no code**, and *"`ListDueWork` is unchanged and still passes"* is a DoD
+  item
 
-> **The order was set by the founder, and the three are not a queue but a
-> sequence with a reason:** strengthen the development foundation (EPIC-023 ✅),
-> then make the architectural invariants executable (**EPIC-024**), then return
-> to **EPIC-021** once second-sequence workflows exist. The third is the only one
-> still waiting on a precondition nothing in this backlog creates.
+**Four RIM objects, not six.** The runway below says EPIC-020 closes 6; it closes
+**4**. `ProcessObjectiveGroup` is deferred with its milestone named — nobody asks
+its question, and RegOS holds no product with objectives in two markets, which is
+[ADR-038](../adr/ADR-038-organization-depth-roots-and-the-three-filter-shapes.md)'s
+*demo of an empty table*. **Recorded before implementation rather than discovered
+at the retro.**
 
-**EPIC-024 gained a third item from EPIC-023's close**, and it is the same shape
-as the two already there — a rule the project relies on that nothing executes:
-*any test project referencing `RegOS.Persistence` must also reference
-`RegOS.TestSupport`.* EPIC-023's guard proves **no file names a database**; it
-does not prove **every database test uses the fixture**.
+> **The one sentence the epic turns on**, and the four design choices reduce to
+> it: **plans are historical records, not projections.** A plan pins a
+> `ProcessDefinitionVersion` forever; dates are derived **once**; re-binding is
+> explicit; recalculation is **absent, not missing**.
 
-> **The one thing EPIC-023 did not buy, stated where it will be read:** it
-> removed the lie, not the silence. All three founding observations were
-> *"somebody ran the suite and it told them the wrong thing"* — fixed. **Nothing
-> runs the suite except a person typing `dotnet test`.** A green run is now
-> trustworthy; an absent run is still invisible, and
-> [EPIC-015](#later)'s CI job is worth more than it looked the day before this
-> shipped.
+**`ProcessDefinition`, not RIM's `ProcessPlanTemplate`** — *template* means a
+thing you copy and edit, *definition* means a thing you conform to, and the
+second is what was designed. The UI calls it a **Playbook**. This is the **third**
+time RegOS kept a RIM concept and refused its shape or name, after `Artwork`
+(EPIC-018) and `PackAuthorisation` (EPIC-010b); **promotion of that pattern to
+`implementation-standards.md` waits for this epic's retro**, because two are
+shipped and the third is only decided.
+
+**Split point declared, not held in reserve:** S001–S005 touch no existing
+context; S006–S007 are where five get migrations. If velocity slips it splits
+there into 020a/020b, and nothing has to be rethought.
 
 **EPIC-010 is finished** — 10a, 10b and 10c are all shipped, which closes the
 Product depth work.
@@ -162,7 +166,8 @@ whoever can go and fetch one.*
 | # | ID | Epic | Status | Depends on |
 |---|---|---|---|---|
 | — | ~~**EPIC-023**~~ | **The test suite runs against its own schema** | 🟢 **Shipped 2026-08-05** | — |
-| — | ~~**EPIC-024**~~ | **The invariants nothing checks** | 🟡 **Taken 2026-08-05** — in [Now](#now) | — |
+| — | ~~**EPIC-024**~~ | **The invariants nothing checks** | 🟢 **Shipped 2026-08-06** (PR #25) | — |
+| — | ~~**EPIC-020**~~ | **Regulatory process & planning** | 🟡 **Taken 2026-08-06** — in [Now](#now) | EPIC-004 ✅ · EPIC-006 ✅ · EPIC-017 ✅ |
 | 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) · **and one thing no epic supplies** — see below |
 | — | ~~**EPIC-010c**~~ | **Manufacturing** | 🟢 **Shipped 2026-08-05** (PR #23), closing EPIC-010 | — |
 
@@ -303,7 +308,7 @@ and value calls are the founder's.
 |---|---|---|---|
 | **EPIC-010** | **IDMP / product data depth** — substances, ingredients, strength, presentation, packaging, manufacturing | ⚪ Not Started | needs EPIC-016 + EPIC-017 · **split into 10a/10b/10c before cutting a branch** · umbrella → [`epics/EPIC-010-idmp-product-data-depth.md`](epics/EPIC-010-idmp-product-data-depth.md) |
 | **EPIC-021** | **Cross-sequence continuity** — the checks FDA's review tooling needs and no DTD can express: a study filed twice under two titles, an instance qualifier that drifts, a `study-id` that changes | ⚪ Not Started | **owed by EPIC-019**, scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) — the check belongs in the generator, reading frozen publication facts, adding no dependency in any direction. **Architecture settled; implementation deferred** because it needs a second sequence filing the same study. E24, E17, E18 |
-| **EPIC-020** | **Regulatory process & planning** — objectives, plan/step templates, live plans and dated steps; RIM's spine | ⚪ Not Started | needs EPIC-004 + EPIC-006 + EPIC-017 · deliberately last · planned → [`epics/EPIC-020-regulatory-process-and-planning.md`](epics/EPIC-020-regulatory-process-and-planning.md) |
+| ~~**EPIC-020**~~ | **Regulatory process & planning** — objectives, process definitions, live plans and dated steps; RIM's spine | 🟡 **Taken 2026-08-06** — in [Now](#now) | *"Deliberately last" meant its dependencies came first; EPIC-004, 006 and 017 have all shipped, so last now means next* |
 | **EPIC-007b** | **Publishing — transmission, STF & message formats** — gateway transmission (ESG/AS2), study tagging files, xEVMPD/IDMP messages | ⚪ Not Started | needs EPIC-010 + EPIC-019 · **carries the `Filed` transition**: ADR-046 named EPIC-007 as the milestone, and it belongs to whichever half transmits |
 | **EPIC-008** | **Review & approval workflow** — internal review, comments, approvals, e-signatures; the QC/publishing/compilation/validation status pipelines deferred from EPIC-004 | ⚪ Not Started | |
 | **EPIC-009** | **Regulatory intelligence / requirements** — what's required per market & product type; keeps the blueprint current | ⚪ Not Started | feeds EPIC-001 |
@@ -517,7 +522,17 @@ Three divergences are **not** gaps and should be defended, not closed:
 | — | *taken out of order 2026-08-03* — EPIC-019 shipped before 018, because Module 4 was blocked and labeling was not | | | |
 | 6 | **EPIC-019** Study registry | 2 | → ~59% | 🟢 |
 | 7 | **EPIC-010** IDMP depth (10a 🟢 / 10b 🟢 / 10c 🟢) | **11 built · 5 refused** | *see below* | 🟢 |
-| 8 | **EPIC-020** Process & planning | 6 | → ~98% | ⚪ |
+| 8 | **EPIC-020** Process & planning | ~~6~~ **4 built · 2 refused** | *see below* | 🟡 |
+
+> **EPIC-020's four, corrected at Phase 1 rather than at the retro.** This row
+> said **6 → ~98%** from the day the runway was written, and the epic plan closes
+> **4**. `Process Objective Group` is deferred with its milestone named — nobody
+> asks its question — and RIM's `Process Plan Template` becomes
+> **`ProcessDefinition`**, a different shape for the same concept, so it is
+> counted as built rather than as RIM's object. **The running-coverage figure is
+> therefore left blank rather than restated**: it was arithmetic on a number that
+> was wrong, and inventing a replacement percentage would repeat the mistake in a
+> new digit. Coverage is a map of the domain, not an implementation target.
 
 > **EPIC-018's ten, counted honestly.** Nine aggregates cover the ten RIM
 > objects: **Artwork is not its own aggregate** — it is a `LocalLabel` of type
