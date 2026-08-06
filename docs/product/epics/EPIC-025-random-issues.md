@@ -56,7 +56,7 @@ problems go to be forgotten.** The rules below exist to stop that.
 | ID | Issue | Severity | Found | Status |
 |---|---|---|---|---|
 | [BUG-001](#bug-001--in-memory-ordering-by-an-id-throws-once-a-collection-holds-two-rows) | In-memory ordering by an id throws once a collection holds two rows | **Live** | 2026-08-06 | ⚪ Open |
-| [BUG-002](#bug-002--the-frontend-does-not-compile) | The frontend does not compile — `npm run build` fails | **Live** | 2026-08-06 | ⚪ Open |
+| [BUG-002](#bug-002--the-frontend-does-not-compile) | The frontend does not compile — `npm run build` fails | **Live** | 2026-08-06 | ⚪ Open — **does not reproduce on `main`'s descendants**, see the entry |
 | [BUG-003](#bug-003--five-seed-initializers-can-never-pick-up-a-newly-added-row) | Five seed initializers can never pick up a newly added seed row | **Latent** | 2026-08-06 | ⚪ Open |
 
 ---
@@ -157,6 +157,22 @@ so **`npm run build` produces no bundle** — this is not a warning.
 
 `npm run lint` separately reports 6 problems (3 errors, 3 warnings) in four
 files, none of them this one. Those are pre-existing and not part of this entry.
+
+> **Does not reproduce — checked 2026-08-06 on `feat/EPIC-020-S005-late-work`.**
+> `tsc -b --force` with every `.tsbuildinfo` deleted exits **0**, so this is not
+> an incremental-cache artefact. `npm run lint` reports **3 problems (0 errors,
+> 3 warnings)**, not 6.
+>
+> **The entry names `42c599a` as the file's last commit, and it is not.**
+> `2a82753` — *"fix(labeling): the null the Select emits, and the build nobody
+> ran"*, 2026-08-04 — touches this exact file and **is an ancestor of
+> `origin/main`**. So the fix predates the finding by two days on every branch
+> that descends from `main`.
+>
+> **The likeliest explanation is a worktree that does not contain `2a82753`**,
+> and that is worth confirming rather than assuming: if it reproduces somewhere,
+> the interesting fact is *where*, not the error. **Left open rather than closed
+> — the finder verifies their own environment, not me.**
 
 ---
 
