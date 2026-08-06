@@ -12,6 +12,13 @@
 [ADR-061 §3](ADR-061-a-pack-is-how-a-medicine-is-supplied.md) (the cycle the compiler caught),
 [EPIC-020](../product/epics/EPIC-020-regulatory-process-and-planning.md) I1–I4, D1–D9
 
+> **Amended in place at S003, 2026-08-06, before it was merged to `main` and
+> before anything relied on the clause it changed** — ADR-064's precedent, and
+> EPIC-022 D6's before that. Two changes: **I5 (instantiation is deterministic)
+> was added**, and **the ad-hoc-plan clause in the versioning model was struck**
+> — the pin is `NOT NULL`, because instantiation is the only way to create a plan.
+> Neither touches a decision any code depends on.
+>
 > **This ADR is the implementation contract for EPIC-020, not a summary of it.**
 > It deliberately says nothing about story order, screens or sequencing, so that
 > re-cutting S002 or S004 leaves it untouched. Where it and the epic plan
@@ -140,6 +147,26 @@ A step may record that a submission belongs to it. It may never create, transiti
 
 The two halves reinforce each other: immutability means a version cannot be edited under a plan already running against it; permanent pinning means *"why did this milestone move?"* always has an answer, and the answer is never *"the playbook changed under us."*
 
+### I5 — Instantiation is deterministic
+
+> **Given the same published `ProcessDefinitionVersion`, the same objective and the same anchor date, `InstantiateFrom` always produces the same plan** — the same steps, the same dates, the same predecessor graph. No runtime state, no wall clock, no database ordering and no randomness may influence the result.
+
+*Added at S003, 2026-08-06 — the first story that creates plans.*
+
+**This is I4, publication's certificate and EPIC-024's ordering rule meeting in one method.** Each is necessary and none is sufficient:
+
+| Without it | What breaks |
+|---|---|
+| the pinned, frozen version (I4) | the *input* changes under a rerun |
+| publication's DAG certificate | the walk has no guaranteed order to find |
+| deterministic ordering | two runs schedule the same tie differently |
+
+**The test is a rerun, not an inspection.** Instantiating twice from the same three inputs must produce two plans that differ only in their ids — which is checkable, and is the form the S003 tests take.
+
+**What it forbids, concretely:** reading `DateTime.UtcNow` inside the derivation, ordering steps by whatever the database returned, resolving "the current version" instead of taking one, or letting an already-created plan influence the next. **Each of those is a plausible convenience**, which is why the invariant is stated rather than assumed.
+
+**It is what makes *"why is this milestone on this date?"* answerable at all** — the question I4 exists to protect. A pinned version and a stated anchor are only an explanation if the same pair always yields the same answer.
+
 ## Architectural consequences — the properties a change must preserve
 
 **These are not decisions.** Each falls out of the invariants above, and they are stated separately so that a reviewer can ask *"does this change preserve the consequences?"* without re-opening the decisions.
@@ -211,7 +238,11 @@ A contributor who reads only that sentence should make the same four calls unpro
 
 **The pin targets the *version*, not the definition** — the same deliberate exception [ADR-035 §2](ADR-035-submissions-bind-to-a-published-template-version.md) makes for submissions, and for the same reason: **the version is the governance artefact**, so pointing at the root would leave *"which version?"* unanswered at every point that matters. The database foreign key is `Restrict`; a version a plan was scheduled from can never be deleted.
 
-**A plan with no definition is legitimate.** An ad-hoc plan pins nothing, exactly as [ADR-035 §4](ADR-035-submissions-bind-to-a-published-template-version.md) allows an unbound submission: **missing reference data must never block the business.**
+~~**A plan with no definition is legitimate.** An ad-hoc plan pins nothing, exactly as [ADR-035 §4](ADR-035-submissions-bind-to-a-published-template-version.md) allows an unbound submission: **missing reference data must never block the business.**~~
+
+> **Amended at S003, 2026-08-06 — the pin is required.** `ProcessPlan.ProcessDefinitionVersionId` is **`NOT NULL`**, because instantiation is the only way to create a plan and every plan therefore has one. The clause above described a capability nobody has built, and carrying a nullable column for it would be the speculative seam this ADR refuses elsewhere — the same discipline that kept `ProcessObjectiveGroup` out, left five authorised edges undeclared, and deleted a duplicated DTO field.
+>
+> **If ad-hoc plans become a real requirement, the migration is `ALTER COLUMN … DROP NOT NULL`** — and ADR-035 §4's argument is waiting for it, unchanged. **Nothing about the reasoning was wrong; it was answering a question nobody had asked yet.**
 
 ## RIM adoption
 

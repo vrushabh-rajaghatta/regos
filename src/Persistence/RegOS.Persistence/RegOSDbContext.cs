@@ -7,6 +7,7 @@ using RegOS.Labeling.Domain.Aggregates.UndesirableEffects;
 using RegOS.Labeling.Domain.Aggregates.LocalLabels;
 using RegOS.Process.Domain.Aggregates.ProcessDefinitions;
 using RegOS.Process.Domain.Aggregates.ProcessObjectives;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.Product.Domain.Product;
 
 using RegOS.SharedKernel.Abstractions;
@@ -200,6 +201,17 @@ public sealed class RegOSDbContext : DbContext
     /// </summary>
     public DbSet<ProcessObjective> ProcessObjectives =>
         Set<ProcessObjective>();
+
+    /// <summary>
+    /// How an objective is to be achieved — instantiated from a pinned playbook
+    /// version, with its dates derived once (ADR-065 I4, I5).
+    /// </summary>
+    /// <remarks>
+    /// No set for <c>ProcessSteps</c>: a step carries no <c>TenantId</c> and has
+    /// no filter of its own, so every read of one starts here.
+    /// </remarks>
+    public DbSet<ProcessPlan> ProcessPlans =>
+        Set<ProcessPlan>();
 
     /// <summary>
     /// What a product is approved to treat in one market — a regulatory fact,
@@ -598,6 +610,9 @@ public sealed class RegOSDbContext : DbContext
         // does not differ by customer. It can never ship an objective, because
         // where a company intends to seek approval is that company's strategy.
         modelBuilder.Entity<ProcessObjective>().HasQueryFilter(
+            x => CurrentTenant != null && x.TenantId == CurrentTenant);
+
+        modelBuilder.Entity<ProcessPlan>().HasQueryFilter(
             x => CurrentTenant != null && x.TenantId == CurrentTenant);
 
         modelBuilder.Entity<RegistrationAggregate>().HasQueryFilter(
