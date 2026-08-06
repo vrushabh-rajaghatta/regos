@@ -1,4 +1,5 @@
 using RegOS.Platform.Contracts;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.ReferenceData.Domain.Regulatory.Correspondence;
 using RegOS.Registration.Domain.Aggregates.Registration;
@@ -125,6 +126,22 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
 
     public RegistrationId? RegistrationId { get; private set; }
 
+    /// <summary>The planned work this letter serves, if any.</summary>
+    /// <remarks>
+    /// <b>Deliberately not a constructor parameter</b>, unlike every other
+    /// foreign key on this aggregate. The private constructor is EF's binding
+    /// contract — it is what keeps each required field non-nullable — and an
+    /// attachment is never known when the letter is recorded. EF sets this
+    /// through the property instead, which is exactly what it is for.
+    /// <para>
+    /// It is also not a fourth anchor. <see cref="FileAgainst"/> sets three
+    /// together because they answer <em>what is this about?</em>; this answers
+    /// <em>what planned work does it serve?</em>, which is a different question
+    /// with a different answer, and is set on its own.
+    /// </para>
+    /// </remarks>
+    public ProcessStepId? ProcessStepId { get; private set; }
+
     /// <summary>When RegOS learned of it.</summary>
     public DateTime RecordedOnUtc { get; }
 
@@ -235,6 +252,14 @@ public sealed class HaCorrespondence : AggregateRoot<HaCorrespondenceId>
         SubmissionId = submissionId;
         RegistrationId = registrationId;
     }
+
+    /// <summary>
+    /// Records which planned work this letter serves, or clears it. Separate
+    /// from <see cref="FileAgainst"/>, and separate on purpose — see
+    /// <see cref="ProcessStepId"/>.
+    /// </summary>
+    public void AttachToStep(ProcessStepId? processStepId)
+        => ProcessStepId = processStepId;
 
     /// <summary>
     /// Records content that has already been written to storage. The bytes are

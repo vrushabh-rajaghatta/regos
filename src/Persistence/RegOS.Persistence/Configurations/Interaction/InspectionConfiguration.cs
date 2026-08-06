@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RegOS.Interaction.Domain.Inspections;
 using RegOS.Organization.Domain.Aggregates.OrganizationSite;
 using RegOS.Platform.Contracts;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.SharedKernel.Primitives;
 
@@ -71,5 +72,22 @@ public sealed class InspectionConfiguration : IEntityTypeConfiguration<Inspectio
             (InspectionStatusEntryId id) => id.Value,
             value => new InspectionStatusEntryId(value),
             InspectionStatusEntry.NoteMaxLength);
+
+        // ADR-065 D2 — an annotation the owning aggregate holds, and the fourth
+        // context to hold one. SetNull, not Cascade: deleting a plan step must
+        // never delete an inspection, and I9 makes the resulting null mean
+        // exactly what every other null on this table means — nothing.
+        builder.Property(x => x.ProcessStepId)
+            .HasConversion(
+                id => id != null ? id.Value : (Guid?)null,
+                value => value != null ? new ProcessStepId(value.Value) : null);
+
+        builder.HasOne<ProcessStep>()
+            .WithMany()
+            .HasForeignKey(x => x.ProcessStepId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // "What work did this step involve?" — the read the link exists for.
+        builder.HasIndex(x => x.ProcessStepId);
     }
 }

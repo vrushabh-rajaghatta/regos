@@ -43,6 +43,7 @@ export interface CorrespondenceDetail {
   regulatoryApplicationNumber: string | null;
   submissionId: string | null;
   registrationId: string | null;
+  processStepId: string | null;
   attachments: CorrespondenceAttachmentSummary[];
   questions: CorrespondenceQuestionSummary[];
 }

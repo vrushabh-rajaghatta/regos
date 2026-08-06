@@ -28,6 +28,12 @@ public sealed record CorrespondenceDetail(
     string? RegulatoryApplicationNumber,
     Guid? SubmissionId,
     Guid? RegistrationId,
+    /// <summary>
+    /// The planned work this letter serves, if any (ADR-065 D2). Null is the
+    /// ordinary state and means nothing — most correspondence was recorded
+    /// before anyone planned anything (I9).
+    /// </summary>
+    Guid? ProcessStepId,
     IReadOnlyList<CorrespondenceAttachmentSummary> Attachments,
     IReadOnlyList<CorrespondenceQuestionSummary> Questions);
 

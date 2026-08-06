@@ -21,7 +21,6 @@ using RegOS.Api.Endpoints.Submissions;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
 using RegOS.Api.Endpoints.RegulatoryApplications;
-using RegOS.Api.Endpoints.Submissions;
 using RegOS.Api.Endpoints.ApplicationTypes;
 using RegOS.Api.Endpoints.SubmissionTypes;
 using RegOS.Api.Endpoints.SubmissionSubTypes;
@@ -56,7 +55,6 @@ using RegOS.Api.Endpoints.Commitments;
 using RegOS.Api.Endpoints.Inspections;
 using RegOS.Api.Endpoints.Meetings;
 using RegOS.Api.Endpoints.Correspondence;
-using RegOS.Api.Endpoints.Registrations;
 using RegOS.Api.Endpoints.Studies;
 using RegOS.Api.Endpoints.Substances;
 using RegOS.Api.Endpoints.Presentations;
@@ -394,11 +392,16 @@ processPlans.MapChangeProcessPlanStatusEndpoint();
 processPlans.MapChangeProcessStepStatusEndpoint();
 processPlans.MapGetPlanImpactEndpoint();
 
-// The two attachment routes live with the aggregates that own the column, not
+// The six attachment routes live with the aggregates that own the column, not
 // here — but they are mapped alongside the plan group so the surface reads as
-// one capability (ADR-065 D2).
+// one capability (ADR-065 D2). Six is the whole of it: three contexts, and the
+// inbound edges the ADR authorised are now spent.
 processPlans.MapAttachSubmissionToStepEndpoint();
 processPlans.MapAttachRegistrationToStepEndpoint();
+processPlans.MapAttachHaCorrespondenceToStepEndpoint();
+processPlans.MapAttachHaMeetingToStepEndpoint();
+processPlans.MapAttachInspectionToStepEndpoint();
+processPlans.MapAttachCommitmentToStepEndpoint();
 
 var localLabels = app.MapGroup("").WithTags("Local Labels");
 localLabels.MapListCoreVersionsForProduct();

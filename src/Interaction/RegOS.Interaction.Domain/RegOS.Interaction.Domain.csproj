@@ -8,6 +8,7 @@
     <ProjectReference Include="..\..\RegulatoryApplication\RegOS.RegulatoryApplication.Domain\RegOS.RegulatoryApplication.Domain.csproj" />
     <ProjectReference Include="..\..\Submission\RegOS.Submission.Domain\RegOS.Submission.Domain.csproj" />
     <ProjectReference Include="..\..\Registration\RegOS.Registration.Domain\RegOS.Registration.Domain.csproj" />
+    <ProjectReference Include="..\..\Process\RegOS.Process.Domain\RegOS.Process.Domain.csproj" />
   </ItemGroup>
 
 </Project>
