@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\Interaction\RegOS.Interaction.Domain\RegOS.Interaction.Domain.csproj" />
     <ProjectReference Include="..\..\Study\RegOS.Study.Domain\RegOS.Study.Domain.csproj" />
     <ProjectReference Include="..\..\Labeling\RegOS.Labeling.Domain\RegOS.Labeling.Domain.csproj" />
+    <ProjectReference Include="..\..\Process\RegOS.Process.Domain\RegOS.Process.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

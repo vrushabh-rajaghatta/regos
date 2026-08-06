@@ -340,7 +340,10 @@ public sealed class FdaRegionalBackboneRendererTests : IDisposable
         var path = Path.Combine(regional, "us-regional.xml");
         File.WriteAllText(path, offline, new UTF8Encoding(false));
 
-        using var process = Process.Start(new ProcessStartInfo("xmllint")
+        // Fully qualified since EPIC-020 S001: RegOS.Process is a bounded context,
+        // and inside the RegOS root namespace it now shadows System.Diagnostics.
+        using var process = System.Diagnostics.Process.Start(
+            new ProcessStartInfo("xmllint")
         {
             ArgumentList = { "--noout", "--valid", path },
             RedirectStandardError = true,

@@ -15,6 +15,7 @@ const items = [
   { label: "Contacts", path: "contacts" },
   { label: "Authorities", path: "authorities" },
   { label: "Templates", path: "templates" },
+  { label: "Playbooks", path: "playbooks" },
 ];
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
