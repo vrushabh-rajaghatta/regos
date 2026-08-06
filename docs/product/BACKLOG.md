@@ -170,6 +170,15 @@ whoever can go and fetch one.*
 | — | ~~**EPIC-020**~~ | **Regulatory process & planning** | 🟡 **Taken 2026-08-06** — in [Now](#now) | EPIC-004 ✅ · EPIC-006 ✅ · EPIC-017 ✅ |
 | 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) · **and one thing no epic supplies** — see below |
 | — | ~~**EPIC-010c**~~ | **Manufacturing** | 🟢 **Shipped 2026-08-05** (PR #23), closing EPIC-010 | — |
+| — | **EPIC-025** | **[Random Issues](epics/EPIC-025-random-issues.md)** — the register for defects found incidentally | 🟡 **Standing** — never closes, holds no slot | — |
+
+> **EPIC-025 carries no priority number on purpose.** It is a standing register,
+> not a unit of work competing for the next slot: bugs are recorded when found
+> and fixed inside whatever branch is already touching that code. It is listed
+> here so that "nothing gets built that isn't recorded here first" stays true of
+> bug fixes too. The epic states its own rules for what belongs in it — and
+> rule 4, *promote when it stops being random*, is what keeps it from becoming
+> a place problems go to be forgotten.
 
 > **The 2026-08-05 ordering, and the reason it is not simply "hardening first".**
 > EPIC-023 and EPIC-024 were both raised unnumbered, because placement is the
