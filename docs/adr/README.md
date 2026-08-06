@@ -99,6 +99,7 @@ An ADR is Accepted because it was agreed, not because it was typed.
 | [062](ADR-062-a-language-is-a-world-fact.md) | A language is a world fact, not a product fact | Accepted | Structure |
 | [063](ADR-063-where-a-product-is-made-is-a-product-fact.md) | Where a product is made is a product fact | Accepted | Structure |
 | [064](ADR-064-the-test-suite-provisions-its-own-schema.md) | The test suite provisions its own schema | Accepted | Direction |
+| [065](ADR-065-regulatory-process-is-an-optional-bounded-context.md) | Regulatory Process is an optional bounded context | Accepted | Direction |
 
 **Kind** distinguishes the three truths every architecture record mixes up:
 *Current* — describes the code as it is today. *Direction* — decided, possibly
