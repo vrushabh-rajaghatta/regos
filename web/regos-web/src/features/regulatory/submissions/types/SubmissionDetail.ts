@@ -16,6 +16,8 @@ export interface SubmissionDetail {
   nextSequenceNumber: number;
   /** Its own lifecycle, oldest first — only steps we are the actor of. */
   history: SubmissionStatusStep[];
+  /** The plan step this contributes to, if any. Null means nothing. */
+  processStepId: string | null;
 }
 
 export interface SubmissionStatusStep {

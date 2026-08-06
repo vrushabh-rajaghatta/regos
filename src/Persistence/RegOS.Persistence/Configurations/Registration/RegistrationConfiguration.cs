@@ -13,6 +13,8 @@ using AuthorityAggregate = RegOS.ReferenceData.Domain.Regulatory.Authority.Autho
 using OrganizationAggregate = RegOS.Organization.Domain.Aggregates.Organization.Organization;
 using RegulatoryApplicationAggregate = RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication.RegulatoryApplication;
 
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
+
 namespace RegOS.Persistence.Configurations.Registration;
 
 public sealed class RegistrationConfiguration
@@ -130,5 +132,22 @@ public sealed class RegistrationConfiguration
         builder.Metadata
             .FindNavigation(nameof(RegistrationAggregate.History))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        // ADR-065 D2 — an annotation the owning aggregate holds. SetNull, not
+        // Cascade: deleting a plan step must never delete a registration, and I9 makes
+        // the resulting null mean exactly what every other null here means —
+        // nothing.
+        builder.Property(x => x.ProcessStepId)
+            .HasConversion(
+                id => id != null ? id.Value : (Guid?)null,
+                value => value != null ? new ProcessStepId(value.Value) : null);
+
+        builder.HasOne<ProcessStep>()
+            .WithMany()
+            .HasForeignKey(x => x.ProcessStepId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // "What did this step produce?" — the read the link exists for.
+        builder.HasIndex(x => x.ProcessStepId);
     }
 }

@@ -16,6 +16,8 @@ using RegOS.Api.Endpoints.ProductDocuments;
 using RegOS.Api.Endpoints.ProcessDefinitions;
 using RegOS.Api.Endpoints.ProcessObjectives;
 using RegOS.Api.Endpoints.ProcessPlans;
+using RegOS.Api.Endpoints.Registrations;
+using RegOS.Api.Endpoints.Submissions;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
 using RegOS.Api.Endpoints.RegulatoryApplications;
@@ -391,6 +393,12 @@ processPlans.MapListNextStepsEndpoint();
 processPlans.MapChangeProcessPlanStatusEndpoint();
 processPlans.MapChangeProcessStepStatusEndpoint();
 processPlans.MapGetPlanImpactEndpoint();
+
+// The two attachment routes live with the aggregates that own the column, not
+// here — but they are mapped alongside the plan group so the surface reads as
+// one capability (ADR-065 D2).
+processPlans.MapAttachSubmissionToStepEndpoint();
+processPlans.MapAttachRegistrationToStepEndpoint();
 
 var localLabels = app.MapGroup("").WithTags("Local Labels");
 localLabels.MapListCoreVersionsForProduct();

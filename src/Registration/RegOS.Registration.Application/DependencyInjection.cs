@@ -16,6 +16,8 @@ using RegOS.Registration.Application.Queries.ListMarketRegistrations;
 using RegOS.Registration.Application.Queries.ListProductRegistrations;
 using RegOS.Registration.Application.Queries.ListRegistrationMarkets;
 
+using RegOS.Registration.Application.Commands.AttachRegistrationToStep;
+
 namespace RegOS.Registration.Application;
 
 public static class DependencyInjection
@@ -48,6 +50,8 @@ public static class DependencyInjection
         services.AddScoped<WithdrawPackAuthorisationHandler>();
 
         services.AddScoped<ListAuthorisedPacksHandler>();
+
+        services.AddScoped<AttachRegistrationToStepHandler>();
 
         return services;
     }

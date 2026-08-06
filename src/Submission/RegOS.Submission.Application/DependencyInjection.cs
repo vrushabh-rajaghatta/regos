@@ -25,6 +25,8 @@ using RegOS.Submission.Application.Generation;
 using RegOS.Submission.Application.Queries.ValidateSubmission;
 using RegOS.Submission.Application.Validation;
 
+using RegOS.Submission.Application.Commands.AttachSubmissionToStep;
+
 namespace RegOS.Submission.Application;
 
 public static class DependencyInjection
@@ -86,6 +88,8 @@ public static class DependencyInjection
 
         services.AddScoped<PublishSubmissionHandler>();
 
+
+        services.AddScoped<AttachSubmissionToStepHandler>();
 
         return services;
     }

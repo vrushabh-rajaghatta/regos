@@ -94,11 +94,14 @@ public class ContextDependencyTests
 
         // ADR-061 §3: a pack authorisation lives here rather than in Product,
         // because the edge Product → Registration would have closed a cycle.
+        // Process arrived at S006: a registration records which planned work
+        // produced it (ADR-065 D2). An annotation, never ownership.
         ["Registration"] =
-            ["Organization", "Product", "ReferenceData", "RegulatoryApplication"],
+            ["Organization", "Process", "Product", "ReferenceData",
+             "RegulatoryApplication"],
 
         ["Submission"] =
-            ["Organization", "ProductDocument", "ReferenceData",
+            ["Organization", "Process", "ProductDocument", "ReferenceData",
              "RegulatoryApplication", "Study"],
 
         ["Interaction"] =
@@ -227,6 +230,83 @@ public class ContextDependencyTests
             "the host is a composition root — it wires application and "
             + "infrastructure together and reads neither's internals");
     }
+
+    /// <summary>
+    /// <b>A context owns only its own repositories</b> — checked in both
+    /// directions.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is [ADR-065](../../../docs/adr/ADR-065-regulatory-process-is-an-optional-bounded-context.md)
+    /// I2 made mechanical</b>, and it generalised on the way: the rule is true of
+    /// every context, not only Process, and stating it narrowly would have been
+    /// the special case.
+    /// <para>
+    /// <b>Cross-context <em>reads</em> compose over <c>RegOSDbContext</c>; cross-context
+    /// <em>writes</em> never occur.</b> A write needs a repository, so a context that
+    /// cannot name a foreign one cannot perform a foreign write — which is why
+    /// this is a stronger guarantee than a review habit. ADR-016 already grants
+    /// the read; this closes the write.
+    /// </para>
+    /// <para>
+    /// <b>Both directions matter, and for different reasons.</b> Outbound
+    /// (Process → <c>ISubmissionRepository</c>) would be Process taking ownership
+    /// of a lifecycle that is not its own. Inbound
+    /// (Submission → <c>IProcessPlanRepository</c>) would be a context reaching
+    /// into Process to keep something "in sync" — the same mistake with the
+    /// arrow reversed, and the one nobody thinks to look for.
+    /// </para>
+    /// <para>
+    /// <b>It does not catch everything</b>, and the gap is worth naming: a
+    /// handler could still call a domain method on an entity it read through
+    /// <c>RegOSDbContext</c>. What it catches is the shape that actually arrives
+    /// — a constructor taking a foreign repository — which is how every real
+    /// version of this mistake has been written.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void A_context_never_names_another_contexts_repository()
+    {
+        var offenders = new List<string>();
+
+        foreach (var file in Repo.SourceFiles("src"))
+        {
+            var relative = Repo.Relative(file);
+            var owner = ContextOfPath(relative);
+
+            if (owner is null) continue;
+
+            foreach (var match in RepositoryInterface.Matches(File.ReadAllText(file)))
+            {
+                var referenced = ContextOfNamespace(((Match)match).Groups[1].Value);
+
+                if (referenced is not null && referenced != owner)
+                    offenders.Add($"{relative} names {((Match)match).Value}");
+            }
+        }
+
+        offenders.Should().BeEmpty(
+            "a context owns only its own repositories (ADR-065 I2). Compose the "
+            + "read over RegOSDbContext instead — and if you need a WRITE in "
+            + "another context, that context's own command is where it belongs");
+    }
+
+    /// <summary>Matches a fully-qualified repository interface in a using or a type.</summary>
+    private static readonly Regex RepositoryInterface = new(
+        @"RegOS\.(\w+)\.Domain[\w.]*\.(I\w+Repository)", RegexOptions.Compiled);
+
+    /// <summary><c>src/Process/RegOS.Process.Application/…</c> → <c>Process</c>.</summary>
+    private static string? ContextOfPath(string relative)
+    {
+        var parts = relative.Split('/');
+
+        return parts.Length > 2 && parts[0] == "src"
+            && parts[1] is not ("Shared" or "Persistence" or "Host" or "Storage")
+            ? parts[1]
+            : null;
+    }
+
+    private static string? ContextOfNamespace(string context)
+        => context is "SharedKernel" or "Storage" ? null : context;
 
     /// <summary>
     /// The negative control. Without it every assertion above passes by reading

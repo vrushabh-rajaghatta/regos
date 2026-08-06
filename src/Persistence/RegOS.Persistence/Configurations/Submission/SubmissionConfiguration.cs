@@ -14,6 +14,8 @@ using SubmissionTypeEntity = RegOS.ReferenceData.Domain.SubmissionType.Submissio
 using SubmissionSubTypeEntity =
     RegOS.ReferenceData.Domain.SubmissionSubType.SubmissionSubType;
 
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
+
 namespace RegOS.Persistence.Configurations.Submission;
 
 public sealed class SubmissionConfiguration
@@ -249,5 +251,22 @@ public sealed class SubmissionConfiguration
             (SubmissionStatusEntryId id) => id.Value,
             value => SubmissionStatusEntryId.From(value),
             SubmissionStatusEntry.NoteMaxLength);
+
+        // ADR-065 D2 — an annotation the owning aggregate holds. SetNull, not
+        // Cascade: deleting a plan step must never delete a submission, and I9 makes
+        // the resulting null mean exactly what every other null here means —
+        // nothing.
+        builder.Property(x => x.ProcessStepId)
+            .HasConversion(
+                id => id != null ? id.Value : (Guid?)null,
+                value => value != null ? new ProcessStepId(value.Value) : null);
+
+        builder.HasOne<ProcessStep>()
+            .WithMany()
+            .HasForeignKey(x => x.ProcessStepId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // "What did this step produce?" — the read the link exists for.
+        builder.HasIndex(x => x.ProcessStepId);
     }
 }

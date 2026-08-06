@@ -18,6 +18,10 @@ const today = () => new Date().toISOString().slice(0, 10);
  * Planned dates were worked out once and nothing recalculates them. Execution is
  * separate: **a step becomes complete because a person says so** — no linked
  * submission, meeting or finished predecessor ever moves it.
+ *
+ * Attached records are shown because they are discoverable from here, not
+ * because they mean anything about the step's state. **A step with nothing
+ * attached is not incomplete** — it may simply not have been annotated.
  */
 export function PlanScheduleTable({
   planId,
@@ -92,6 +96,23 @@ export function PlanScheduleTable({
 
                 <td className="p-3 whitespace-nowrap text-muted-foreground">
                   {step.plannedStartOn} to {step.plannedEndOn}
+
+                  {step.attached.length > 0 && (
+                    <div className="mt-2 space-y-0.5">
+                      {step.attached.map((artefact) => (
+                        <div
+                          key={`${artefact.kind}-${artefact.id}`}
+                          data-testid="step-attachment"
+                          className="text-xs whitespace-normal"
+                        >
+                          <span className="text-muted-foreground">
+                            {artefact.kind}:
+                          </span>{" "}
+                          {artefact.title}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </td>
 
                 <td className="p-3 whitespace-nowrap text-muted-foreground">
