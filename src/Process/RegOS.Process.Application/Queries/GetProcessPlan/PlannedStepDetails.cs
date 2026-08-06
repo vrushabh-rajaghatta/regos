@@ -26,7 +26,24 @@ public sealed record PlannedStepDetails(
     DateOnly? ActualStartOn,
     DateOnly? ActualEndOn,
     bool IsSettled,
-    IReadOnlyList<StepHistoryEntry> History);
+    IReadOnlyList<StepHistoryEntry> History,
+    IReadOnlyList<AttachedArtefact> Attached);
+
+/// <summary>
+/// A regulatory record somebody said contributes to this step.
+/// </summary>
+/// <remarks>
+/// <b>Read-only, and Process holds no foreign key</b> (ADR-065 D2). The owning
+/// aggregate carries the column; this composes the reverse view over
+/// <c>RegOSDbContext</c>, which ADR-016 permits and the repository guard is what
+/// keeps to a read.
+/// <para>
+/// <b>An empty list means nothing</b> (I9). A step with no attachments may have
+/// produced nothing, or may simply not have been annotated — and the second is
+/// the common case for work recorded before anyone planned it.
+/// </para>
+/// </remarks>
+public sealed record AttachedArtefact(string Kind, Guid Id, string Title);
 
 /// <param name="OccurredOn">The business date. <param name="RecordedOnUtc">When
 /// RegOS learned. Two clocks, always (ADR-037), and append-only (I6).</param></param>

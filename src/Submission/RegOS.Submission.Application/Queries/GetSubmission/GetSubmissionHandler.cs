@@ -41,6 +41,7 @@ public sealed class GetSubmissionHandler
                 submission.Status,
                 submission.Format,
                 submission.CreatedOn,
+                submission.ProcessStepId,
                 submission.BoundTemplateVersionId,
                 submission.SequenceNumber,
                 History = submission.History
@@ -79,7 +80,8 @@ public sealed class GetSubmissionHandler
                 row.BoundTemplateVersionId, cancellationToken),
             row.SequenceNumber,
             (highestPublished ?? -1) + 1,
-            row.History);
+            row.History,
+            row.ProcessStepId != null ? row.ProcessStepId.Value : null);
     }
 
     /// <summary>

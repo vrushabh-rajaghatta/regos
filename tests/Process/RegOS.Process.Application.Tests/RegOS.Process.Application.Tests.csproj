@@ -20,6 +20,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Process\RegOS.Process.Application\RegOS.Process.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Process\RegOS.Process.Infrastructure\RegOS.Process.Infrastructure.csproj" />
+    <!-- Test-only, and only so S006 can prove a NEGATIVE: that attaching a
+         registration to a plan step leaves the registration untouched. The
+         Process context itself never references Registration — the edge runs
+         the other way (ADR-065 D2). -->
+    <ProjectReference Include="..\..\..\src\Registration\RegOS.Registration.Infrastructure\RegOS.Registration.Infrastructure.csproj" />
     <ProjectReference Include="..\..\TestSupport\RegOS.TestSupport\RegOS.TestSupport.csproj" />
   </ItemGroup>
 

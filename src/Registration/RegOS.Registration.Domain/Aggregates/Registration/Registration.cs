@@ -2,6 +2,7 @@ using RegOS.Organization.Domain.Aggregates.Organization;
 using RegOS.Product.Domain.Product;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.SharedKernel.Exceptions;
 using RegOS.SharedKernel.Primitives;
 
@@ -102,6 +103,42 @@ public sealed class Registration
     public DateOnly? ApprovedOn { get; private set; }
 
     public DateOnly? ExpiresOn { get; private set; }
+
+    /// <summary>
+    /// The plan step this registration was the outcome of, when somebody has
+    /// said so.
+    /// </summary>
+    /// <remarks>
+    /// <b>An annotation, not ownership</b>
+    /// ([ADR-065](../../../../../docs/adr/ADR-065-regulatory-process-is-an-optional-bounded-context.md)
+    /// D2, I2, I9). <c>Registration</c> owns this column and its own lifecycle;
+    /// Process can read it and can never write it, nor be the reason an
+    /// authorisation changes state.
+    /// <para>
+    /// <b>A registration is an outcome rather than an activity</b>, which is what
+    /// makes the link worth having: <em>"which planned work produced this
+    /// authorisation?"</em> is a question nothing else in RegOS can answer.
+    /// </para>
+    /// <para>
+    /// <b>Nullable, and its absence means nothing</b> (I9). Every registration
+    /// RegOS holds today is unattached, and none of them is thereby less valid —
+    /// most were granted long before anyone planned anything here.
+    /// </para>
+    /// </remarks>
+    public ProcessStepId? ProcessStepId { get; private set; }
+
+    /// <summary>
+    /// Records that this registration was the outcome of a step of a plan, or
+    /// clears the link.
+    /// </summary>
+    /// <remarks>
+    /// <b>This aggregate's own command.</b> A Process command setting it would be
+    /// Process writing into a lifecycle that is not its own —
+    /// <c>ContextDependencyTests</c> now refuses that shape mechanically, in both
+    /// directions.
+    /// </remarks>
+    public void AttachToStep(ProcessStepId? processStepId)
+        => ProcessStepId = processStepId;
 
     public DateTime CreatedOn { get; }
 

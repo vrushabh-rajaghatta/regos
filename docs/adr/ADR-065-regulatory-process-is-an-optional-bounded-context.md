@@ -22,6 +22,7 @@
 > | | Change |
 > |---|---|
 > | **S003** | **I5 added** (instantiation is deterministic). **The ad-hoc-plan clause struck** — the pin is `NOT NULL`, because instantiation is the only way to create a plan. |
+> | **S006** | **I9 added** — attachments are descriptive, not constitutive. |
 > | **S005** | **I7 and I8 added** — impact analysis never repairs the schedule, and never replaces it. |
 > | **S004** | **D10 recorded** (a plan belongs to exactly one objective — settled at S003 sign-off, written down here). **D11 added** (step completion is a human decision). **I6 added** (execution history is append-only). |
 >
@@ -271,6 +272,21 @@ The two halves reinforce each other: immutability means a version cannot be edit
 
 **And it is why the projection may recalculate at all.** Recalculation is forbidden as a *stored* thing (D5, I4): a playbook change must never move a milestone. Deriving *what today's facts imply* breaks neither, because the plan's own dates never change and the answer is labelled as a projection everywhere it appears.
 
+### I9 — Attachments are descriptive
+
+> **Attaching a regulatory artefact to a `ProcessStep` records that the artefact contributes to execution of that step. The attachment changes neither the artefact's meaning nor the plan's execution. Adding or removing one changes discoverability only.**
+
+*Added at S006, the first story where anything attaches.*
+
+**The drift it forbids is a sentence, not a feature:** *"this submission is not attached, therefore it is not part of the plan."* **No** — it may simply not be annotated. **An attachment is descriptive, not constitutive**, and the distinction matters most exactly when the data is incomplete, which is always.
+
+| | |
+|---|---|
+| an attachment **may** | make a record discoverable from the step, and the step from the record |
+| an attachment **may not** | complete a step (D11), gate a transition, change what the artefact means, or make its absence mean anything |
+
+**It is what keeps I1 true once integration exists.** If an unattached submission were *less valid*, Process would have stopped being optional — it would have become a thing every context had to satisfy.
+
 ## Architectural consequences — the properties a change must preserve
 
 **These are not decisions.** Each falls out of the invariants above, and they are stated separately so that a reviewer can ask *"does this change preserve the consequences?"* without re-opening the decisions.
@@ -285,6 +301,7 @@ The two halves reinforce each other: immutability means a version cannot be edit
 | **No lifecycle transition happens as a consequence of another context** | I2 · D11 |
 | **No execution fact is ever overwritten** | I6 |
 | **No analysis ever becomes the schedule** | I7 · I8 |
+| **An absent attachment means nothing** | I1 · I9 |
 
 ### The fourth is the one the others reduce to
 

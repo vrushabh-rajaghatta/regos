@@ -87,6 +87,39 @@ public sealed class GetProcessPlanHandler
 
         var codeOf = row.Steps.ToDictionary(x => x.Id, x => x.Code);
 
+        // The reverse view, composed rather than navigated: Process holds no FK
+        // to either of these (ADR-065 D2), so it asks the database instead. Two
+        // small reads over the whole plan, not one per step.
+        var stepIds = row.Steps.Select(x => x.Id).ToList();
+
+        var submissions = await _dbContext.Submissions
+            .AsNoTracking()
+            .Where(x => x.ProcessStepId != null && stepIds.Contains(x.ProcessStepId))
+            .Select(x => new { Step = x.ProcessStepId!, x.Id, x.Title })
+            .ToListAsync(cancellationToken);
+
+        var registrations = await _dbContext.Registrations
+            .AsNoTracking()
+            .Where(x => x.ProcessStepId != null && stepIds.Contains(x.ProcessStepId))
+            .Select(x => new { Step = x.ProcessStepId!, x.Id, x.RegistrationNumber })
+            .ToListAsync(cancellationToken);
+
+        var attached = submissions
+            .Select(x => (
+                Step: x.Step,
+                Artefact: new AttachedArtefact("Submission", x.Id.Value, x.Title)))
+            .Concat(registrations.Select(x => (
+                Step: x.Step,
+                Artefact: new AttachedArtefact(
+                    "Registration",
+                    x.Id.Value,
+                    x.RegistrationNumber ?? "Registration"))))
+            .ToList();
+
+        var attachedByStep = attached
+            .GroupBy(x => x.Step)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.Artefact).ToList());
+
         // Schedule order, then code. Deterministic: two steps may legitimately
         // start on the same day, and a step code carries a unique index per plan,
         // so the pair is total.
@@ -131,7 +164,13 @@ public sealed class GetProcessPlanHandler
                         h.Status.ToString(),
                         h.OccurredOn,
                         h.RecordedOnUtc,
-                        h.Note))]))
+                        h.Note))],
+                [.. attachedByStep.GetValueOrDefault(step.Id, [])
+                    // Deterministic: an artefact appears once, and (Kind, Id) is
+                    // unique across the two sources.
+                    .OrderBy(x => x.Kind, StringComparer.Ordinal)
+                    .ThenBy(x => x.Title, StringComparer.Ordinal)
+                    .ThenBy(x => x.Id)]))
             .ToList();
 
         return new ProcessPlanDetails(

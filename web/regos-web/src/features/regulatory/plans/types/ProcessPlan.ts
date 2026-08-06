@@ -38,6 +38,14 @@ export interface PlannedStep {
   isSettled: boolean;
   /** Append-only. A correction is a new entry, never a rewrite. */
   history: StepHistoryEntry[];
+  /** Records somebody said contribute to this step. Empty means nothing. */
+  attached: AttachedArtefact[];
+}
+
+export interface AttachedArtefact {
+  kind: string;
+  id: string;
+  title: string;
 }
 
 /** One row of the plan board — what a team can work on. */
