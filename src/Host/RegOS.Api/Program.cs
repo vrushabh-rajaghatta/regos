@@ -390,6 +390,7 @@ processPlans.MapListObjectivePlansEndpoint();
 processPlans.MapListNextStepsEndpoint();
 processPlans.MapChangeProcessPlanStatusEndpoint();
 processPlans.MapChangeProcessStepStatusEndpoint();
+processPlans.MapGetPlanImpactEndpoint();
 
 var localLabels = app.MapGroup("").WithTags("Local Labels");
 localLabels.MapListCoreVersionsForProduct();

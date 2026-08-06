@@ -41,7 +41,8 @@ public sealed class ProcessStep : Entity<ProcessStepId>
         ProcessStepId? parentStepId,
         int order,
         DateOnly plannedStartOn,
-        DateOnly plannedEndOn)
+        DateOnly plannedEndOn,
+        DateOnly openedOn)
     {
         Id = id;
         StepDefinitionId = stepDefinitionId;
@@ -54,10 +55,15 @@ public sealed class ProcessStep : Entity<ProcessStepId>
         PlannedEndOn = plannedEndOn;
         CurrentStatus = ProcessStepStatus.NotStarted;
 
+        // openedOn, not plannedStartOn: the step became "not started" when the
+        // plan was drawn up, not on the day it was scheduled to begin. Seeding
+        // it with the planned start made the chronology rule forbid recording
+        // work EARLY, which is an ordinary thing for a team to do — found by an
+        // impact test in S005, one story after the mistake was made.
         _history.Add(new ProcessStepStatusEntry(
             ProcessStepStatusEntryId.New(),
             ProcessStepStatus.NotStarted,
-            plannedStartOn,
+            openedOn,
             DateTime.UtcNow,
             null));
     }

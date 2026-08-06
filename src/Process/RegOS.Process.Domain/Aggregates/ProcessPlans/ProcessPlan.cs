@@ -121,7 +121,7 @@ public sealed class ProcessPlan : AggregateRoot<ProcessPlanId>
             DateTime.UtcNow,
             null));
 
-        plan.Schedule(version, anchorDate);
+        plan.Schedule(version, anchorDate, openedOn);
 
         return plan;
     }
@@ -289,7 +289,8 @@ public sealed class ProcessPlan : AggregateRoot<ProcessPlanId>
     /// Dates are <b>inclusive</b>, and <c>OffsetDays = 0</c> means <em>"the day
     /// after the last thing it waits for finishes"</em>.
     /// </remarks>
-    private void Schedule(ProcessDefinitionVersion version, DateOnly anchorDate)
+    private void Schedule(
+        ProcessDefinitionVersion version, DateOnly anchorDate, DateOnly openedOn)
     {
         // Ordered by code, not by the collection's order: EF materialises an
         // Include in whatever order the database returned, and I5 forbids that
@@ -349,7 +350,8 @@ public sealed class ProcessPlan : AggregateRoot<ProcessPlanId>
                 definition.ParentStepId is { } parent ? liveIds[parent] : null,
                 definition.Order,
                 start,
-                end));
+                end,
+                openedOn));
         }
 
         var stepsById = _steps.ToDictionary(step => step.StepDefinitionId);

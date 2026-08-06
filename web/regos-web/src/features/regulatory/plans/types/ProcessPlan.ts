@@ -74,3 +74,40 @@ export interface PlanDetail {
   plannedEndOn: string | null;
   steps: PlannedStep[];
 }
+
+export interface AffectedStep {
+  stepId: string;
+  code: string;
+  name: string;
+  status: string;
+  /** Affected and still open — where intervention is possible. */
+  isActionable: boolean;
+}
+
+export interface LateStepImpact {
+  stepId: string;
+  code: string;
+  name: string;
+  status: string;
+  daysLate: number;
+  plannedEndOn: string;
+  projectedEndOn: string;
+  affected: AffectedStep[];
+}
+
+/**
+ * An analysis, never the schedule. `projectedFinishOn` is what today's facts
+ * imply if nothing changes — the plan still finishes on `plannedFinishOn` and
+ * always will.
+ */
+export interface PlanImpact {
+  planId: string;
+  planName: string;
+  objectiveName: string;
+  asOf: string;
+  plannedFinishOn: string | null;
+  projectedFinishOn: string | null;
+  /** Zero when the delay fell inside somebody's slack. */
+  slipDays: number;
+  lateSteps: LateStepImpact[];
+}

@@ -1,6 +1,6 @@
 # EPIC-020 — Regulatory process & planning
 
-**Status:** ⚪ Not Started — **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 **In Progress — 5 of 8 stories** ([progress](#progress--5-of-8-2026-08-06)) · **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 RIM's **spine**. Everything RegOS builds — applications, submissions, correspondence, meetings, commitments, inspections — becomes a *step in a plan* that serves an *objective*. This is the layer that turns a record system into a system that tells you what to do next.
 
@@ -133,7 +133,7 @@ The concrete path a story-by-story build has to make real. **US FDA IND, initial
 
 ---
 
-## The four invariants
+## The invariants
 
 *Settled at Phase-1 sign-off, 2026-08-06. Everything else in Phase 2 is still a lean; **these four are not**, and ADR-065 carries all four. They are stated together because each one protects a different thing, and each is cheap to violate by accident in a story that means well.*
 
@@ -324,20 +324,77 @@ Global Product → Objective (product + country) → market preparation
 
 ---
 
+## Progress — 5 of 8, 2026-08-06
+
+**Everything below shipped in one day, and the record is written because five
+stories of decisions had accumulated with nothing but commit messages holding
+them.**
+
+| Story | Delivered | What it found |
+|---|---|---|
+| **S001** | `ProcessDefinition` → `Version` → `StepDefinition`; publish freezes; the US·FDA·IND playbook seeded, 12 steps | `RegOS.Process` shadows `System.Diagnostics.Process` inside the `RegOS` root namespace — two test files fully-qualify it, and that is the whole cost |
+| **S002** | `ProcessObjective` with strategy, dated history, and D8's confirmation seam | **The invariant deleted a field.** A `MedicinalProductName` and its left join were written and removed: D8 requires the market record to carry the pair the objective already holds, so the name was a second copy of it |
+| **S003** | Instantiation from a pinned version, dates derived once, graph translated into the plan's own ids | **The FDA IND critical path is not where anyone guesses.** The convergence test was written asserting `CMC` and was **wrong by 33 days** — the path runs through the pre-IND meeting track, because FDA's calendar contributes 30 days twice before a protocol can be written |
+| **S004** | Step execution, `Draft → Active → Completed \| Cancelled`, the plan board | Three refusals to manufacture history: a null `ActualStartOn`, no history entry for a reschedule, and a required skip reason |
+| **S005** | Impact analysis — transitive affected/actionable, and what a delay costs the finish date | **An S005 test found an S004 bug.** Each step's initial `NotStarted` entry was seeded with its *planned start*, so the chronology rule refused any earlier entry — a step could not be recorded as **completed early** |
+
+### What the stories proved about the architecture
+
+*Each one asked a harder question of the same model, and the previous story's guarantee is what let it.*
+
+```
+S001  is this graph valid?            → publication certifies a DAG
+S003  when do things happen?          → instantiation CASHES that certificate
+S005  what does this delay affect?    → impact walks the same graph forward
+```
+
+**`InstantiateFrom` contains no cycle detection.** It refuses an unpublished version, and that refusal is the entire basis for assuming the graph is schedulable. **S001 removed work from S003** rather than merely preceding it — which is the clearest evidence the two were cut at the right seam.
+
+### ADR-065 was amended twice, both times to sharpen
+
+| | |
+|---|---|
+| **S003** | **I5** added (instantiation is deterministic); the **ad-hoc-plan clause struck** — the pin is `NOT NULL`, because instantiation is the only way to create a plan |
+| **S004** | **D10** recorded, **D11** added (completion is a decision, never a consequence), **I6** added (execution history is append-only) |
+| **S005** | **I7** and **I8** added — impact analysis never repairs the schedule, and never replaces it |
+
+**No invariant has needed an exception, and every amendment made the model smaller** — a seam removed, a nullable removed, a duplicated field removed. **An amendment log with a freeze rule now sits at the top of the ADR:** it is corrected in place while the epic is in flight and superseded, never edited, once the epic branch reaches `main`.
+
+### The philosophy the five stories converged on
+
+> **Record what is known, not what can be inferred.**
+
+Not planned; observed at the retro-in-progress, and it explains why so many convenient alternatives were refused:
+
+- a published version is immutable rather than re-derived
+- a plan is a historical record rather than a projection
+- `ActualStartOn` stays **null** when nobody recorded a start
+- rescheduling writes no execution history
+- completion is explicit, never derived from a linked artefact
+- a skip reason explains an absence rather than leaving silence
+
+**And its uncomfortable corollary, which the impact projection surfaces:** *"nobody clicked Start"* and *"the work has not begun"* are indistinguishable to RegOS, so a step nobody started reads as late. That is correct — **unknown is not the same as inferred** — and it is the one place the philosophy costs something visible.
+
+### Verification at S005
+
+**21 reporting suites green** · architecture **41/41** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Process: **62 domain**, **30 database-backed**.
+
+---
+
 ## Phase 3 — Stories *(re-slice as Phase 2 lands)*
 
 **Every story opens on its question, never on its entity list** — EPIC-006's cadence finding, which it named for this epic to inherit: *"six of the eight stories produced a smaller model than the entity-first version would have."*
 
-| # | Story | The question it opens on | Slice |
+| # | Story | The question it opens on | Status |
 |---|---|---|---|
-| **S001** | **The playbook** — `ProcessDefinition` + `ProcessDefinitionVersion` + `ProcessStepDefinition`, versioned, immutable on publish, scoped country + authority + application type, predecessors + offsets, cycle rejected at publish; **seeded for US·FDA·IND**; writes [`docs/domain-model/process.md`](../../domain-model/) with the D9 pair | *"What do we have to do to file this, and in what order?"* | domain → persistence → API → read UI → test |
-| **S002** | **The objective** — strategy, dated status, target product + market, nullable application link. **D3 is settled here or the object is deleted here** | *"What are we trying to achieve, and why this route?"* | full slice |
-| **S003** | **Instantiation** — a plan pinned to a published version, steps dated once from the offsets. The ADR-035 pattern, second occurrence | *"We did this last year. Do it again."* | full slice |
-| **S004** | **Working the plan** — step status history, actual dates, the plan board | *"Where are we, and what is next?"* | full slice |
-| **S005** | **What is late, and what does it block** — transitive successors, derived on read; D6's superseded-playbook disclosure | *"What is late, and what does it block?"* | read model → UI → test |
-| **S006** | **Wiring, part 1** — `Submission` and `Registration` attach to steps; both ends show it. **D2 is proved or reversed here**, on the two cheapest contexts | *"This submission — what plan is it part of?"* | migration → API → UI → test |
-| **S007** | **Wiring, part 2** — the four Interaction aggregates. **Guard: a step is not a commitment's fourth business origin** — [ADR-042 decision 2](../../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) fires on a fourth *origin*, and a step is what a commitment *serves*, not where it *arose* | *"What did this step actually produce?"* | migration → API → UI → test |
-| **S008** | **Capstone** — the workflow steps 1→6 in one browser run, ADR-065, `ContextDependencyTests` extended, retro | — | UI → test → docs |
+| **S001** | **The playbook** — `ProcessDefinition` + `ProcessDefinitionVersion` + `ProcessStepDefinition`, versioned, immutable on publish, scoped country + authority + application type, predecessors + offsets, cycle rejected at publish; **seeded for US·FDA·IND**; writes [`docs/domain-model/process.md`](../../domain-model/) with the D9 pair | *"What do we have to do to file this, and in what order?"* | 🟢 **Done** · merged `c156a58` |
+| **S002** | **The objective** — strategy, dated status, target product + market, nullable application link. **D3 is settled here or the object is deleted here** | *"What are we trying to achieve, and why this route?"* | 🟢 **Done** · merged `812a2bd` |
+| **S003** | **Instantiation** — a plan pinned to a published version, steps dated once from the offsets. The ADR-035 pattern, second occurrence | *"We did this last year. Do it again."* | 🟢 **Done** · merged `1d6267f` |
+| **S004** | **Working the plan** — step status history, actual dates, the plan board | *"Where are we, and what is next?"* | 🟢 **Done** · merged `61c99a0` |
+| **S005** | **What is late, and what does it block** — transitive successors, derived on read; D6's superseded-playbook disclosure | *"What is late, and what does it block?"* | 🟢 **Done** · `8b85646`, awaiting merge |
+| **S006** | **Wiring, part 1** — `Submission` and `Registration` attach to steps; both ends show it. **D2 is proved or reversed here**, on the two cheapest contexts | *"This submission — what plan is it part of?"* | ⚪ Not started |
+| **S007** | **Wiring, part 2** — the four Interaction aggregates. **Guard: a step is not a commitment's fourth business origin** — [ADR-042 decision 2](../../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) fires on a fourth *origin*, and a step is what a commitment *serves*, not where it *arose* | *"What did this step actually produce?"* | ⚪ Not started |
+| **S008** | **Capstone** — the workflow steps 1→6 in one browser run, ADR-065, `ContextDependencyTests` extended, retro | — | ⚪ Not started |
 
 **The split point, declared now so it is a decision and not a rescue** — and confirmed at sign-off:
 

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/shared/components/PageHeader";
 
+import { PlanImpactPanel } from "../components/PlanImpactPanel";
 import { PlanScheduleTable } from "../components/PlanScheduleTable";
 import { useChangePlanStatus } from "../hooks/useChangePlanStatus";
 import { usePlan } from "../hooks/usePlan";
@@ -112,6 +113,8 @@ export function PlanDetailPage() {
                 </span>
               )}
             </div>
+
+            {data.status === "Active" && <PlanImpactPanel planId={data.id} />}
 
             <section className="mt-8">
               <h2 className="text-sm font-medium">Schedule</h2>

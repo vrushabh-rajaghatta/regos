@@ -22,6 +22,7 @@
 > | | Change |
 > |---|---|
 > | **S003** | **I5 added** (instantiation is deterministic). **The ad-hoc-plan clause struck** — the pin is `NOT NULL`, because instantiation is the only way to create a plan. |
+> | **S005** | **I7 and I8 added** — impact analysis never repairs the schedule, and never replaces it. |
 > | **S004** | **D10 recorded** (a plan belongs to exactly one objective — settled at S003 sign-off, written down here). **D11 added** (step completion is a human decision). **I6 added** (execution history is append-only). |
 >
 > No amendment has touched a decision code already depends on.
@@ -244,6 +245,32 @@ The two halves reinforce each other: immutability means a version cannot be edit
 
 **What it does not forbid:** editing a step's *planned* dates. A schedule is a statement of intent that a human owns and may simply change (D5). The distinction is that **planned dates are a current value; execution is a sequence of events** — and only the second is history.
 
+### I7 — Impact analysis never repairs the schedule
+
+> **Impact analysis is derived entirely from the current dependency graph and execution state. It never mutates the plan and never proposes an alternative schedule.**
+
+*Added at S005.* It answers ***"if nothing changes…"*** and only that. **The moment it suggests what to move, it has become a scheduler** — which this ADR's [Out of scope](#out-of-scope--refused-not-deferred) list already refuses, and which is a different bounded context wearing a helpful face.
+
+### I8 — Impact analysis is observational
+
+> **Impact analysis derives hypothetical consequences from the current state of a plan. It never creates, modifies or persists scheduling information, and never becomes the authoritative schedule.**
+
+*Added at S005.* **I7 says do not repair the schedule; I8 says do not replace it.** Those protect different things, which is why they are two invariants rather than one carefully worded one.
+
+**The projection is ephemeral by construction:**
+
+```
+   the plan            unchanged, on disk, authoritative
+       │
+       ├─► read request ─► projection computed ─► returned ─► discarded
+       │
+   the plan            still unchanged
+```
+
+**Nothing is written, nothing is cached as a new schedule, and re-running it on the same inputs gives the same answer** — which is I5's property applied to a read. *The forecast is not the ledger.*
+
+**And it is why the projection may recalculate at all.** Recalculation is forbidden as a *stored* thing (D5, I4): a playbook change must never move a milestone. Deriving *what today's facts imply* breaks neither, because the plan's own dates never change and the answer is labelled as a projection everywhere it appears.
+
 ## Architectural consequences — the properties a change must preserve
 
 **These are not decisions.** Each falls out of the invariants above, and they are stated separately so that a reviewer can ask *"does this change preserve the consequences?"* without re-opening the decisions.
@@ -257,6 +284,7 @@ The two halves reinforce each other: immutability means a version cannot be edit
 | Existing "due work" semantics remain unchanged | D7 |
 | **No lifecycle transition happens as a consequence of another context** | I2 · D11 |
 | **No execution fact is ever overwritten** | I6 |
+| **No analysis ever becomes the schedule** | I7 · I8 |
 
 ### The fourth is the one the others reduce to
 

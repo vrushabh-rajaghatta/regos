@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using RegOS.Persistence;
 using RegOS.Process.Domain.Aggregates.ProcessDefinitions;
 using RegOS.Process.Domain.Aggregates.ProcessPlans;
-using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.SharedKernel.Exceptions;
 
 namespace RegOS.Process.Application.Queries.GetProcessPlan;

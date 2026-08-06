@@ -8,6 +8,7 @@ using RegOS.Process.Application.Commands.CreateProcessObjective;
 using RegOS.Process.Application.Commands.InstantiateProcessPlan;
 using RegOS.Process.Application.Queries.GetProcessDefinition;
 using RegOS.Process.Application.Queries.GetProcessObjective;
+using RegOS.Process.Application.Queries.GetPlanImpact;
 using RegOS.Process.Application.Queries.GetProcessPlan;
 using RegOS.Process.Application.Queries.ListNextSteps;
 using RegOS.Process.Application.Queries.ListObjectivePlans;
@@ -46,6 +47,8 @@ public static class DependencyInjection
         services.AddScoped<ChangeProcessStepStatusHandler>();
 
         services.AddScoped<ListNextStepsHandler>();
+
+        services.AddScoped<GetPlanImpactHandler>();
 
         return services;
     }
