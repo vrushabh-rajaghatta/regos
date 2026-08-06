@@ -5,6 +5,7 @@ using RegOS.Labeling.Domain.Aggregates.Indications;
 using RegOS.Labeling.Domain.Aggregates.DrugInteractions;
 using RegOS.Labeling.Domain.Aggregates.UndesirableEffects;
 using RegOS.Labeling.Domain.Aggregates.LocalLabels;
+using RegOS.Process.Domain.Aggregates.ProcessDefinitions;
 using RegOS.Product.Domain.Product;
 
 using RegOS.SharedKernel.Abstractions;
@@ -179,6 +180,18 @@ public sealed class RegOSDbContext : DbContext
     /// </remarks>
     public DbSet<LocalLabel> LocalLabels =>
         Set<LocalLabel>();
+
+    /// <summary>
+    /// The authoritative, versioned description of a regulatory process —
+    /// <b>"Playbook"</b> on screen (ADR-065 decision 7).
+    /// </summary>
+    /// <remarks>
+    /// No set for <c>ProcessDefinitionVersions</c> or
+    /// <c>ProcessStepDefinitions</c>: neither carries a <c>TenantId</c> and
+    /// neither has a filter of its own, so every read of one starts here.
+    /// </remarks>
+    public DbSet<ProcessDefinition> ProcessDefinitions =>
+        Set<ProcessDefinition>();
 
     /// <summary>
     /// What a product is approved to treat in one market — a regulatory fact,
@@ -560,6 +573,15 @@ public sealed class RegOSDbContext : DbContext
         // licensed terminology arrives; AuthorityDivision's never does
         // (ADR-058 §2).
         modelBuilder.Entity<SubstanceAggregate>().HasQueryFilter(
+            x => CurrentTenant != null
+                && (x.TenantId == null || x.TenantId == CurrentTenant));
+
+        // The same shape a fourth time, and the argument is the platform's own:
+        // RegOS ships the playbooks it knows — what it takes to open an IND with
+        // FDA does not differ by customer — and a tenant adds its own house
+        // process beside them. Authoring the tenant's half is EPIC-012's; the
+        // filter is here now so that story adds no migration (ADR-065 decision 7).
+        modelBuilder.Entity<ProcessDefinition>().HasQueryFilter(
             x => CurrentTenant != null
                 && (x.TenantId == null || x.TenantId == CurrentTenant));
 

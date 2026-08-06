@@ -339,7 +339,10 @@ public sealed class IchBackboneRendererTests : IDisposable
         var indexPath = Path.Combine(root, IchBackboneRenderer.FileName);
         File.WriteAllText(indexPath, xml, new UTF8Encoding(false));
 
-        using var process = Process.Start(new ProcessStartInfo("xmllint")
+        // Fully qualified since EPIC-020 S001: RegOS.Process is a bounded context,
+        // and inside the RegOS root namespace it now shadows System.Diagnostics.
+        using var process = System.Diagnostics.Process.Start(
+            new ProcessStartInfo("xmllint")
         {
             ArgumentList = { "--noout", "--valid", indexPath },
             RedirectStandardError = true,

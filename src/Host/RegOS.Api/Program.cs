@@ -13,6 +13,7 @@ using RegOS.Api.Endpoints.MedicinalProducts;
 using RegOS.Api.Endpoints.Manufacturing;
 using RegOS.Api.Endpoints.Packs;
 using RegOS.Api.Endpoints.ProductDocuments;
+using RegOS.Api.Endpoints.ProcessDefinitions;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
 using RegOS.Api.Endpoints.RegulatoryApplications;
@@ -62,6 +63,8 @@ using RegOS.Api.Endpoints.Indications;
 using RegOS.Api.Endpoints.LocalLabels;
 using RegOS.Labeling.Application;
 using RegOS.Labeling.Infrastructure;
+using RegOS.Process.Application;
+using RegOS.Process.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -143,6 +146,9 @@ builder.Services.AddStudyInfrastructure();
 
 builder.Services.AddLabelingApplication();
 builder.Services.AddLabelingInfrastructure();
+
+builder.Services.AddProcessApplication();
+builder.Services.AddProcessInfrastructure();
 
 var app = builder.Build();
 
@@ -358,6 +364,13 @@ globalLabels.MapStartGlobalLabelDraft();
 globalLabels.MapAttachGlobalLabelContent();
 globalLabels.MapPublishGlobalLabelVersion();
 globalLabels.MapDiscardGlobalLabelDraft();
+
+var processDefinitions = app.MapGroup("").WithTags("Playbooks");
+// "Playbook" on screen, ProcessDefinition in the model — the pair ADR-065
+// decision 9 settled, recorded in docs/domain-model/process.md. The route uses
+// the type's word because it is an API contract, not a label.
+processDefinitions.MapListProcessDefinitionsEndpoint();
+processDefinitions.MapGetProcessDefinitionEndpoint();
 
 var localLabels = app.MapGroup("").WithTags("Local Labels");
 localLabels.MapListCoreVersionsForProduct();

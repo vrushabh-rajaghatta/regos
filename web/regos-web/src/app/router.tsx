@@ -60,6 +60,8 @@ import { SessionsPage } from "@/features/settings/pages/SessionsPage";
 import { RequireAuth } from "@/features/auth/components/RequireAuth";
 import { TemplateListPage } from "@/features/regulatory/templates/pages/TemplateListPage";
 import { TemplateDetailPage } from "@/features/regulatory/templates/pages/TemplateDetailPage";
+import { PlaybookListPage } from "@/features/regulatory/playbooks/pages/PlaybookListPage";
+import { PlaybookDetailPage } from "@/features/regulatory/playbooks/pages/PlaybookDetailPage";
 import { ProductLabelsPage } from "@/features/regulatory/labels/pages/ProductLabelsPage";
 import { ProductRegistrationsPage } from "@/features/regulatory/registrations/pages/ProductRegistrationsPage";
 import { MedicinalProductPage } from "@/features/regulatory/medicinalProducts/pages/MedicinalProductPage";
@@ -145,6 +147,19 @@ export const router = createBrowserRouter([
             path: "regulatory",
             element: <RegulatoryLayout />,
             children: [
+              {
+                path: "playbooks",
+                children: [
+                  {
+                    index: true,
+                    element: <PlaybookListPage />,
+                  },
+                  {
+                    path: ":playbookId",
+                    element: <PlaybookDetailPage />,
+                  },
+                ],
+              },
               {
                 path: "templates",
                 children: [
