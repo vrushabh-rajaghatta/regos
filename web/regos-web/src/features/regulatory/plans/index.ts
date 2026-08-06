@@ -4,5 +4,6 @@ export * from "./hooks/useInstantiatePlan";
 export * from "./hooks/useChangePlanStatus";
 export * from "./hooks/useChangeStepStatus";
 export * from "./hooks/useNextSteps";
+export * from "./hooks/usePlanImpact";
 
 export * from "./types/ProcessPlan";
