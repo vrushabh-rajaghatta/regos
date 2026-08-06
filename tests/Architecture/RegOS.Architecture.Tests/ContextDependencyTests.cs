@@ -45,7 +45,7 @@ public class ContextDependencyTests
         ["RegOS.SharedKernel", "RegOS.Platform.Contracts", "RegOS.Storage"];
 
     /// <summary>
-    /// <b>The 26 edges.</b> Each key is a context whose <c>*.Domain</c> project
+    /// <b>The 32 edges.</b> Each key is a context whose <c>*.Domain</c> project
     /// may reference the <c>*.Domain</c> of every context listed, and no other.
     /// </summary>
     /// <remarks>
@@ -78,6 +78,10 @@ public class ContextDependencyTests
         // INBOUND for the nullable ProcessStepId, and **none is declared until a
         // project takes it**: "the graph declares no edge that no project takes"
         // is what stops a permission outliving its reason.
+        //
+        // All three are now taken — Registration and Submission at S006,
+        // Interaction at S007 — so the authorisation is spent. A fourth context
+        // wanting a ProcessStepId is a new decision, not a remaining allowance.
         ["Process"] = ["Product", "ReferenceData", "RegulatoryApplication"],
 
         // ADR-063: where a product is made is a product fact. The reverse edge —
@@ -104,10 +108,33 @@ public class ContextDependencyTests
             ["Organization", "Process", "ProductDocument", "ReferenceData",
              "RegulatoryApplication", "Study"],
 
+        // Process arrived at S007: all four interaction aggregates record which
+        // planned work they serve. The third and last of the inbound edges
+        // ADR-065 authorised — and the reason a conversation with an authority
+        // now appears on the plan without the plan owning any of it.
         ["Interaction"] =
-            ["Organization", "ReferenceData", "Registration",
+            ["Organization", "Process", "ReferenceData", "Registration",
              "RegulatoryApplication", "Submission"],
     };
+
+    /// <summary>
+    /// <b>The count in the summary above is load-bearing, so it is asserted.</b>
+    /// It said 26 for five stories while the dictionary held 31 — a number in
+    /// prose drifts silently, which is the one failure mode this whole test
+    /// class exists to prevent.
+    /// </summary>
+    /// <remarks>
+    /// Failing here is not a defect: adding an edge is meant to cost two edits,
+    /// so that widening the graph is never something that happens by accident
+    /// while doing something else. Update the number and the summary together.
+    /// </remarks>
+    [Fact]
+    public void The_graph_holds_the_number_of_edges_it_says_it_does()
+    {
+        DomainMayReference.Sum(x => x.Value.Length).Should().Be(32,
+            because: "the summary on DomainMayReference says 32 edges, and a "
+                + "documented count that nothing checks is a count that drifts");
+    }
 
     [Fact]
     public void A_domain_references_only_the_contexts_its_entry_names()

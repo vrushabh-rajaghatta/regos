@@ -88,37 +88,12 @@ public sealed class GetProcessPlanHandler
         var codeOf = row.Steps.ToDictionary(x => x.Id, x => x.Code);
 
         // The reverse view, composed rather than navigated: Process holds no FK
-        // to either of these (ADR-065 D2), so it asks the database instead. Two
-        // small reads over the whole plan, not one per step.
-        var stepIds = row.Steps.Select(x => x.Id).ToList();
-
-        var submissions = await _dbContext.Submissions
-            .AsNoTracking()
-            .Where(x => x.ProcessStepId != null && stepIds.Contains(x.ProcessStepId))
-            .Select(x => new { Step = x.ProcessStepId!, x.Id, x.Title })
-            .ToListAsync(cancellationToken);
-
-        var registrations = await _dbContext.Registrations
-            .AsNoTracking()
-            .Where(x => x.ProcessStepId != null && stepIds.Contains(x.ProcessStepId))
-            .Select(x => new { Step = x.ProcessStepId!, x.Id, x.RegistrationNumber })
-            .ToListAsync(cancellationToken);
-
-        var attached = submissions
-            .Select(x => (
-                Step: x.Step,
-                Artefact: new AttachedArtefact("Submission", x.Id.Value, x.Title)))
-            .Concat(registrations.Select(x => (
-                Step: x.Step,
-                Artefact: new AttachedArtefact(
-                    "Registration",
-                    x.Id.Value,
-                    x.RegistrationNumber ?? "Registration"))))
-            .ToList();
-
-        var attachedByStep = attached
-            .GroupBy(x => x.Step)
-            .ToDictionary(g => g.Key, g => g.Select(x => x.Artefact).ToList());
+        // to any of these (ADR-065 D2), so it asks the database instead. Six
+        // reads over the whole plan, never one per step — see PlanAttachments.
+        var attachedByStep = await PlanAttachments.ForStepsAsync(
+            _dbContext,
+            row.Steps.Select(x => x.Id).ToList(),
+            cancellationToken);
 
         // Schedule order, then code. Deterministic: two steps may legitimately
         // start on the same day, and a step code carries a unique index per plan,

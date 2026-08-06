@@ -47,7 +47,7 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 ## Now
 
 🟡 **[EPIC-020 — regulatory process & planning](epics/EPIC-020-regulatory-process-and-planning.md)
-— 5 of 8 stories.**
+— 7 of 8 stories.**
 Taken 2026-08-06. RIM's **spine** — the layer that turns a record system into one
 that tells you what to do next. Phase 1 approved the same day, and
 [ADR-065](../adr/ADR-065-regulatory-process-is-an-optional-bounded-context.md) has
@@ -60,7 +60,7 @@ been the implementation contract since.
 | 🟢 | **S003** instantiation — pinned version, dates derived once | planning |
 | 🟢 | **S004** execution — step status, actual dates, the plan board | operation |
 | 🟢 | **S005** impact — what a delay actually costs | visibility |
-| ⚪ | **S006–S007** wiring — six aggregates gain a nullable `ProcessStepId` | integration |
+| 🟢 | **S006–S007** wiring — six aggregates gain a nullable `ProcessStepId`; Process reads, never owns | integration |
 | ⚪ | **S008** capstone — browser proof, retro | — |
 
 **Two findings worth carrying out of the epic already.** The FDA IND **critical
@@ -196,7 +196,7 @@ whoever can go and fetch one.*
 |---|---|---|---|---|
 | — | ~~**EPIC-023**~~ | **The test suite runs against its own schema** | 🟢 **Shipped 2026-08-05** | — |
 | — | ~~**EPIC-024**~~ | **The invariants nothing checks** | 🟢 **Shipped 2026-08-06** (PR #25) | — |
-| — | ~~**EPIC-020**~~ | **Regulatory process & planning** | 🟡 **In progress — 5 of 8** (2026-08-06) — in [Now](#now) | EPIC-004 ✅ · EPIC-006 ✅ · EPIC-017 ✅ |
+| — | ~~**EPIC-020**~~ | **Regulatory process & planning** | 🟡 **In progress — 7 of 8** (2026-08-06) — in [Now](#now) | EPIC-004 ✅ · EPIC-006 ✅ · EPIC-017 ✅ |
 | 1 | **EPIC-021** | **Cross-sequence continuity** — the checks no DTD can express | ⚪ Not Started | EPIC-019 ✅ · scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) · **and one thing no epic supplies** — see below |
 | — | ~~**EPIC-010c**~~ | **Manufacturing** | 🟢 **Shipped 2026-08-05** (PR #23), closing EPIC-010 | — |
 | — | **EPIC-025** | **[Random Issues](epics/EPIC-025-random-issues.md)** — the register for defects found incidentally | 🟡 **Standing** — never closes, holds no slot | — |
@@ -346,7 +346,7 @@ and value calls are the founder's.
 |---|---|---|---|
 | **EPIC-010** | **IDMP / product data depth** — substances, ingredients, strength, presentation, packaging, manufacturing | ⚪ Not Started | needs EPIC-016 + EPIC-017 · **split into 10a/10b/10c before cutting a branch** · umbrella → [`epics/EPIC-010-idmp-product-data-depth.md`](epics/EPIC-010-idmp-product-data-depth.md) |
 | **EPIC-021** | **Cross-sequence continuity** — the checks FDA's review tooling needs and no DTD can express: a study filed twice under two titles, an instance qualifier that drifts, a `study-id` that changes | ⚪ Not Started | **owed by EPIC-019**, scoped by [ADR-057 §2](../adr/ADR-057-a-filed-artifact-is-projected-from-a-snapshot.md) — the check belongs in the generator, reading frozen publication facts, adding no dependency in any direction. **Architecture settled; implementation deferred** because it needs a second sequence filing the same study. E24, E17, E18 |
-| ~~**EPIC-020**~~ | **Regulatory process & planning** — objectives, process definitions, live plans and dated steps; RIM's spine | 🟡 **In progress — 5 of 8** — in [Now](#now) | *"Deliberately last" meant its dependencies came first; EPIC-004, 006 and 017 have all shipped, so last now means next* |
+| ~~**EPIC-020**~~ | **Regulatory process & planning** — objectives, process definitions, live plans and dated steps; RIM's spine | 🟡 **In progress — 7 of 8** — in [Now](#now) | *"Deliberately last" meant its dependencies came first; EPIC-004, 006 and 017 have all shipped, so last now means next* |
 | **EPIC-007b** | **Publishing — transmission, STF & message formats** — gateway transmission (ESG/AS2), study tagging files, xEVMPD/IDMP messages | ⚪ Not Started | needs EPIC-010 + EPIC-019 · **carries the `Filed` transition**: ADR-046 named EPIC-007 as the milestone, and it belongs to whichever half transmits |
 | **EPIC-008** | **Review & approval workflow** — internal review, comments, approvals, e-signatures; the QC/publishing/compilation/validation status pipelines deferred from EPIC-004 | ⚪ Not Started | |
 | **EPIC-009** | **Regulatory intelligence / requirements** — what's required per market & product type; keeps the blueprint current | ⚪ Not Started | feeds EPIC-001 |

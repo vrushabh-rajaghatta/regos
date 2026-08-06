@@ -4,6 +4,7 @@ import { Page } from "@/shared/components/Page";
 import { PageHeader } from "@/shared/components/PageHeader";
 
 import { CorrespondenceContent } from "../components/CorrespondenceContent";
+import { CorrespondencePlanStepSection } from "../components/CorrespondencePlanStepSection";
 import { CorrespondenceQuestions } from "../components/CorrespondenceQuestions";
 import { ResponseDue } from "../components/ResponseDue";
 import { directionLabel } from "../constants/correspondenceDirections";
@@ -149,6 +150,11 @@ export function CorrespondenceDetailPage() {
       <CorrespondenceQuestions
         correspondenceId={letter.correspondenceId}
         questions={letter.questions}
+      />
+
+      <CorrespondencePlanStepSection
+        correspondenceId={letter.correspondenceId}
+        processStepId={letter.processStepId}
       />
     </Page>
   );

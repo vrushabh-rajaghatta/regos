@@ -25,6 +25,11 @@
          Process context itself never references Registration — the edge runs
          the other way (ADR-065 D2). -->
     <ProjectReference Include="..\..\..\src\Registration\RegOS.Registration.Infrastructure\RegOS.Registration.Infrastructure.csproj" />
+    <!-- Same reason, four more aggregates (S007). Process references neither
+         project in src/; these exist so the tests can construct a real letter,
+         meeting, inspection and commitment and then show that attaching one
+         changes nothing about it. -->
+    <ProjectReference Include="..\..\..\src\Interaction\RegOS.Interaction.Infrastructure\RegOS.Interaction.Infrastructure.csproj" />
     <ProjectReference Include="..\..\TestSupport\RegOS.TestSupport\RegOS.TestSupport.csproj" />
   </ItemGroup>
 

@@ -1,5 +1,6 @@
 using RegOS.Organization.Domain.Aggregates.OrganizationSite;
 using RegOS.Platform.Contracts;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
@@ -67,6 +68,15 @@ public sealed class Inspection : AggregateRoot<InspectionId>
     public DateOnly? ScheduledFor { get; private set; }
 
     public UserId? OwnerUserId { get; private set; }
+
+    /// <summary>The planned work this inspection serves, if any.</summary>
+    /// <remarks>
+    /// Rarest of the four, and kept for the same reason the others are: an
+    /// inspection is occasionally a condition of a filing, and when it is, the
+    /// plan should be able to say so. When it is not — the ordinary case, an
+    /// authority arriving on its own schedule — the null means nothing (I9).
+    /// </remarks>
+    public ProcessStepId? ProcessStepId { get; private set; }
 
     /// <summary>What the authority found. Not what we must now do.</summary>
     public string? Outcome { get; private set; }
@@ -185,6 +195,13 @@ public sealed class Inspection : AggregateRoot<InspectionId>
     /// <summary>Naming the site once it is known is its own business event.</summary>
     public void InspectedAt(OrganizationSiteId? organizationSiteId)
         => OrganizationSiteId = organizationSiteId;
+
+    /// <summary>
+    /// Records which planned work this inspection serves, or clears it.
+    /// Changes discoverability and nothing else.
+    /// </summary>
+    public void AttachToStep(ProcessStepId? processStepId)
+        => ProcessStepId = processStepId;
 
     public void AssignTo(UserId? ownerUserId) => OwnerUserId = ownerUserId;
 

@@ -1,4 +1,5 @@
 using RegOS.Platform.Contracts;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Abstractions;
@@ -68,6 +69,17 @@ public sealed class HaMeeting : AggregateRoot<HaMeetingId>
     public RegulatoryApplicationId? RegulatoryApplicationId { get; private set; }
 
     public UserId? OwnerUserId { get; private set; }
+
+    /// <summary>The planned work this meeting serves, if any.</summary>
+    /// <remarks>
+    /// The step this most often carries is a pre-IND meeting step in a playbook
+    /// — which is the case ADR-065 D2 was written for and the reason the plan
+    /// does not schedule the meeting itself. <b>Both records keep their own
+    /// dates</b>: the step's are derived, the meeting's are what happened, and
+    /// neither corrects the other (I9). Holding the meeting does not complete
+    /// the step, and completing the step does not hold the meeting.
+    /// </remarks>
+    public ProcessStepId? ProcessStepId { get; private set; }
 
     /// <summary>What was said. Recorded once it has been held.</summary>
     public string? Minutes { get; private set; }
@@ -179,6 +191,14 @@ public sealed class HaMeeting : AggregateRoot<HaMeetingId>
     public void Reschedule(DateOnly? scheduledFor) => ScheduledFor = scheduledFor;
 
     public void AssignTo(UserId? ownerUserId) => OwnerUserId = ownerUserId;
+
+    /// <summary>
+    /// Records which planned work this meeting serves, or clears it. Permitted
+    /// after the meeting has concluded, because attaching states what the
+    /// meeting was for — a fact that outlives its lifecycle.
+    /// </summary>
+    public void AttachToStep(ProcessStepId? processStepId)
+        => ProcessStepId = processStepId;
 
     private static string ValidatedSubject(string subject)
     {

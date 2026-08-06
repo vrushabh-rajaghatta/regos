@@ -1,6 +1,6 @@
 # EPIC-020 — Regulatory process & planning
 
-**Status:** 🟡 **In Progress — 5 of 8 stories** ([progress](#progress--5-of-8-2026-08-06)) · **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 **In Progress — 7 of 8 stories** ([progress](#progress--7-of-8-2026-08-06)) · **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 RIM's **spine**. Everything RegOS builds — applications, submissions, correspondence, meetings, commitments, inspections — becomes a *step in a plan* that serves an *objective*. This is the layer that turns a record system into a system that tells you what to do next.
 
@@ -324,7 +324,7 @@ Global Product → Objective (product + country) → market preparation
 
 ---
 
-## Progress — 5 of 8, 2026-08-06
+## Progress — 7 of 8, 2026-08-06
 
 **Everything below shipped in one day, and the record is written because five
 stories of decisions had accumulated with nothing but commit messages holding
@@ -337,6 +337,8 @@ them.**
 | **S003** | Instantiation from a pinned version, dates derived once, graph translated into the plan's own ids | **The FDA IND critical path is not where anyone guesses.** The convergence test was written asserting `CMC` and was **wrong by 33 days** — the path runs through the pre-IND meeting track, because FDA's calendar contributes 30 days twice before a protocol can be written |
 | **S004** | Step execution, `Draft → Active → Completed \| Cancelled`, the plan board | Three refusals to manufacture history: a null `ActualStartOn`, no history entry for a reschedule, and a required skip reason |
 | **S005** | Impact analysis — transitive affected/actionable, and what a delay costs the finish date | **An S005 test found an S004 bug.** Each step's initial `NotStarted` entry was seeded with its *planned start*, so the chronology rule refused any earlier entry — a step could not be recorded as **completed early** |
+| **S006** | Nullable `ProcessStepId` on `Submission` and `Registration`; the reverse read; **I9** | **I2 turned out to be a property of RegOS, not of Process.** Writing the guard for one context made it obvious the rule holds for all eleven — so it is stated that way, and narrowing it would have been the special case |
+| **S007** | The same four times, on the Interaction aggregates — and the pre-IND track finally has somewhere to point | **Nothing.** Four repetitions, no new invariant, no exception, no fifth variation. Recorded because at this point in an epic that is the finding |
 
 ### What the stories proved about the architecture
 
@@ -350,13 +352,15 @@ S005  what does this delay affect?    → impact walks the same graph forward
 
 **`InstantiateFrom` contains no cycle detection.** It refuses an unpublished version, and that refusal is the entire basis for assuming the graph is schedulable. **S001 removed work from S003** rather than merely preceding it — which is the clearest evidence the two were cut at the right seam.
 
-### ADR-065 was amended twice, both times to sharpen
+### ADR-065 was amended four times, every one of them to sharpen
 
 | | |
 |---|---|
 | **S003** | **I5** added (instantiation is deterministic); the **ad-hoc-plan clause struck** — the pin is `NOT NULL`, because instantiation is the only way to create a plan |
 | **S004** | **D10** recorded, **D11** added (completion is a decision, never a consequence), **I6** added (execution history is append-only) |
 | **S005** | **I7** and **I8** added — impact analysis never repairs the schedule, and never replaces it |
+| **S006** | **I9** added — attachments are descriptive, not constitutive |
+| **S007** | **Nothing.** The first story that needed no amendment at all |
 
 **No invariant has needed an exception, and every amendment made the model smaller** — a seam removed, a nullable removed, a duplicated field removed. **An amendment log with a freeze rule now sits at the top of the ADR:** it is corrected in place while the epic is in flight and superseded, never edited, once the epic branch reaches `main`.
 
@@ -375,9 +379,31 @@ Not planned; observed at the retro-in-progress, and it explains why so many conv
 
 **And its uncomfortable corollary, which the impact projection surfaces:** *"nobody clicked Start"* and *"the work has not begun"* are indistinguishable to RegOS, so a step nobody started reads as late. That is correct — **unknown is not the same as inferred** — and it is the one place the philosophy costs something visible.
 
-### Verification at S005
+### The integration half, S006–S007
 
-**21 reporting suites green** · architecture **41/41** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Process: **62 domain**, **30 database-backed**.
+Two stories, one shape, six aggregates. **The success criterion for S007 was that nothing interesting happened** — and nothing did.
+
+```
+   write   owning aggregate ──owns──► its own nullable ProcessStepId
+   read    Process ──composes over RegOSDbContext──► what a step involved
+```
+
+**Symmetry would have been the suspicious outcome.** It would have tempted Process into owning writes, and the whole of D2 is that it must not. `SetNull` on all six foreign keys says the same thing relationally: delete a plan step and every regulatory record survives, carrying a null that means what every other null there means — nothing.
+
+**`ContextDependencyTests` gained two guards**, both generalised past the case that produced them:
+
+| Guard | Was going to be | Became |
+|---|---|---|
+| **Repository** | *Process must not take foreign repositories* | *no context may name another context's repository*, in either direction, for all eleven |
+| **Edge count** | — | the graph's documented size, asserted — it read **26** for five stories while the dictionary held **31** |
+
+**Three inbound edges authorised, three taken, none spare.** `Registration` and `Submission` at S006, `Interaction` at S007. The graph is neither aspirational nor stale; a fourth context wanting a `ProcessStepId` now needs an ADR.
+
+**The one gap S007 left open, deliberately.** Only correspondence has a detail page, so only correspondence has an attach control — the other three have the same API and nowhere to put it. Adding those controls to the plan page would have made Process the place users manage other contexts' records, which is D2 undone in the mental model even with the command correctly routed. **The gap is a missing screen, and it stays visible.**
+
+### Verification at S007
+
+**21 reporting suites green** · architecture **43/43** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Process: **62 domain**, **40 database-backed**.
 
 ---
 
@@ -391,9 +417,9 @@ Not planned; observed at the retro-in-progress, and it explains why so many conv
 | **S002** | **The objective** — strategy, dated status, target product + market, nullable application link. **D3 is settled here or the object is deleted here** | *"What are we trying to achieve, and why this route?"* | 🟢 **Done** · merged `812a2bd` |
 | **S003** | **Instantiation** — a plan pinned to a published version, steps dated once from the offsets. The ADR-035 pattern, second occurrence | *"We did this last year. Do it again."* | 🟢 **Done** · merged `1d6267f` |
 | **S004** | **Working the plan** — step status history, actual dates, the plan board | *"Where are we, and what is next?"* | 🟢 **Done** · merged `61c99a0` |
-| **S005** | **What is late, and what does it block** — transitive successors, derived on read; D6's superseded-playbook disclosure | *"What is late, and what does it block?"* | 🟢 **Done** · `8b85646`, awaiting merge |
-| **S006** | **Wiring, part 1** — `Submission` and `Registration` attach to steps; both ends show it. **D2 is proved or reversed here**, on the two cheapest contexts | *"This submission — what plan is it part of?"* | ⚪ Not started |
-| **S007** | **Wiring, part 2** — the four Interaction aggregates. **Guard: a step is not a commitment's fourth business origin** — [ADR-042 decision 2](../../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) fires on a fourth *origin*, and a step is what a commitment *serves*, not where it *arose* | *"What did this step actually produce?"* | ⚪ Not started |
+| **S005** | **What is late, and what does it block** — transitive successors, derived on read; D6's superseded-playbook disclosure | *"What is late, and what does it block?"* | 🟢 **Done** · merged `b004795` |
+| **S006** | **Wiring, part 1** — `Submission` and `Registration` attach to steps; both ends show it. **D2 is proved or reversed here**, on the two cheapest contexts | *"This submission — what plan is it part of?"* | 🟢 **Done** · merged `a9cc20a` |
+| **S007** | **Wiring, part 2** — the four Interaction aggregates. **Guard: a step is not a commitment's fourth business origin** — [ADR-042 decision 2](../../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) fires on a fourth *origin*, and a step is what a commitment *serves*, not where it *arose* | *"What did this step actually produce?"* | 🟢 **Done** — and the guard held: a step is what a commitment *serves*, asserted as its own test |
 | **S008** | **Capstone** — the workflow steps 1→6 in one browser run, ADR-065, `ContextDependencyTests` extended, retro | — | ⚪ Not started |
 
 **The split point, declared now so it is a decision and not a rescue** — and confirmed at sign-off:

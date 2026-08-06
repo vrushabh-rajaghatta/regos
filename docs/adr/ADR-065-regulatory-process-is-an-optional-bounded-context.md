@@ -22,11 +22,17 @@
 > | | Change |
 > |---|---|
 > | **S003** | **I5 added** (instantiation is deterministic). **The ad-hoc-plan clause struck** — the pin is `NOT NULL`, because instantiation is the only way to create a plan. |
-> | **S006** | **I9 added** — attachments are descriptive, not constitutive. |
-> | **S005** | **I7 and I8 added** — impact analysis never repairs the schedule, and never replaces it. |
 > | **S004** | **D10 recorded** (a plan belongs to exactly one objective — settled at S003 sign-off, written down here). **D11 added** (step completion is a human decision). **I6 added** (execution history is append-only). |
+> | **S005** | **I7 and I8 added** — impact analysis never repairs the schedule, and never replaces it. |
+> | **S006** | **I9 added** — attachments are descriptive, not constitutive. |
+> | **S007** | **Nothing added.** Four more aggregates took the same shape and none of them needed a clause. Recorded because a repetition that required no amendment is the strongest evidence this document is finished. |
 >
 > No amendment has touched a decision code already depends on.
+>
+> **The three inbound edges D2 authorises are now spent** — `Registration` and
+> `Submission` at S006, `Interaction` at S007. A fourth context wanting a
+> `ProcessStepId` is a new decision requiring a new ADR, not a remaining
+> allowance under this one. `ContextDependencyTests` is what enforces that.
 >
 > **This ADR is the implementation contract for EPIC-020, not a summary of it.**
 > It deliberately says nothing about story order, screens or sequencing, so that
