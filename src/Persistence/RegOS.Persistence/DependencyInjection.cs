@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RegOS.Persistence.Initialization;
 using RegOS.Persistence.Initialization.Organization;
 using RegOS.Persistence.Initialization.Platform;
+using RegOS.Persistence.Initialization.Process;
 using RegOS.Persistence.Initialization.Product;
 using RegOS.Persistence.Initialization.ReferenceData;
 using RegOS.Persistence.Initialization.ReferenceData.Organization;
@@ -68,6 +69,9 @@ public static class DependencyInjection
         services.AddScoped<IDataInitializer, SubstanceDataInitializer>();
         // After application types and authorities: a template references both.
         services.AddScoped<IDataInitializer, RegulatoryTemplateDataInitializer>();
+        // Same prerequisites as the blueprint above, plus countries — a playbook
+        // is scoped by country, authority and application type together.
+        services.AddScoped<IDataInitializer, ProcessDefinitionDataInitializer>();
 
         return services;
     }

@@ -7,6 +7,7 @@ using RegOS.ReferenceData.Domain.SubmissionType;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Abstractions;
 using RegOS.SharedKernel.Exceptions;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.SharedKernel.Primitives;
 using RegOS.Study.Domain.Aggregates.ClinicalStudy;
 using RegOS.Study.Domain.Aggregates.NonClinicalStudy;
@@ -167,6 +168,46 @@ public sealed class Submission : AggregateRoot<SubmissionId>
     /// without passing through code.
     /// </remarks>
     public SubmissionTypeId? SubmissionTypeId { get; private set; }
+    /// <summary>
+    /// The plan step this submission contributes to, when somebody has said so.
+    /// </summary>
+    /// <remarks>
+    /// <b>An annotation, not ownership</b>
+    /// ([ADR-065](../../../../../docs/adr/ADR-065-regulatory-process-is-an-optional-bounded-context.md)
+    /// D2, I2, I9). <c>Submission</c> owns this column and its own lifecycle; the
+    /// Process context can read it and can never write it, complete anything
+    /// because of it, or be the reason this submission changes state.
+    /// <para>
+    /// <b>Nullable, and its absence means nothing</b> (I9). An unattached
+    /// submission is complete, valid and unremarkable — it may simply not have been
+    /// annotated. <em>"Not attached, therefore not part of the plan"</em> is the
+    /// one reading this column must never support, because it would make Process
+    /// something every context has to satisfy rather than something any of them
+    /// may ignore.
+    /// </para>
+    /// </remarks>
+    public ProcessStepId? ProcessStepId { get; private set; }
+
+    /// <summary>
+    /// Records that this submission contributes to a step of a plan, or clears the
+    /// link.
+    /// </summary>
+    /// <remarks>
+    /// <b>This aggregate's own command, deliberately.</b> The owning aggregate
+    /// sets and clears its own foreign key — a Process command doing it would be
+    /// Process writing into a lifecycle that is not its own, which is the shape
+    /// <c>ContextDependencyTests</c> now refuses mechanically.
+    /// <para>
+    /// <b>Nothing is validated about the step here.</b> Checking it exists, or
+    /// belongs to a plan about the same product, would be the cross-aggregate
+    /// read ADR-016 keeps out of the domain — and the second check has no
+    /// invariant behind it anyway: a plan may legitimately span work about
+    /// several applications.
+    /// </para>
+    /// </remarks>
+    public void AttachToStep(ProcessStepId? processStepId)
+        => ProcessStepId = processStepId;
+
 
     /// <summary>
     /// What this sequence does to its activity — application, amendment, report.

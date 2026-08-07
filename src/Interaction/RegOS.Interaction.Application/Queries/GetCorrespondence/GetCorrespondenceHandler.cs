@@ -70,6 +70,9 @@ public sealed class GetCorrespondenceHandler
                     x.Correspondence.RegistrationId != null
                         ? x.Correspondence.RegistrationId!.Value.Value
                         : null,
+                    x.Correspondence.ProcessStepId != null
+                        ? x.Correspondence.ProcessStepId!.Value
+                        : null,
                     x.Correspondence.Attachments
                         .OrderBy(a => a.UploadedOnUtc)
                         .ThenBy(a => a.Id)

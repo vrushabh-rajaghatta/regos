@@ -15,6 +15,10 @@ using RegOS.Interaction.Application.Commands.RecordCorrespondence;
 using RegOS.Interaction.Application.Commands.ResolveQuestion;
 using RegOS.Interaction.Application.Commands.RespondToQuestion;
 using RegOS.Interaction.Application.Commands.RemoveCorrespondenceContent;
+using RegOS.Interaction.Application.Commands.AttachCommitmentToStep;
+using RegOS.Interaction.Application.Commands.AttachHaCorrespondenceToStep;
+using RegOS.Interaction.Application.Commands.AttachHaMeetingToStep;
+using RegOS.Interaction.Application.Commands.AttachInspectionToStep;
 using RegOS.Interaction.Application.Queries.GetCorrespondenceContent;
 using RegOS.Interaction.Application.Queries.GetCorrespondence;
 using RegOS.Interaction.Application.Queries.ListCommitments;
@@ -73,6 +77,12 @@ public static class DependencyInjection
         services.AddScoped<ListCorrespondenceHandler>();
 
         services.AddScoped<GetCorrespondenceHandler>();
+
+        // ADR-065 S007 — all four, following the shape S006 established.
+        services.AddScoped<AttachHaCorrespondenceToStepHandler>();
+        services.AddScoped<AttachHaMeetingToStepHandler>();
+        services.AddScoped<AttachInspectionToStepHandler>();
+        services.AddScoped<AttachCommitmentToStepHandler>();
 
         return services;
     }

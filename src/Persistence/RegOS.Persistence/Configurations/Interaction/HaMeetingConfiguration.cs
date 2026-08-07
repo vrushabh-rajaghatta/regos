@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using RegOS.Interaction.Domain.Meetings;
 using RegOS.Platform.Contracts;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
 using RegOS.SharedKernel.Primitives;
@@ -73,5 +74,22 @@ public sealed class HaMeetingConfiguration : IEntityTypeConfiguration<HaMeeting>
             (HaMeetingStatusEntryId id) => id.Value,
             value => new HaMeetingStatusEntryId(value),
             HaMeetingStatusEntry.NoteMaxLength);
+
+        // ADR-065 D2 — an annotation the owning aggregate holds, and the fourth
+        // context to hold one. SetNull, not Cascade: deleting a plan step must
+        // never delete a meeting that happened, and I9 makes the resulting null mean
+        // exactly what every other null on this table means — nothing.
+        builder.Property(x => x.ProcessStepId)
+            .HasConversion(
+                id => id != null ? id.Value : (Guid?)null,
+                value => value != null ? new ProcessStepId(value.Value) : null);
+
+        builder.HasOne<ProcessStep>()
+            .WithMany()
+            .HasForeignKey(x => x.ProcessStepId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // "What work did this step involve?" — the read the link exists for.
+        builder.HasIndex(x => x.ProcessStepId);
     }
 }

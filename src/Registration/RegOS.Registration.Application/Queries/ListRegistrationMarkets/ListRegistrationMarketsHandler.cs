@@ -45,6 +45,9 @@ public sealed class ListRegistrationMarketsHandler
                 country.Code,
             }
             into market
+            // BUG-001: the tie-breaker in SQL, where CountryId translates. In
+            // memory it has no IComparable and throws on the second market.
+            orderby market.Key.CountryId
             select new
             {
                 market.Key.CountryId,
@@ -76,9 +79,11 @@ public sealed class ListRegistrationMarketsHandler
 
         var byCountry = regions.ToDictionary(x => x.Id, x => x.Codes);
 
+        // Deterministic: the source query is ordered by CountryId in SQL and
+        // this sort is stable, so equal names keep that order. The tie-break
+        // lives there because an id has no IComparable in memory (BUG-001).
         return rows
             .OrderBy(row => row.Name)
-            .ThenBy(row => row.CountryId)
             .Select(row => new RegistrationMarket(
                 row.CountryId.Value,
                 row.Name,

@@ -33,6 +33,8 @@
     <ProjectReference Include="..\..\Study\RegOS.Study.Infrastructure\RegOS.Study.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Labeling\RegOS.Labeling.Application\RegOS.Labeling.Application.csproj" />
     <ProjectReference Include="..\..\Labeling\RegOS.Labeling.Infrastructure\RegOS.Labeling.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Process\RegOS.Process.Application\RegOS.Process.Application.csproj" />
+    <ProjectReference Include="..\..\Process\RegOS.Process.Infrastructure\RegOS.Process.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

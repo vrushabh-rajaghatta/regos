@@ -2,6 +2,7 @@ using RegOS.Interaction.Domain.Correspondence;
 using RegOS.Interaction.Domain.Inspections;
 using RegOS.Interaction.Domain.Meetings;
 using RegOS.Platform.Contracts;
+using RegOS.Process.Domain.Aggregates.ProcessPlans;
 using RegOS.ReferenceData.Domain.Regulatory.Authority;
 using RegOS.Registration.Domain.Aggregates.Registration;
 using RegOS.RegulatoryApplication.Domain.Aggregates.RegulatoryApplication;
@@ -101,6 +102,28 @@ public sealed class Commitment : AggregateRoot<CommitmentId>
     /// </remarks>
     public InspectionId? SourceInspectionId { get; private set; }
 
+    /// <summary>The planned work this commitment supports, if any.</summary>
+    /// <remarks>
+    /// <b>It is not a business origin</b> and does not participate in ADR-042's
+    /// origin model. The three <c>Source*Id</c> columns above record where a
+    /// commitment <em>arose</em>; this records what it <em>serves</em>. A
+    /// commitment attached to a step still has however many origins it had —
+    /// most often none.
+    /// <para>
+    /// So this does not trip the fourth-origin clause on
+    /// <see cref="SourceInspectionId"/>, and a future reader counting nullable
+    /// foreign keys on this aggregate should not count it. That clause is
+    /// deliberately worded as origins rather than columns; this is the first
+    /// thing to test the wording, and it holds.
+    /// </para>
+    /// <para>
+    /// Descriptive, never constitutive (ADR-065 I9): attaching does not change
+    /// the due date, the owner or the status, and completing the step will
+    /// never fulfil the commitment.
+    /// </para>
+    /// </remarks>
+    public ProcessStepId? ProcessStepId { get; private set; }
+
     public CommitmentStatus CurrentStatus { get; private set; }
 
     public IReadOnlyList<CommitmentStatusEntry> History => _history.AsReadOnly();
@@ -197,6 +220,13 @@ public sealed class Commitment : AggregateRoot<CommitmentId>
     }
 
     public void AssignTo(UserId? ownerUserId) => OwnerUserId = ownerUserId;
+
+    /// <summary>
+    /// Records which planned work this commitment supports, or clears it.
+    /// Always permitted — it changes discoverability and nothing else.
+    /// </summary>
+    public void AttachToStep(ProcessStepId? processStepId)
+        => ProcessStepId = processStepId;
 
     public void Amend(string title, string? description, DateOnly dueOn)
     {

@@ -186,6 +186,10 @@ public sealed class CreateSubmissionHandler
             .Include(t => t.Versions)
             .Where(t => t.ApplicationTypeId == applicationTypeId
                 && t.Status == RegulatoryTemplateStatus.Active)
+            // BUG-001: the tie-break in SQL, where a template id translates.
+            // In memory it has no IComparable and threw on the second
+            // candidate — the very tie the comment below anticipated.
+            .OrderBy(t => t.Id)
             .ToListAsync(cancellationToken);
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -200,8 +204,9 @@ public sealed class CreateSubmissionHandler
             // otherwise let the database choose which one a filing binds to.
             // Seed data holds one, so the tie is unreachable today; this
             // ordering does not depend on that staying true.
+            // Deterministic: the query above orders candidates by id in SQL
+            // and this sort is stable (BUG-001).
             .OrderByDescending(t => t.TenantId != null)
-            .ThenBy(t => t.Id)
             .Select(t => t.Versions
                 // Within a template: published, effective today, newest wins.
                 .Where(v => v.Status == TemplateVersionStatus.Published

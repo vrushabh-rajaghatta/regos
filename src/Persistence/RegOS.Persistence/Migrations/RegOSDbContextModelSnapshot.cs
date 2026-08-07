@@ -43,6 +43,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ProcessStepId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("RegistrationId")
                         .HasColumnType("uuid");
 
@@ -69,6 +72,8 @@ namespace RegOS.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorityId");
+
+                    b.HasIndex("ProcessStepId");
 
                     b.HasIndex("TenantId", "OwnerUserId");
 
@@ -101,6 +106,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<DateOnly>("OccurredOn")
                         .HasColumnType("date");
 
+                    b.Property<Guid?>("ProcessStepId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("RecordedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -131,6 +139,8 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("AuthorityId");
 
                     b.HasIndex("CorrespondenceTypeId");
+
+                    b.HasIndex("ProcessStepId");
 
                     b.HasIndex("RegulatoryApplicationId");
 
@@ -164,6 +174,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ProcessStepId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateOnly?>("ScheduledFor")
                         .HasColumnType("date");
 
@@ -180,6 +193,8 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("AuthorityId");
 
                     b.HasIndex("OrganizationSiteId");
+
+                    b.HasIndex("ProcessStepId");
 
                     b.HasIndex("TenantId", "CurrentStatus", "ScheduledFor");
 
@@ -211,6 +226,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ProcessStepId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("RegulatoryApplicationId")
                         .HasColumnType("uuid");
 
@@ -230,6 +248,8 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("AuthorityDivisionId");
 
                     b.HasIndex("AuthorityId");
+
+                    b.HasIndex("ProcessStepId");
 
                     b.HasIndex("TenantId", "CurrentStatus", "ScheduledFor");
 
@@ -1146,6 +1166,268 @@ namespace RegOS.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserCredentials", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ApplicationTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("CountryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique();
+
+                    b.HasIndex("CountryId", "AuthorityId", "ApplicationTypeId");
+
+                    b.ToTable("ProcessDefinitions", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessDefinitionVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("ProcessDefinitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("PublishedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessDefinitionId", "Status");
+
+                    b.HasIndex("ProcessDefinitionId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("ProcessDefinitionVersions", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessStepDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int>("DurationDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("OffsetDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ParentStepId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProcessDefinitionVersionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentStepId");
+
+                    b.HasIndex("ProcessDefinitionVersionId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("ProcessStepDefinitions", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessObjectives.ProcessObjective", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CountryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("GlobalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("MedicinalProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Rationale")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid?>("RegulatoryApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("TargetCompletionOn")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MedicinalProductId");
+
+                    b.HasIndex("GlobalProductId", "CountryId");
+
+                    b.HasIndex("TenantId", "CurrentStatus");
+
+                    b.ToTable("ProcessObjectives", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("AnchorDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("ProcessDefinitionVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProcessObjectiveId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessDefinitionVersionId");
+
+                    b.HasIndex("ProcessObjectiveId");
+
+                    b.HasIndex("TenantId", "CurrentStatus");
+
+                    b.ToTable("ProcessPlans", (string)null);
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ParentStepId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("PlannedEndOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PlannedStartOn")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("ProcessPlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StepDefinitionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CurrentStatus", "PlannedStartOn");
+
+                    b.HasIndex("ProcessPlanId", "Code")
+                        .IsUnique();
+
+                    b.HasIndex("ProcessPlanId", "PlannedStartOn");
+
+                    b.ToTable("ProcessSteps", (string)null);
                 });
 
             modelBuilder.Entity("RegOS.Product.Domain.Product.GlobalProduct", b =>
@@ -2272,6 +2554,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid?>("OriginatingApplicationId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ProcessStepId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("RegistrationNumber")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -2286,6 +2571,8 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("HolderOrganizationId");
 
                     b.HasIndex("OriginatingApplicationId");
+
+                    b.HasIndex("ProcessStepId");
 
                     b.HasIndex("TenantId");
 
@@ -2524,6 +2811,9 @@ namespace RegOS.Persistence.Migrations
                     b.Property<Guid?>("OriginatingSubmissionId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ProcessStepId")
+                        .HasColumnType("uuid");
+
                     b.Property<int?>("SequenceNumber")
                         .HasColumnType("integer");
 
@@ -2551,6 +2841,8 @@ namespace RegOS.Persistence.Migrations
                     b.HasIndex("BoundTemplateVersionId");
 
                     b.HasIndex("OriginatingSubmissionId");
+
+                    b.HasIndex("ProcessStepId");
 
                     b.HasIndex("SubmissionSubTypeId");
 
@@ -2699,6 +2991,11 @@ namespace RegOS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStep", null)
+                        .WithMany()
+                        .HasForeignKey("ProcessStepId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.OwnsMany("RegOS.Interaction.Domain.Commitments.CommitmentStatusEntry", "History", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -2752,6 +3049,11 @@ namespace RegOS.Persistence.Migrations
                         .HasForeignKey("CorrespondenceTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStep", null)
+                        .WithMany()
+                        .HasForeignKey("ProcessStepId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.OwnsMany("RegOS.Interaction.Domain.Correspondence.CorrespondenceAttachment", "Attachments", b1 =>
                         {
@@ -2889,6 +3191,11 @@ namespace RegOS.Persistence.Migrations
                         .HasForeignKey("OrganizationSiteId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStep", null)
+                        .WithMany()
+                        .HasForeignKey("ProcessStepId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.OwnsMany("RegOS.Interaction.Domain.Inspections.InspectionStatusEntry", "History", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -2936,6 +3243,11 @@ namespace RegOS.Persistence.Migrations
                         .HasForeignKey("AuthorityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStep", null)
+                        .WithMany()
+                        .HasForeignKey("ProcessStepId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.OwnsMany("RegOS.Interaction.Domain.Meetings.HaMeetingStatusEntry", "History", b1 =>
                         {
@@ -4139,6 +4451,218 @@ namespace RegOS.Persistence.Migrations
                         .HasForeignKey("RegOS.Platform.Domain.Aggregates.UserCredential.UserCredential", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessDefinitionVersion", b =>
+                {
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessDefinition", null)
+                        .WithMany("Versions")
+                        .HasForeignKey("ProcessDefinitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessStepDefinition", b =>
+                {
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessDefinitionVersion", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("ProcessDefinitionVersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsMany("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessStepPredecessor", "Predecessors", b1 =>
+                        {
+                            b1.Property<Guid>("ProcessStepDefinitionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<Guid>("PredecessorStepId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("ProcessStepDefinitionId", "Id");
+
+                            b1.HasIndex("ProcessStepDefinitionId", "PredecessorStepId")
+                                .IsUnique();
+
+                            b1.ToTable("ProcessStepPredecessors", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProcessStepDefinitionId");
+                        });
+
+                    b.Navigation("Predecessors");
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessObjectives.ProcessObjective", b =>
+                {
+                    b.HasOne("RegOS.Product.Domain.Product.GlobalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("GlobalProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Product.Domain.Product.MedicinalProduct", null)
+                        .WithMany()
+                        .HasForeignKey("MedicinalProductId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.OwnsMany("RegOS.Process.Domain.Aggregates.ProcessObjectives.ProcessObjectiveStatusEntry", "History", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("Id");
+
+                            b1.Property<string>("Note")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<DateOnly>("OccurredOn")
+                                .HasColumnType("date");
+
+                            b1.Property<Guid>("ProcessObjectiveId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("RecordedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<int>("Status")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ProcessObjectiveId");
+
+                            b1.ToTable("ProcessObjectiveStatusHistory", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProcessObjectiveId");
+                        });
+
+                    b.Navigation("History");
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessPlan", b =>
+                {
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessDefinitionVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ProcessDefinitionVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessObjectives.ProcessObjective", null)
+                        .WithMany()
+                        .HasForeignKey("ProcessObjectiveId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsMany("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessPlanStatusEntry", "History", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("Id");
+
+                            b1.Property<string>("Note")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<DateOnly>("OccurredOn")
+                                .HasColumnType("date");
+
+                            b1.Property<Guid>("ProcessPlanId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("RecordedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<int>("Status")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ProcessPlanId");
+
+                            b1.ToTable("ProcessPlanStatusHistory", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProcessPlanId");
+                        });
+
+                    b.Navigation("History");
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStep", b =>
+                {
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessPlan", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("ProcessPlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsMany("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStepDependency", "Predecessors", b1 =>
+                        {
+                            b1.Property<Guid>("ProcessStepId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<Guid>("PredecessorStepId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("ProcessStepId", "Id");
+
+                            b1.HasIndex("ProcessStepId", "PredecessorStepId")
+                                .IsUnique();
+
+                            b1.ToTable("ProcessStepDependencies", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProcessStepId");
+                        });
+
+                    b.OwnsMany("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStepStatusEntry", "History", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("Id");
+
+                            b1.Property<string>("Note")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<DateOnly>("OccurredOn")
+                                .HasColumnType("date");
+
+                            b1.Property<Guid>("ProcessStepId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("RecordedOnUtc")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<int>("Status")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ProcessStepId");
+
+                            b1.ToTable("ProcessStepStatusHistory", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProcessStepId");
+                        });
+
+                    b.Navigation("History");
+
+                    b.Navigation("Predecessors");
                 });
 
             modelBuilder.Entity("RegOS.Product.Domain.Product.Ingredient", b =>
@@ -5352,6 +5876,11 @@ namespace RegOS.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("OriginatingApplicationId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStep", null)
+                        .WithMany()
+                        .HasForeignKey("ProcessStepId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("RegOS.Registration.Domain.Aggregates.Registration.RegistrationStatusEntry", b =>
@@ -5447,6 +5976,11 @@ namespace RegOS.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("OriginatingSubmissionId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessStep", null)
+                        .WithMany()
+                        .HasForeignKey("ProcessStepId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("RegOS.ReferenceData.Domain.SubmissionSubType.SubmissionSubType", null)
                         .WithMany()
@@ -5587,6 +6121,21 @@ namespace RegOS.Persistence.Migrations
             modelBuilder.Entity("RegOS.Organization.Domain.Aggregates.OrganizationSite.OrganizationSite", b =>
                 {
                     b.Navigation("Identifiers");
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessDefinition", b =>
+                {
+                    b.Navigation("Versions");
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessDefinitions.ProcessDefinitionVersion", b =>
+                {
+                    b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("RegOS.Process.Domain.Aggregates.ProcessPlans.ProcessPlan", b =>
+                {
+                    b.Navigation("Steps");
                 });
 
             modelBuilder.Entity("RegOS.Product.Domain.Product.MedicinalProduct", b =>

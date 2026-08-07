@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { SubmissionPlanStepSection } from "../components/SubmissionPlanStepSection";
 
 import { useSubmission } from "../hooks/useSubmission";
 import { SubmissionStatusBadge } from "../components/SubmissionStatusBadge";
@@ -89,6 +90,11 @@ export function SubmissionOverviewPage() {
           </div>
         </div>
       </section>
+
+      <SubmissionPlanStepSection
+        submissionId={submission.id}
+        processStepId={submission.processStepId}
+      />
     </div>
   );
 }

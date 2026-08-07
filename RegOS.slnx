@@ -62,6 +62,11 @@
     <Project Path="src/Labeling/RegOS.Labeling.Domain/RegOS.Labeling.Domain.csproj" />
     <Project Path="src/Labeling/RegOS.Labeling.Infrastructure/RegOS.Labeling.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Process/">
+    <Project Path="src/Process/RegOS.Process.Application/RegOS.Process.Application.csproj" />
+    <Project Path="src/Process/RegOS.Process.Domain/RegOS.Process.Domain.csproj" />
+    <Project Path="src/Process/RegOS.Process.Infrastructure/RegOS.Process.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Storage/">
     <Project Path="src/Storage/RegOS.Storage/RegOS.Storage.csproj" />
   </Folder>
@@ -74,6 +79,10 @@
   </Folder>
   <Folder Name="/tests/Labeling/">
     <Project Path="tests/Labeling/RegOS.Labeling.Domain.Tests/RegOS.Labeling.Domain.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Process/">
+    <Project Path="tests/Process/RegOS.Process.Application.Tests/RegOS.Process.Application.Tests.csproj" />
+    <Project Path="tests/Process/RegOS.Process.Domain.Tests/RegOS.Process.Domain.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/Architecture/">
     <Project Path="tests/Architecture/RegOS.Architecture.Tests/RegOS.Architecture.Tests.csproj" />

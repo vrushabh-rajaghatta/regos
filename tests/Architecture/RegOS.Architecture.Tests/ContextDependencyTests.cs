@@ -45,7 +45,7 @@ public class ContextDependencyTests
         ["RegOS.SharedKernel", "RegOS.Platform.Contracts", "RegOS.Storage"];
 
     /// <summary>
-    /// <b>The 26 edges.</b> Each key is a context whose <c>*.Domain</c> project
+    /// <b>The 32 edges.</b> Each key is a context whose <c>*.Domain</c> project
     /// may reference the <c>*.Domain</c> of every context listed, and no other.
     /// </summary>
     /// <remarks>
@@ -67,6 +67,23 @@ public class ContextDependencyTests
 
         ["Organization"] = ["ReferenceData"],
 
+        // ADR-065: Regulatory Process is an OPTIONAL bounded context. It consumes
+        // the regulatory domain and is never its hub, so it is listed low here
+        // rather than high.
+        //
+        // These three arrived one story at a time — ReferenceData with the
+        // playbook (S001), then Product and RegulatoryApplication with the
+        // objective (S002), which targets a product in a market and names the
+        // application it is pursued through. The ADR authorises three more, all
+        // INBOUND for the nullable ProcessStepId, and **none is declared until a
+        // project takes it**: "the graph declares no edge that no project takes"
+        // is what stops a permission outliving its reason.
+        //
+        // All three are now taken — Registration and Submission at S006,
+        // Interaction at S007 — so the authorisation is spent. A fourth context
+        // wanting a ProcessStepId is a new decision, not a remaining allowance.
+        ["Process"] = ["Product", "ReferenceData", "RegulatoryApplication"],
+
         // ADR-063: where a product is made is a product fact. The reverse edge —
         // Organization → Product — is permanently closed, and the absence of
         // "Product" from Organization's list above is what now enforces it.
@@ -81,17 +98,43 @@ public class ContextDependencyTests
 
         // ADR-061 §3: a pack authorisation lives here rather than in Product,
         // because the edge Product → Registration would have closed a cycle.
+        // Process arrived at S006: a registration records which planned work
+        // produced it (ADR-065 D2). An annotation, never ownership.
         ["Registration"] =
-            ["Organization", "Product", "ReferenceData", "RegulatoryApplication"],
+            ["Organization", "Process", "Product", "ReferenceData",
+             "RegulatoryApplication"],
 
         ["Submission"] =
-            ["Organization", "ProductDocument", "ReferenceData",
+            ["Organization", "Process", "ProductDocument", "ReferenceData",
              "RegulatoryApplication", "Study"],
 
+        // Process arrived at S007: all four interaction aggregates record which
+        // planned work they serve. The third and last of the inbound edges
+        // ADR-065 authorised — and the reason a conversation with an authority
+        // now appears on the plan without the plan owning any of it.
         ["Interaction"] =
-            ["Organization", "ReferenceData", "Registration",
+            ["Organization", "Process", "ReferenceData", "Registration",
              "RegulatoryApplication", "Submission"],
     };
+
+    /// <summary>
+    /// <b>The count in the summary above is load-bearing, so it is asserted.</b>
+    /// It said 26 for five stories while the dictionary held 31 — a number in
+    /// prose drifts silently, which is the one failure mode this whole test
+    /// class exists to prevent.
+    /// </summary>
+    /// <remarks>
+    /// Failing here is not a defect: adding an edge is meant to cost two edits,
+    /// so that widening the graph is never something that happens by accident
+    /// while doing something else. Update the number and the summary together.
+    /// </remarks>
+    [Fact]
+    public void The_graph_holds_the_number_of_edges_it_says_it_does()
+    {
+        DomainMayReference.Sum(x => x.Value.Length).Should().Be(32,
+            because: "the summary on DomainMayReference says 32 edges, and a "
+                + "documented count that nothing checks is a count that drifts");
+    }
 
     [Fact]
     public void A_domain_references_only_the_contexts_its_entry_names()
@@ -214,6 +257,83 @@ public class ContextDependencyTests
             "the host is a composition root — it wires application and "
             + "infrastructure together and reads neither's internals");
     }
+
+    /// <summary>
+    /// <b>A context owns only its own repositories</b> — checked in both
+    /// directions.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is [ADR-065](../../../docs/adr/ADR-065-regulatory-process-is-an-optional-bounded-context.md)
+    /// I2 made mechanical</b>, and it generalised on the way: the rule is true of
+    /// every context, not only Process, and stating it narrowly would have been
+    /// the special case.
+    /// <para>
+    /// <b>Cross-context <em>reads</em> compose over <c>RegOSDbContext</c>; cross-context
+    /// <em>writes</em> never occur.</b> A write needs a repository, so a context that
+    /// cannot name a foreign one cannot perform a foreign write — which is why
+    /// this is a stronger guarantee than a review habit. ADR-016 already grants
+    /// the read; this closes the write.
+    /// </para>
+    /// <para>
+    /// <b>Both directions matter, and for different reasons.</b> Outbound
+    /// (Process → <c>ISubmissionRepository</c>) would be Process taking ownership
+    /// of a lifecycle that is not its own. Inbound
+    /// (Submission → <c>IProcessPlanRepository</c>) would be a context reaching
+    /// into Process to keep something "in sync" — the same mistake with the
+    /// arrow reversed, and the one nobody thinks to look for.
+    /// </para>
+    /// <para>
+    /// <b>It does not catch everything</b>, and the gap is worth naming: a
+    /// handler could still call a domain method on an entity it read through
+    /// <c>RegOSDbContext</c>. What it catches is the shape that actually arrives
+    /// — a constructor taking a foreign repository — which is how every real
+    /// version of this mistake has been written.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void A_context_never_names_another_contexts_repository()
+    {
+        var offenders = new List<string>();
+
+        foreach (var file in Repo.SourceFiles("src"))
+        {
+            var relative = Repo.Relative(file);
+            var owner = ContextOfPath(relative);
+
+            if (owner is null) continue;
+
+            foreach (var match in RepositoryInterface.Matches(File.ReadAllText(file)))
+            {
+                var referenced = ContextOfNamespace(((Match)match).Groups[1].Value);
+
+                if (referenced is not null && referenced != owner)
+                    offenders.Add($"{relative} names {((Match)match).Value}");
+            }
+        }
+
+        offenders.Should().BeEmpty(
+            "a context owns only its own repositories (ADR-065 I2). Compose the "
+            + "read over RegOSDbContext instead — and if you need a WRITE in "
+            + "another context, that context's own command is where it belongs");
+    }
+
+    /// <summary>Matches a fully-qualified repository interface in a using or a type.</summary>
+    private static readonly Regex RepositoryInterface = new(
+        @"RegOS\.(\w+)\.Domain[\w.]*\.(I\w+Repository)", RegexOptions.Compiled);
+
+    /// <summary><c>src/Process/RegOS.Process.Application/…</c> → <c>Process</c>.</summary>
+    private static string? ContextOfPath(string relative)
+    {
+        var parts = relative.Split('/');
+
+        return parts.Length > 2 && parts[0] == "src"
+            && parts[1] is not ("Shared" or "Persistence" or "Host" or "Storage")
+            ? parts[1]
+            : null;
+    }
+
+    private static string? ContextOfNamespace(string context)
+        => context is "SharedKernel" or "Storage" ? null : context;
 
     /// <summary>
     /// The negative control. Without it every assertion above passes by reading

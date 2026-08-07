@@ -26,7 +26,11 @@ public sealed record SubmissionDetailDto(
     // the authority did arrives as correspondence anchored to this submission
     // (ADR-046), and the page composes the two rather than the backend joining
     // across bounded contexts.
-    IReadOnlyList<SubmissionStatusStep> History);
+    IReadOnlyList<SubmissionStatusStep> History,
+    // The plan step this submission contributes to, when somebody has said so.
+    // Null is the normal state and means nothing (ADR-065 I9) — a submission is
+    // complete on its own, and most were filed before anyone planned anything.
+    Guid? ProcessStepId);
 
 /// <param name="OccurredOn">
 /// When the step happened, as a regulator would date it — which for a migrated

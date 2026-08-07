@@ -77,6 +77,10 @@ public sealed class ListSiteAlignmentHandler
             where siteIds.Contains(site.Id)
             join country in _dbContext.Countries
                 on site.Address.CountryId equals country.Id
+            // BUG-001. The tie-breaker belongs here, in SQL, where an id has a
+            // translation — after materialisation it has no IComparable and
+            // throws the moment a product has two sites.
+            orderby site.Id
             select new
             {
                 site.Id,
@@ -85,9 +89,11 @@ public sealed class ListSiteAlignmentHandler
             })
             .ToListAsync(cancellationToken);
 
+        // Deterministic: the source query is ordered by site id in SQL and this
+        // sort is stable, so equal names keep that order. The tie-break lives
+        // there because an id has no IComparable in memory (BUG-001).
         return sites
             .OrderBy(site => site.Name, StringComparer.Ordinal)
-            .ThenBy(site => site.Id)
             .Select(site =>
             {
                 var performed = operations

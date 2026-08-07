@@ -15,6 +15,7 @@
          precedent exists because authentication is not part of the regulatory
          model, and Organization is. -->
     <ProjectReference Include="..\..\Organization\RegOS.Organization.Domain\RegOS.Organization.Domain.csproj" />
+    <ProjectReference Include="..\..\Process\RegOS.Process.Domain\RegOS.Process.Domain.csproj" />
   </ItemGroup>
 
 </Project>

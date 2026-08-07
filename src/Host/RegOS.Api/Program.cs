@@ -13,10 +13,14 @@ using RegOS.Api.Endpoints.MedicinalProducts;
 using RegOS.Api.Endpoints.Manufacturing;
 using RegOS.Api.Endpoints.Packs;
 using RegOS.Api.Endpoints.ProductDocuments;
+using RegOS.Api.Endpoints.ProcessDefinitions;
+using RegOS.Api.Endpoints.ProcessObjectives;
+using RegOS.Api.Endpoints.ProcessPlans;
+using RegOS.Api.Endpoints.Registrations;
+using RegOS.Api.Endpoints.Submissions;
 using RegOS.Api.Endpoints.Products;
 using RegOS.Api.Endpoints.ReferenceData;
 using RegOS.Api.Endpoints.RegulatoryApplications;
-using RegOS.Api.Endpoints.Submissions;
 using RegOS.Api.Endpoints.ApplicationTypes;
 using RegOS.Api.Endpoints.SubmissionTypes;
 using RegOS.Api.Endpoints.SubmissionSubTypes;
@@ -51,7 +55,6 @@ using RegOS.Api.Endpoints.Commitments;
 using RegOS.Api.Endpoints.Inspections;
 using RegOS.Api.Endpoints.Meetings;
 using RegOS.Api.Endpoints.Correspondence;
-using RegOS.Api.Endpoints.Registrations;
 using RegOS.Api.Endpoints.Studies;
 using RegOS.Api.Endpoints.Substances;
 using RegOS.Api.Endpoints.Presentations;
@@ -62,6 +65,8 @@ using RegOS.Api.Endpoints.Indications;
 using RegOS.Api.Endpoints.LocalLabels;
 using RegOS.Labeling.Application;
 using RegOS.Labeling.Infrastructure;
+using RegOS.Process.Application;
+using RegOS.Process.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -143,6 +148,9 @@ builder.Services.AddStudyInfrastructure();
 
 builder.Services.AddLabelingApplication();
 builder.Services.AddLabelingInfrastructure();
+
+builder.Services.AddProcessApplication();
+builder.Services.AddProcessInfrastructure();
 
 var app = builder.Build();
 
@@ -358,6 +366,42 @@ globalLabels.MapStartGlobalLabelDraft();
 globalLabels.MapAttachGlobalLabelContent();
 globalLabels.MapPublishGlobalLabelVersion();
 globalLabels.MapDiscardGlobalLabelDraft();
+
+var processDefinitions = app.MapGroup("").WithTags("Playbooks");
+// "Playbook" on screen, ProcessDefinition in the model — the pair ADR-065
+// decision 9 settled, recorded in docs/domain-model/process.md. The route uses
+// the type's word because it is an API contract, not a label.
+processDefinitions.MapListProcessDefinitionsEndpoint();
+processDefinitions.MapGetProcessDefinitionEndpoint();
+
+var processObjectives = app.MapGroup("").WithTags("Objectives");
+processObjectives.MapListProcessObjectivesEndpoint();
+processObjectives.MapCreateProcessObjectiveEndpoint();
+processObjectives.MapGetProcessObjectiveEndpoint();
+processObjectives.MapChangeProcessObjectiveStatusEndpoint();
+processObjectives.MapConfirmObjectiveMarketRecordEndpoint();
+
+var processPlans = app.MapGroup("").WithTags("Plans");
+processPlans.MapInstantiateProcessPlanEndpoint();
+processPlans.MapGetProcessPlanEndpoint();
+processPlans.MapListObjectivePlansEndpoint();
+// Before the {id:guid} routes above cannot match it, but kept adjacent so the
+// group reads as one surface.
+processPlans.MapListNextStepsEndpoint();
+processPlans.MapChangeProcessPlanStatusEndpoint();
+processPlans.MapChangeProcessStepStatusEndpoint();
+processPlans.MapGetPlanImpactEndpoint();
+
+// The six attachment routes live with the aggregates that own the column, not
+// here — but they are mapped alongside the plan group so the surface reads as
+// one capability (ADR-065 D2). Six is the whole of it: three contexts, and the
+// inbound edges the ADR authorised are now spent.
+processPlans.MapAttachSubmissionToStepEndpoint();
+processPlans.MapAttachRegistrationToStepEndpoint();
+processPlans.MapAttachHaCorrespondenceToStepEndpoint();
+processPlans.MapAttachHaMeetingToStepEndpoint();
+processPlans.MapAttachInspectionToStepEndpoint();
+processPlans.MapAttachCommitmentToStepEndpoint();
 
 var localLabels = app.MapGroup("").WithTags("Local Labels");
 localLabels.MapListCoreVersionsForProduct();

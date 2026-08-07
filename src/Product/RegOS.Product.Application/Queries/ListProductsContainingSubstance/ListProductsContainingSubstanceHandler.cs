@@ -54,6 +54,8 @@ public sealed class ListProductsContainingSubstanceHandler
                 on market.GlobalProductId equals product.Id
             join country in _dbContext.Countries
                 on market.CountryId equals country.Id
+            // BUG-001: the tie-breaker in SQL, where PresentationId translates.
+            orderby presentation.Id
             select new
             {
                 market.GlobalProductId,
@@ -73,11 +75,17 @@ public sealed class ListProductsContainingSubstanceHandler
         // Ordered by what a reader scans for: the product first, then where it
         // is sold, then which presentation. Sorting by market alone would
         // scatter one product's entries across the list.
+        //
+        // Deterministic: the source query is ordered by PresentationId in SQL
+        // and LINQ-to-Objects sorts stably, so equal keys keep that order. The
+        // tie-break lives there rather than here because an id has no
+        // IComparable in memory and throws on the second row (BUG-001).
         return rows
             .OrderBy(x => x.ProductName.Value, StringComparer.OrdinalIgnoreCase)
             .ThenBy(x => x.CountryName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(x => x.PresentationName, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(x => x.PresentationId)
+            // BUG-001: no PresentationId tie-break here — the source query is
+            // ordered by it in SQL and this sort is stable.
             .Select(x => new SubstanceUsageDto(
                 x.GlobalProductId.Value,
                 x.ProductName.Value,

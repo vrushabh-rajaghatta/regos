@@ -43,6 +43,19 @@ public sealed class ListInspectionsHandler
                 x => x.AuthorityId,
                 a => a.Id,
                 (x, a) => new { Inspection = x, Authority = a })
+            // BUG-001. The history is an OWNED collection — always loaded, and
+            // no Include applies to it — so its order is settled here, in SQL,
+            // where an entry id translates. Projected alongside the entity
+            // rather than sorted after materialisation, where the id has no
+            // IComparable and threw on the second entry.
+            .Select(x => new
+            {
+                x.Inspection,
+                x.Authority,
+                // Deterministic: an entry id is unique, so this is a
+                // total order.
+                History = x.Inspection.History.OrderBy(h => h.Id).ToList()
+            })
             .ToListAsync(cancellationToken);
 
         return rows
@@ -60,10 +73,11 @@ public sealed class ListInspectionsHandler
                 x.Inspection.CompletedOn,
                 x.Inspection.CurrentStatus.ToString(),
                 x.Inspection.Outcome,
-                x.Inspection.History
+                // Deterministic: ordered by entry id in SQL above, and this
+                // sort is stable (BUG-001).
+                x.History
                     .OrderBy(h => h.OccurredOn)
                     .ThenBy(h => h.RecordedOnUtc)
-                    .ThenBy(h => h.Id)
                     .Select(h => new InspectionHistoryEntry(
                         h.Status.ToString(),
                         h.OccurredOn,

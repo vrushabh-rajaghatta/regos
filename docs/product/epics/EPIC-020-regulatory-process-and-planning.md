@@ -1,6 +1,6 @@
 # EPIC-020 — Regulatory process & planning
 
-**Status:** ⚪ Not Started — **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 **Complete — 9 of 9 stories** ([progress](#progress--7-of-8-2026-08-06)) — S008's audit added S009 · **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 RIM's **spine**. Everything RegOS builds — applications, submissions, correspondence, meetings, commitments, inspections — becomes a *step in a plan* that serves an *objective*. This is the layer that turns a record system into a system that tells you what to do next.
 
@@ -133,7 +133,7 @@ The concrete path a story-by-story build has to make real. **US FDA IND, initial
 
 ---
 
-## The four invariants
+## The invariants
 
 *Settled at Phase-1 sign-off, 2026-08-06. Everything else in Phase 2 is still a lean; **these four are not**, and ADR-065 carries all four. They are stated together because each one protects a different thing, and each is cheap to violate by accident in a story that means well.*
 
@@ -257,7 +257,25 @@ Four sources, one screen, and each source stays answerable on its own. **Milesto
 
 ### D8 — Objective ↔ application, and what an objective targets
 
-RIM draws `Process Objective → Application` as *Peer, Conditional*. **Lean: keep them distinct and let the objective hold a nullable `RegulatoryApplicationId`** — an objective is *"get approved in Japan"*, an application is the vehicle, and one objective may run through several over years. **Open:** does the objective target `GlobalProductId + CountryId`, or the `MedicinalProduct` (EPIC-017's market tier)? Lean **the former**, because the objective routinely exists before anyone has created the market-local product — with a nullable `MedicinalProductId` seam for when they have.
+RIM draws `Process Objective → Application` as *Peer, Conditional*. **Keep them distinct and let the objective hold a nullable `RegulatoryApplicationId`** — an objective is *"get approved in Japan"*, an application is the vehicle, and one objective may run through several over years.
+
+**Settled 2026-08-06: an objective targets `GlobalProductId + CountryId`, with a nullable `MedicinalProductId` confirmation seam.**
+
+The deciding question is *when does the business first know the objective exists?* — and the answer is almost always **before the market-local product does**. *"File in Japan in FY2028"*, *"enter Brazil after the EU launch"*: the global product exists, the market is known, the market-specific regulatory record does not. **Requiring a `MedicinalProduct` would force an organisation to create a regulatory artefact purely to satisfy a foreign key.**
+
+```
+Global Product → Objective (product + country) → market preparation
+                                                        ↓
+                     objective optionally linked ← MedicinalProduct created
+```
+
+**The nullable FK is not there because the objective is incomplete.** It is there because the market record does not exist yet — which is an honest representation of the timeline rather than a modelling concession.
+
+**And it confirms identity rather than redefining it.** Once `MedicinalProductId` is populated it **must** reference the same `(GlobalProductId, CountryId)` the objective already holds; attaching a US market record to a Japan objective is a domain error. That is what stops the duplicated pair drifting.
+
+> **Where that invariant is enforced is decided by [ADR-016](../../adr/ADR-016-persistence-access-model.md), not by this decision: in the command handler, never in the aggregate.** `ProcessObjective` cannot load a `MedicinalProduct` to check it — that is the cross-aggregate read the domain keeps out. `LocalLabel.PrintedFor` documents the identical situation for packs, and EPIC-010b resolved it the same way. **The rule is real and the aggregate is not where it lives.**
+
+**Why not target `MedicinalProduct` alone:** it changes what an objective *means*. *"We intend to enter Japan"* becomes *"we intend to work on a regulatory record that already exists"* — strategic becomes administrative. This is [D3](#d3--is-processobjective-genuinely-distinct-from-processplan) again from a different angle: the strategic concept stays independent of the execution artefacts that follow it.
 
 ### D9 — Terminology **(settled 2026-08-06 — this is a decision, and it goes in ADR-065)**
 
@@ -306,20 +324,202 @@ RIM draws `Process Objective → Application` as *Peer, Conditional*. **Lean: ke
 
 ---
 
+## Progress — 7 of 8, 2026-08-06
+
+**Everything below shipped in one day, and the record is written because five
+stories of decisions had accumulated with nothing but commit messages holding
+them.**
+
+| Story | Delivered | What it found |
+|---|---|---|
+| **S001** | `ProcessDefinition` → `Version` → `StepDefinition`; publish freezes; the US·FDA·IND playbook seeded, 12 steps | `RegOS.Process` shadows `System.Diagnostics.Process` inside the `RegOS` root namespace — two test files fully-qualify it, and that is the whole cost |
+| **S002** | `ProcessObjective` with strategy, dated history, and D8's confirmation seam | **The invariant deleted a field.** A `MedicinalProductName` and its left join were written and removed: D8 requires the market record to carry the pair the objective already holds, so the name was a second copy of it |
+| **S003** | Instantiation from a pinned version, dates derived once, graph translated into the plan's own ids | **The FDA IND critical path is not where anyone guesses.** The convergence test was written asserting `CMC` and was **wrong by 33 days** — the path runs through the pre-IND meeting track, because FDA's calendar contributes 30 days twice before a protocol can be written |
+| **S004** | Step execution, `Draft → Active → Completed \| Cancelled`, the plan board | Three refusals to manufacture history: a null `ActualStartOn`, no history entry for a reschedule, and a required skip reason |
+| **S005** | Impact analysis — transitive affected/actionable, and what a delay costs the finish date | **An S005 test found an S004 bug.** Each step's initial `NotStarted` entry was seeded with its *planned start*, so the chronology rule refused any earlier entry — a step could not be recorded as **completed early** |
+| **S006** | Nullable `ProcessStepId` on `Submission` and `Registration`; the reverse read; **I9** | **I2 turned out to be a property of RegOS, not of Process.** Writing the guard for one context made it obvious the rule holds for all eleven — so it is stated that way, and narrowing it would have been the special case |
+| **S007** | The same four times, on the Interaction aggregates — and the pre-IND track finally has somewhere to point | **Nothing.** Four repetitions, no new invariant, no exception, no fifth variation. Recorded because at this point in an epic that is the finding |
+
+### What the stories proved about the architecture
+
+*Each one asked a harder question of the same model, and the previous story's guarantee is what let it.*
+
+```
+S001  is this graph valid?            → publication certifies a DAG
+S003  when do things happen?          → instantiation CASHES that certificate
+S005  what does this delay affect?    → impact walks the same graph forward
+```
+
+**`InstantiateFrom` contains no cycle detection.** It refuses an unpublished version, and that refusal is the entire basis for assuming the graph is schedulable. **S001 removed work from S003** rather than merely preceding it — which is the clearest evidence the two were cut at the right seam.
+
+### ADR-065 was amended four times, every one of them to sharpen
+
+| | |
+|---|---|
+| **S003** | **I5** added (instantiation is deterministic); the **ad-hoc-plan clause struck** — the pin is `NOT NULL`, because instantiation is the only way to create a plan |
+| **S004** | **D10** recorded, **D11** added (completion is a decision, never a consequence), **I6** added (execution history is append-only) |
+| **S005** | **I7** and **I8** added — impact analysis never repairs the schedule, and never replaces it |
+| **S006** | **I9** added — attachments are descriptive, not constitutive |
+| **S007** | **Nothing.** The first story that needed no amendment at all |
+
+**No invariant has needed an exception, and every amendment made the model smaller** — a seam removed, a nullable removed, a duplicated field removed. **An amendment log with a freeze rule now sits at the top of the ADR:** it is corrected in place while the epic is in flight and superseded, never edited, once the epic branch reaches `main`.
+
+### The philosophy the five stories converged on
+
+> **Record what is known, not what can be inferred.**
+
+Not planned; observed at the retro-in-progress, and it explains why so many convenient alternatives were refused:
+
+- a published version is immutable rather than re-derived
+- a plan is a historical record rather than a projection
+- `ActualStartOn` stays **null** when nobody recorded a start
+- rescheduling writes no execution history
+- completion is explicit, never derived from a linked artefact
+- a skip reason explains an absence rather than leaving silence
+
+**And its uncomfortable corollary, which the impact projection surfaces:** *"nobody clicked Start"* and *"the work has not begun"* are indistinguishable to RegOS, so a step nobody started reads as late. That is correct — **unknown is not the same as inferred** — and it is the one place the philosophy costs something visible.
+
+### The integration half, S006–S007
+
+Two stories, one shape, six aggregates. **The success criterion for S007 was that nothing interesting happened** — and nothing did.
+
+```
+   write   owning aggregate ──owns──► its own nullable ProcessStepId
+   read    Process ──composes over RegOSDbContext──► what a step involved
+```
+
+**Symmetry would have been the suspicious outcome.** It would have tempted Process into owning writes, and the whole of D2 is that it must not. `SetNull` on all six foreign keys says the same thing relationally: delete a plan step and every regulatory record survives, carrying a null that means what every other null there means — nothing.
+
+**`ContextDependencyTests` gained two guards**, both generalised past the case that produced them:
+
+| Guard | Was going to be | Became |
+|---|---|---|
+| **Repository** | *Process must not take foreign repositories* | *no context may name another context's repository*, in either direction, for all eleven |
+| **Edge count** | — | the graph's documented size, asserted — it read **26** for five stories while the dictionary held **31** |
+
+**Three inbound edges authorised, three taken, none spare.** `Registration` and `Submission` at S006, `Interaction` at S007. The graph is neither aspirational nor stale; a fourth context wanting a `ProcessStepId` now needs an ADR.
+
+**The one gap S007 left open, deliberately.** Only correspondence has a detail page, so only correspondence has an attach control — the other three have the same API and nowhere to put it. Adding those controls to the plan page would have made Process the place users manage other contexts' records, which is D2 undone in the mental model even with the command correctly routed. **The gap is a missing screen, and it stays visible.**
+
+## S008 — the capstone, and what it audited
+
+**Its Definition of Done was not "features implemented".** It was:
+
+> **Every ADR-065 invariant names executable evidence.**
+
+Not *implemented* — **demonstrated**. Six months from now *"does I5 still hold?"* has to be answerable with *"run this test"* rather than *"I think so"*.
+
+### The evidence table
+
+| | Invariant | Evidence |
+|---|---|---|
+| **I1** | Process is optional | `SubmissionNeedsNoPlanTests` — three tests, **in the Submission project, which references no Process project** |
+| **I2** | never owns a foreign lifecycle | `ContextDependencyTests.A_context_never_names_another_contexts_repository` — bidirectional, all eleven contexts |
+| **I3** | each context owns itself, optionally references Process | `ProcessIsOptionalTests` — every `ProcessStepId` nullable; `ProcessStepId` is the only Process type any foreign domain names |
+| **I4** | permanently bound to a published version | `ProcessDefinitionTests`, `ProcessPlanInstantiationTests` (domain + database), `ProcessDefinitionSeedTests` |
+| **I5** | instantiation is deterministic | `ProcessPlanInstantiationTests.Instantiating_twice_produces_the_same_schedule` — in memory and through Postgres |
+| **I6** | execution history is append-only | `ProcessStepExecutionTests` |
+| **I7** | never repairs the schedule | `PlanImpactNeverSchedulesTests` — a delay never shortens downstream work; no member could carry a proposal |
+| **I8** | observational | `PlanImpactReadTests.Running_the_analysis_changes_nothing_about_the_plan` |
+| **I9** | attachments are descriptive | `StepAttachmentTests`, `InteractionAttachmentTests` |
+
+**The audit found three rows empty** — I1, I3 and I7 — and all three were empty for the same reason: they were **absence-shaped**. I1 and I3 held because nobody had written the code that would break them, and I7 was covered by a test that carried it silently while citing only I8. *Nothing contradicts it* is not evidence.
+
+Had the audit found nine rows already full, S008 would have been ceremonial.
+
+### The finding
+
+> **Browser verification uncovered a systemic client routing defect.**
+> **All fifteen Process UI calls omit the `/api` prefix their endpoints require and return 404.** The capability has never been reachable from a browser. The backend is correct — SC-001 compliant, with 40 database-backed tests passing against it — and the defect is confined to the client.
+> **Recorded as S009 rather than repaired within the capstone, so the audit remains historically accurate.** `process-capstone.spec.ts` is committed red; it turning green is S009's acceptance test.
+
+**The missing `/api` is almost incidental.** The real failure is that **seven stories reached Done without a browser exercising the feature** — and `npm run build` and `npm run lint`, which every story cited as green, structurally cannot see a wrong URL string. That is a verification-coverage defect, not a Process defect, and it is why S009's deliverable is the **mechanical guard**, not the fifteen edits. Fifteen edits are maintenance; a guard removes the class.
+
+**It was ambiguity, not carelessness.** The server genuinely serves `/master-data/*`, `/reference-data/*` and `/submissions/{id}` without the prefix — pre-existing SC-001 violations — so both spellings look correct in the codebase. S009 lets the guard *report* those rather than fixing them: normalise or formally except is a decision someone should make deliberately.
+
+### S009 — the engineering response to the finding
+
+**The fifteen edits were maintenance. The guard was the story.**
+
+Fixing the routes moved the browser spec from step 1 to step 2, where it hit **415 Unsupported Media Type** — seven Process writes passed `JSON.stringify` with no headers, so `fetch` sent `text/plain`. **Same family, same reason:** invisible to the compiler, invisible to lint, reachable only by a browser.
+
+`ApiRouteAlignmentTests` closes the class rather than the instances:
+
+| | What it asserts |
+|---|---|
+| **1** | every client path matches a route the host maps |
+| **2** | every client path starts `/api`, or is on the dated **shrink-only** list of pre-existing SC-001 exceptions |
+| **3** | every `MapGroup` prefix is one the scanner can resolve |
+| **4** | every `JSON.stringify` body declares `Content-Type` — keyed on `stringify`, so `FormData` uploads that must omit it are not caught |
+
+**Guard 3 deviates from its sign-off, deliberately.** The design said *assert every prefix is empty*; one already is not (`TenantEndpoints` declares `/api/platform/tenants`), and forcing it would have changed working code to suit a test. The invariant asserted is the true one — **every prefix is one the scanner can see** — demonstrated by a change that still compiles.
+
+**Measured, not assumed.** The browser suite ran twice, once with the changes stashed:
+
+| | Baseline | With S009 |
+|---|---|---|
+| passed | 110 | **115** |
+| failed | 24 | **19** |
+
+**Five fixed, none newly broken.** The nineteen that remain fail identically without these changes — pre-existing, and untouched.
+
+**Two of the five were S007's collateral.** `correspondence.spec.ts` and `interaction-lifecycle.spec.ts` had been regressed by the broken attach call in the section S007 added to the correspondence page: the query threw and the whole detail page stopped rendering. The same gap billing itself twice — a story called Done had broken specs nobody ran.
+
+**The eleven SC-001 exceptions are reported, not resolved.** Dated, shrink-only, with the note that normalising them or formally excepting them is a decision someone should take deliberately. **Evidence before repair**, one more time.
+
+### The retro — four distinctions, and each refused something cheaper
+
+The Process capability repeatedly separated things that are convenient to conflate. **None of these was theoretical**: each one turned down an implementation that was simpler in the short term and muddier in the long one.
+
+| Distinction | The cheaper implementation it refused |
+|---|---|
+| **facts / analysis** | a stored "days late" column |
+| **ownership / annotation** | Process publishing a submission |
+| **planning / execution** | a reschedule writing execution history |
+| **knowledge / projection** | a playbook edit rippling into live plans |
+| **evidence / assumption** | declaring success without the kind of evidence that could actually prove it |
+
+**The fifth is what S008 itself is**, and the epic earned it the hard way: the story whose whole purpose was replacing *"this should be true"* with *"this test proves it"* is the story that discovered seven stories' worth of untested client code.
+
+**And it is the only one of the five not discovered in the domain model.** The other four came from asking what a regulatory record actually is; this one came from asking what our own "Done" was resting on. That makes it no less binding — the build and lint results cited at every story were never *false*, they were insufficient evidence for the conclusion drawn from them, and a distinction that costs a story to learn is worth keeping beside the four that cost a design argument.
+
+### One seed did most of the work
+
+**The US·FDA·IND playbook stopped being demo data almost immediately.** Twelve steps, three converging strands — and it successively validated immutable publication, deterministic scheduling, critical-path analysis, execution, impact projection and integration. Six architectural promises from one piece of representative data.
+
+**It is also why the critical-path finding mattered.** The discovery that the path runs through the pre-IND meeting track rather than the 150-day CMC package — and that a test asserting otherwise was wrong by 33 days — came out of the playbook a user will actually open, not a benchmark built to make the point. **An artificial fixture could not have been wrong in an interesting way.**
+
+### Verification at S008
+
+**21 reporting suites green** · architecture **45/45** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Process: **65 domain**, **40 database-backed**. Browser: **`process-capstone.spec.ts` red, by decision** — see the finding above.
+
+### Verification at S009 — the epic's closing numbers
+
+**21 reporting suites green** · architecture **49/49** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Browser: **115 passed / 19 failed**, every remaining failure pre-existing and reproduced on a stashed baseline.
+
+---
+
+### Verification at S007
+
+**21 reporting suites green** · architecture **43/43** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Process: **62 domain**, **40 database-backed**.
+
+---
+
 ## Phase 3 — Stories *(re-slice as Phase 2 lands)*
 
 **Every story opens on its question, never on its entity list** — EPIC-006's cadence finding, which it named for this epic to inherit: *"six of the eight stories produced a smaller model than the entity-first version would have."*
 
-| # | Story | The question it opens on | Slice |
+| # | Story | The question it opens on | Status |
 |---|---|---|---|
-| **S001** | **The playbook** — `ProcessDefinition` + `ProcessDefinitionVersion` + `ProcessStepDefinition`, versioned, immutable on publish, scoped country + authority + application type, predecessors + offsets, cycle rejected at publish; **seeded for US·FDA·IND**; writes [`docs/domain-model/process.md`](../../domain-model/) with the D9 pair | *"What do we have to do to file this, and in what order?"* | domain → persistence → API → read UI → test |
-| **S002** | **The objective** — strategy, dated status, target product + market, nullable application link. **D3 is settled here or the object is deleted here** | *"What are we trying to achieve, and why this route?"* | full slice |
-| **S003** | **Instantiation** — a plan pinned to a published version, steps dated once from the offsets. The ADR-035 pattern, second occurrence | *"We did this last year. Do it again."* | full slice |
-| **S004** | **Working the plan** — step status history, actual dates, the plan board | *"Where are we, and what is next?"* | full slice |
-| **S005** | **What is late, and what does it block** — transitive successors, derived on read; D6's superseded-playbook disclosure | *"What is late, and what does it block?"* | read model → UI → test |
-| **S006** | **Wiring, part 1** — `Submission` and `Registration` attach to steps; both ends show it. **D2 is proved or reversed here**, on the two cheapest contexts | *"This submission — what plan is it part of?"* | migration → API → UI → test |
-| **S007** | **Wiring, part 2** — the four Interaction aggregates. **Guard: a step is not a commitment's fourth business origin** — [ADR-042 decision 2](../../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) fires on a fourth *origin*, and a step is what a commitment *serves*, not where it *arose* | *"What did this step actually produce?"* | migration → API → UI → test |
-| **S008** | **Capstone** — the workflow steps 1→6 in one browser run, ADR-065, `ContextDependencyTests` extended, retro | — | UI → test → docs |
+| **S001** | **The playbook** — `ProcessDefinition` + `ProcessDefinitionVersion` + `ProcessStepDefinition`, versioned, immutable on publish, scoped country + authority + application type, predecessors + offsets, cycle rejected at publish; **seeded for US·FDA·IND**; writes [`docs/domain-model/process.md`](../../domain-model/) with the D9 pair | *"What do we have to do to file this, and in what order?"* | 🟢 **Done** · merged `c156a58` |
+| **S002** | **The objective** — strategy, dated status, target product + market, nullable application link. **D3 is settled here or the object is deleted here** | *"What are we trying to achieve, and why this route?"* | 🟢 **Done** · merged `812a2bd` |
+| **S003** | **Instantiation** — a plan pinned to a published version, steps dated once from the offsets. The ADR-035 pattern, second occurrence | *"We did this last year. Do it again."* | 🟢 **Done** · merged `1d6267f` |
+| **S004** | **Working the plan** — step status history, actual dates, the plan board | *"Where are we, and what is next?"* | 🟢 **Done** · merged `61c99a0` |
+| **S005** | **What is late, and what does it block** — transitive successors, derived on read; D6's superseded-playbook disclosure | *"What is late, and what does it block?"* | 🟢 **Done** · merged `b004795` |
+| **S006** | **Wiring, part 1** — `Submission` and `Registration` attach to steps; both ends show it. **D2 is proved or reversed here**, on the two cheapest contexts | *"This submission — what plan is it part of?"* | 🟢 **Done** · merged `a9cc20a` |
+| **S007** | **Wiring, part 2** — the four Interaction aggregates. **Guard: a step is not a commitment's fourth business origin** — [ADR-042 decision 2](../../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) fires on a fourth *origin*, and a step is what a commitment *serves*, not where it *arose* | *"What did this step actually produce?"* | 🟢 **Done** — and the guard held: a step is what a commitment *serves*, asserted as its own test |
+| **S008** | **Capstone — the audit.** Every ADR-065 invariant names executable evidence; the workflow 1→6 in one browser run; retro. **Introduced no capability, by design** | *"Have we demonstrated everything ADR-065 promised?"* | 🟢 **Done** — three empty rows found and closed (I1, I3, I7), and a systemic client defect recorded as S009 |
+| **S009** | **The Process UI reaches the API** — fifteen route fixes, seven missing `Content-Type` headers, and **the four guards that are the actual deliverable**. The pre-existing SC-001 exceptions are reported, not repaired | *"Why did seven stories reach Done without a browser?"* | 🟢 **Done** — capstone spec green; **5 browser specs fixed, 0 newly broken**, measured against a stashed baseline |
 
 **The split point, declared now so it is a decision and not a rescue** — and confirmed at sign-off:
 

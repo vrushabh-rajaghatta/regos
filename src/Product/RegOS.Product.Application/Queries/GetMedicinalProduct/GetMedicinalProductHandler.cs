@@ -57,6 +57,9 @@ public sealed class GetMedicinalProductHandler
                     })
                     .ToList(),
                 History = market.MarketStatusHistory
+                    // BUG-001: ordered HERE, inside the query, where an entry
+                    // id translates to SQL. In memory it has no IComparable.
+                    .OrderBy(entry => entry.Id)
                     .Select(entry => new
                     {
                         entry.Id,
@@ -75,10 +78,12 @@ public sealed class GetMedicinalProductHandler
         // entries can share a business date when a portfolio is migrated, and
         // the order they were recorded in is the tie-break a reader expects.
         // The same ordering the registration detail uses.
+        // Deterministic: the projection above orders the history by entry id
+        // in SQL and this sort is stable, so equal dates keep that order
+        // (BUG-001).
         var history = row.History
             .OrderBy(entry => entry.OccurredOn)
             .ThenBy(entry => entry.RecordedOnUtc)
-            .ThenBy(entry => entry.Id)
             .ToList();
 
         return new MedicinalProductDetailDto(
