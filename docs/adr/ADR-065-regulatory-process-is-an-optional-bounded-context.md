@@ -26,8 +26,15 @@
 > | **S005** | **I7 and I8 added** — impact analysis never repairs the schedule, and never replaces it. |
 > | **S006** | **I9 added** — attachments are descriptive, not constitutive. |
 > | **S007** | **Nothing added.** Four more aggregates took the same shape and none of them needed a clause. Recorded because a repetition that required no amendment is the strongest evidence this document is finished. |
+> | **S008** | **Nothing added — and every invariant now names a test.** The capstone audited the nine against the suite rather than against intent, and found **I1, I3 and I7 asserted nowhere**. All three were absence-shaped: true because nobody had written the code that would break them. The evidence table is in [EPIC-020](../product/epics/EPIC-020-regulatory-process-and-planning.md#the-evidence-table). |
 >
 > No amendment has touched a decision code already depends on.
+>
+> **From S008, this document is falsifiable.** Each invariant above cites
+> executable evidence, so *"does I5 still hold?"* is answered by running a test
+> rather than by reading this page. That is the boundary an ADR crosses when it
+> stops being primarily a design document and becomes a description of
+> architecture already demonstrated in running code.
 >
 > **The three inbound edges D2 authorises are now spent** — `Registration` and
 > `Submission` at S006, `Interaction` at S007. A fourth context wanting a
