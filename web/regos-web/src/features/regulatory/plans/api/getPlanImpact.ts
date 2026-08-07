@@ -10,7 +10,9 @@ export async function getPlanImpact(
   asOf?: string,
 ): Promise<PlanImpact> {
   const response = await apiFetch(
-    buildUrl(`/process-plans/${planId}/impact${asOf ? `?asOf=${asOf}` : ""}`),
+    buildUrl(
+      `/api/process-plans/${planId}/impact${asOf ? `?asOf=${asOf}` : ""}`,
+    ),
   );
 
   if (!response.ok) {

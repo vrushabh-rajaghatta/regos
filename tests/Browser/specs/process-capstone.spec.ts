@@ -23,29 +23,45 @@ import { test, api, collectErrors } from "./support";
  *
  * ---
  *
- * **THIS SPEC IS RED, AND IT IS COMMITTED RED ON PURPOSE.**
+ * **It was committed red, and that was the point.**
  *
- * It fails at step 1 with `playbook-row` resolving to zero elements, because
- * every client call the Process feature makes omits the `/api` prefix its
- * endpoint requires and therefore 404s. Fifteen calls, S001 through S007. The
- * backend is correct and its 40 database-backed tests pass; the browser has
- * never been able to reach it.
+ * S008 wrote this spec and it failed at step 1: every client call the Process
+ * feature made omitted the `/api` prefix its endpoint required, so all fifteen
+ * returned 404 and the capability had never been reachable from a browser. A
+ * second defect sat behind it — seven writes passed `JSON.stringify` with no
+ * headers, so `fetch` sent `text/plain` and the API answered **415**.
  *
- * **S008 found this and deliberately did not fix it.** A capstone audits; it
- * does not quietly repair what it is auditing, or the record would read
- * *"browser proof ✓"* when what happened was *"browser proof → systemic
- * defect"*. The repair is EPIC-020 **S009**, along with the guard that matters
- * more than the fifteen edits: nothing mechanical compares a client path to the
- * routes the host actually maps, which is why seven stories reached Done with
- * this unnoticed.
+ * The capstone recorded both and repaired neither: an audit that quietly fixes
+ * what it finds leaves a record reading *"browser proof ✓"*. **S009 is the
+ * repair**, and this spec turning green was its acceptance test.
  *
- * **This spec turning green is S009's acceptance test.**
+ * Neither defect was visible to `npm run build` or `npm run lint`. A route is a
+ * string and a missing header is an absence. `ApiRouteAlignmentTests` now
+ * compares both halves mechanically, so the class is closed rather than the
+ * instance.
  */
 const FDA = "20000000-0000-0000-0000-000000000001";
 const MEETING_REQUEST = "90000000-0000-0000-0000-000000000005";
 
-/** The anchor every assertion below is relative to. */
-const ANCHOR = "2026-09-01";
+/**
+ * The anchor every assertion below is relative to — **sixty days in the past**.
+ *
+ * Not a fixed date, and the reason is the domain rather than convenience. A plan
+ * is opened on its anchor, and its execution history is append-only with a
+ * chronology rule (I6), so a plan anchored in the *future* refuses every
+ * `occurredOn: today` the UI sends. Backdating the anchor is also what gives
+ * step 6 something real to report. **A hundred and twenty days**, not sixty:
+ * at sixty the plan is only *projected* late, and `lateSteps` — which lists
+ * steps whose planned end has actually passed — is still empty. The distinction
+ * is D7's, and this is the browser meeting it.
+ */
+const ANCHOR = daysAgo(120);
+
+function daysAgo(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().slice(0, 10);
+}
 
 test.describe("Regulatory process — the whole workflow", () => {
   test("playbook to plan to attached work to what a delay costs", async ({
@@ -65,11 +81,19 @@ test.describe("Regulatory process — the whole workflow", () => {
       .filter({ hasText: "US FDA IND" });
 
     await expect(playbook).toHaveCount(1);
-    await playbook.getByRole("link").first().click();
+    // The row IS the link — the testid sits on the <Link>, not inside it.
+    await playbook.click();
 
+    // Two different statuses, and the distinction is I4's: the PLAYBOOK is
+    // Active — it may still gain versions — while the VERSION a plan pins is
+    // Published and can never change again.
     await expect(page.getByTestId("playbook-status-badge")).toContainText(
-      "Published",
+      "Active",
     );
+
+    await expect(
+      page.getByTestId("playbook-version-button").first(),
+    ).toContainText("Published");
 
     // Twelve steps, the number S001 seeded and every scheduling test measured.
     await expect(page.getByTestId("playbook-step-row")).toHaveCount(12);
@@ -101,8 +125,6 @@ test.describe("Regulatory process — the whole workflow", () => {
     await page
       .getByTestId("objective-row")
       .filter({ hasText: objectiveName })
-      .getByRole("link")
-      .first()
       .click();
 
     // --- 3. the plan, from a pinned version ------------------------------
@@ -124,8 +146,6 @@ test.describe("Regulatory process — the whole workflow", () => {
     await page
       .getByTestId("objective-plan-row")
       .filter({ hasText: `US IND filing plan ${unique}` })
-      .getByRole("link")
-      .first()
       .click();
 
     await expect(page.getByTestId("plan-schedule")).toBeVisible();
@@ -142,7 +162,10 @@ test.describe("Regulatory process — the whole workflow", () => {
     // --- 4. the team works it --------------------------------------------
     await page.getByTestId("plan-status-action").first().click();
 
-    const request = steps.filter({ hasText: "PRE-IND-REQ" });
+    // **Filtered by name, not by code** — a row renders its own code AND the
+    // codes of everything it waits for, so `hasText: "PRE-IND-REQ"` also matches
+    // PRE-IND-PKG, which waits for it. Names appear in one column only.
+    const request = steps.filter({ hasText: "Submit pre-IND meeting request" });
 
     await request.getByTestId("step-start").click();
     await expect(request).toContainText("InProgress");
@@ -176,24 +199,28 @@ test.describe("Regulatory process — the whole workflow", () => {
     // And the plan sees it from the other end — the reverse read, composed.
     await page.goto(planUrl);
 
-    await expect(
-      steps.filter({ hasText: "PRE-IND-MTG" }).getByTestId("step-attachment"),
-    ).toContainText("Correspondence");
+    const meetingStep = steps.filter({ hasText: "Pre-IND meeting with FDA" });
+
+    await expect(meetingStep.getByTestId("step-attachment")).toContainText(
+      "Correspondence",
+    );
 
     // The link changed discoverability and nothing else (I9): the letter did
     // not complete the step it serves.
-    await expect(steps.filter({ hasText: "PRE-IND-MTG" })).toContainText(
-      "NotStarted",
-    );
+    await expect(meetingStep).toContainText("NotStarted");
 
     // --- 6. what a delay costs -------------------------------------------
     const impact = page.getByTestId("plan-impact");
     await expect(impact).toBeVisible();
 
-    // The anchor is in the past by the time this runs, and most of the plan was
-    // never started — so the projection has something real to report.
+    // The anchor is 120 days back and almost nothing was worked, so the
+    // projection has something real to say — and says both halves of D7.
     await expect(impact.getByTestId("projected-finish")).not.toContainText("—");
-    await expect(impact.getByTestId("slip-days")).toBeVisible();
+
+    // "What has slipped" — the finish moves out, and by a stated amount.
+    await expect(impact.getByTestId("slip-days")).toContainText(/^\+\d+ days$/);
+
+    // "What is actually overdue" — a different question, answered separately.
     await expect(impact.getByTestId("late-steps")).toBeVisible();
 
     // Asking did not change the answer to anything (I8). The plan's own dates
@@ -236,5 +263,5 @@ async function recordCorrespondence(unique: number): Promise<string> {
     );
   }
 
-  return (await response.json()).correspondenceId;
+  return (await response.json()).id;
 }

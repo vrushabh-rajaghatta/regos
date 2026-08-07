@@ -13,8 +13,12 @@ export async function changeStepStatus(
   request: ChangeStepStatusRequest,
 ): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/process-plans/${planId}/steps/${stepId}/status`),
-    { method: "POST", body: JSON.stringify(request) },
+    buildUrl(`/api/process-plans/${planId}/steps/${stepId}/status`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    },
   );
 
   if (!response.ok) {

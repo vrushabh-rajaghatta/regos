@@ -17,8 +17,9 @@ export interface CreateObjectiveRequest {
 export async function createObjective(
   request: CreateObjectiveRequest,
 ): Promise<{ id: string }> {
-  const response = await apiFetch(buildUrl("/process-objectives"), {
+  const response = await apiFetch(buildUrl("/api/process-objectives"), {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
   });
 
