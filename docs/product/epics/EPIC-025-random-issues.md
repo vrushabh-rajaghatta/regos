@@ -55,7 +55,7 @@ problems go to be forgotten.** The rules below exist to stop that.
 
 | ID | Issue | Severity | Found | Status |
 |---|---|---|---|---|
-| [BUG-001](#bug-001--in-memory-ordering-by-an-id-throws-once-a-collection-holds-two-rows) | In-memory ordering by an id throws once a collection holds two rows | **Live** | 2026-08-06 | 🟡 **6 of 14 fixed** — reproduced, and one listed site was not a defect |
+| [BUG-001](#bug-001--in-memory-ordering-by-an-id-throws-once-a-collection-holds-two-rows) | In-memory ordering by an id throws once a collection holds two rows | **Live** | 2026-08-06 | ✅ **Fixed** 2026-08-07 — all 14 sites; one listed site was not a defect |
 | [BUG-002](#bug-002--the-frontend-does-not-compile) | The frontend does not compile — `npm run build` fails | **Live** | 2026-08-06 | ⚪ Open — **does not reproduce on `main`'s descendants**, see the entry |
 | [BUG-003](#bug-003--five-seed-initializers-can-never-pick-up-a-newly-added-row) | Five seed initializers can never pick up a newly added seed row | **Latent** | 2026-08-06 | ⚪ Open |
 
@@ -139,9 +139,9 @@ and the id tie-break actually runs. It threw exactly the reported exception.
 **Every existing test on that handler used one row**, which is the whole reason
 this was invisible.
 
-**Fixed — 6 sites**, in the decided direction. The tie-break moves into SQL and
-LINQ-to-Objects stability carries it. No `.Value`, no kernel change, no new id
-API.
+**Fixed — all 14 sites**, in the decided direction. The tie-break moves into SQL
+and LINQ-to-Objects stability carries it. No `.Value`, no kernel change, no new
+id API.
 
 | # | Site | Where the order now comes from |
 |---|---|---|
@@ -149,7 +149,30 @@ API.
 | 2 | `ListSiteAlignmentHandler` | `orderby` in the query |
 | 3–4 | `GetRegistrationHandler` | **ordered `Include`** |
 | 5 | `ListRegistrationMarketsHandler` | `orderby` after the `group by` |
+| 6 | `GetMedicinalProductHandler` | `OrderBy` inside the EF projection |
 | 7 | `ListProductsContainingSubstanceHandler` | `orderby` in the query |
+| 9 | `ListInspectionsHandler` | **projected in-query** — see below |
+| 10 | `ListMeetingsHandler` | **projected in-query** — see below |
+| 11 | `GetRegulatoryTemplateHandler` | **ordered `ThenInclude`** |
+| 12 | `GetSubmissionContentPlanHandler` | ordered `ThenInclude`, then `GroupBy` |
+| 13 | `GetSubmissionContentPlanHandler` | `OrderBy` in the query, then `GroupBy` |
+| 14 | `ListNextStepsHandler` | `OrderBy` inside the step projection |
+| 15 | `CreateSubmissionHandler` | `OrderBy` before `ToListAsync` |
+
+**Three mechanisms, and the third was the only real difficulty.**
+
+- **An `orderby` in the query** — the direction as written, and it covered 7 sites.
+- **An ordered `Include` / `ThenInclude`** — extends the direction to a collection
+  loaded with its aggregate, which *"an `orderby` in the EF query"* did not
+  obviously reach. EF applies it in SQL, where an id translates.
+- **A projection alongside the entity** — for **#9 and #10 the history is an
+  *owned* collection**: always loaded, and no `Include` applies to it. So the
+  query projects `History = x.Inspection.History.OrderBy(h => h.Id).ToList()`
+  beside the entity, and the in-memory sort reads that instead.
+
+**`GroupBy` was load-bearing at #12 and #13.** LINQ-to-Objects preserves source
+order within each group, so ordering the source once gives every per-section list
+its order for free.
 
 **The ordered `Include` extends the decided direction**, which said *"an `orderby`
 in the EF query"* and did not obviously cover a collection loaded with its
@@ -170,18 +193,30 @@ that lost its tie-break, and again for the ordered `Include`. Both now carry a
 `// Deterministic:` sentence saying why stability suffices. **EPIC-024's guard,
 from the epic that caused this bug, is what kept its fix honest.**
 
-**Remaining — 8 sites:** `GetMedicinalProduct`, `ListInspections`, `ListMeetings`,
-`GetRegulatoryTemplate`, `GetSubmissionContentPlan` (×2), `ListNextSteps`,
-`CreateSubmission`. Three of them project a child collection inside an in-memory
-`Select`, which is a source shape none of the six fixed so far had.
+**`DeterministicOrderingTests` had to be satisfied four separate times** — once
+for each ordering that lost its tie-break, and again for each new ordered include
+or in-query sort. One of those justifications is deliberately *not* a claim of
+total order: the template's `RequiredDocuments` are ordered by `DocumentTypeId`,
+which is unique **per section** and not across a version — and every consumer
+groups by section first, so within the group it is total and across the version
+it does not need to be.
 
 > **This entry is at the edge of rule 4.** The per-site fixes belong here; the
 > guard that prevents recurrence needs an ADR and possibly a Roslyn semantic
 > model, and should be promoted when taken.
 
-**Open — not yet audited:** 66 in-memory orderings exist across all key types.
-The 15 above are the id-keyed ones. Sorting on a bare **value object** fails
-identically, and establishing that needs type resolution rather than regex.
+**What this entry did NOT close.** 66 in-memory orderings exist across all key
+types; the 14 above are the id-keyed ones that were found. **Sorting on a bare
+value object fails identically**, and a regex cannot tell an in-memory sort from
+one inside an EF query — the sweep run after the fix returned 40 surviving
+`ThenBy(x => x.Id)` sites, and every one of them is presumed safe *because it is
+inside a query*, which is a presumption rather than a proof.
+
+**That is the same gap this entry's rule-4 note already names**, and it is why
+the guard is worth more than the fourteen fixes: only a Roslyn semantic model can
+decide whether a given ordering runs in the database or in memory. **Nothing here
+should be read as "the class is closed."** The known instances are fixed; the
+class is not mechanically prevented.
 
 ---
 
@@ -268,4 +303,4 @@ place it was dropped.
 | Date | Change |
 |---|---|
 | 2026-08-06 | Epic created; BUG-001, BUG-002, BUG-003 recorded |
-| 2026-08-07 | BUG-001 reproduced and 6 of its sites fixed; site #8 disproved, so the class is 14 sites rather than 15 |
+| 2026-08-07 | BUG-001 reproduced, then all 14 sites fixed; site #8 disproved, so the class was 14 rather than 15. The guard remains unbuilt and is the entry's real residue |

@@ -152,9 +152,11 @@ public sealed class GetSubmissionContentPlanHandler
             : [];
 
         var expected = placeholders.TryGetValue(section.Id, out var required)
-            // Deterministic: a required document is unique per
-            // (SectionId, DocumentTypeId), which the ThenBy reaches.
-            ? required.OrderBy(r => r.Order).ThenBy(r => r.DocumentTypeId).ToList()
+            // Deterministic: the template's RequiredDocuments are loaded
+            // through an ordered include (see the query below) and this sort is
+            // stable, so equal orders keep that order. The tie-break lives in
+            // SQL because a DocumentTypeId has no IComparable (BUG-001).
+            ? required.OrderBy(r => r.Order).ToList()
             : [];
 
         // A placeholder is satisfied by a document of its type placed in *this*
@@ -206,9 +208,10 @@ public sealed class GetSubmissionContentPlanHandler
 
     private static IReadOnlyList<ContentPlanDocument> Ordered(
         IEnumerable<PlacedDocument> documents) =>
+        // Deterministic: these arrive ordered by attachment id from SQL and
+        // this sort is stable, so equal display orders keep it (BUG-001).
         documents
             .OrderBy(d => d.DisplayOrder)
-            .ThenBy(d => d.SubmissionDocumentId)
             .Select(d => new ContentPlanDocument(
                 d.SubmissionDocumentId,
                 d.ProductDocumentId,
@@ -254,7 +257,12 @@ public sealed class GetSubmissionContentPlanHandler
                 attachment.ClinicalStudyId,
                 attachment.NonClinicalStudyId,
                 attachment.FileTag,
-            }).ToListAsync(cancellationToken);
+            })
+            // BUG-001: the tie-break in SQL, where an attachment id translates.
+            // GroupBy below preserves source order within each group, so every
+            // per-section list inherits it.
+            .OrderBy(x => x.Id)
+            .ToListAsync(cancellationToken);
 
         var studies = await LoadStudyIdentifiersAsync(
             rows.Select(r => r.ClinicalStudyId),
@@ -361,8 +369,15 @@ public sealed class GetSubmissionContentPlanHandler
             .AsNoTracking()
             .Include(t => t.Versions)
                 .ThenInclude(v => v.Sections)
+            // BUG-001: an ORDERED include — see the placeholder sort above.
             .Include(t => t.Versions)
-                .ThenInclude(v => v.RequiredDocuments)
+                .ThenInclude(v => v.RequiredDocuments
+                    // Deterministic: a required document is unique per
+                    // (SectionId, DocumentTypeId), and every consumer groups by
+                    // section before sorting — so within the group this key is
+                    // unique and the order is total. Across the whole version it
+                    // is not, and does not need to be.
+                    .OrderBy(d => d.DocumentTypeId))
             .FirstOrDefaultAsync(
                 t => t.Versions.Any(v => v.Id == versionId), cancellationToken);
 

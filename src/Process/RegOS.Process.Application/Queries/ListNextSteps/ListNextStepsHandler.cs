@@ -52,6 +52,9 @@ public sealed class ListNextStepsHandler
                 ObjectiveName = objective.Name,
                 CountryCode = country.Code,
                 Steps = plan.Steps
+                    // BUG-001: ordered here, in SQL, where a step id
+                    // translates. In memory it has no IComparable.
+                    .OrderBy(step => step.Id)
                     .Select(step => new
                     {
                         step.Id,
@@ -120,11 +123,13 @@ public sealed class ListNextStepsHandler
         // between two steps due the same day, which the step id settles.
         return
         [
+            // Deterministic: each plan's steps arrive ordered by step id from
+            // SQL and this sort is stable, so steps due the same day keep that
+            // order (BUG-001).
             .. items
                 .OrderByDescending(item => item.DaysLate.HasValue)
                 .ThenByDescending(item => item.DaysLate)
                 .ThenBy(item => item.PlannedEndOn)
-                .ThenBy(item => item.StepId)
         ];
     }
 }

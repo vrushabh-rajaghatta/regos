@@ -24,8 +24,17 @@ public sealed class GetRegulatoryTemplateHandler
             .AsNoTracking()
             .Include(x => x.Versions)
                 .ThenInclude(v => v.Sections)
+            // BUG-001: an ORDERED include. EF applies it in SQL, where a
+            // DocumentTypeId translates; the in-memory sort below then only has
+            // to be stable, which LINQ-to-Objects guarantees.
             .Include(x => x.Versions)
-                .ThenInclude(v => v.RequiredDocuments)
+                .ThenInclude(v => v.RequiredDocuments
+                    // Deterministic: a required document is unique per
+                    // (SectionId, DocumentTypeId), and every consumer groups by
+                    // section before sorting — so within the group this key is
+                    // unique and the order is total. Across the whole version it
+                    // is not, and does not need to be.
+                    .OrderBy(d => d.DocumentTypeId))
             .Include(x => x.Versions)
                 .ThenInclude(v => v.ValidationRules)
             .FirstOrDefaultAsync(x => x.Id == templateId, cancellationToken);
@@ -54,8 +63,9 @@ public sealed class GetRegulatoryTemplateHandler
                         s.Order))
                     .ToList(),
                 v.RequiredDocuments
+                    // Deterministic: the include orders these by DocumentTypeId
+                    // in SQL and this sort is stable (BUG-001).
                     .OrderBy(d => d.Order)
-                    .ThenBy(d => d.DocumentTypeId)
                     .Select(d => new RequiredDocumentDto(
                         d.Id,
                         d.SectionId,
