@@ -47,7 +47,7 @@ Built before this backlog existed; recorded here so the map is complete. Authori
 ## Now
 
 🟡 **[EPIC-020 — regulatory process & planning](epics/EPIC-020-regulatory-process-and-planning.md)
-— 8 of 9 stories.** *(S008's audit added the ninth.)*
+— 9 of 9 stories, complete.** *(S008's audit added the ninth.)*
 Taken 2026-08-06. RIM's **spine** — the layer that turns a record system into one
 that tells you what to do next. Phase 1 approved the same day, and
 [ADR-065](../adr/ADR-065-regulatory-process-is-an-optional-bounded-context.md) has
@@ -62,7 +62,7 @@ been the implementation contract since.
 | 🟢 | **S005** impact — what a delay actually costs | visibility |
 | 🟢 | **S006–S007** wiring — six aggregates gain a nullable `ProcessStepId`; Process reads, never owns | integration |
 | 🟢 | **S008** capstone — the audit: every invariant names executable evidence | evidence |
-| ⚪ | **S009** the Process UI reaches the API — and the guard that stops it recurring | verification |
+| 🟢 | **S009** the Process UI reaches the API — and the four guards that stop it recurring | verification |
 
 **Two findings worth carrying out of the epic already.** The FDA IND **critical
 path is not the 150-day CMC package** — it runs through the pre-IND meeting

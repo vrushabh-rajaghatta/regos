@@ -1,6 +1,6 @@
 # EPIC-020 — Regulatory process & planning
 
-**Status:** 🟡 **In Progress — 8 of 9 stories** ([progress](#progress--7-of-8-2026-08-06)) — S008's audit added S009 · **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟢 **Complete — 9 of 9 stories** ([progress](#progress--7-of-8-2026-08-06)) — S008's audit added S009 · **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 RIM's **spine**. Everything RegOS builds — applications, submissions, correspondence, meetings, commitments, inspections — becomes a *step in a plan* that serves an *objective*. This is the layer that turns a record system into a system that tells you what to do next.
 
@@ -437,6 +437,36 @@ Had the audit found nine rows already full, S008 would have been ceremonial.
 
 **It was ambiguity, not carelessness.** The server genuinely serves `/master-data/*`, `/reference-data/*` and `/submissions/{id}` without the prefix — pre-existing SC-001 violations — so both spellings look correct in the codebase. S009 lets the guard *report* those rather than fixing them: normalise or formally except is a decision someone should make deliberately.
 
+### S009 — the engineering response to the finding
+
+**The fifteen edits were maintenance. The guard was the story.**
+
+Fixing the routes moved the browser spec from step 1 to step 2, where it hit **415 Unsupported Media Type** — seven Process writes passed `JSON.stringify` with no headers, so `fetch` sent `text/plain`. **Same family, same reason:** invisible to the compiler, invisible to lint, reachable only by a browser.
+
+`ApiRouteAlignmentTests` closes the class rather than the instances:
+
+| | What it asserts |
+|---|---|
+| **1** | every client path matches a route the host maps |
+| **2** | every client path starts `/api`, or is on the dated **shrink-only** list of pre-existing SC-001 exceptions |
+| **3** | every `MapGroup` prefix is one the scanner can resolve |
+| **4** | every `JSON.stringify` body declares `Content-Type` — keyed on `stringify`, so `FormData` uploads that must omit it are not caught |
+
+**Guard 3 deviates from its sign-off, deliberately.** The design said *assert every prefix is empty*; one already is not (`TenantEndpoints` declares `/api/platform/tenants`), and forcing it would have changed working code to suit a test. The invariant asserted is the true one — **every prefix is one the scanner can see** — demonstrated by a change that still compiles.
+
+**Measured, not assumed.** The browser suite ran twice, once with the changes stashed:
+
+| | Baseline | With S009 |
+|---|---|---|
+| passed | 110 | **115** |
+| failed | 24 | **19** |
+
+**Five fixed, none newly broken.** The nineteen that remain fail identically without these changes — pre-existing, and untouched.
+
+**Two of the five were S007's collateral.** `correspondence.spec.ts` and `interaction-lifecycle.spec.ts` had been regressed by the broken attach call in the section S007 added to the correspondence page: the query threw and the whole detail page stopped rendering. The same gap billing itself twice — a story called Done had broken specs nobody ran.
+
+**The eleven SC-001 exceptions are reported, not resolved.** Dated, shrink-only, with the note that normalising them or formally excepting them is a decision someone should take deliberately. **Evidence before repair**, one more time.
+
 ### The retro — four distinctions, and each refused something cheaper
 
 The Process capability repeatedly separated things that are convenient to conflate. **None of these was theoretical**: each one turned down an implementation that was simpler in the short term and muddier in the long one.
@@ -463,6 +493,10 @@ The Process capability repeatedly separated things that are convenient to confla
 
 **21 reporting suites green** · architecture **45/45** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Process: **65 domain**, **40 database-backed**. Browser: **`process-capstone.spec.ts` red, by decision** — see the finding above.
 
+### Verification at S009 — the epic's closing numbers
+
+**21 reporting suites green** · architecture **49/49** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Browser: **115 passed / 19 failed**, every remaining failure pre-existing and reproduced on a stashed baseline.
+
 ---
 
 ### Verification at S007
@@ -485,7 +519,7 @@ The Process capability repeatedly separated things that are convenient to confla
 | **S006** | **Wiring, part 1** — `Submission` and `Registration` attach to steps; both ends show it. **D2 is proved or reversed here**, on the two cheapest contexts | *"This submission — what plan is it part of?"* | 🟢 **Done** · merged `a9cc20a` |
 | **S007** | **Wiring, part 2** — the four Interaction aggregates. **Guard: a step is not a commitment's fourth business origin** — [ADR-042 decision 2](../../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) fires on a fourth *origin*, and a step is what a commitment *serves*, not where it *arose* | *"What did this step actually produce?"* | 🟢 **Done** — and the guard held: a step is what a commitment *serves*, asserted as its own test |
 | **S008** | **Capstone — the audit.** Every ADR-065 invariant names executable evidence; the workflow 1→6 in one browser run; retro. **Introduced no capability, by design** | *"Have we demonstrated everything ADR-065 promised?"* | 🟢 **Done** — three empty rows found and closed (I1, I3, I7), and a systemic client defect recorded as S009 |
-| **S009** | **The Process UI reaches the API** — the fifteen `/api` fixes, `process-capstone.spec.ts` turning green, and **the mechanical guard that is the actual deliverable**: every client path checked against the routes the host maps. Surfaces the pre-existing SC-001 exceptions as a list rather than repairing them | *"Why did seven stories reach Done without a browser?"* | ⚪ Not started |
+| **S009** | **The Process UI reaches the API** — fifteen route fixes, seven missing `Content-Type` headers, and **the four guards that are the actual deliverable**. The pre-existing SC-001 exceptions are reported, not repaired | *"Why did seven stories reach Done without a browser?"* | 🟢 **Done** — capstone spec green; **5 browser specs fixed, 0 newly broken**, measured against a stashed baseline |
 
 **The split point, declared now so it is a decision and not a rescue** — and confirmed at sign-off:
 
