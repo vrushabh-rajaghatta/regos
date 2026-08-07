@@ -55,7 +55,7 @@ problems go to be forgotten.** The rules below exist to stop that.
 
 | ID | Issue | Severity | Found | Status |
 |---|---|---|---|---|
-| [BUG-001](#bug-001--in-memory-ordering-by-an-id-throws-once-a-collection-holds-two-rows) | In-memory ordering by an id throws once a collection holds two rows | **Live** | 2026-08-06 | ⚪ Open |
+| [BUG-001](#bug-001--in-memory-ordering-by-an-id-throws-once-a-collection-holds-two-rows) | In-memory ordering by an id throws once a collection holds two rows | **Live** | 2026-08-06 | 🟡 **6 of 14 fixed** — reproduced, and one listed site was not a defect |
 | [BUG-002](#bug-002--the-frontend-does-not-compile) | The frontend does not compile — `npm run build` fails | **Live** | 2026-08-06 | ⚪ Open — **does not reproduce on `main`'s descendants**, see the entry |
 | [BUG-003](#bug-003--five-seed-initializers-can-never-pick-up-a-newly-added-row) | Five seed initializers can never pick up a newly added seed row | **Latent** | 2026-08-06 | ⚪ Open |
 
@@ -131,6 +131,49 @@ already articulates — *"LINQ-to-Objects sorts stably, so such an ordering is
 deterministic exactly when its source is"*: give the in-memory sort a
 **deterministically ordered source** (an `orderby` in the EF query) and let
 stability carry it. No `.Value`, no kernel change, no new id API.
+
+**Reproduced, 2026-08-07**, before anything was changed —
+`RegistrationTests.Two_registrations_in_one_market_sort_without_throwing`. Two
+registrations of the **same** product in one market, so prominence and name tie
+and the id tie-break actually runs. It threw exactly the reported exception.
+**Every existing test on that handler used one row**, which is the whole reason
+this was invisible.
+
+**Fixed — 6 sites**, in the decided direction. The tie-break moves into SQL and
+LINQ-to-Objects stability carries it. No `.Value`, no kernel change, no new id
+API.
+
+| # | Site | Where the order now comes from |
+|---|---|---|
+| 1 | `ListMarketRegistrationsHandler` | `orderby` in the query |
+| 2 | `ListSiteAlignmentHandler` | `orderby` in the query |
+| 3–4 | `GetRegistrationHandler` | **ordered `Include`** |
+| 5 | `ListRegistrationMarketsHandler` | `orderby` after the `group by` |
+| 7 | `ListProductsContainingSubstanceHandler` | `orderby` in the query |
+
+**The ordered `Include` extends the decided direction**, which said *"an `orderby`
+in the EF query"* and did not obviously cover a collection loaded with its
+aggregate. `.Include(x => x.History.OrderBy(e => e.Id))` is applied in SQL, where
+an id translates — so the in-memory sort only has to be stable.
+
+**#3 and #4 are one sort, not two.** The line `.ThenBy(entry => entry.Id)` was
+written twice in succession. The duplicate is gone.
+
+**#8 is not a defect, and the count is now 14.** `ListDueWorkHandler:147` orders
+by `DueWorkItem.Id`, which is a plain `Guid` — `IComparable`, and it cannot
+throw. It belongs with the 51 safe orderings. **The list was evidence, not
+gospel**, which is why the remaining eight will each have their key type checked
+before they are touched.
+
+**`DeterministicOrderingTests` caught the fix twice** — once for each ordering
+that lost its tie-break, and again for the ordered `Include`. Both now carry a
+`// Deterministic:` sentence saying why stability suffices. **EPIC-024's guard,
+from the epic that caused this bug, is what kept its fix honest.**
+
+**Remaining — 8 sites:** `GetMedicinalProduct`, `ListInspections`, `ListMeetings`,
+`GetRegulatoryTemplate`, `GetSubmissionContentPlan` (×2), `ListNextSteps`,
+`CreateSubmission`. Three of them project a child collection inside an in-memory
+`Select`, which is a source shape none of the six fixed so far had.
 
 > **This entry is at the edge of rule 4.** The per-site fixes belong here; the
 > guard that prevents recurrence needs an ADR and possibly a Roslyn semantic
@@ -225,3 +268,4 @@ place it was dropped.
 | Date | Change |
 |---|---|
 | 2026-08-06 | Epic created; BUG-001, BUG-002, BUG-003 recorded |
+| 2026-08-07 | BUG-001 reproduced and 6 of its sites fixed; site #8 disproved, so the class is 14 sites rather than 15 |

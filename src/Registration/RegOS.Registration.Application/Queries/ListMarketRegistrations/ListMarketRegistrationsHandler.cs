@@ -58,6 +58,15 @@ public sealed class ListMarketRegistrationsHandler
                 on registration.AuthorityId equals authority.Id
             join holder in _dbContext.Organizations
                 on registration.HolderOrganizationId equals holder.Id
+            // BUG-001. The tie-breaker belongs HERE, not on the in-memory sort
+            // below: an id has no IComparable, so `.ThenBy(row => row.Id)` after
+            // materialisation throws the moment two rows reach it. In SQL the
+            // same expression translates and costs nothing.
+            //
+            // LINQ-to-Objects sorts stably, so ordering the source totally is
+            // enough — the in-memory OrderBy/ThenBy below preserve this order
+            // wherever their own keys tie.
+            orderby registration.Id
             select new
             {
                 registration.Id,
@@ -96,10 +105,15 @@ public sealed class ListMarketRegistrationsHandler
 
         var today = ExpiryVisibility.Today();
 
+        // Deterministic: the source query is ordered by the registration id in
+        // SQL and this sort is stable, so equal keys keep that order. The
+        // tie-break lives there because an id has no IComparable in memory and
+        // throws on the second row (BUG-001).
         return rows
             .OrderBy(row => Prominence(row.CurrentStatus))
             .ThenBy(row => row.ProductName.Value)
-            .ThenBy(row => row.Id)
+            // No id tie-break here — the source is already ordered by it and
+            // this sort is stable. See the `orderby` in the query above.
             .Select(row =>
             {
                 var expiry = ExpiryVisibility.For(

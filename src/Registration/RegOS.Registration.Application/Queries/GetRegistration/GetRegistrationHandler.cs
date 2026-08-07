@@ -26,7 +26,11 @@ public sealed class GetRegistrationHandler
     {
         var registration = await _dbContext.Set<RegistrationAggregate>()
             .AsNoTracking()
-            .Include(x => x.History)
+            // Deterministic: an entry id is unique, so this is a total order —
+            // and it is an ORDERED include on purpose. EF applies it in SQL,
+            // where an id translates; the in-memory sort below then only has to
+            // be stable, which LINQ-to-Objects guarantees (BUG-001).
+            .Include(x => x.History.OrderBy(entry => entry.Id))
             .FirstOrDefaultAsync(x => x.Id == registrationId, cancellationToken);
 
         if (registration is null)
@@ -93,14 +97,17 @@ public sealed class GetRegistrationHandler
             registration.ExpiresOn,
             registration.CreatedOn,
             [.. registration.History
+                // Deterministic: the Include above orders the history by entry
+                // id in SQL and this sort is stable (BUG-001).
+                //
                 // Chronological by what happened, then by what was learned:
                 // two entries can share a business date when a portfolio is
                 // migrated, and the order they were recorded in is the
                 // tie-break a reader expects.
                 .OrderBy(entry => entry.OccurredOn)
                 .ThenBy(entry => entry.RecordedOnUtc)
-                .ThenBy(entry => entry.Id)
-                .ThenBy(entry => entry.Id)
+                // BUG-001: no id tie-break here — the Include above orders the
+                // history in SQL and this sort is stable.
                 .Select(entry => new RegistrationStatusEntryDto(
                     entry.Id.Value,
                     entry.Status.ToString(),
