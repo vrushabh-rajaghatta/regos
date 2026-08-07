@@ -885,6 +885,49 @@ public sealed class RegistrationTests : IAsyncLifetime
         return id;
     }
 
+    /// <summary>
+    /// <b>BUG-001, reproduced.</b> Two registrations in one market, identical in
+    /// every earlier sort key, so the tie-breaker actually runs.
+    /// </summary>
+    /// <remarks>
+    /// <b>The bug hid behind a count.</b> Every existing test on this handler
+    /// puts one row in the market, and a sort of fewer than two elements never
+    /// invokes its comparer — so <c>.ThenBy(row => row.Id)</c> was exercised
+    /// exactly never. Two rows of the SAME product make prominence and name tie,
+    /// which is the only way to reach the id.
+    /// <para>
+    /// Before the fix this threw
+    /// <c>InvalidOperationException: Failed to compare two elements in the
+    /// array → At least one object must implement IComparable</c>. It is the
+    /// 500 a market page returned on 2026-08-06.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public async Task Two_registrations_in_one_market_sort_without_throwing()
+    {
+        MedicinalProductId market;
+
+        await using (var ctx = New())
+        {
+            var globalProductId = await ProductAsync(ctx);
+            market = await MarketAsync(ctx, globalProductId);
+
+            await CreateAsync(ctx, market);
+            await CreateAsync(ctx, market, applicationId: null,
+                occurredOn: Today.AddDays(1));
+        }
+
+        await using var check = New();
+
+        var rows = await new ListMarketRegistrationsHandler(check)
+            .HandleAsync(UnitedStates, default);
+
+        rows.Where(x => x.MedicinalProductId == market.Value)
+            .Should().HaveCount(2,
+                "both belong to the market, and the read must survive the tie "
+                    + "between them");
+    }
+
     private async Task<RegistrationId> CreateAsync(
         RegOSDbContext ctx,
         MedicinalProductId medicinalProductId,
