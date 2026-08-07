@@ -11,8 +11,12 @@ export async function attachCorrespondenceToStep(
   processStepId: string | null,
 ): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/correspondence/${correspondenceId}/process-step`),
-    { method: "PUT", body: JSON.stringify({ processStepId }) },
+    buildUrl(`/api/correspondence/${correspondenceId}/process-step`),
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ processStepId }),
+    },
   );
 
   if (!response.ok) {

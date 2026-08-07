@@ -6,7 +6,7 @@ export async function listObjectives(
   includeClosed = false,
 ): Promise<ObjectiveSummary[]> {
   const response = await apiFetch(
-    buildUrl(`/process-objectives?includeClosed=${includeClosed}`),
+    buildUrl(`/api/process-objectives?includeClosed=${includeClosed}`),
   );
 
   if (!response.ok) {

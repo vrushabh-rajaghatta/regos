@@ -7,7 +7,9 @@ export async function getPlaybook(
   version?: number,
 ): Promise<PlaybookDetail> {
   const query = version === undefined ? "" : `?version=${version}`;
-  const response = await apiFetch(buildUrl(`/process-definitions/${id}${query}`));
+  const response = await apiFetch(
+    buildUrl(`/api/process-definitions/${id}${query}`),
+  );
 
   if (!response.ok) {
     throw new Error("Unable to load the playbook.");

@@ -8,7 +8,7 @@ import type { NextStep } from "../types/ProcessPlan";
  */
 export async function listNextSteps(asOf?: string): Promise<NextStep[]> {
   const response = await apiFetch(
-    buildUrl(`/process-plans/next-steps${asOf ? `?asOf=${asOf}` : ""}`),
+    buildUrl(`/api/process-plans/next-steps${asOf ? `?asOf=${asOf}` : ""}`),
   );
 
   if (!response.ok) {

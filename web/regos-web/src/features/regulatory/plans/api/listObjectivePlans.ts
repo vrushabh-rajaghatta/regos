@@ -6,7 +6,7 @@ export async function listObjectivePlans(
   objectiveId: string,
 ): Promise<ObjectivePlanSummary[]> {
   const response = await apiFetch(
-    buildUrl(`/process-objectives/${objectiveId}/plans`),
+    buildUrl(`/api/process-objectives/${objectiveId}/plans`),
   );
 
   if (!response.ok) {

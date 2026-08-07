@@ -11,8 +11,12 @@ export async function changePlanStatus(
   request: ChangePlanStatusRequest,
 ): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/process-plans/${planId}/status`),
-    { method: "POST", body: JSON.stringify(request) },
+    buildUrl(`/api/process-plans/${planId}/status`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    },
   );
 
   if (!response.ok) {

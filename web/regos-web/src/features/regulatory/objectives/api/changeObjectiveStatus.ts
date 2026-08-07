@@ -11,8 +11,12 @@ export async function changeObjectiveStatus(
   request: ChangeObjectiveStatusRequest,
 ): Promise<void> {
   const response = await apiFetch(
-    buildUrl(`/process-objectives/${id}/status`),
-    { method: "POST", body: JSON.stringify(request) },
+    buildUrl(`/api/process-objectives/${id}/status`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    },
   );
 
   if (!response.ok) {

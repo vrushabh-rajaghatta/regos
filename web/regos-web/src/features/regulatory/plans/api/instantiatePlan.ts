@@ -11,8 +11,9 @@ export interface InstantiatePlanRequest {
 export async function instantiatePlan(
   request: InstantiatePlanRequest,
 ): Promise<{ id: string; stepCount: number }> {
-  const response = await apiFetch(buildUrl("/process-plans"), {
+  const response = await apiFetch(buildUrl("/api/process-plans"), {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
   });
 
