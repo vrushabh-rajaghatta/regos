@@ -39,6 +39,15 @@ public sealed class PlanImpactReadTests
     /// dates are byte-identical after the analysis runs — a projection is
     /// computed, returned and discarded.
     /// </summary>
+    /// <remarks>
+    /// <b>This covers I7's first half too</b> — <em>never mutates the plan</em> —
+    /// and for five stories it was the only evidence either invariant had, which
+    /// left I7's <em>second</em> half unasserted: never <em>propose</em> an
+    /// alternative schedule. S008's audit split that out to
+    /// <c>PlanImpactNeverSchedulesTests</c>, because becoming a scheduler and
+    /// becoming the authoritative schedule are different failures and a future
+    /// implementation could commit either alone.
+    /// </remarks>
     [Fact]
     public async Task Running_the_analysis_changes_nothing_about_the_plan()
     {

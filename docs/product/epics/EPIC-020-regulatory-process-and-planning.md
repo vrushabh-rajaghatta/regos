@@ -1,6 +1,6 @@
 # EPIC-020 — Regulatory process & planning
 
-**Status:** 🟡 **In Progress — 7 of 8 stories** ([progress](#progress--7-of-8-2026-08-06)) · **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
+**Status:** 🟡 **In Progress — 8 of 9 stories** ([progress](#progress--7-of-8-2026-08-06)) — S008's audit added S009 · **Phase 1 approved 2026-08-06** · **Branch:** `epic/EPIC-020-regulatory-process-and-planning` (cut at Phase 1) · **Process:** [FEATURE-DEVELOPMENT-FLOW.md](../FEATURE-DEVELOPMENT-FLOW.md)
 
 RIM's **spine**. Everything RegOS builds — applications, submissions, correspondence, meetings, commitments, inspections — becomes a *step in a plan* that serves an *objective*. This is the layer that turns a record system into a system that tells you what to do next.
 
@@ -401,6 +401,68 @@ Two stories, one shape, six aggregates. **The success criterion for S007 was tha
 
 **The one gap S007 left open, deliberately.** Only correspondence has a detail page, so only correspondence has an attach control — the other three have the same API and nowhere to put it. Adding those controls to the plan page would have made Process the place users manage other contexts' records, which is D2 undone in the mental model even with the command correctly routed. **The gap is a missing screen, and it stays visible.**
 
+## S008 — the capstone, and what it audited
+
+**Its Definition of Done was not "features implemented".** It was:
+
+> **Every ADR-065 invariant names executable evidence.**
+
+Not *implemented* — **demonstrated**. Six months from now *"does I5 still hold?"* has to be answerable with *"run this test"* rather than *"I think so"*.
+
+### The evidence table
+
+| | Invariant | Evidence |
+|---|---|---|
+| **I1** | Process is optional | `SubmissionNeedsNoPlanTests` — three tests, **in the Submission project, which references no Process project** |
+| **I2** | never owns a foreign lifecycle | `ContextDependencyTests.A_context_never_names_another_contexts_repository` — bidirectional, all eleven contexts |
+| **I3** | each context owns itself, optionally references Process | `ProcessIsOptionalTests` — every `ProcessStepId` nullable; `ProcessStepId` is the only Process type any foreign domain names |
+| **I4** | permanently bound to a published version | `ProcessDefinitionTests`, `ProcessPlanInstantiationTests` (domain + database), `ProcessDefinitionSeedTests` |
+| **I5** | instantiation is deterministic | `ProcessPlanInstantiationTests.Instantiating_twice_produces_the_same_schedule` — in memory and through Postgres |
+| **I6** | execution history is append-only | `ProcessStepExecutionTests` |
+| **I7** | never repairs the schedule | `PlanImpactNeverSchedulesTests` — a delay never shortens downstream work; no member could carry a proposal |
+| **I8** | observational | `PlanImpactReadTests.Running_the_analysis_changes_nothing_about_the_plan` |
+| **I9** | attachments are descriptive | `StepAttachmentTests`, `InteractionAttachmentTests` |
+
+**The audit found three rows empty** — I1, I3 and I7 — and all three were empty for the same reason: they were **absence-shaped**. I1 and I3 held because nobody had written the code that would break them, and I7 was covered by a test that carried it silently while citing only I8. *Nothing contradicts it* is not evidence.
+
+Had the audit found nine rows already full, S008 would have been ceremonial.
+
+### The finding
+
+> **Browser verification uncovered a systemic client routing defect.**
+> **All fifteen Process UI calls omit the `/api` prefix their endpoints require and return 404.** The capability has never been reachable from a browser. The backend is correct — SC-001 compliant, with 40 database-backed tests passing against it — and the defect is confined to the client.
+> **Recorded as S009 rather than repaired within the capstone, so the audit remains historically accurate.** `process-capstone.spec.ts` is committed red; it turning green is S009's acceptance test.
+
+**The missing `/api` is almost incidental.** The real failure is that **seven stories reached Done without a browser exercising the feature** — and `npm run build` and `npm run lint`, which every story cited as green, structurally cannot see a wrong URL string. That is a verification-coverage defect, not a Process defect, and it is why S009's deliverable is the **mechanical guard**, not the fifteen edits. Fifteen edits are maintenance; a guard removes the class.
+
+**It was ambiguity, not carelessness.** The server genuinely serves `/master-data/*`, `/reference-data/*` and `/submissions/{id}` without the prefix — pre-existing SC-001 violations — so both spellings look correct in the codebase. S009 lets the guard *report* those rather than fixing them: normalise or formally except is a decision someone should make deliberately.
+
+### The retro — four distinctions, and each refused something cheaper
+
+The Process capability repeatedly separated things that are convenient to conflate. **None of these was theoretical**: each one turned down an implementation that was simpler in the short term and muddier in the long one.
+
+| Distinction | The cheaper implementation it refused |
+|---|---|
+| **facts / analysis** | a stored "days late" column |
+| **ownership / annotation** | Process publishing a submission |
+| **planning / execution** | a reschedule writing execution history |
+| **knowledge / projection** | a playbook edit rippling into live plans |
+| **evidence / assumption** | trusting architectural intent without executable proof |
+
+**The fifth is what S008 itself is**, and the epic earned it the hard way: the story whose whole purpose was replacing *"this should be true"* with *"this test proves it"* is the story that discovered seven stories' worth of untested client code.
+
+### One seed did most of the work
+
+**The US·FDA·IND playbook stopped being demo data almost immediately.** Twelve steps, three converging strands — and it successively validated immutable publication, deterministic scheduling, critical-path analysis, execution, impact projection and integration. Six architectural promises from one piece of representative data.
+
+**It is also why the critical-path finding mattered.** The discovery that the path runs through the pre-IND meeting track rather than the 150-day CMC package — and that a test asserting otherwise was wrong by 33 days — came out of the playbook a user will actually open, not a benchmark built to make the point. **An artificial fixture could not have been wrong in an interesting way.**
+
+### Verification at S008
+
+**21 reporting suites green** · architecture **45/45** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Process: **65 domain**, **40 database-backed**. Browser: **`process-capstone.spec.ts` red, by decision** — see the finding above.
+
+---
+
 ### Verification at S007
 
 **21 reporting suites green** · architecture **43/43** · `npm run build` clean · `npm run lint` at its 3-warning baseline. Process: **62 domain**, **40 database-backed**.
@@ -420,7 +482,8 @@ Two stories, one shape, six aggregates. **The success criterion for S007 was tha
 | **S005** | **What is late, and what does it block** — transitive successors, derived on read; D6's superseded-playbook disclosure | *"What is late, and what does it block?"* | 🟢 **Done** · merged `b004795` |
 | **S006** | **Wiring, part 1** — `Submission` and `Registration` attach to steps; both ends show it. **D2 is proved or reversed here**, on the two cheapest contexts | *"This submission — what plan is it part of?"* | 🟢 **Done** · merged `a9cc20a` |
 | **S007** | **Wiring, part 2** — the four Interaction aggregates. **Guard: a step is not a commitment's fourth business origin** — [ADR-042 decision 2](../../adr/ADR-042-what-the-interaction-context-turned-out-to-be.md) fires on a fourth *origin*, and a step is what a commitment *serves*, not where it *arose* | *"What did this step actually produce?"* | 🟢 **Done** — and the guard held: a step is what a commitment *serves*, asserted as its own test |
-| **S008** | **Capstone** — the workflow steps 1→6 in one browser run, ADR-065, `ContextDependencyTests` extended, retro | — | ⚪ Not started |
+| **S008** | **Capstone — the audit.** Every ADR-065 invariant names executable evidence; the workflow 1→6 in one browser run; retro. **Introduced no capability, by design** | *"Have we demonstrated everything ADR-065 promised?"* | 🟢 **Done** — three empty rows found and closed (I1, I3, I7), and a systemic client defect recorded as S009 |
+| **S009** | **The Process UI reaches the API** — the fifteen `/api` fixes, `process-capstone.spec.ts` turning green, and **the mechanical guard that is the actual deliverable**: every client path checked against the routes the host maps. Surfaces the pre-existing SC-001 exceptions as a list rather than repairing them | *"Why did seven stories reach Done without a browser?"* | ⚪ Not started |
 
 **The split point, declared now so it is a decision and not a rescue** — and confirmed at sign-off:
 
