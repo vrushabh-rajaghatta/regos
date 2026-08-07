@@ -447,9 +447,11 @@ The Process capability repeatedly separated things that are convenient to confla
 | **ownership / annotation** | Process publishing a submission |
 | **planning / execution** | a reschedule writing execution history |
 | **knowledge / projection** | a playbook edit rippling into live plans |
-| **evidence / assumption** | trusting architectural intent without executable proof |
+| **evidence / assumption** | declaring success without the kind of evidence that could actually prove it |
 
 **The fifth is what S008 itself is**, and the epic earned it the hard way: the story whose whole purpose was replacing *"this should be true"* with *"this test proves it"* is the story that discovered seven stories' worth of untested client code.
+
+**And it is the only one of the five not discovered in the domain model.** The other four came from asking what a regulatory record actually is; this one came from asking what our own "Done" was resting on. That makes it no less binding — the build and lint results cited at every story were never *false*, they were insufficient evidence for the conclusion drawn from them, and a distinction that costs a story to learn is worth keeping beside the four that cost a design argument.
 
 ### One seed did most of the work
 
